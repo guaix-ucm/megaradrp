@@ -27,15 +27,10 @@ import pyfits
 import numpy
 from numpy.random import normal, poisson
 from numina.treedict import TreeDict
+from numina.instrument import CCDDetector, Amplifier
 from numina.instrument.template import interpolate
 
 from pontifex.astrotime import datetime_to_mjd
-
-class Amplifier(object):
-    def __init__(self):
-        self.gain = 1.0
-        self.ron = 0.3
-        self.shape = (slice(0, 100), slice(0, 100))
 
 class OpticalElement(object):
     def __init__(self):
@@ -61,69 +56,17 @@ class Shutter(OpticalElement):
         else:
             return None
 
-class CCDDetector(OpticalElement):
-    def __init__(self):
-        OpticalElement.__init__(self)
-        self.shape = (100, 100)
-        self.amplifiers = [Amplifier()]
-        self.bias = 100.0
-        self.dark = 0.1
-        self.buffer = numpy.zeros(self.shape)
-        self.meta = TreeDict()
-        self.light_source = None
-
-        self.meta['readmode'] = 'fast'
-        self.meta['readscheme'] = 'perline'
-        self.meta['exposed'] = 0
-        self.meta['gain'] = 3.6
-        self.meta['readnoise'] = 2.16
-
-    def reset(self):
-        self.buffer.fill(0)
-
-    def light_path(self, ls):
-        self.light_source = ls
-        return None
-
-    def expose(self, exposure):
-        now = datetime.now()
-        # Recording time of start of exposure
-        self.meta['exposed'] = exposure
-        self.meta['dateobs'] = now.isoformat()
-        self.meta['mjdobs'] = datetime_to_mjd(now)
-
-        if self.light_source is not None:
-            self.buffer += self.light_source * exposure
-
-        self.buffer = poisson(self.buffer)
-        self.buffer += self.dark * exposure
-
-    def readout(self):
-        data = self.buffer.copy()
-        for amp in self.amplifiers:            
-            if amp.ron > 0:
-                data[amp.shape] = normal(self.buffer[amp.shape], amp.ron)
-            data[amp.shape] /= amp.gain
-        data += self.bias
-        data = data.astype('int32')
-        # readout destroys data
-        self.buffer.fill(0)
-        return data
-
-    def mode(self, name):
-        pass
-
 class Instrument(object):
     def __init__(self, shutter, detector):
         self.shutter = shutter
         self.detector = detector
 
-        self.path = [self.shutter, self.shutter, self.detector]
+        self.path = [self.shutter, self.detector]
 
         self.meta = TreeDict()
         self.meta['name'] = 'MEGARA'
         self.meta['focalstation'] = 'FCASS'
-        self.meta['filter0'] = 'B'
+        self.meta['grism0'] = 'A'
         self.meta['imagetype'] = ''
         self.meta['detector'] = self.detector.meta
  
@@ -133,8 +76,8 @@ class Instrument(object):
             ls = oe.light_path(ls)
         return ls
 
-    def filter(self, name):
-        self.meta['filter0'] = name
+    def grism(self, name):
+        self.meta['grism0'] = name
 
     def expose(self, time):
         self.detector.expose(time)
@@ -149,7 +92,8 @@ class Instrument(object):
 class Megara(Instrument):
     def __init__(self):
         shutter = Shutter()
-        detector = CCDDetector()
+        amplifiers=[Amplifier(shape=(slice(0, 2048), slice(0,2048)), gain=1, ron=1, wdepth=100000)]
+        detector = CCDDetector(shape=(2048, 2048), amplifiers=amplifiers, bias=100, dark=0.3)
         Instrument.__init__(self, shutter, detector)
 
 class MegaraImageFactory(object):
@@ -164,4 +108,3 @@ class MegaraImageFactory(object):
         for rr in hh.ascardlist():
             rr.value = interpolate(metadata, rr.value)
         return hh
-
