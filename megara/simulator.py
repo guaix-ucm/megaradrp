@@ -101,10 +101,21 @@ class MegaraImageFactory(object):
         sfile = StringIO(get_data('megara', 'primary.txt'))
         self.htempl = pyfits.Header(txtfile=sfile)
 
-    def create(self, metadata):
+    def create(self, metadata, data):
 
         hh = self.htempl.copy()
 
         for rr in hh.ascardlist():
             rr.value = interpolate(metadata, rr.value)
-        return hh
+
+
+	prim = pyfits.PrimaryHDU(header=hh)
+	hl = [prim]
+	lcb = pyfits.ImageHDU(data=data, name='LCB')
+        hl.append(lcb)
+	#scb = pyfits.ImageHDU(name='SCB')
+	#mos = pyfits.ImageHDU(name='MOS')
+
+	hdulist = pyfits.HDUList(hl)
+        return hdulist
+
