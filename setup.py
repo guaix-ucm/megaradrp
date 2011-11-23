@@ -12,7 +12,7 @@ setup(name='pymegara',
       packages=[
                 'megara', 'megara.recipes',
                 ],
-      package_data={'megara': ['primary.txt']},
+      package_data={'megara': ['primary.txt', 'spec0.txt', 'spec1.txt']},
       install_requires=['numina'],
       classifiers=[
                    "Programming Language :: Python",

@@ -44,32 +44,42 @@ class MasterBias(Image):
         super(MasterBias, self).__init__(hdu)
 
     def metadata(self):
-        hdr = self.image[0].header
-        yield 'detector0.mode', hdr['readmode']
+        #hdr = self.image[0].header
+        #yield 'detector0.mode', hdr['readmode']
+        # FIXME: this is a hack
+        yield 'detector0.mode', 'normal'
 
 class MasterDark(Image):
     def __init__(self, hdu):
         super(MasterDark, self).__init__(hdu)
 
     def metadata(self):
-        hdr = self.image[0].header
-        yield 'detector0.mode', hdr['readmode']
+        #hdr = self.image[0].header
+        #yield 'detector0.mode', hdr['readmode']
+        # FIXME: this is a hack
+        yield 'detector0.mode', 'normal'
 
 class MasterFlat(Image):
     def __init__(self, hdu):
         super(MasterFlat, self).__init__(hdu)
 
     def metadata(self):
-        hdr = self.image[0].header
-        yield 'detector0.mode', hdr['readmode']
-        yield 'grism0', hdr['grism']
+        # FIXME: this is a hack
+        #hdr = self.image[0].header
+        #yield 'detector0.mode', hdr['readmode']
+        yield 'grism0', 'HR-I'
+        yield 'detector0.mode', 'normal'
+        #yield 'grism0', hdr['grism']
 
 class MasterIllum(Image):
     def __init__(self, hdu):
         super(MasterIllum, self).__init__(hdu)
 
     def metadata(self):
-        hdr = self.image[0].header
-        yield 'detector0.mode', hdr['readmode']
-        yield 'grism0', hdr['grism']
+        # FIXME: this is a hack
+        #hdr = self.image[0].header
+        #yield 'detector0.mode', hdr['readmode']
+        yield 'grism0', 'HR-I'
+        yield 'detector0.mode', 'normal'
+        #yield 'grism0', hdr['grism']
 

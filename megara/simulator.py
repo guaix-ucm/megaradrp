@@ -99,22 +99,27 @@ class Megara(Instrument):
 class MegaraImageFactory(object):
     def __init__(self):
         sfile = StringIO(get_data('megara', 'primary.txt'))
-        self.htempl = pyfits.Header(txtfile=sfile)
+        self.p_templ = pyfits.Header(txtfile=sfile)
+        sfile = StringIO(get_data('megara', 'spec0.txt'))
+        self.s0_templ = pyfits.Header(txtfile=sfile)
+        sfile = StringIO(get_data('megara', 'spec1.txt'))
+        self.s1_templ = pyfits.Header(txtfile=sfile)
+        del sfile
 
     def create(self, metadata, data):
 
-        hh = self.htempl.copy()
-
+        hh = self.p_templ.copy()
         for rr in hh.ascardlist():
             rr.value = interpolate(metadata, rr.value)
 
-
 	prim = pyfits.PrimaryHDU(header=hh)
 	hl = [prim]
-	lcb = pyfits.ImageHDU(data=data, name='LCB')
-        hl.append(lcb)
-	#scb = pyfits.ImageHDU(name='SCB')
-	#mos = pyfits.ImageHDU(name='MOS')
+
+        hh = self.s0_templ.copy()
+        for rr in hh.ascardlist():
+            rr.value = interpolate(metadata, rr.value)
+	spec0 = pyfits.ImageHDU(data=data, header=hh, name='Spec0')
+        hl.append(spec0)
 
 	hdulist = pyfits.HDUList(hl)
         return hdulist

@@ -58,14 +58,14 @@ class BiasRecipe(RecipeBase):
                 cdata.append(hdulist)
 
             _logger.info('stacking images')
-            data = numpy.zeros(cdata[0]['PRIMARY'].data.shape, dtype='float32')
+            data = numpy.zeros(cdata[0]['LCB'].data.shape, dtype='float32')
             for hdulist in cdata:
-                data += hdulist['PRIMARY'].data
+                data += hdulist['LCB'].data
 
             data /= len(cdata)
             data += 2.0
 
-            hdu = pyfits.PrimaryHDU(data, header=cdata[0]['PRIMARY'].header)
+            hdu = pyfits.PrimaryHDU(data, header=cdata[0]['LCB'].header)
     
             # update hdu header with
             # reduction keywords
@@ -108,7 +108,7 @@ class DarkRecipe(RecipeBase):
             with pyfits.open(self.parameters['master_bias'], mode='readonly') as master_bias:
                 for image in block.images:
                     with pyfits.open(image, memmap=True) as fd:
-                        data = fd['primary'].data
+                        data = fd['lcb'].data
                         data -= master_bias['primary'].data
                 
 
@@ -117,12 +117,12 @@ class DarkRecipe(RecipeBase):
             base = block.images[0]
            
             with pyfits.open(base, memmap=True) as fd:
-                data = fd['PRIMARY'].data.copy()
-                hdr = fd['PRIMARY'].header
+                data = fd['lcb'].data.copy()
+                hdr = fd['lcb'].header
            
             for image in block.images[1:]:
                 with pyfits.open(image, memmap=True) as fd:
-                    add_data = fd['primary'].data
+                    add_data = fd['lcb'].data
                     data += add_data
 
             hdu = pyfits.PrimaryHDU(data, header=hdr)
