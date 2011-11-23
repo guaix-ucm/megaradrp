@@ -92,8 +92,8 @@ class Instrument(object):
 class Megara(Instrument):
     def __init__(self):
         shutter = Shutter()
-        amplifiers=[Amplifier(shape=(slice(0, 2048), slice(0,2048)), gain=1, ron=1, wdepth=100000)]
-        detector = CCDDetector(shape=(2048, 2048), amplifiers=amplifiers, bias=100, dark=0.3)
+        amplifiers=[Amplifier(shape=(slice(0, 4096), slice(0,4096)), gain=1, ron=1, wdepth=66000)]
+        detector = CCDDetector(shape=(4096, 4096), amplifiers=amplifiers, bias=100, dark=0.3)
         Instrument.__init__(self, shutter, detector)
 
 class MegaraImageFactory(object):

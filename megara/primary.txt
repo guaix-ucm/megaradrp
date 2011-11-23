@@ -36,24 +36,8 @@ IMAGETY = '%(megara.imagetype)' / Type of observation, e.g. object
 DEC     = '%(pointing.dec)' / DEC of the instrument scientific aperture 
 RA      = '%(pointing.ra)' / RA of the instrument scientific aperture
 GRISM   = '%(megara.grism0)' / Grism id.
-READSCHM= '%(megara.detector.readscheme)'/ Read-out scheme of the detector                
+READSCHM= '%(megara.detector.readscheme)'/ Read-out scheme of the detector 
 READMODE= '%(megara.detector.readmode)'/ Detector read-out mode
 EXPOSED = '%(megara.detector.exposed)' / [s] Time between correlated reads
 READNOIS= '%(megara.detector.readnoise)' / Readout noise in electrons per pixel
 GAIN    = '%(megara.detector.gain)' / Electrons per ADU
-COMMENT WCS starts here
-WCSNAME = 'RA-DEC'
-CRPIX1  = 1024.0
-CRPIX2  = 1024.0
-CDELT1  = 0.000055556
-CDELT2  = 0.000055556
-CRVAL1  = 0.0 / Right ascension
-CRVAL2  = 0.0 / Declination
-CTYPE1  = 'RA---TAN'
-CTYPE2  = 'DEC--TAN'
-CUNIT1  = 'deg'
-CUNIT2  = 'deg'
-LONPOLE = 180
-RADESYS = 'FK5'
-EQUINOX = 2000.0 / [yr] Equinox of equatorial coordinates
-COMMENT WCS ends here                                                           
