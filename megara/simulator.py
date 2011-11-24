@@ -100,10 +100,10 @@ class MegaraImageFactory(object):
     def __init__(self):
         sfile = StringIO(get_data('megara', 'primary.txt'))
         self.p_templ = pyfits.Header(txtfile=sfile)
-        sfile = StringIO(get_data('megara', 'spec0.txt'))
-        self.s0_templ = pyfits.Header(txtfile=sfile)
         sfile = StringIO(get_data('megara', 'spec1.txt'))
         self.s1_templ = pyfits.Header(txtfile=sfile)
+        sfile = StringIO(get_data('megara', 'spec2.txt'))
+        self.s2_templ = pyfits.Header(txtfile=sfile)
         del sfile
 
     def create(self, metadata, data):
@@ -115,11 +115,11 @@ class MegaraImageFactory(object):
 	prim = pyfits.PrimaryHDU(header=hh)
 	hl = [prim]
 
-        hh = self.s0_templ.copy()
+        hh = self.s1_templ.copy()
         for rr in hh.ascardlist():
             rr.value = interpolate(metadata, rr.value)
-	spec0 = pyfits.ImageHDU(data=data, header=hh, name='Spec0')
-        hl.append(spec0)
+	spec1 = pyfits.ImageHDU(data=data, header=hh, name='Spec1')
+        hl.append(spec1)
 
 	hdulist = pyfits.HDUList(hl)
         return hdulist
