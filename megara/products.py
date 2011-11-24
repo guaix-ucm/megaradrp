@@ -44,20 +44,16 @@ class MasterBias(Image):
         super(MasterBias, self).__init__(hdu)
 
     def metadata(self):
-        #hdr = self.image[0].header
-        #yield 'detector0.mode', hdr['readmode']
-        # FIXME: this is a hack
-        yield 'detector0.mode', 'normal'
+        hdr = self.image[1].header
+        yield 'detector0.mode', hdr['readmode']
 
 class MasterDark(Image):
     def __init__(self, hdu):
         super(MasterDark, self).__init__(hdu)
 
     def metadata(self):
-        #hdr = self.image[0].header
-        #yield 'detector0.mode', hdr['readmode']
-        # FIXME: this is a hack
-        yield 'detector0.mode', 'normal'
+        hdr = self.image[1].header
+        yield 'detector0.mode', hdr['readmode']
 
 class MasterFlat(Image):
     def __init__(self, hdu):

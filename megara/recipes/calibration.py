@@ -58,18 +58,18 @@ class BiasRecipe(RecipeBase):
                 cdata.append(hdulist)
 
             _logger.info('stacking images')
-            data = numpy.zeros(cdata[0]['LCB'].data.shape, dtype='float32')
+            data = numpy.zeros(cdata[0][1].data.shape, dtype='float32')
             for hdulist in cdata:
-                data += hdulist['LCB'].data
+                data += hdulist[1].data
 
             data /= len(cdata)
             data += 2.0
 
-            hdu = pyfits.PrimaryHDU(data, header=cdata[0]['LCB'].header)
+            hdu = pyfits.ImageHDU(data, header=cdata[0][1].header)
     
             # update hdu header with
             # reduction keywords
-            hdr = hdu.header
+            hdr = cdata[0][0].header
             hdr.update('FILENAME', 'master_bias-%(block_id)d.fits' % self.environ)
             hdr.update('IMGTYP', 'BIAS', 'Image type')
             hdr.update('NUMTYP', 'MASTER_BIAS', 'Data product type')
@@ -77,7 +77,7 @@ class BiasRecipe(RecipeBase):
             hdr.update('NUMRNAM', 'BiasRecipe', 'Numina recipe name')
             hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
 
-            hdulist = pyfits.HDUList([hdu])
+            hdulist = pyfits.HDUList([cdata[0][0], hdu])
 
             _logger.info('bias reduction ended')
 
@@ -108,8 +108,8 @@ class DarkRecipe(RecipeBase):
             with pyfits.open(self.parameters['master_bias'], mode='readonly') as master_bias:
                 for image in block.images:
                     with pyfits.open(image, memmap=True) as fd:
-                        data = fd['lcb'].data
-                        data -= master_bias['primary'].data
+                        data = fd[1].data
+                        data -= master_bias[1].data
                 
 
             _logger.info('stacking images from block %d', block.id)
@@ -117,27 +117,29 @@ class DarkRecipe(RecipeBase):
             base = block.images[0]
            
             with pyfits.open(base, memmap=True) as fd:
-                data = fd['lcb'].data.copy()
-                hdr = fd['lcb'].header
+                data = fd[1].data.copy()
+                hdr = fd[1].header
+                bhdr = fd[0].header
            
             for image in block.images[1:]:
                 with pyfits.open(image, memmap=True) as fd:
-                    add_data = fd['lcb'].data
+                    add_data = fd[1].data
                     data += add_data
 
-            hdu = pyfits.PrimaryHDU(data, header=hdr)
+            hdu = pyfits.ImageHDU(data, header=hdr)
     
             # update hdu header with
             # reduction keywords
             hdr = hdu.header
             hdr.update('FILENAME', 'master_dark-%(block_id)d.fits' % self.environ)
+            bhdr.update('FILENAME', 'master_dark-%(block_id)d.fits' % self.environ)
             hdr.update('IMGTYP', 'DARK', 'Image type')
             hdr.update('NUMTYP', 'MASTER_DARK', 'Data product type')
             hdr.update('NUMXVER', __version__, 'Numina package version')
             hdr.update('NUMRNAM', 'DarkRecipe', 'Numina recipe name')
             hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
 
-            hdulist = pyfits.HDUList([hdu])
+            hdulist = pyfits.HDUList([pyfits.PrimaryHDU(header=bhdr), hdu])
 
             _logger.info('dark reduction ended')
 
