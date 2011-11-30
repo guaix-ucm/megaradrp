@@ -56,17 +56,18 @@ class Shutter(OpticalElement):
         else:
             return None
 
-class Instrument(object):
+class MegaraSpectrograph(object):
     def __init__(self, shutter, detector):
         self.shutter = shutter
         self.detector = detector
+        self.parent = None
 
         self.path = [self.shutter, self.detector]
 
         self.meta = TreeDict()
-        self.meta['name'] = 'MEGARA'
-        self.meta['focalstation'] = 'FCASS'
-        self.meta['grism0'] = 'A'
+        self.meta['name'] = 'A'
+        self.meta['source'] = 'MOS' # One of LFB, SFB, MOS
+        self.meta['grism'] = ''
         self.meta['imagetype'] = ''
         self.meta['detector'] = self.detector.meta
  
@@ -77,33 +78,54 @@ class Instrument(object):
         return ls
 
     def grism(self, name):
-        self.meta['grism0'] = name
+        self.meta['grism'] = name
 
     def expose(self, time):
         self.detector.expose(time)
 
     def readout(self):
         data = self.detector.readout() 
-        return self.meta, data
+        if self.parent is None:
+            return self.meta, data
+        else:
+            meta = self.parent.meta
+            meta['spec'] = self.meta
+            return meta, data
+
 
     def imagetype(self, name):
         self.meta['imagetype'] = name
+
+class Instrument(object):
+    def __init__(self, spectrograph):
+        self.spectrograph = spectrograph
+        self.spectrograph1 = spectrograph
+        self.spec1 = spectrograph
+        self.spectrograph.parent = self
+
+        self.meta = TreeDict()
+        self.meta['name'] = 'MEGARA'
+        self.meta['focalstation'] = 'FCASS'
+        self.meta['spec1'] = self.spectrograph.meta
+ 
+    def light_path(self, ls):
+
+        for oe in self.path:
+            ls = oe.light_path(ls)
+        return ls
 
 class Megara(Instrument):
     def __init__(self):
         shutter = Shutter()
         amplifiers=[Amplifier(shape=(slice(0, 4096), slice(0,4096)), gain=1, ron=1, wdepth=66000)]
         detector = CCDDetector(shape=(4096, 4096), amplifiers=amplifiers, bias=100, dark=0.3)
-        Instrument.__init__(self, shutter, detector)
+        ms1 = MegaraSpectrograph(shutter, detector)
+        Instrument.__init__(self, ms1)
 
 class MegaraImageFactory(object):
     def __init__(self):
         sfile = StringIO(get_data('megara', 'primary.txt'))
         self.p_templ = pyfits.Header(txtfile=sfile)
-        sfile = StringIO(get_data('megara', 'spec1.txt'))
-        self.s1_templ = pyfits.Header(txtfile=sfile)
-        sfile = StringIO(get_data('megara', 'spec2.txt'))
-        self.s2_templ = pyfits.Header(txtfile=sfile)
         del sfile
 
     def create(self, metadata, data):
@@ -112,14 +134,8 @@ class MegaraImageFactory(object):
         for rr in hh.ascardlist():
             rr.value = interpolate(metadata, rr.value)
 
-	prim = pyfits.PrimaryHDU(header=hh)
+	prim = pyfits.PrimaryHDU(data=data, header=hh)
 	hl = [prim]
-
-        hh = self.s1_templ.copy()
-        for rr in hh.ascardlist():
-            rr.value = interpolate(metadata, rr.value)
-	spec1 = pyfits.ImageHDU(data=data, header=hh, name='Spec1')
-        hl.append(spec1)
 
 	hdulist = pyfits.HDUList(hl)
         return hdulist

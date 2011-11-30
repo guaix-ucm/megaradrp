@@ -1,8 +1,0 @@
-INHERIT =                    T / Inherits global header
-BUNIT   = 'ADU     '           / Unit of the array of image data
-GRISM   = '%(megara.grism1)' / Grism id.
-READSCHM= '%(megara.detector.readscheme)'/ Read-out scheme of the detector 
-READMODE= '%(megara.detector.readmode)'/ Detector read-out mode
-EXPOSED = '%(megara.detector.exposed)' / [s] Time between correlated reads
-READNOIS= '%(megara.detector.readnoise)' / Readout noise in electrons per pixel
-GAIN    = '%(megara.detector.gain)' / Electrons per ADU
