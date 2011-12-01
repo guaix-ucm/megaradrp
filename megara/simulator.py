@@ -55,14 +55,70 @@ class Shutter(OpticalElement):
             return ls
         else:
             return None
+class Wheel(object):
+    def __init__(self, size):
+        self.pos = 0
+        self.size = size
+
+        self.elements = [Holder()] * size
+        self.meta = TreeDict()
+
+        for pos in range(self.size):
+            self.load(pos, Holder())
+
+        self.position(0)
+
+    def load(self, pos, element):
+        if not isinstance(element, Holder):
+            h = Holder(element)
+        else:
+            h = element
+        self.elements[pos % self.size] = h
+
+    def position(self, pos):
+        self.pos = pos % self.size
+        self.meta['active.pos'] = self.pos
+
+        this_elem = self.elements[self.pos]
+
+        self.meta['active.name'] = this_elem.name
+        self.meta['active.uid'] = this_elem.uid
+        
+    def current(self):
+        return self.elements[self.pos]
+
+class Holder(object):
+    def __init__(self, element=None):
+        self.name = 'None' if element is None else element.name
+        self.uid = 0 if element is None else element.uid
+        self.element = element
+
+class Grism(object):
+    def __init__(self, name, uid):
+        self.name = name
+        self.uid = uid
+    
+class MegaraWheel(Wheel):
+
+    def __init__(self):
+        Wheel.__init__(self, 13)
 
 class MegaraSpectrograph(object):
     def __init__(self, shutter, detector):
         self.shutter = shutter
+        self.wheel = MegaraWheel()
+
+        for a in range(13):
+            g = Grism('a%d' % (a + 1), a)
+            self.wheel.load(a, g)
+        
+        self.wheel.position(pos=0)
+
+
         self.detector = detector
         self.parent = None
 
-        self.path = [self.shutter, self.detector]
+        self.path = [self.shutter, self.wheel, self.detector]
 
         self.meta = TreeDict()
         self.meta['name'] = 'A'
@@ -70,6 +126,7 @@ class MegaraSpectrograph(object):
         self.meta['grism'] = ''
         self.meta['imagetype'] = ''
         self.meta['detector'] = self.detector.meta
+        self.meta['wheel'] = self.wheel.meta
  
     def light_path(self, ls):
 
@@ -77,8 +134,8 @@ class MegaraSpectrograph(object):
             ls = oe.light_path(ls)
         return ls
 
-    def grism(self, name):
-        self.meta['grism'] = name
+    def grism(self, pos):
+        self.wheel.position(pos)
 
     def expose(self, time):
         self.detector.expose(time)
@@ -89,7 +146,7 @@ class MegaraSpectrograph(object):
             return self.meta, data
         else:
             meta = self.parent.meta
-            meta['spec'] = self.meta
+            meta['spec'] = self.meta          
             return meta, data
 
 
