@@ -29,19 +29,10 @@ from numpy.random import normal, poisson
 from numina.treedict import TreeDict
 from numina.instrument import CCDDetector, Amplifier
 from numina.instrument.template import interpolate
+from numina.astrotime import datetime_to_mjd
 
-from pontifex.astrotime import datetime_to_mjd
-
-class OpticalElement(object):
+class Shutter(object):
     def __init__(self):
-        object.__init__(self)
-
-    def light_path(self, ls):
-        return ls
-
-class Shutter(OpticalElement):
-    def __init__(self):
-        OpticalElement.__init__(self)
         self.opened = True
 
     def open(self):
@@ -50,11 +41,6 @@ class Shutter(OpticalElement):
     def close(self):
         self.opened = False
 
-    def light_path(self, ls):
-        if self.opened:
-            return ls
-        else:
-            return None
 class Wheel(object):
     def __init__(self, size):
         self.pos = 0
@@ -99,7 +85,6 @@ class Grism(object):
         self.uid = uid
     
 class MegaraWheel(Wheel):
-
     def __init__(self):
         Wheel.__init__(self, 13)
 
@@ -128,12 +113,6 @@ class MegaraSpectrograph(object):
         self.meta['detector'] = self.detector.meta
         self.meta['wheel'] = self.wheel.meta
  
-    def light_path(self, ls):
-
-        for oe in self.path:
-            ls = oe.light_path(ls)
-        return ls
-
     def grism(self, pos):
         self.wheel.position(pos)
 
@@ -164,18 +143,27 @@ class Instrument(object):
         self.meta['name'] = 'MEGARA'
         self.meta['focalstation'] = 'FCASS'
         self.meta['spec1'] = self.spectrograph.meta
+
+class MegaraDetector(CCDDetector):
+    def __init__(self):
+        amplifiers=[Amplifier(shape=(slice(0, 2048), slice(0,4096)), gain=2.4, ron=6, wdepth=66000),
+                    Amplifier(shape=(slice(2048, 4096), slice(0,4096)), gain=2.4, ron=6, wdepth=66000)]
+        CCDDetector.__init__(self, shape=(4096, 4096), amplifiers=amplifiers, bias=100, dark=0.3)
+
+    def mode(self, name):
+        if name.lower() not in ['slow', 'fast', 'engineering']:
+            raise ValueError('%s is not a valid speed mode' % name)
+        # FIXME: change here the values of Noise and Gain
+        # Slow 40s 3e- 1.2 e-/ADU
+        # Fast 23s 6e- 2.4 e-/ADU
+        # Engineering 12s - 5e-/ADU
+        CCDDetector.mode(self, name)
+
  
-    def light_path(self, ls):
-
-        for oe in self.path:
-            ls = oe.light_path(ls)
-        return ls
-
 class Megara(Instrument):
     def __init__(self):
         shutter = Shutter()
-        amplifiers=[Amplifier(shape=(slice(0, 4096), slice(0,4096)), gain=1, ron=1, wdepth=66000)]
-        detector = CCDDetector(shape=(4096, 4096), amplifiers=amplifiers, bias=100, dark=0.3)
+        detector = MegaraDetector()
         ms1 = MegaraSpectrograph(shutter, detector)
         Instrument.__init__(self, ms1)
 
