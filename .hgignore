@@ -5,3 +5,5 @@ syntax: glob
 *~
 *.fits
 *.db
+.project
+.pydevproject
