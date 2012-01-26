@@ -1,5 +1,5 @@
 #
-# Copyright 2011 Universidad Complutense de Madrid
+# Copyright 2011-2012 Universidad Complutense de Madrid
 # 
 # This file is part of Megara DRP
 # 
@@ -27,3 +27,7 @@ _equiv = {'bias': 'calibration:BiasRecipe',
 def find_recipe(mode):
     return _equiv[mode]
 
+class MegaraPipeline(object):
+
+    def find_recipe(self, mode):
+        return _equiv[mode]

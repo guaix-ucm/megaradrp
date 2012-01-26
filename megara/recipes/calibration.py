@@ -1,5 +1,5 @@
 #
-# Copyright 2011 Universidad Complutense de Madrid
+# Copyright 2011-2012 Universidad Complutense de Madrid
 # 
 # This file is part of Megara DRP
 # 
@@ -24,7 +24,8 @@ import logging
 import numpy
 import pyfits
 from numina import RecipeBase, __version__
-from numina.recipes import Parameter, log_to_history
+from numina.recipes import Parameter
+from numina.logger import log_to_history
 
 from megara.products import MasterBias, MasterDark, MasterFlat
 
