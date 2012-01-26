@@ -1,5 +1,5 @@
 #
-# Copyright 2011 Universidad Complutense de Madrid
+# Copyright 2011-2012 Universidad Complutense de Madrid
 # 
 # This file is part of Megara DRP
 # 
@@ -27,7 +27,7 @@ import pyfits
 import numpy
 from numpy.random import normal, poisson
 from numina.treedict import TreeDict
-from numina.instrument import CCDDetector, Amplifier
+from numina.instrument import Das, CCDDetector, Amplifier
 from numina.instrument.template import interpolate
 from numina.astrotime import datetime_to_mjd
 
@@ -101,6 +101,7 @@ class MegaraSpectrograph(object):
 
 
         self.detector = detector
+        self.das = Das(detector)
         self.parent = None
 
         self.path = [self.shutter, self.wheel, self.detector]
@@ -111,10 +112,21 @@ class MegaraSpectrograph(object):
         self.meta['grism'] = ''
         self.meta['imagetype'] = ''
         self.meta['detector'] = self.detector.meta
+        self.meta['das'] = self.das.meta
         self.meta['wheel'] = self.wheel.meta
  
     def grism(self, pos):
         self.wheel.position(pos)
+
+    def acquire(self, time):
+        data = self.das.acquire(time)
+
+        if self.parent is None:
+            return self.meta, data
+        else:
+            meta = self.parent.meta
+            meta['spec'] = self.meta
+            return meta, data
 
     def expose(self, time):
         self.detector.expose(time)
