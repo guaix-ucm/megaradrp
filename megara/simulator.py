@@ -27,7 +27,7 @@ import pyfits
 import numpy
 from numpy.random import normal, poisson
 from numina.treedict import TreeDict
-from numina.instrument import Das, CCDDetector, Amplifier
+from numina.instrument.detector import Das, CCDDetector, Amplifier
 from numina.instrument.template import interpolate
 from numina.astrotime import datetime_to_mjd
 
