@@ -21,25 +21,25 @@
 
 
 '''
-    RAW_BIAS Image
-    RAW_DARK Image
-    RAW_FLAT Image
-    RAW_ILLUM Image
-    RAW_SCIENCE Image
+    RAW_BIAS DataFrame
+    RAW_DARK DataFrame
+    RAW_FLAT DataFrame
+    RAW_ILLUM DataFrame
+    RAW_SCIENCE DataFrame
 
-    MASTER_BIAS  Image(detector)
-    MASTER_DARK  Image(detector, exposure)
-    MASTER_FLAT  Image(detector, grism)
-    MASTER_ILLUM Image(detector, grism)
+    MASTER_BIAS  DataFrame(detector)
+    MASTER_DARK  DataFrame(detector, exposure)
+    MASTER_FLAT  DataFrame(detector, grism)
+    MASTER_ILLUM DataFrame(detector, grism)
 
-    POINTING Image
-    MOSAIC Image
+    POINTING DataFrame
+    MOSAIC DataFrame
 
 '''
 
-from numina.recipes import Image
+from numina.recipes import DataFrame
 
-class MasterBias(Image):
+class MasterBias(DataFrame):
     def __init__(self, hdu):
         super(MasterBias, self).__init__(hdu)
 
@@ -47,7 +47,7 @@ class MasterBias(Image):
         hdr = self.image[1].header
         yield 'spec1.detector.mode', hdr['readmode']
 
-class MasterDark(Image):
+class MasterDark(DataFrame):
     def __init__(self, hdu):
         super(MasterDark, self).__init__(hdu)
 
@@ -55,7 +55,7 @@ class MasterDark(Image):
         hdr = self.image[1].header
         yield 'spec1.detector.mode', hdr['readmode']
 
-class MasterFlat(Image):
+class MasterFlat(DataFrame):
     def __init__(self, hdu):
         super(MasterFlat, self).__init__(hdu)
 
@@ -64,7 +64,7 @@ class MasterFlat(Image):
         yield 'spec1.detector.mode', hdr['readmode']
         yield 'spec1.grism', hdr['grism']
 
-class MasterIllum(Image):
+class MasterIllum(DataFrame):
     def __init__(self, hdu):
         super(MasterIllum, self).__init__(hdu)
 
