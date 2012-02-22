@@ -7,3 +7,6 @@ syntax: glob
 *.db
 .project
 .pydevproject
+
+syntax: regexp
+^build$
