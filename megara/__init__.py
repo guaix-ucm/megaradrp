@@ -19,6 +19,8 @@
 
 '''The MEGARA Data Reduction Pipeline.'''
 
+import logging
+
 from .simulator import MegaraImageFactory as ImageFactory
 from .simulator import Megara as Instrument
 from .recipes import MegaraPipeline as Pipeline
@@ -26,3 +28,6 @@ from .recipes import MegaraPipeline as Pipeline
 __version__ = '0.1.0'
 
 __all__ = ['Pipeline', 'Instrument', 'ImageFactory']
+
+# Top level NullHandler
+logging.getLogger("megara").addHandler(logging.NullHandler())
