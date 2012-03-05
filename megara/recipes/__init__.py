@@ -17,15 +17,22 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-__all__ = ['find_recipe']
+from .calibration import BiasRecipe, DarkRecipe
+from .recipe2 import Recipe
+
 
 # equivalence
-_equiv = {'bias': 'calibration:BiasRecipe',
-          'dark': 'calibration:DarkRecipe',
-        'mosaic': 'recipe2:Recipe'}
+_equiv_class = {
+        'bias': BiasRecipe,
+        'dark': DarkRecipe,
+        'mosaic': Recipe
+        }
 
 def find_recipe(mode):
     return _equiv[mode]
+
+def find_recipe_class(mode):
+    return _equiv_class[mode]
 
 class MegaraPipeline(object):
 
