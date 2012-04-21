@@ -28,18 +28,9 @@ import numpy
 from numpy.random import normal, poisson
 from numina.treedict import TreeDict
 from numina.instrument.detector import Das, CCDDetector, Amplifier
+from numina.instrument import Shutter
 from numina.instrument.template import interpolate
 from numina.astrotime import datetime_to_mjd
-
-class Shutter(object):
-    def __init__(self):
-        self.opened = True
-
-    def open(self):
-        self.opened = True
-
-    def close(self):
-        self.opened = False
 
 class Wheel(object):
     def __init__(self, size):
@@ -101,6 +92,7 @@ class MegaraSpectrograph(object):
 
 
         self.detector = detector
+        self.detector.connect(self.shutter)
         self.das = Das(detector)
         self.parent = None
 
@@ -156,6 +148,9 @@ class Instrument(object):
         self.meta['focalstation'] = 'FCASS'
         self.meta['spec1'] = self.spectrograph.meta
 
+    def connect(self, source):
+        self.source = source
+
 class MegaraDetector(CCDDetector):
     def __init__(self):
         amplifiers=[Amplifier(shape=(slice(0, 2048), slice(0,4096)), gain=2.4, ron=6, wdepth=66000),
@@ -181,12 +176,14 @@ class Megara(Instrument):
 
 class MegaraImageFactory(object):
     def __init__(self):
-        sfile = StringIO(get_data('megara', 'primary.txt'))
-        self.p_templ = pyfits.Header(txtfile=sfile)
+        #sfile = StringIO(get_data('megara', 'primary.txt'))
+        with open('/home/spr/devel/megara/megara/primary.txt') as sfile:
+            self.p_templ = pyfits.Header(txtfile=sfile)
         del sfile
 
     def create(self, metadata, data):
 
+        print 'create factory'
         hh = self.p_templ.copy()
         for rr in hh.ascardlist():
             rr.value = interpolate(metadata, rr.value)

@@ -17,6 +17,8 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from numina.pipeline import Pipeline
+
 from .calibration import BiasRecipe, DarkRecipe
 from .recipe2 import Recipe
 
@@ -28,13 +30,8 @@ _equiv_class = {
         'mosaic': Recipe
         }
 
-def find_recipe(mode):
-    return _equiv[mode]
-
-def find_recipe_class(mode):
-    return _equiv_class[mode]
-
-class MegaraPipeline(object):
-
-    def find_recipe(self, mode):
-        return _equiv[mode]
+class MegaraPipeline(Pipeline):
+    def __init__(self, version):
+        super(MegaraPipeline, self).__init__(name='megara',
+              version=version,
+              recipes=_equiv_class)
