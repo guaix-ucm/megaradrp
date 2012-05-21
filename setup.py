@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import setup, find_packages
+
+BASE_PKGS=find_packages('src', exclude=['drp', 'drp.*'])
+NAMESPACE_PKGS = ['numina.pipelines', 'numina.pipelines.megara']
+ALL_PKGS = BASE_PKGS + NAMESPACE_PKGS
 
 setup(name='pymegara',
       version='0.1.0',
@@ -9,13 +13,12 @@ setup(name='pymegara',
       url='http://guaix.fis.ucm.es/~spr',
       license='GPLv3',
       description='Megara Data Reduction Pipeline',
-      packages=[
-                'megara', 'megara.recipes',
-                ],
+      packages=ALL_PKGS,
+      package_dir={'megara': 'src/megara', 'numina.pipelines': 'src/drp'},
       package_data={'megara': ['primary.txt', 'spec1.txt', 'spec2.txt']},
       install_requires=['numina'],
       classifiers=[
-                   "Programming Language :: Python",
+                   "Programming Language :: Python :: 2.7",
                    'Development Status :: 3 - Alpha',
                    "Environment :: Other Environment",
                    "Intended Audience :: Science/Research",
