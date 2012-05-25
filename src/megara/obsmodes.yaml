@@ -1,0 +1,31 @@
+
+---
+!om
+name: Bias Image
+uuid: 4ef06dd6-8ff5-4bd3-a79e-a59e903b603e
+key: bias_image
+url: http://somegtc_url.es/emir/obsmode1.html
+instrument: MEGARA
+summary: Recipe to process bias images
+recipe: megara.recipes.BiasRecipe
+status: DRAFT
+date: 2012-05-25
+reference: IPUREMI_323
+description: |
+    Recipe to process bias images
+---
+!om
+name: Dark current Image
+uuid: 02ff7f50-574c-4e44-9884-7d1d07c77183
+key: dark_image
+url: http://somegtc_url.es/emir/obsmode4.html
+instrument: MEGARA
+summary: Summary of Dark current Image
+recipe: megara.recipes.DarkRecipe
+status: DRAFT
+date: 2012-05-25
+reference: IPUREMI_323
+description: |
+    Lines and mode lines
+    of descriptions here
+

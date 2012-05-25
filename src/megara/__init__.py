@@ -21,18 +21,12 @@
 
 import logging
 
-from numina.pipeline import register_pipeline
-
 from .simulator import MegaraImageFactory as ImageFactory
 from .simulator import Megara as Instrument
-from .recipes import MegaraPipeline
 
 __version__ = '0.1.0'
 
 __all__ = ['Instrument', 'ImageFactory']
-
-register_pipeline(MegaraPipeline(version=__version__))
-
 
 # Top level NullHandler
 logging.getLogger("megara").addHandler(logging.NullHandler())

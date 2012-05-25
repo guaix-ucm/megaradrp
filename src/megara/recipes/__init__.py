@@ -17,21 +17,4 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numina.pipeline import Pipeline
-
 from .calibration import BiasRecipe, DarkRecipe
-from .recipe2 import Recipe
-
-
-# equivalence
-_equiv_class = {
-        'bias': BiasRecipe,
-        'dark': DarkRecipe,
-        'mosaic': Recipe
-        }
-
-class MegaraPipeline(Pipeline):
-    def __init__(self, version):
-        super(MegaraPipeline, self).__init__(name='megara',
-              version=version,
-              recipes=_equiv_class)

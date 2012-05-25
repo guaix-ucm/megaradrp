@@ -47,7 +47,7 @@ class BiasRecipe(RecipeBase):
 
     @log_to_history(_logger)
     def run(self, rb):
-    	_logger.info('starting bias reduction')
+        _logger.info('starting bias reduction')
 
         images = rb.images
 
@@ -102,7 +102,7 @@ class DarkRecipe(RecipeBase):
     @log_to_history(_logger)
     def run(self, block):
 
-    	_logger.info('starting dark reduction')
+        _logger.info('starting dark reduction')
 
         try:
             _logger.info('subtracting bias %s', str(self.parameters['master_bias']))
@@ -132,14 +132,13 @@ class DarkRecipe(RecipeBase):
             # reduction keywords
             hdr = hdu.header
             hdr.update('FILENAME', 'master_dark-%(block_id)d.fits' % self.environ)
-            bhdr.update('FILENAME', 'master_dark-%(block_id)d.fits' % self.environ)
             hdr.update('IMGTYP', 'DARK', 'Image type')
             hdr.update('NUMTYP', 'MASTER_DARK', 'Data product type')
             hdr.update('NUMXVER', __version__, 'Numina package version')
             hdr.update('NUMRNAM', 'DarkRecipe', 'Numina recipe name')
             hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
 
-            hdulist = pyfits.HDUList([pyfits.PrimaryHDU(header=bhdr), hdu])
+            hdulist = pyfits.HDUList([pyfits.PrimaryHDU(header=hdr), hdu])
 
             _logger.info('dark reduction ended')
 
@@ -167,7 +166,7 @@ class FlatRecipe(RecipeBase):
     @log_to_history(_logger)
     def run(self, block):
 
-    	_logger.info('starting flat reduction')
+        _logger.info('starting flat reduction')
 
         try:
             _logger.info('subtracting bias %s', str(self.parameters['master_bias']))
