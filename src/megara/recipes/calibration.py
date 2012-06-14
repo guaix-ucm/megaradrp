@@ -24,7 +24,7 @@ import logging
 import numpy
 import pyfits
 from numina import __version__
-from numina.core import RecipeBase, Parameter
+from numina.core import BaseRecipe, Parameter
 from numina.logger import log_to_history
 
 from megara.products import MasterBias, MasterDark, MasterFlat
@@ -33,7 +33,7 @@ __all__ = ['BiasRecipe', 'DarkRecipe', 'FlatRecipe']
 
 _logger = logging.getLogger('megara.recipes')
 
-class BiasRecipe(RecipeBase):
+class BiasRecipe(BaseRecipe):
     '''Process BIAS images and create MASTER_BIAS.'''
 
     __requires__ = []
@@ -87,7 +87,7 @@ class BiasRecipe(RecipeBase):
             for hdulist in cdata:
                 hdulist.close()
 
-class DarkRecipe(RecipeBase):
+class DarkRecipe(BaseRecipe):
     '''Process DARK images and provide MASTER_DARK. '''
 
     __requires__ = [Parameter('master_bias', MasterBias, 'comment')]
@@ -148,7 +148,7 @@ class DarkRecipe(RecipeBase):
         finally:
             pass
 
-class FlatRecipe(RecipeBase):
+class FlatRecipe(BaseRecipe):
     '''Process FLAT images and provide MASTER_FLAT. '''
 
     __requires__ = [
