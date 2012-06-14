@@ -24,7 +24,7 @@ import pkgutil
 import importlib
     
 import yaml
-from numina.pipeline import BaseInstrument, BasePipeline
+from numina.core import BaseInstrument, BasePipeline
 
 from megara import __version__
 
@@ -50,7 +50,7 @@ del _m
 
 class MegaraPipeline(BasePipeline):
     def __init__(self):
-        super(MegaraPipeline, self).__init__(name='megara', 
+        super(MegaraPipeline, self).__init__(name='MEGARA', 
                 version=__version__,
                 recipes=_equiv_class)
 

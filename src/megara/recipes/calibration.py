@@ -23,8 +23,8 @@ import logging
 
 import numpy
 import pyfits
-from numina import RecipeBase, __version__
-from numina.recipes import Parameter
+from numina import __version__
+from numina.core import RecipeBase, Parameter
 from numina.logger import log_to_history
 
 from megara.products import MasterBias, MasterDark, MasterFlat
