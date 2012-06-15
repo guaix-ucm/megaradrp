@@ -27,7 +27,7 @@ import pyfits
 import numpy
 from numpy.random import normal, poisson
 from numina.treedict import TreeDict
-from numina.instrument.detector import Das, CCDDetector, Amplifier
+from numina.instrument.detector import DAS, CCDDetector, Amplifier
 from numina.instrument import Shutter
 from numina.instrument.template import interpolate
 from numina.astrotime import datetime_to_mjd
@@ -93,7 +93,7 @@ class MegaraSpectrograph(object):
 
         self.detector = detector
         self.detector.connect(self.shutter)
-        self.das = Das(detector)
+        self.das = DAS(detector)
         self.parent = None
 
         self.path = [self.shutter, self.wheel, self.detector]
