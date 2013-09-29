@@ -19,33 +19,6 @@
 
 '''The MEGARA Data Reduction Pipeline.'''
 
-import logging
-import pkgutil
-import importlib
-    
-import yaml
-from numina.core import BaseInstrument, BasePipeline, import_core
+from numina.core import drp_load
 
-from megara import __version__
-
-_modes = [i for i in yaml.load_all(pkgutil.get_data('megara',
-                                                   'obsmodes.yaml'))
-          if i.instrument == 'MEGARA']
-
-_equiv_class = {}
-
-for _m in _modes:
-    _m.recipe_class = import_object(_m.recipe)
-    _equiv_class[_m.key] = _m.recipe_class
-
-del _m
-
-class MegaraPipeline(BasePipeline):
-    def __init__(self):
-        super(MegaraPipeline, self).__init__(name='MEGARA', 
-                version=__version__,
-                recipes=_equiv_class)
-
-class MEGARA_Instrument(BaseInstrument):
-    name = 'MEGARA'
-    modes = _modes
+__numina_drp__ = drp_load('megara', 'drp.yaml')

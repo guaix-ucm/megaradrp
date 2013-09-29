@@ -15,7 +15,7 @@ setup(name='pymegara',
       description='Megara Data Reduction Pipeline',
       packages=ALL_PKGS,
       package_dir={'megara': 'src/megara', 'numina.pipelines': 'src/drp'},
-      package_data={'megara': ['obsmodes.yaml', 'primary.txt']},
+      package_data={'megara': ['drp.yaml', 'primary.txt']},
       install_requires=['numina>=0.7.0'],
       classifiers=[
                    "Programming Language :: Python :: 2.7",

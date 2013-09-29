@@ -21,12 +21,12 @@
 
 import logging
 
-from .simulator import MegaraImageFactory as ImageFactory
-from .simulator import Megara as Instrument
+#from .simulator import MegaraImageFactory as ImageFactory
+#from .simulator import Megara as Instrument
 
 __version__ = '0.1.0'
 
-__all__ = ['Instrument', 'ImageFactory']
+#__all__ = ['Instrument', 'ImageFactory']
 
 # Top level NullHandler
 logging.getLogger("megara").addHandler(logging.NullHandler())
