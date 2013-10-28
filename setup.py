@@ -7,16 +7,16 @@ NAMESPACE_PKGS = ['numina.pipelines', 'numina.pipelines.megara']
 ALL_PKGS = BASE_PKGS + NAMESPACE_PKGS
 
 setup(name='pymegara',
-      version='0.1.0',
+      version='0.1.0dev',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
-      url='http://guaix.fis.ucm.es/~spr',
+      url='http://guaix.fis.ucm.es/hg/megara-drp',
       license='GPLv3',
       description='Megara Data Reduction Pipeline',
       packages=ALL_PKGS,
       package_dir={'megara': 'src/megara', 'numina.pipelines': 'src/drp'},
       package_data={'megara': ['drp.yaml', 'primary.txt']},
-      install_requires=['numina>=0.7.0'],
+      install_requires=['numina>=0.10.0'],
       classifiers=[
                    "Programming Language :: Python :: 2.7",
                    'Development Status :: 3 - Alpha',
