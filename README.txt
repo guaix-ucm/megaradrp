@@ -9,6 +9,6 @@ be able to be installed and work properly:
  - setuptools (http://peak.telecommunity.com/DevCenter/setuptools)
  - numpy (http://numpy.scipy.org/)
 
-Webpage: http://guaix.fis.ucm.es/hg/megara-drp/
+Webpage: http://guaix.fis.ucm.es/hg/pymegara
 Maintainer: sergiopr@fis.ucm.es
 
