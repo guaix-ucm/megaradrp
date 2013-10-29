@@ -21,23 +21,26 @@
 
 import logging
 
-import numpy
-import pyfits
-from numina import __version__
-from numina.core import BaseRecipe, Parameter
-from numina.logger import log_to_history
+from numina.core import BaseRecipe, RecipeRequirements
+from numina.core import Requirement, Product, DataProductRequirement
+from numina.core import define_requirements, define_result
+#from numina.logger import log_to_history
 
-from megara.products import MasterBias, MasterDark, MasterFlat
+from megara.core import RecipeResult
+from megara.products import MasterBias, MasterDark
 
-__all__ = ['BiasRecipe', 'DarkRecipe', 'FlatRecipe']
+_logger = logging.getLogger('numina.recipes.megara')
 
-_logger = logging.getLogger('megara.recipes')
+class BiasRecipeRequirements(RecipeRequirements):
+    pass
 
+class BiasRecipeResult(RecipeResult):
+    biasframe = Product(MasterBias)
+
+@define_requirements(BiasRecipeRequirements)
+@define_result(BiasRecipeResult)
 class BiasRecipe(BaseRecipe):
     '''Process BIAS images and create MASTER_BIAS.'''
-
-    __requires__ = []
-    __provides__ = [MasterBias]
 
     def __init__(self):
         super(BiasRecipe, self).__init__(
@@ -45,53 +48,27 @@ class BiasRecipe(BaseRecipe):
                         version="0.1.0"
                 )
 
-    @log_to_history(_logger)
-    def run(self, rb):
+    # FIXME find a better way of doing this automatically
+    # @log_to_history(_logger)
+    def run(self, obresult, reqs):
         _logger.info('starting bias reduction')
 
-        images = rb.images
+        _logger.info('stacking images')
+        _logger.info('bias reduction ended')
 
-        cdata = []
+        result = BiasRecipeResult(biasframe=None)
+        return result
 
-        try:
-            for image in images:
-                hdulist = pyfits.open(image, memmap=True, mode='readonly')
-                cdata.append(hdulist)
+class DarkRecipeRequirements(BiasRecipeRequirements):
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
 
-            _logger.info('stacking images')
-            data = numpy.zeros(cdata[0][0].data.shape, dtype='float32')
-            for hdulist in cdata:
-                data += hdulist[0].data
+class DarkRecipeResult(RecipeResult):
+    darkframe = Product(MasterDark)
 
-            data /= len(cdata)
-            data += 2.0
-
-            hdu = pyfits.ImageHDU(data, header=cdata[0][0].header)
-    
-            # update hdu header with
-            # reduction keywords
-            hdr = cdata[0][0].header
-            hdr.update('FILENAME', 'master_bias-%(block_id)d.fits' % self.environ)
-            hdr.update('IMGTYP', 'BIAS', 'Image type')
-            hdr.update('NUMTYP', 'MASTER_BIAS', 'Data product type')
-            hdr.update('NUMXVER', __version__, 'Numina package version')
-            hdr.update('NUMRNAM', 'BiasRecipe', 'Numina recipe name')
-            hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
-
-            hdulist = pyfits.HDUList([cdata[0][0], hdu])
-
-            _logger.info('bias reduction ended')
-
-            return {'products': [MasterBias(hdulist)]}
-        finally:
-            for hdulist in cdata:
-                hdulist.close()
-
+@define_requirements(DarkRecipeRequirements)
+@define_result(DarkRecipeResult)
 class DarkRecipe(BaseRecipe):
     '''Process DARK images and provide MASTER_DARK. '''
-
-    __requires__ = [Parameter('master_bias', MasterBias, 'comment')]
-    __provides__ = [MasterDark]
 
     def __init__(self):
         super(DarkRecipe, self).__init__(
@@ -99,125 +76,14 @@ class DarkRecipe(BaseRecipe):
                         version="0.1.0"
                 )
 
-    @log_to_history(_logger)
-    def run(self, block):
+    # FIXME find a better way of doing this automatically
+    # @log_to_history(_logger)
+    def run(self, obresult, reqs):
 
         _logger.info('starting dark reduction')
 
-        try:
-            _logger.info('subtracting bias %s', str(self.parameters['master_bias']))
-            with pyfits.open(self.parameters['master_bias'], mode='readonly') as master_bias:
-                for image in block.images:
-                    with pyfits.open(image, memmap=True) as fd:
-                        data = fd[0].data
-                        data -= master_bias[0].data
-                
+        _logger.info('dark reduction ended')
 
-            _logger.info('stacking images from block %d', block.id)
-
-            base = block.images[0]
-           
-            with pyfits.open(base, memmap=True) as fd:
-                data = fd[0].data.copy()
-                hdr = fd[0].header
-           
-            for image in block.images[1:]:
-                with pyfits.open(image, memmap=True) as fd:
-                    add_data = fd[0].data
-                    data += add_data
-
-            hdu = pyfits.ImageHDU(data, header=hdr)
-    
-            # update hdu header with
-            # reduction keywords
-            hdr = hdu.header
-            hdr.update('FILENAME', 'master_dark-%(block_id)d.fits' % self.environ)
-            hdr.update('IMGTYP', 'DARK', 'Image type')
-            hdr.update('NUMTYP', 'MASTER_DARK', 'Data product type')
-            hdr.update('NUMXVER', __version__, 'Numina package version')
-            hdr.update('NUMRNAM', 'DarkRecipe', 'Numina recipe name')
-            hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
-
-            hdulist = pyfits.HDUList([pyfits.PrimaryHDU(header=hdr), hdu])
-
-            _logger.info('dark reduction ended')
-
-
-
-            return {'products': [MasterDark(hdulist)]}
-        finally:
-            pass
-
-class FlatRecipe(BaseRecipe):
-    '''Process FLAT images and provide MASTER_FLAT. '''
-
-    __requires__ = [
-                    Parameter('master_bias', MasterBias, 'comment'),
-                    Parameter('master_dark', MasterDark, 'comment')
-                    ]
-    __provides__ = [MasterFlat]
-
-    def __init__(self):
-        super(FlatRecipe, self).__init__(
-                        author="Sergio Pascual <sergiopr@fis.ucm.es>",
-                        version="0.1.0"
-                )
-
-    @log_to_history(_logger)
-    def run(self, block):
-
-        _logger.info('starting flat reduction')
-
-        try:
-            _logger.info('subtracting bias %s', str(self.parameters['master_bias']))
-            with pyfits.open(self.parameters['master_bias'], mode='readonly') as master_bias:
-                for image in block.images:
-                    with pyfits.open(image, memmap=True) as fd:
-                        data = fd['primary'].data
-                        data -= master_bias['primary'].data
-                
-
-            _logger.info('subtracting dark %s', str(self.parameters['master_dark']))
-            with pyfits.open(self.parameters['master_dark'], mode='readonly') as master_dark:
-                for image in block.images:
-                    with pyfits.open(image, memmap=True) as fd:
-                        data = fd['primary'].data
-                        data -= master_dark['primary'].data
-
-
-            _logger.info('stacking images from block %d', block.id)
-
-            base = block.images[0]
-           
-            with pyfits.open(base, memmap=True) as fd:
-                data = fd['PRIMARY'].data.copy()
-                hdr = fd['PRIMARY'].header
-           
-            for image in block.images[1:]:
-                with pyfits.open(image, memmap=True) as fd:
-                    add_data = fd['primary'].data
-                    data += add_data
-
-            # Normalize flat to mean 1.0
-            data[:] = 1.0
-
-            hdu = pyfits.PrimaryHDU(data, header=hdr)
-
-            # update hdu header with
-            # reduction keywords
-            hdr = hdu.header
-            hdr.update('FILENAME', 'master_flat-%(block_id)d.fits' % self.environ)
-            hdr.update('IMGTYP', 'FLAT', 'Image type')
-            hdr.update('NUMTYP', 'MASTER_FLAT', 'Data product type')
-            hdr.update('NUMXVER', __version__, 'Numina package version')
-            hdr.update('NUMRNAM', 'FlatRecipe', 'Numina recipe name')
-            hdr.update('NUMRVER', self.__version__, 'Numina recipe version')
-
-            hdulist = pyfits.HDUList([hdu])
-
-            _logger.info('flat reduction ended')
-
-            return {'products': [MasterFlat(hdulist)]}
-        finally:
-            pass
+        result = DarkRecipeResult(darkframe=None)
+        return result
 
