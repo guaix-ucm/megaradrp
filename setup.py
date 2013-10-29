@@ -7,7 +7,7 @@ NAMESPACE_PKGS = ['numina.pipelines', 'numina.pipelines.megara']
 ALL_PKGS = BASE_PKGS + NAMESPACE_PKGS
 
 setup(name='pymegara',
-      version='0.1.0',
+      version='0.2.0dev',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/hg/megara-drp',
