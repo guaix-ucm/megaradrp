@@ -60,7 +60,7 @@ class BiasRecipe(BaseRecipe):
         return result
 
 class DarkRecipeRequirements(BiasRecipeRequirements):
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration', optional=True)
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
 
 class DarkRecipeResult(RecipeResult):
     darkframe = Product(MasterDark)
