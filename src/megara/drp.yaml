@@ -39,3 +39,7 @@ pipelines:
       fail: numina.core.utils.AlwaysFailRecipe
       success: numina.core.utils.AlwaysSuccessRecipe
     version: 1
+  experimental:
+    recipes:
+      bias_image: megara.recipes.experimental.BiasRecipe
+    version: 1
