@@ -34,8 +34,8 @@ modes:
 pipelines:
   default:
     recipes:
-      bias_image: megara.recipes.BiasRecipe
-      dark_image: megara.recipes.DarkRecipe
+      bias_image: megara.drp.recipes.BiasRecipe
+      dark_image: megara.drp.recipes.DarkRecipe
       fail: numina.core.utils.AlwaysFailRecipe
       success: numina.core.utils.AlwaysSuccessRecipe
     version: 1

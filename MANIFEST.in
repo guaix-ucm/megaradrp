@@ -1,5 +1,5 @@
 include MANIFEST.in *.txt
-include src/megara/*.txt
-include src/megara/*.yaml
+include src/megara/drp/*.txt
+include src/megara/drp/*.yaml
 recursive-include doc *
 

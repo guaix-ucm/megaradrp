@@ -19,6 +19,14 @@
 
 '''The MEGARA Data Reduction Pipeline.'''
 
-from numina.core import drp_load
+import logging
 
-__numina_drp__ = drp_load('megara.drp', 'drp.yaml')
+#from .simulator import MegaraImageFactory as ImageFactory
+#from .simulator import Megara as Instrument
+
+__version__ = '0.2.0dev'
+
+#__all__ = ['Instrument', 'ImageFactory']
+
+# Top level NullHandler
+logging.getLogger("megara").addHandler(logging.NullHandler())

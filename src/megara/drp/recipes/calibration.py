@@ -17,30 +17,29 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Recipes with experimental features.'''
+'''Calibration Recipes for Megara'''
 
 import logging
 
-from numina.core import RecipeRequirements
-from numina.core.recipes import BaseRecipeSingle
+from numina.core import BaseRecipe, RecipeRequirements
 from numina.core import Requirement, Product, DataProductRequirement
-from numina.core.requirements import ObservationResultRequirement
 from numina.core import define_requirements, define_result
+#from numina.logger import log_to_history
 
-from megara.core import RecipeResult
-from megara.products import MasterBias
+from megara.drp.core import RecipeResult
+from megara.drp.products import MasterBias, MasterDark
 
 _logger = logging.getLogger('numina.recipes.megara')
 
 class BiasRecipeRequirements(RecipeRequirements):
-    obs = ObservationResultRequirement()
+    pass
 
 class BiasRecipeResult(RecipeResult):
     biasframe = Product(MasterBias)
 
 @define_requirements(BiasRecipeRequirements)
 @define_result(BiasRecipeResult)
-class BiasRecipe(BaseRecipeSingle):
+class BiasRecipe(BaseRecipe):
     '''Process BIAS images and create MASTER_BIAS.'''
 
     def __init__(self):
@@ -49,12 +48,42 @@ class BiasRecipe(BaseRecipeSingle):
                         version="0.1.0"
                 )
 
-    def run(self, recipe_input):
+    # FIXME find a better way of doing this automatically
+    # @log_to_history(_logger)
+    def run(self, obresult, reqs):
         _logger.info('starting bias reduction')
 
         _logger.info('stacking images')
         _logger.info('bias reduction ended')
 
         result = BiasRecipeResult(biasframe=None)
+        return result
+
+class DarkRecipeRequirements(BiasRecipeRequirements):
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
+
+class DarkRecipeResult(RecipeResult):
+    darkframe = Product(MasterDark)
+
+@define_requirements(DarkRecipeRequirements)
+@define_result(DarkRecipeResult)
+class DarkRecipe(BaseRecipe):
+    '''Process DARK images and provide MASTER_DARK. '''
+
+    def __init__(self):
+        super(DarkRecipe, self).__init__(
+                        author="Sergio Pascual <sergiopr@fis.ucm.es>",
+                        version="0.1.0"
+                )
+
+    # FIXME find a better way of doing this automatically
+    # @log_to_history(_logger)
+    def run(self, obresult, reqs):
+
+        _logger.info('starting dark reduction')
+
+        _logger.info('dark reduction ended')
+
+        result = DarkRecipeResult(darkframe=None)
         return result
 
