@@ -23,6 +23,7 @@ import logging
 
 from astropy.io import fits
 
+from numina import __version__
 from numina.core import BaseRecipe, RecipeRequirements
 from numina.core import Product, DataProductRequirement
 from numina.core import define_requirements, define_result
