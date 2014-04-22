@@ -30,7 +30,7 @@ from numina.core.requirements import ObservationResultRequirement
 from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
 
-from megara.drp.core import TrimAndOverscanCorrector
+from megara.drp.core import OverscanCorrector, TrimImage
 #from numina.logger import log_to_history
 
 from megara.drp.core import RecipeResult
@@ -62,9 +62,10 @@ class BiasRecipe(BaseRecipe):
         
         cdata = []
         
-        trim_and_overscan = TrimAndOverscanCorrector()
+        o_c = OverscanCorrector()
+        t_i = TrimImage()
         
-        basicflow = SerialFlow([trim_and_overscan])
+        basicflow = SerialFlow([o_c, t_i])
         
         try:
             for frame in rinput.obresult.frames:

@@ -164,7 +164,7 @@ import logging
 
 _logger = logging.getLogger('numina.recipes.megara')
 
-class TrimAndOverscanCorrector(TagOptionalCorrector):
+class OverscanCorrector(TagOptionalCorrector):
     '''A Node that corrects a frame from overscan.'''
     def __init__(self, datamodel=None, mark=True, 
                  tagger=None, dtype='float32'):
@@ -172,11 +172,29 @@ class TrimAndOverscanCorrector(TagOptionalCorrector):
         
         
         if tagger is None:
-            tagger = TagFits('NUM-OT','O and T')
+            tagger = TagFits('NUM-O','O')
             
-        self.update_variance = False
-                
-        super(TrimAndOverscanCorrector, self).__init__(datamodel=datamodel,
+        super(OverscanCorrector, self).__init__(datamodel=datamodel,
+                                            tagger=tagger, 
+                                            mark=mark, 
+                                            dtype=dtype)
+
+    def _run(self, img):
+        _logger.debug('correct overscan1 in image %s', img)
+        _logger.debug('correct overscan2 in image %s', img)
+        
+        return img
+
+
+class TrimImage(TagOptionalCorrector):
+    '''A Node that trims images.'''
+    def __init__(self, datamodel=None, mark=True, 
+                 tagger=None, dtype='float32'):
+        
+        if tagger is None:
+            tagger = TagFits('NUM-T','T')
+            
+        super(TrimImage, self).__init__(datamodel=datamodel,
                                             tagger=tagger, 
                                             mark=mark, 
                                             dtype=dtype)
@@ -187,5 +205,4 @@ class TrimAndOverscanCorrector(TagOptionalCorrector):
         img[0] = trim_and_o_hdu(img[0])
                 
         return img
-
 
