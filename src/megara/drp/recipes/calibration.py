@@ -26,7 +26,11 @@ from astropy.io import fits
 from numina.core import BaseRecipe, RecipeRequirements
 from numina.core import Product, DataProductRequirement
 from numina.core import define_requirements, define_result
+from numina.core.requirements import ObservationResultRequirement
 from numina.array.combine import median as c_median
+from numina.flow import SerialFlow
+
+from megara.drp.core import TrimAndOverscanCorrector
 #from numina.logger import log_to_history
 
 from megara.drp.core import RecipeResult
@@ -35,7 +39,7 @@ from megara.drp.products import MasterBias, MasterDark
 _logger = logging.getLogger('numina.recipes.megara')
 
 class BiasRecipeRequirements(RecipeRequirements):
-    pass
+    obresult = ObservationResultRequirement()
 
 class BiasRecipeResult(RecipeResult):
     biasframe = Product(MasterBias)
@@ -57,9 +61,16 @@ class BiasRecipe(BaseRecipe):
         _logger.info('starting bias reduction')
         
         cdata = []
+        
+        trim_and_overscan = TrimAndOverscanCorrector()
+        
+        basicflow = SerialFlow([trim_and_overscan])
+        
         try:
             for frame in rinput.obresult.frames:
-                cdata.append(frame.open())
+                hdulist = frame.open()
+                hdulist = basicflow(hdulist)
+                cdata.append(hdulist)
  
             _logger.info('stacking %d images using median', len(cdata))
             
