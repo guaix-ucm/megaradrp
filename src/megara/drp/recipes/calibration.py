@@ -81,6 +81,17 @@ class BiasRecipe(BaseRecipe):
             for hdulist in cdata:
                 hdulist.close()
       
+        hdr = hdu.header
+        hdr['IMGTYP'] = ('BIAS', 'Image type')
+        hdr['NUMTYP'] = ('MASTER_BIAS', 'Data product type')
+        hdr['NUMXVER'] = (__version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdr['CCDMEAN'] = data[0].mean()
+      
+        varhdu = fits.ImageHDU(data[1], name='VARIANCE')        
+        num = fits.ImageHDU(data[2], name='MAP')
+        hdulist = fits.HDUList([hdu, varhdu, num])
         _logger.info('bias reduction ended')
 
         result = BiasRecipeResult(biasframe=hdu)
