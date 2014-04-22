@@ -21,9 +21,12 @@
 
 import logging
 
+from astropy.io import fits
+
 from numina.core import BaseRecipe, RecipeRequirements
-from numina.core import Requirement, Product, DataProductRequirement
+from numina.core import Product, DataProductRequirement
 from numina.core import define_requirements, define_result
+from numina.array.combine import median as c_median
 #from numina.logger import log_to_history
 
 from megara.drp.core import RecipeResult
@@ -50,13 +53,26 @@ class BiasRecipe(BaseRecipe):
 
     # FIXME find a better way of doing this automatically
     # @log_to_history(_logger)
-    def run(self, obresult, reqs):
+    def run(self, rinput):
         _logger.info('starting bias reduction')
-
-        _logger.info('stacking images')
+        
+        cdata = []
+        try:
+            for frame in rinput.obresult.frames:
+                cdata.append(frame.open())
+ 
+            _logger.info('stacking %d images using median', len(cdata))
+            
+            data = c_median([d[0].data for d in cdata], dtype='float32')
+            template_header = cdata[0][0].header
+            hdu = fits.PrimaryHDU(data[0], header=template_header)
+        finally:
+            for hdulist in cdata:
+                hdulist.close()
+      
         _logger.info('bias reduction ended')
 
-        result = BiasRecipeResult(biasframe=None)
+        result = BiasRecipeResult(biasframe=hdu)
         return result
 
 class DarkRecipeRequirements(BiasRecipeRequirements):
@@ -78,7 +94,7 @@ class DarkRecipe(BaseRecipe):
 
     # FIXME find a better way of doing this automatically
     # @log_to_history(_logger)
-    def run(self, obresult, reqs):
+    def run(self, rinput):
 
         _logger.info('starting dark reduction')
 

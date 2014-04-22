@@ -41,5 +41,5 @@ pipelines:
     version: 1
   experimental:
     recipes:
-      bias_image: megara.recipes.experimental.BiasRecipe
+      bias_image: megara.drp.recipes.experimental.BiasRecipe
     version: 1

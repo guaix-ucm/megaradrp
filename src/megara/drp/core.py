@@ -17,4 +17,4 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numina.core.reciperesult import RecipeResultAutoQA as RecipeResult
+from numina.core.reciperesult import RecipeResultAutoQC as RecipeResult

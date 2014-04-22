@@ -22,7 +22,7 @@
 import logging
 
 from numina.core import RecipeRequirements
-from numina.core.recipes import BaseRecipeSingle
+from numina.core.recipes import BaseRecipe
 from numina.core import Requirement, Product, DataProductRequirement
 from numina.core.requirements import ObservationResultRequirement
 from numina.core import define_requirements, define_result
@@ -40,7 +40,7 @@ class BiasRecipeResult(RecipeResult):
 
 @define_requirements(BiasRecipeRequirements)
 @define_result(BiasRecipeResult)
-class BiasRecipe(BaseRecipeSingle):
+class BiasRecipe(BaseRecipe):
     '''Process BIAS images and create MASTER_BIAS.'''
 
     def __init__(self):
