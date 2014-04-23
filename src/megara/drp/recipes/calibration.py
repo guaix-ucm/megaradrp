@@ -30,12 +30,13 @@ from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
 from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
+from numina.flow.processing import BiasCorrector
 
 from megara.drp.core import OverscanCorrector, TrimImage
 #from numina.logger import log_to_history
 
 from megara.drp.core import RecipeResult
-from megara.drp.products import MasterBias, MasterDark
+from megara.drp.products import MasterBias, MasterDark, MasterFiberFlat
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -127,3 +128,66 @@ class DarkRecipe(BaseRecipe):
         result = DarkRecipeResult(darkframe=None)
         return result
 
+class FiberFlatRecipeRequirements(RecipeRequirements):
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
+    obresult = ObservationResultRequirement()
+
+class FiberFlatRecipeResult(RecipeResult):
+    fiberflatframe = Product(MasterFiberFlat)
+
+@define_requirements(FiberFlatRecipeRequirements)
+@define_result(FiberFlatRecipeResult)
+class FiberFlatRecipe(BaseRecipe):
+    '''Process FIBER_FLAT images and create MASTER_FIBER_FLAT.'''
+
+    def __init__(self):
+        super(FiberFlatRecipe, self).__init__(
+                        author="Sergio Pascual <sergiopr@fis.ucm.es>",
+                        version="0.1.0"
+                )
+
+    def run(self, rinput):
+        _logger.info('starting fiber flat reduction')
+        
+        
+        o_c = OverscanCorrector()
+        t_i = TrimImage()
+        
+        with rinput.master_bias.open() as hdul:
+            mbias = hdul[0].data.copy()
+            b_c = BiasCorrector(mbias)
+            
+        basicflow = SerialFlow([o_c, t_i, b_c])
+            
+        cdata = []
+        
+        try:
+            for frame in rinput.obresult.frames:
+                hdulist = frame.open()
+                hdulist = basicflow(hdulist)
+                cdata.append(hdulist)
+ 
+            _logger.info('stacking %d images using median', len(cdata))
+            
+            data = c_median([d[0].data for d in cdata], dtype='float32')
+            template_header = cdata[0][0].header
+            hdu = fits.PrimaryHDU(data[0], header=template_header)
+        finally:
+            for hdulist in cdata:
+                hdulist.close()
+      
+        hdr = hdu.header
+        hdr['IMGTYP'] = ('FIBER_FLAT', 'Image type')
+        hdr['NUMTYP'] = ('MASTER_FIBER_FLAT', 'Data product type')
+        hdr['NUMXVER'] = (__version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdr['CCDMEAN'] = data[0].mean()
+      
+        varhdu = fits.ImageHDU(data[1], name='VARIANCE')        
+        num = fits.ImageHDU(data[2], name='MAP')
+        hdulist = fits.HDUList([hdu, varhdu, num])
+        _logger.info('fiber flat reduction ended')
+
+        result = FiberFlatRecipeResult(fiberflatframe=hdu)
+        return result

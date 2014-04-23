@@ -45,3 +45,6 @@ class MasterBias(FrameDataProduct):
 class MasterDark(FrameDataProduct):
     pass
 
+class MasterFiberFlat(FrameDataProduct):
+    pass
+

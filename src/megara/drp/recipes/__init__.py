@@ -17,4 +17,4 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from .calibration import BiasRecipe, DarkRecipe
+from .calibration import BiasRecipe, DarkRecipe, FiberFlatRecipe
