@@ -21,6 +21,7 @@
 
 import logging
 
+import numpy
 from astropy.io import fits
 
 from numina import __version__
@@ -33,6 +34,7 @@ from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
 
 from megara.drp.core import OverscanCorrector, TrimImage
+from megara.drp.core import peakdet
 #from numina.logger import log_to_history
 
 from megara.drp.core import RecipeResult
@@ -134,6 +136,7 @@ class FiberFlatRecipeRequirements(RecipeRequirements):
 
 class FiberFlatRecipeResult(RecipeResult):
     fiberflatframe = Product(MasterFiberFlat)
+    fiberflatrss = Product(MasterFiberFlat)
 
 @define_requirements(FiberFlatRecipeRequirements)
 @define_result(FiberFlatRecipeResult)
@@ -187,7 +190,51 @@ class FiberFlatRecipe(BaseRecipe):
         varhdu = fits.ImageHDU(data[1], name='VARIANCE')        
         num = fits.ImageHDU(data[2], name='MAP')
         hdulist = fits.HDUList([hdu, varhdu, num])
+        
+        
+        # Trace extract and normalize  
+        # Cut a region in the center
+        mm = data[0]
+        
+        cut = mm[:,1980:2020]
+        colcut = cut.sum(axis=1) / 40.0
+        
+        # Find peaks
+        maxt, mint = peakdet(v=colcut, delta=0.3, back=5e3)
+        _logger.info('found %d peaks', len(maxt))
+        # Cut around the peak
+        
+        # Maximum half width of peaks
+        maxw = 3.0
+
+        borders = numpy.empty((maxt.shape[0], 3))
+        borders[:, 1] = maxt[:, 0]
+        borders[1:, 0] = mint[:-1,0]
+        borders[0, 0] = 0.0
+        borders[:-1, 2] = mint[1:, 0]
+        borders[-1, 2] = 1e4
+
+        borders[:, 2] = numpy.minimum(borders[:, 2], borders[:, 1] + maxw)
+        borders[:, 0] = numpy.maximum(borders[:, 0], borders[:, 1] - maxw)
+        
+        _logger.info('extract fibers')
+        rss = numpy.empty((borders.shape[0], mm.shape[1]))
+        for idx, r in enumerate(borders):
+            l = int(r[0])
+            r = int(r[2]) + 1
+            sl = (slice(l, r), )
+            m = mm[sl].sum(axis=0)
+            rss[idx] = m
+            
+        # Normalize RSS
+        _logger.info('normilize fibers fibers')
+        rss_cut = rss[:,1980:2020]
+        rss_cut_m = rss_cut.mean(axis=1)
+        
+        
+        newrss_norm = rss / rss_cut_m[:,numpy.newaxis]
+        
         _logger.info('fiber flat reduction ended')
 
-        result = FiberFlatRecipeResult(fiberflatframe=hdu)
+        result = FiberFlatRecipeResult(fiberflatframe=hdu, fiberflatrss=fits.PrimaryHDU(newrss_norm))
         return result
