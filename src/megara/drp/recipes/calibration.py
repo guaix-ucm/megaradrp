@@ -28,6 +28,7 @@ from numina import __version__
 from numina.core import BaseRecipe, RecipeRequirements
 from numina.core import Product, DataProductRequirement
 from numina.core import define_requirements, define_result
+from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
 from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
@@ -135,9 +136,10 @@ class FiberFlatRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
 
 class FiberFlatRecipeResult(RecipeResult):
-    fiberflatframe = Product(MasterFiberFlat)
-    fiberflatrss = Product(MasterFiberFlat)
-
+    fiberflat_frame = Product(MasterFiberFlat)
+    fiberflat_rss = Product(MasterFiberFlat)
+    traces = Product(ArrayType)
+    
 @define_requirements(FiberFlatRecipeRequirements)
 @define_result(FiberFlatRecipeResult)
 class FiberFlatRecipe(BaseRecipe):
@@ -205,12 +207,12 @@ class FiberFlatRecipe(BaseRecipe):
         # Cut around the peak
         
         # Maximum half width of peaks
-        maxw = 3.0
+        maxw = 3
 
-        borders = numpy.empty((maxt.shape[0], 3))
+        borders = numpy.empty((maxt.shape[0], 3), dtype='int')
         borders[:, 1] = maxt[:, 0]
         borders[1:, 0] = mint[:-1,0]
-        borders[0, 0] = 0.0
+        borders[0, 0] = 0
         borders[:-1, 2] = mint[1:, 0]
         borders[-1, 2] = 1e4
 
@@ -227,7 +229,7 @@ class FiberFlatRecipe(BaseRecipe):
             rss[idx] = m
             
         # Normalize RSS
-        _logger.info('normalize fibers fibers')
+        _logger.info('normalize fibers')
         nidx = 350
         single_s = rss[nidx, :]
         
@@ -244,5 +246,8 @@ class FiberFlatRecipe(BaseRecipe):
         
         _logger.info('fiber flat reduction ended')
 
-        result = FiberFlatRecipeResult(fiberflatframe=hdu, fiberflatrss=fits.PrimaryHDU(rss_norm))
+        result = FiberFlatRecipeResult(fiberflat_frame=hdu, 
+                fiberflat_rss=fits.PrimaryHDU(rss_norm),
+                traces=borders)
+        
         return result
