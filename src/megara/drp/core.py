@@ -259,6 +259,66 @@ class TrimImage(TagOptionalCorrector):
                 
         return img
 
+class ApertureExtractor(TagOptionalCorrector):
+    '''A Node that extracts apertures.'''
+    def __init__(self, trace, datamodel=None, mark=True, 
+                 tagger=None, dtype='float32'):
+        
+        if tagger is None:
+            tagger = TagFits('NUM-T','T')
+            
+        super(ApertureExtractor, self).__init__(datamodel=datamodel,
+                                            tagger=tagger, 
+                                            mark=mark, 
+                                            dtype=dtype)
+        self.trace = trace
+
+    def _run(self, img):
+        imgid = self.get_imgid(img)
+        _logger.debug('extracting apertures in image %s', imgid)
+        rss = apextract(img[0].data, self.trace):
+        img[0].data = rss
+        
+        return img
+
+class FiberFlatCorrector(TagOptionalCorrector):
+    '''A Node that corrects from fiber flat.'''
+    def __init__(self, fiberflat, datamodel=None, mark=True, 
+                 tagger=None, dtype='float32'):
+        
+        if tagger is None:
+            tagger = TagFits('NUM-T','T')
+            
+        super(FiberFlatCorrector, self).__init__(datamodel=datamodel,
+                                            tagger=tagger, 
+                                            mark=mark, 
+                                            dtype=dtype)
+
+        if isinstance(fiberflat, fits.HDUList):
+            self.corr = fiberflat[0].data
+        elif isinstance(fiberflat, numpy.ndarray):
+            self.corr = fiberflat
+
+        self.corrid = self.get_imgid(fiberflat)
+
+
+    def _run(self, img):
+        imgid = self.get_imgid(img)
+        _logger.debug('correct from fiber flat in image %s', imgid)
+        
+        return img
+
+def apextract(data, trace):
+    '''Extract apertures.''' 
+    rss = numpy.empty((trace.shape[0], data.shape[1]), dtype='float32')
+    for idx, r in enumerate(trace):
+        l = r[0]
+        r = r[2] + 1
+        sl = (slice(l, r), )
+        m = data[sl].sum(axis=0)
+        rss[idx] = m
+    return rss
+
 def peakdet(v, delta, x=None, back=0.0):
     '''Basic peak detection.'''
     
@@ -306,3 +366,4 @@ def peakdet(v, delta, x=None, back=0.0):
                 lookformax = True
 
     return np.array(maxtab), np.array(mintab)
+

@@ -29,11 +29,13 @@ from numina.core import BaseRecipe, RecipeRequirements
 from numina.core import Product, DataProductRequirement
 from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement
+from numina.core.products import ArrayType
 from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
 
 from megara.drp.core import OverscanCorrector, TrimImage
+from megara.drp.core import ApertureExtractor, FiberFlatCorrector
 from megara.drp.core import peakdet
 #from numina.logger import log_to_history
 
@@ -46,6 +48,7 @@ class FiberMOSRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
     master_fiber_flat = DataProductRequirement(MasterFiberFlat, 'Master fiber flat calibration')
+    traces = Parameter(ArrayType)
 
 class FiberMOSRecipeResult(RecipeResult):
     fiberflatframe = Product(MasterFiberFlat)
@@ -73,7 +76,12 @@ class FiberMOSRecipe(BaseRecipe):
             mbias = hdul[0].data.copy()
             b_c = BiasCorrector(mbias)
             
-        basicflow = SerialFlow([o_c, t_i, b_c])
+        a_e = ApertureExtractor(rinput.traces)
+
+        with rinput.master_fiber_flat.open() as hdul:
+            f_f_c = FiberFlatCorrector(hdul)
+
+        basicflow = SerialFlow([o_c, t_i, b_c, a_e, f_f_c])
             
         cdata = []
         
