@@ -39,12 +39,21 @@ modes:
   status: DRAFT
   summary: Summary of Fiber Flat Image
   uuid: 8a20058f-8887-4b6d-9b65-c113258eccee
+- date: 2014-04-25
+  description: Lines and mode lines
+  key: mos_image
+  name: Image with the fiber MOS
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Fiber MOS image
+  uuid: 6b2ea25b-e6e4-4e0c-b374-825c70387668
 pipelines:
   default:
     recipes:
       bias_image: megara.drp.recipes.BiasRecipe
       dark_image: megara.drp.recipes.DarkRecipe
       fiber_flat_image: megara.drp.recipes.FiberFlatRecipe
+      mos_image: megara.drp.recipes.FiberMOSRecipe
       fail: numina.core.utils.AlwaysFailRecipe
       success: numina.core.utils.AlwaysSuccessRecipe
     version: 1

@@ -18,3 +18,4 @@
 #
 
 from .calibration import BiasRecipe, DarkRecipe, FiberFlatRecipe
+from .scientific import FiberMOSRecipe
