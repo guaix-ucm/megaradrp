@@ -227,14 +227,22 @@ class FiberFlatRecipe(BaseRecipe):
             rss[idx] = m
             
         # Normalize RSS
-        _logger.info('normilize fibers fibers')
-        rss_cut = rss[:,1980:2020]
-        rss_cut_m = rss_cut.mean(axis=1)
+        _logger.info('normalize fibers fibers')
+        nidx = 350
+        single_s = rss[nidx, :]
         
+        # FIXME: hardcoded values
+        x_fit_min = 50
+        x_fit_max = 4050 # This is the last value, not included
+        x_fit = range(x_fit_min, x_fit_max)
         
-        newrss_norm = rss / rss_cut_m[:,numpy.newaxis]
+        # fitting a 3rd degree polynomial
+        pol_coeff = numpy.polyfit(x_fit, single_s[x_fit_min:x_fit_max], deg=3)
+        pol_fit = numpy.poly1d(pol_coeff)
+        norm = pol_fit(range(single_s.shape[0]))
+        rss_norm = rss / norm
         
         _logger.info('fiber flat reduction ended')
 
-        result = FiberFlatRecipeResult(fiberflatframe=hdu, fiberflatrss=fits.PrimaryHDU(newrss_norm))
+        result = FiberFlatRecipeResult(fiberflatframe=hdu, fiberflatrss=fits.PrimaryHDU(rss_norm))
         return result
