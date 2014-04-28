@@ -22,7 +22,11 @@
 import logging
 
 import numpy
+
+from scipy.interpolate import UnivariateSpline
+
 from astropy.io import fits
+from astropy import wcs 
 
 from numina import __version__
 from numina.core import BaseRecipe, RecipeRequirements
@@ -259,10 +263,11 @@ class PseudoFluxCalibrationRecipeRequirements(RecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
     master_fiber_flat = DataProductRequirement(MasterFiberFlat, 'Master fiber flat calibration')
     traces = Requirement(TraceMapType, 'Trace information of the Apertures')
-    
+    reference_spectrum = DataProductRequirement(MasterFiberFlat, 'Reference spectrum')
 
 class PseudoFluxCalibrationRecipeResult(RecipeResult):
     calibration = Product(MasterFiberFlat)
+    calibration_rss = Product(MasterFiberFlat)
     
 @define_requirements(PseudoFluxCalibrationRecipeRequirements)
 @define_result(PseudoFluxCalibrationRecipeResult)
@@ -314,8 +319,27 @@ class PseudoFluxCalibrationRecipe(BaseRecipe):
         hdr['CCDMEAN'] = data_t[0].mean()
         hdr['NUMTYP'] = ('SCIENCE_TARGET', 'Data product type')
       
+        _logger.info('resampling reference spectrum')
+        with rinput.reference_spectrum.open() as hdul:
+            # Needs resampling
+            data = hdul[0].data
+            w_ref = wcs.WCS(hdul[0].header)
+            # FIXME: Hardcoded values
+            # because we do not have WL calibration
+            wlr = [3617.2721575, 4437.82452769]
+            # The 0 mean 0-based 
+            pixcrd2 = w_ref.wcs_world2pix(wlr, 0)
+            size = hdu_t.data.shape[1]
+            xinter = numpy.linspace(pixcrd2[0][0], pixcrd2[0][1], size)
+            
+            si = UnivariateSpline(range(len(data)), data, k=3, s=0)
+            final = si(xinter)
+            
+        sens_data = final / hdu_t.data
+        hdu_sens = fits.PrimaryHDU(sens_data, header=template_header)
+      
         _logger.info('pseudo flux calibration reduction ended')
 
-        result = PseudoFluxCalibrationRecipeResult(calibration=hdu_t)
+        result = PseudoFluxCalibrationRecipeResult(calibration=hdu_sens, calibration_rss=hdu_t)
         return result
 
