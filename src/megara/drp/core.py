@@ -207,7 +207,7 @@ class OverscanCorrector(TagOptionalCorrector):
         
         
         if tagger is None:
-            tagger = TagFits('NUM-O','O')
+            tagger = TagFits('NUM-OVPE','Over scan/prescan')
             
         super(OverscanCorrector, self).__init__(datamodel=datamodel,
                                             tagger=tagger, 
@@ -245,7 +245,7 @@ class TrimImage(TagOptionalCorrector):
                  tagger=None, dtype='float32'):
         
         if tagger is None:
-            tagger = TagFits('NUM-T','T')
+            tagger = TagFits('NUM-TRIM','Trimming')
             
         super(TrimImage, self).__init__(datamodel=datamodel,
                                             tagger=tagger, 
@@ -265,7 +265,7 @@ class ApertureExtractor(TagOptionalCorrector):
                  tagger=None, dtype='float32'):
         
         if tagger is None:
-            tagger = TagFits('NUM-T','T')
+            tagger = TagFits('NUM-MAE','MEGARA Aperture extractor')
             
         super(ApertureExtractor, self).__init__(datamodel=datamodel,
                                             tagger=tagger, 
@@ -276,7 +276,7 @@ class ApertureExtractor(TagOptionalCorrector):
     def _run(self, img):
         imgid = self.get_imgid(img)
         _logger.debug('extracting apertures in image %s', imgid)
-        rss = apextract(img[0].data, self.trace):
+        rss = apextract(img[0].data, self.trace)
         img[0].data = rss
         
         return img
@@ -287,7 +287,7 @@ class FiberFlatCorrector(TagOptionalCorrector):
                  tagger=None, dtype='float32'):
         
         if tagger is None:
-            tagger = TagFits('NUM-T','T')
+            tagger = TagFits('NUM-MFF','MEGARA Fiber flat correction')
             
         super(FiberFlatCorrector, self).__init__(datamodel=datamodel,
                                             tagger=tagger, 
@@ -296,7 +296,7 @@ class FiberFlatCorrector(TagOptionalCorrector):
 
         if isinstance(fiberflat, fits.HDUList):
             self.corr = fiberflat[0].data
-        elif isinstance(fiberflat, numpy.ndarray):
+        elif isinstance(fiberflat, np.ndarray):
             self.corr = fiberflat
 
         self.corrid = self.get_imgid(fiberflat)
@@ -310,7 +310,7 @@ class FiberFlatCorrector(TagOptionalCorrector):
 
 def apextract(data, trace):
     '''Extract apertures.''' 
-    rss = numpy.empty((trace.shape[0], data.shape[1]), dtype='float32')
+    rss = np.empty((trace.shape[0], data.shape[1]), dtype='float32')
     for idx, r in enumerate(trace):
         l = r[0]
         r = r[2] + 1
