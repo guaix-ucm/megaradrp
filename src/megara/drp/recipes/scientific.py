@@ -112,31 +112,36 @@ class FiberMOSRecipe(BaseRecipe):
             for hdulist in s_data:
                 hdulist.close()
       
-        hdr = hdu_s.header
-        hdr['NUMXVER'] = (__version__, 'Numina package version')
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
-        hdr['CCDMEAN'] = data_s[0].mean()
-        hdr['NUMTYP'] = ('SCIENCE_SKY', 'Data product type')
+        wlr = [3617.2721575, 4437.82452769]
+        size = hdu_t.data.shape[1]    
+        delt = (wlr[1] - wlr[0]) / size
+        
+        def add_wcs(hdr, numtyp):
+            hdr['CRPIX1'] = 1
+            hdr['CRVAL1'] = wlr[0]
+            hdr['CDELT1'] = delt
+            hdr['CTYPE1'] = 'WAVELENGTH'
+            hdr['CRPIX2'] = 1
+            hdr['CRVAL2'] = 1
+            hdr['CDELT2'] = 1
+            hdr['CTYPE2'] = 'PIXEL'
+            hdr['NUMXVER'] = (__version__, 'Numina package version')
+            hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+            hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+            hdr['CCDMEAN'] = data_s[0].mean()
+            hdr['NUMTYP'] = (numtyp, 'Data product type')
+            return hdr
       
-        hdr = hdu_t.header
-        hdr['NUMXVER'] = (__version__, 'Numina package version')
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
-        hdr['CCDMEAN'] = data_t[0].mean()
-        hdr['NUMTYP'] = ('SCIENCE_TARGET', 'Data product type')
-      
+        add_wcs(hdu_s.header, 'SCIENCE_SKY')
+        
+        add_wcs(hdu_t.header, 'SCIENCE_TARGET')
+            
         _logger.info('subtract SKY RSS from target RSS')
         final = data_t[0] - data_s[0]
         hdu_f = fits.PrimaryHDU(final, header=template_header)
-        hdr = hdu_f.header
-        hdr['NUMXVER'] = (__version__, 'Numina package version')
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
-        hdr['CCDMEAN'] = final.mean()
-        hdr['NUMTYP'] = ('SCIENCE_FINAL', 'Data product type')
-        
-        
+                
+        add_wcs(hdu_f.header, 'SCIENCE_FINAL')
+                
         if rinput.sensitivity:
             _logger.info('apply sensitivity')
             with rinput.sensitivity.open() as hdul:

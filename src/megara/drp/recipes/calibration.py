@@ -320,6 +320,21 @@ class PseudoFluxCalibrationRecipe(BaseRecipe):
         hdr['NUMTYP'] = ('SCIENCE_TARGET', 'Data product type')
       
         _logger.info('resampling reference spectrum')
+        wlr = [3617.2721575, 4437.82452769]
+        size = hdu_t.data.shape[1]    
+        delt = (wlr[1] - wlr[0]) / size
+        
+        def add_wcs(hdr):
+            hdr['CRPIX1'] = 1
+            hdr['CRVAL1'] = wlr[0]
+            hdr['CDELT1'] = delt
+            hdr['CTYPE1'] = 'WAVELENGTH'
+            hdr['CRPIX2'] = 1
+            hdr['CRVAL2'] = 1
+            hdr['CDELT2'] = 1
+            hdr['CTYPE2'] = 'PIXEL'
+            return hdr
+        
         with rinput.reference_spectrum.open() as hdul:
             # Needs resampling
             data = hdul[0].data
@@ -327,17 +342,22 @@ class PseudoFluxCalibrationRecipe(BaseRecipe):
             # FIXME: Hardcoded values
             # because we do not have WL calibration
             wlr = [3617.2721575, 4437.82452769]
+             
             # The 0 mean 0-based 
-            pixcrd2 = w_ref.wcs_world2pix(wlr, 0)
-            size = hdu_t.data.shape[1]
+            pixcrd2 = w_ref.wcs_world2pix(wlr, 0)    
             xinter = numpy.linspace(pixcrd2[0][0], pixcrd2[0][1], size)
             
             si = UnivariateSpline(range(len(data)), data, k=3, s=0)
             final = si(xinter)
             
         sens_data = final / hdu_t.data
-        hdu_sens = fits.PrimaryHDU(sens_data, header=template_header)
-      
+        hdu_sens = fits.PrimaryHDU(sens_data, header=hdu_t.header)
+        
+        # Very simple wl calibration
+        add_wcs(hdu_sens.header)
+        
+        add_wcs(hdu_t.header)
+        
         _logger.info('pseudo flux calibration reduction ended')
 
         result = PseudoFluxCalibrationRecipeResult(calibration=hdu_sens, calibration_rss=hdu_t)
