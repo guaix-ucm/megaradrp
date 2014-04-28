@@ -26,7 +26,7 @@ from astropy.io import fits
 
 from numina import __version__
 from numina.core import BaseRecipe, RecipeRequirements
-from numina.core import Product, DataProductRequirement
+from numina.core import Product, DataProductRequirement, Requirement
 from numina.core import define_requirements, define_result
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
@@ -35,11 +35,13 @@ from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
 
 from megara.drp.core import OverscanCorrector, TrimImage
+from megara.drp.core import ApertureExtractor, FiberFlatCorrector
 from megara.drp.core import peakdet
 #from numina.logger import log_to_history
 
 from megara.drp.core import RecipeResult
 from megara.drp.products import MasterBias, MasterDark, MasterFiberFlat
+from megara.drp.products import TraceMapType
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -251,3 +253,69 @@ class FiberFlatRecipe(BaseRecipe):
                 traces=borders)
         
         return result
+    
+class PseudoFluxCalibrationRecipeRequirements(RecipeRequirements):
+    obresult = ObservationResultRequirement()
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
+    master_fiber_flat = DataProductRequirement(MasterFiberFlat, 'Master fiber flat calibration')
+    traces = Requirement(TraceMapType, 'Trace information of the Apertures')
+    
+
+class PseudoFluxCalibrationRecipeResult(RecipeResult):
+    calibration = Product(MasterFiberFlat)
+    
+@define_requirements(PseudoFluxCalibrationRecipeRequirements)
+@define_result(PseudoFluxCalibrationRecipeResult)
+class PseudoFluxCalibrationRecipe(BaseRecipe):
+    
+    def __init__(self):
+        super(PseudoFluxCalibrationRecipe, self).__init__(
+                        author="Sergio Pascual <sergiopr@fis.ucm.es>",
+                        version="0.1.0"
+                )
+
+    def run(self, rinput):
+        _logger.info('starting pseudo flux calibration')
+        
+        
+        o_c = OverscanCorrector()
+        t_i = TrimImage()
+        
+        with rinput.master_bias.open() as hdul:
+            mbias = hdul[0].data.copy()
+            b_c = BiasCorrector(mbias)
+            
+        a_e = ApertureExtractor(rinput.traces)
+
+        with rinput.master_fiber_flat.open() as hdul:
+            f_f_c = FiberFlatCorrector(hdul)
+
+        basicflow = SerialFlow([o_c, t_i, b_c, a_e, f_f_c])
+            
+        t_data = []
+        
+        try:
+            for frame in rinput.obresult.frames:
+                hdulist = frame.open()
+                hdulist = basicflow(hdulist)
+                t_data.append(hdulist)
+             
+            data_t = c_median([d[0].data for d in t_data], dtype='float32')
+            template_header = t_data[0][0].header
+            hdu_t = fits.PrimaryHDU(data_t[0], header=template_header)
+        finally:
+            for hdulist in t_data:
+                hdulist.close()
+      
+        hdr = hdu_t.header
+        hdr['NUMXVER'] = (__version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdr['CCDMEAN'] = data_t[0].mean()
+        hdr['NUMTYP'] = ('SCIENCE_TARGET', 'Data product type')
+      
+        _logger.info('pseudo flux calibration reduction ended')
+
+        result = PseudoFluxCalibrationRecipeResult(calibration=hdu_t)
+        return result
+

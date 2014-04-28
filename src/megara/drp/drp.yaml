@@ -47,6 +47,14 @@ modes:
   status: DRAFT
   summary: Summary of Fiber MOS image
   uuid: 6b2ea25b-e6e4-4e0c-b374-825c70387668
+- date: 2014-04-28
+  description: Lines and mode lines
+  key: flux_calibration
+  name: Pseudo flux-calibration
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Fiber MOS image
+  uuid: 9114511f-15d8-40d2-a0b1-e4a6202a3e39
 pipelines:
   default:
     recipes:
@@ -54,6 +62,7 @@ pipelines:
       dark_image: megara.drp.recipes.DarkRecipe
       fiber_flat_image: megara.drp.recipes.FiberFlatRecipe
       mos_image: megara.drp.recipes.FiberMOSRecipe
+      flux_calibration: megara.drp.recipes.calibration.PseudoFluxCalibrationRecipe
       fail: numina.core.utils.AlwaysFailRecipe
       success: numina.core.utils.AlwaysSuccessRecipe
     version: 1
