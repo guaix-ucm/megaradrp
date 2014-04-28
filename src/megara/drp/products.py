@@ -37,7 +37,9 @@
 
 '''
 
-from numina.core import FrameDataProduct
+import numpy
+
+from numina.core import FrameDataProduct, DataProduct
 
 class MasterBias(FrameDataProduct):
     pass
@@ -47,4 +49,13 @@ class MasterDark(FrameDataProduct):
 
 class MasterFiberFlat(FrameDataProduct):
     pass
+
+class TraceMapType(DataProduct):
+    def __init__(self, default=None):
+        super(TraceMapType, self).__init__(ptype=numpy.ndarray, default=default)
+
+    def store(self, obj):
+        return numpy.loadtxt(obj)
+        
+
 
