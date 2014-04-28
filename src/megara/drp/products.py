@@ -50,6 +50,9 @@ class MasterDark(FrameDataProduct):
 class MasterFiberFlat(FrameDataProduct):
     pass
 
+class MasterSensitivity(FrameDataProduct):
+    pass
+
 class TraceMapType(DataProduct):
     def __init__(self, default=None):
         super(TraceMapType, self).__init__(ptype=numpy.ndarray, default=default)
