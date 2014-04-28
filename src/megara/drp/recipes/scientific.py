@@ -29,7 +29,6 @@ from numina.core import BaseRecipe, RecipeRequirements
 from numina.core import Product, DataProductRequirement
 from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement, Requirement
-from numina.core.products import ArrayType
 from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
@@ -40,7 +39,7 @@ from megara.drp.core import ApertureExtractor, FiberFlatCorrector
 #from numina.logger import log_to_history
 
 from megara.drp.core import RecipeResult
-from megara.drp.products import MasterBias, MasterFiberFlat
+from megara.drp.products import MasterBias, MasterFiberFlat, TraceMapType
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -48,10 +47,12 @@ class FiberMOSRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
     master_fiber_flat = DataProductRequirement(MasterFiberFlat, 'Master fiber flat calibration')
-    traces = Requirement(ArrayType, 'Trace information of the Apertures')
+    traces = Requirement(TraceMapType, 'Trace information of the Apertures')
 
 class FiberMOSRecipeResult(RecipeResult):
-    rss = Product(MasterFiberFlat)
+    final = Product(MasterFiberFlat)
+    target = Product(MasterFiberFlat)
+    sky = Product(MasterFiberFlat)
 
 @define_requirements(FiberMOSRecipeRequirements)
 @define_result(FiberMOSRecipeResult)
@@ -82,36 +83,60 @@ class FiberMOSRecipe(BaseRecipe):
 
         basicflow = SerialFlow([o_c, t_i, b_c, a_e, f_f_c])
             
-        cdata = []
+        t_data = []
+        s_data = []
         
         try:
             for frame in rinput.obresult.frames:
                 hdulist = frame.open()
                 hdulist = basicflow(hdulist)
-                cdata.append(hdulist)
+                p_type = hdulist[0].header.get('OBSTYPE')
+                if p_type == 'SKY':
+                    s_data.append(hdulist)
+                else:
+                    t_data.append(hdulist)
  
-            _logger.info('stacking %d images using median', len(cdata))
+            _logger.info('stacking %d sky images using median', len(s_data))
             
-            data = c_median([d[0].data for d in cdata], dtype='float32')
-            template_header = cdata[0][0].header
-            hdu = fits.PrimaryHDU(data[0], header=template_header)
+            data_s = c_median([d[0].data for d in s_data], dtype='float32')
+            template_header = s_data[0][0].header
+            hdu_s = fits.PrimaryHDU(data_s[0], header=template_header)
+            
+            data_t = c_median([d[0].data for d in t_data], dtype='float32')
+            template_header = t_data[0][0].header
+            hdu_t = fits.PrimaryHDU(data_t[0], header=template_header)
         finally:
-            for hdulist in cdata:
+            for hdulist in t_data:
+                hdulist.close()
+            for hdulist in s_data:
                 hdulist.close()
       
-        hdr = hdu.header
+        hdr = hdu_s.header
         hdr['NUMXVER'] = (__version__, 'Numina package version')
         hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
-        hdr['CCDMEAN'] = data[0].mean()
+        hdr['CCDMEAN'] = data_s[0].mean()
+        hdr['NUMTYP'] = ('SCIENCE_SKY', 'Data product type')
       
-        varhdu = fits.ImageHDU(data[1], name='VARIANCE')        
-        num = fits.ImageHDU(data[2], name='MAP')
-        hdulist = fits.HDUList([hdu, varhdu, num])
+        hdr = hdu_t.header
+        hdr['NUMXVER'] = (__version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdr['CCDMEAN'] = data_t[0].mean()
+        hdr['NUMTYP'] = ('SCIENCE_TARGET', 'Data product type')
+      
+        _logger.info('subtract SKY RSS from traget RSS')
+        final = data_t[0] - data_s[0]
+        hdu_f = fits.PrimaryHDU(final, header=template_header)
+        hdr = hdu_f.header
+        hdr['NUMXVER'] = (__version__, 'Numina package version')
+        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
+        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdr['CCDMEAN'] = final.mean()
+        hdr['NUMTYP'] = ('SCIENCE_FINAL', 'Data product type')
         
-                
         _logger.info('MOS reduction ended')
 
-        result = FiberMOSRecipeResult(rss=hdu)
+        result = FiberMOSRecipeResult(final=hdu_f, target=hdu_t, sky=hdu_s)
         return result
 
