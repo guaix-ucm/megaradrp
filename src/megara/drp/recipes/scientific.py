@@ -28,7 +28,7 @@ from numina import __version__
 from numina.core import BaseRecipe, RecipeRequirements
 from numina.core import Product, DataProductRequirement
 from numina.core import define_requirements, define_result
-from numina.core.requirements import ObservationResultRequirement
+from numina.core.requirements import ObservationResultRequirement, Requirement
 from numina.core.products import ArrayType
 from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
@@ -36,7 +36,7 @@ from numina.flow.processing import BiasCorrector
 
 from megara.drp.core import OverscanCorrector, TrimImage
 from megara.drp.core import ApertureExtractor, FiberFlatCorrector
-from megara.drp.core import peakdet
+
 #from numina.logger import log_to_history
 
 from megara.drp.core import RecipeResult
@@ -48,11 +48,10 @@ class FiberMOSRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
     master_fiber_flat = DataProductRequirement(MasterFiberFlat, 'Master fiber flat calibration')
-    traces = Parameter(ArrayType)
+    traces = Requirement(ArrayType, 'Trace information of the Apertures')
 
 class FiberMOSRecipeResult(RecipeResult):
-    fiberflatframe = Product(MasterFiberFlat)
-    fiberflatrss = Product(MasterFiberFlat)
+    rss = Product(MasterFiberFlat)
 
 @define_requirements(FiberMOSRecipeRequirements)
 @define_result(FiberMOSRecipeResult)
@@ -110,59 +109,9 @@ class FiberMOSRecipe(BaseRecipe):
         num = fits.ImageHDU(data[2], name='MAP')
         hdulist = fits.HDUList([hdu, varhdu, num])
         
-        
-        # Trace extract and normalize  
-        # Cut a region in the center
-        mm = data[0]
-        
-        cut = mm[:,1980:2020]
-        colcut = cut.sum(axis=1) / 40.0
-        
-        # Find peaks
-        maxt, mint = peakdet(v=colcut, delta=0.3, back=5e3)
-        _logger.info('found %d peaks', len(maxt))
-        # Cut around the peak
-        
-        # Maximum half width of peaks
-        maxw = 3.0
-
-        borders = numpy.empty((maxt.shape[0], 3))
-        borders[:, 1] = maxt[:, 0]
-        borders[1:, 0] = mint[:-1,0]
-        borders[0, 0] = 0.0
-        borders[:-1, 2] = mint[1:, 0]
-        borders[-1, 2] = 1e4
-
-        borders[:, 2] = numpy.minimum(borders[:, 2], borders[:, 1] + maxw)
-        borders[:, 0] = numpy.maximum(borders[:, 0], borders[:, 1] - maxw)
-        
-        _logger.info('extract fibers')
-        rss = numpy.empty((borders.shape[0], mm.shape[1]))
-        for idx, r in enumerate(borders):
-            l = int(r[0])
-            r = int(r[2]) + 1
-            sl = (slice(l, r), )
-            m = mm[sl].sum(axis=0)
-            rss[idx] = m
-            
-        # Normalize RSS
-        _logger.info('normalize fibers fibers')
-        nidx = 350
-        single_s = rss[nidx, :]
-        
-        # FIXME: hardcoded values
-        x_fit_min = 50
-        x_fit_max = 4050 # This is the last value, not included
-        x_fit = range(x_fit_min, x_fit_max)
-        
-        # fitting a 3rd degree polynomial
-        pol_coeff = numpy.polyfit(x_fit, single_s[x_fit_min:x_fit_max], deg=3)
-        pol_fit = numpy.poly1d(pol_coeff)
-        norm = pol_fit(range(single_s.shape[0]))
-        rss_norm = rss / norm
-        
+                
         _logger.info('MOS reduction ended')
 
-        result = FiberMOSRecipeResult(fiberflatframe=hdu, fiberflatrss=fits.PrimaryHDU(rss_norm))
+        result = FiberMOSRecipeResult(rss=hdu)
         return result
 
