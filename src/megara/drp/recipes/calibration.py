@@ -45,7 +45,7 @@ from megara.drp.core import peakdet
 
 from megara.drp.core import RecipeResult
 from megara.drp.products import MasterBias, MasterDark, MasterFiberFlat
-from megara.drp.products import TraceMapType
+from megara.drp.products import TraceMapType, MasterSensitivity
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -266,8 +266,8 @@ class PseudoFluxCalibrationRecipeRequirements(RecipeRequirements):
     reference_spectrum = DataProductRequirement(MasterFiberFlat, 'Reference spectrum')
 
 class PseudoFluxCalibrationRecipeResult(RecipeResult):
-    calibration = Product(MasterFiberFlat)
-    calibration_rss = Product(MasterFiberFlat)
+    calibration = Product(MasterSensitivity)
+    calibration_rss = Product(MasterSensitivity)
     
 @define_requirements(PseudoFluxCalibrationRecipeRequirements)
 @define_result(PseudoFluxCalibrationRecipeResult)

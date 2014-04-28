@@ -39,8 +39,8 @@ from megara.drp.core import ApertureExtractor, FiberFlatCorrector
 #from numina.logger import log_to_history
 
 from megara.drp.core import RecipeResult
-from megara.drp.products import MasterBias, MasterFiberFlat, TraceMapType
-
+from megara.drp.products import MasterBias, MasterFiberFlat
+from megara.drp.products import MasterSensitivity,  TraceMapType
 _logger = logging.getLogger('numina.recipes.megara')
 
 class FiberMOSRecipeRequirements(RecipeRequirements):
@@ -48,6 +48,7 @@ class FiberMOSRecipeRequirements(RecipeRequirements):
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
     master_fiber_flat = DataProductRequirement(MasterFiberFlat, 'Master fiber flat calibration')
     traces = Requirement(TraceMapType, 'Trace information of the Apertures')
+    sensitivity = DataProductRequirement(MasterSensitivity, 'Sensitivity', optional=True)
 
 class FiberMOSRecipeResult(RecipeResult):
     final = Product(MasterFiberFlat)
@@ -125,7 +126,7 @@ class FiberMOSRecipe(BaseRecipe):
         hdr['CCDMEAN'] = data_t[0].mean()
         hdr['NUMTYP'] = ('SCIENCE_TARGET', 'Data product type')
       
-        _logger.info('subtract SKY RSS from traget RSS')
+        _logger.info('subtract SKY RSS from target RSS')
         final = data_t[0] - data_s[0]
         hdu_f = fits.PrimaryHDU(final, header=template_header)
         hdr = hdu_f.header
@@ -134,6 +135,15 @@ class FiberMOSRecipe(BaseRecipe):
         hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         hdr['CCDMEAN'] = final.mean()
         hdr['NUMTYP'] = ('SCIENCE_FINAL', 'Data product type')
+        
+        
+        if rinput.sensitivity:
+            _logger.info('apply sensitivity')
+            with rinput.sensitivity.open() as hdul:
+                sens = hdul[0].data
+                hdu_f.data *= sens
+        else:
+            _logger.info('sensitivity is not defined, ignoring')
         
         _logger.info('MOS reduction ended')
 
