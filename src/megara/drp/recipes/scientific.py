@@ -112,7 +112,7 @@ class FiberMOSRecipe(BaseRecipe):
             for hdulist in s_data:
                 hdulist.close()
       
-        wlr = [3617.2721575, 4437.82452769]
+        wlr = (3673.12731884058, 4417.497427536232)
         size = hdu_t.data.shape[1]    
         delt = (wlr[1] - wlr[0]) / (size-1)
         

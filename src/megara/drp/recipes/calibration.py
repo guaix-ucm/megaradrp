@@ -320,7 +320,7 @@ class PseudoFluxCalibrationRecipe(BaseRecipe):
         hdr['NUMTYP'] = ('SCIENCE_TARGET', 'Data product type')
       
         _logger.info('resampling reference spectrum')
-        wlr = [3617.2721575, 4437.82452769]
+        wlr = [3673.12731884058, 4417.497427536232]
         size = hdu_t.data.shape[1]    
         delt = (wlr[1] - wlr[0]) / (size - 1)
         
@@ -341,7 +341,6 @@ class PseudoFluxCalibrationRecipe(BaseRecipe):
             w_ref = wcs.WCS(hdul[0].header)
             # FIXME: Hardcoded values
             # because we do not have WL calibration
-            wlr = [3617.2721575, 4437.82452769]
              
             # The 0 mean 0-based 
             pixcrd2 = w_ref.wcs_world2pix(wlr, 0)    
