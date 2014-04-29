@@ -114,7 +114,7 @@ class FiberMOSRecipe(BaseRecipe):
       
         wlr = [3617.2721575, 4437.82452769]
         size = hdu_t.data.shape[1]    
-        delt = (wlr[1] - wlr[0]) / size
+        delt = (wlr[1] - wlr[0]) / (size-1)
         
         def add_wcs(hdr, numtyp):
             hdr['CRPIX1'] = 1
