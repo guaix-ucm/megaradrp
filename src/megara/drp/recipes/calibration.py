@@ -23,7 +23,7 @@ import logging
 
 import numpy
 
-from scipy.interpolate import UnivariateSpline
+from scipy.interpolate import interp1d
 
 from astropy.io import fits
 from astropy import wcs 
@@ -319,7 +319,15 @@ class PseudoFluxCalibrationRecipe(BaseRecipe):
         hdr['CCDMEAN'] = data_t[0].mean()
         hdr['NUMTYP'] = ('SCIENCE_TARGET', 'Data product type')
       
+        # FIXME: hardcoded calibration
+        # Polynomial that translates pixels to wl
+        _logger.warning('using hardcoded LR-U spectral calibration')
+        wlcal = [7.12175997e-10, -9.36387541e-06, 2.13624855e-01, 3.64665269e+03]
+        plin = numpy.poly1d(wlcal)
+        wl_n_r = plin(range(1, hdu_t.data.shape[1]+1)) # Non-regular WL
+        
         _logger.info('resampling reference spectrum')
+        
         wlr = [3673.12731884058, 4417.497427536232]
         size = hdu_t.data.shape[1]    
         delt = (wlr[1] - wlr[0]) / (size - 1)
@@ -341,21 +349,20 @@ class PseudoFluxCalibrationRecipe(BaseRecipe):
             w_ref = wcs.WCS(hdul[0].header)
             # FIXME: Hardcoded values
             # because we do not have WL calibration
-             
-            # The 0 mean 0-based 
-            pixcrd2 = w_ref.wcs_world2pix(wlr, 0)    
-            xinter = numpy.linspace(pixcrd2[0][0], pixcrd2[0][1], size)
-            
-            si = UnivariateSpline(range(len(data)), data, k=3, s=0)
-            final = si(xinter)
+            pix = range(1, len(data) + 1)
+            wl = w_ref.wcs_pix2world(pix, 1)
+            # The 0 mean 0-based             
+            si = interp1d(wl, data)
+            # Reference spectrum evaluated in the irregular WL grid
+            final = si(wl_n_r)
             
         sens_data = final / hdu_t.data
         hdu_sens = fits.PrimaryHDU(sens_data, header=hdu_t.header)
         
         # Very simple wl calibration
-        add_wcs(hdu_sens.header)
+        #add_wcs(hdu_sens.header)
         
-        add_wcs(hdu_t.header)
+        #add_wcs(hdu_t.header)
         
         _logger.info('pseudo flux calibration reduction ended')
 
