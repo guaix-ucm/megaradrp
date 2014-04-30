@@ -23,7 +23,7 @@ from datetime import datetime
 from pkgutil import get_data
 from StringIO import StringIO
 
-import pyfits
+from astropy.io import fits 
 import numpy
 from numpy.random import normal, poisson
 from numina.treedict import TreeDict
@@ -178,7 +178,7 @@ class MegaraImageFactory(object):
     def __init__(self):
         #sfile = StringIO(get_data('megara', 'primary.txt'))
         with open('/home/spr/devel/megara/megara/primary.txt') as sfile:
-            self.p_templ = pyfits.Header(txtfile=sfile)
+            self.p_templ = fits.Header(txtfile=sfile)
         del sfile
 
     def create(self, metadata, data):
@@ -188,9 +188,9 @@ class MegaraImageFactory(object):
         for rr in hh.ascardlist():
             rr.value = interpolate(metadata, rr.value)
 
-	prim = pyfits.PrimaryHDU(data=data, header=hh)
+	prim = fits.PrimaryHDU(data=data, header=hh)
 	hl = [prim]
 
-	hdulist = pyfits.HDUList(hl)
+	hdulist = fits.HDUList(hl)
         return hdulist
 
