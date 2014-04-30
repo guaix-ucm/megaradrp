@@ -1,6 +1,5 @@
 
-from setuptools import find_packages
-from distutils.core import setup
+from setuptools import find_packages, setup
 
 BASE_PKGS=['megara', 'megara.drp', 'megara.drp.recipes']
 NAMESPACE_PKGS = ['numina.pipelines', 'numina.pipelines.megara']
@@ -16,7 +15,7 @@ setup(name='megaradrp',
       packages=ALL_PKGS,
       package_dir={'megara': 'src/megara', 'numina.pipelines': 'src/drp'},
       package_data={'megara.drp': ['drp.yaml', 'primary.txt']},
-#      install_requires=['numina>=0.11.0'],
+      install_requires=['numpy', 'astropy', 'scipy', 'numina>=0.12.0'],
       classifiers=[
                    "Programming Language :: Python :: 2.7",
                    'Development Status :: 3 - Alpha',
