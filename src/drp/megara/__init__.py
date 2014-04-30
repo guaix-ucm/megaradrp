@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2012 Universidad Complutense de Madrid
+# Copyright 2011-2014 Universidad Complutense de Madrid
 # 
 # This file is part of Megara DRP
 # 
@@ -21,4 +21,4 @@
 
 from numina.core import drp_load
 
-__numina_drp__ = drp_load('megara', 'drp.yaml')
+__numina_drp__ = drp_load('megara.drp', 'drp.yaml')

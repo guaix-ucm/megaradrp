@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2012 Universidad Complutense de Madrid
+# Copyright 2011-2014 Universidad Complutense de Madrid
 # 
 # This file is part of Megara DRP
 # 
@@ -17,4 +17,16 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from .calibration import BiasRecipe, DarkRecipe
+'''The MEGARA Data Reduction Pipeline.'''
+
+import logging
+
+#from .simulator import MegaraImageFactory as ImageFactory
+#from .simulator import Megara as Instrument
+
+__version__ = '0.2.0'
+
+#__all__ = ['Instrument', 'ImageFactory']
+
+# Top level NullHandler
+logging.getLogger("megara").addHandler(logging.NullHandler())

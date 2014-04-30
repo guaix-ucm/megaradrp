@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2012 Universidad Complutense de Madrid
+# Copyright 2011-2014 Universidad Complutense de Madrid
 # 
 # This file is part of Megara DRP
 # 
@@ -17,18 +17,5 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numina import RecipeBase
-
-__all__ = ['Recipe']
-
-class Recipe(RecipeBase):
-    def __init__(self, pp, cp):
-        pass
-
-    @classmethod
-    def requires(cls):
-        return []
-
-    def run(self, rb):
-        return {'result': {'direct_image': 0, 'qa': 1}}
-
+from .calibration import BiasRecipe, DarkRecipe, FiberFlatRecipe
+from .scientific import FiberMOSRecipe

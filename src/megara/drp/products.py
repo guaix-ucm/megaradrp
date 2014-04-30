@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2012 Universidad Complutense de Madrid
+# Copyright 2011-2014 Universidad Complutense de Madrid
 # 
 # This file is part of Megara DRP
 # 
@@ -37,39 +37,28 @@
 
 '''
 
-from numina.core import FrameDataProduct
+import numpy
+
+from numina.core import FrameDataProduct, DataProduct
 
 class MasterBias(FrameDataProduct):
-    def __init__(self, hdu):
-        super(MasterBias, self).__init__(hdu)
-
-    def metadata(self):
-        hdr = self.image[1].header
-        yield 'spec1.detector.mode', hdr['readmode']
+    pass
 
 class MasterDark(FrameDataProduct):
-    def __init__(self, hdu):
-        super(MasterDark, self).__init__(hdu)
+    pass
 
-    def metadata(self):
-        hdr = self.image[1].header
-        yield 'spec1.detector.mode', hdr['readmode']
+class MasterFiberFlat(FrameDataProduct):
+    pass
 
-class MasterFlat(FrameDataProduct):
-    def __init__(self, hdu):
-        super(MasterFlat, self).__init__(hdu)
+class MasterSensitivity(FrameDataProduct):
+    pass
 
-    def metadata(self):
-        hdr = self.image[0].header
-        yield 'spec1.detector.mode', hdr['readmode']
-        yield 'spec1.grism', hdr['grism']
+class TraceMapType(DataProduct):
+    def __init__(self, default=None):
+        super(TraceMapType, self).__init__(ptype=numpy.ndarray, default=default)
 
-class MasterIllum(FrameDataProduct):
-    def __init__(self, hdu):
-        super(MasterIllum, self).__init__(hdu)
+    def store(self, obj):
+        return numpy.loadtxt(obj)
+        
 
-    def metadata(self):
-        hdr = self.image[1].header
-        yield 'spec1.detector.mode', hdr['readmode']
-        yield 'spec1.grism', hdr['grism']
 

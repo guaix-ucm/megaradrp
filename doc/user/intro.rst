@@ -17,7 +17,7 @@ Additional packages are optionally required:
  - `nose <http://somethingaboutorange.com/mrl/projects/nose>`_ to run the tests
  - `sphinx`_ to build the documentation
 
-Webpage: http://guaix.fis.ucm.es/hg/megara-drp/
+Webpage: http://guaix.fis.ucm.es/hg/pymegara/
 
 Maintainer: sergiopr@fis.ucm.es
 
@@ -44,11 +44,11 @@ Development version
 
 The development version can be checked out with:::
 
-    $ hg clone http://guaix.fis.ucm.es/hg/megara-drp/
+    $ hg clone http://guaix.fis.ucm.es/hg/pymegara/
 
 And then installed following the standard procedure:::
 
-    $ cd megara-drp
+    $ cd pymegara
     $ python setup.py install
 
 Building the documentation

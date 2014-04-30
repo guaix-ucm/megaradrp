@@ -1,14 +1,16 @@
-This is PyMegara, the data reduction pipeline for MEGARA
+This is Megara DRP, the data reduction pipeline for MEGARA
 
-PyMegara is distributed under GNU GPL, either version 3 of the License,
+Megara DRP is distributed under GNU GPL, either version 3 of the License,
 or (at your option) any later version. See the file COPYING for details.
 
-PyMegara requires the following packages installed in order to
+Megara DRP requires the following packages installed in order to
 be able to be installed and work properly:
 
- - setuptools (http://peak.telecommunity.com/DevCenter/setuptools)
  - numpy (http://numpy.scipy.org/)
+ - scipy (http://www.scipy.org)
+ - astropy (http://www.astropy.org/)
+ - numina (http://guaix.fis.ucm.es/projects/numina/)
 
-Webpage: http://guaix.fis.ucm.es/hg/megara-drp/
+Webpage: https://guaix.fis.ucm.es/projects/megara
 Maintainer: sergiopr@fis.ucm.es
 

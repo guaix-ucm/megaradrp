@@ -1,0 +1,72 @@
+name: MEGARA
+configurations:
+  default: {}
+modes:
+- date: 2013-11-12
+  description: A mode where the recipe successes, used for testing
+  key: success
+  name: Success
+  reference: numina
+  status: FINAL
+  summary: A mode where the recipe successes
+- date: 2013-11-12
+  description: A mode where the recipe fails, used for testing
+  key: fail
+  name: Fail
+  reference: numina
+  status: FINAL
+  summary: A mode where the recipe fails
+- date: 2012-05-21
+  description: Recipe to process bias images
+  key: bias_image
+  name: Bias Image
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Recipe to process bias images
+- date: 2012-05-21
+  description: Lines and mode lines
+  key: dark_image
+  name: Dark current Image
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Dark current Image
+  uuid: 5b15db30-7774-4823-9645-e8ca27a866af
+- date: 2014-04-23
+  description: Lines and mode lines
+  key: fiber_flat_image
+  name: Fiber Flat Image
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Fiber Flat Image
+  uuid: 8a20058f-8887-4b6d-9b65-c113258eccee
+- date: 2014-04-25
+  description: Lines and mode lines
+  key: mos_image
+  name: Image with the fiber MOS
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Fiber MOS image
+  uuid: 6b2ea25b-e6e4-4e0c-b374-825c70387668
+- date: 2014-04-28
+  description: Lines and mode lines
+  key: flux_calibration
+  name: Pseudo flux-calibration
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Fiber MOS image
+  uuid: 9114511f-15d8-40d2-a0b1-e4a6202a3e39
+pipelines:
+  default:
+    recipes:
+      bias_image: megara.drp.recipes.BiasRecipe
+      dark_image: megara.drp.recipes.DarkRecipe
+      fiber_flat_image: megara.drp.recipes.FiberFlatRecipe
+      mos_image: megara.drp.recipes.FiberMOSRecipe
+      flux_calibration: megara.drp.recipes.calibration.PseudoFluxCalibrationRecipe
+      fail: numina.core.utils.AlwaysFailRecipe
+      success: numina.core.utils.AlwaysSuccessRecipe
+    version: 1
+  experimental:
+    recipes:
+      bias_image: megara.drp.recipes.experimental.BiasRecipe
+    version: 1
