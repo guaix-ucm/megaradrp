@@ -21,39 +21,39 @@
 
 
 '''
-    RAW_BIAS FrameDataProduct
-    RAW_DARK FrameDataProduct
-    RAW_FLAT FrameDataProduct
-    RAW_ILLUM FrameDataProduct
-    RAW_SCIENCE FrameDataProduct
+    RAW_BIAS DataFrameType
+    RAW_DARK DataFrameType
+    RAW_FLAT DataFrameType
+    RAW_ILLUM DataFrameType
+    RAW_SCIENCE DataFrameType
 
-    MASTER_BIAS  FrameDataProduct(detector)
-    MASTER_DARK  FrameDataProduct(detector, exposure)
-    MASTER_FLAT  FrameDataProduct(detector, grism)
-    MASTER_ILLUM FrameDataProduct(detector, grism)
+    MASTER_BIAS  DataFrameType(detector)
+    MASTER_DARK  DataFrameType(detector, exposure)
+    MASTER_FLAT  DataFrameType(detector, grism)
+    MASTER_ILLUM DataFrameType(detector, grism)
 
-    POINTING FrameDataProduct
-    MOSAIC FrameDataProduct
+    POINTING DataFrameType
+    MOSAIC DataFrameType
 
 '''
 
 import numpy
 
-from numina.core import FrameDataProduct, DataProduct
+from numina.core import DataFrameType, DataProductType
 
-class MasterBias(FrameDataProduct):
+class MasterBias(DataFrameType):
     pass
 
-class MasterDark(FrameDataProduct):
+class MasterDark(DataFrameType):
     pass
 
-class MasterFiberFlat(FrameDataProduct):
+class MasterFiberFlat(DataFrameType):
     pass
 
-class MasterSensitivity(FrameDataProduct):
+class MasterSensitivity(DataFrameType):
     pass
 
-class TraceMapType(DataProduct):
+class TraceMapType(DataProductType):
     def __init__(self, default=None):
         super(TraceMapType, self).__init__(ptype=numpy.ndarray, default=default)
 
