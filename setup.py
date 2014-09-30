@@ -1,7 +1,7 @@
 
 from setuptools import find_packages, setup
 
-BASE_PKGS=['megara', 'megara.drp', 'megara.drp.recipes']
+BASE_PKGS = find_packages(where='src', exclude=['drp', 'drp.*'])
 NAMESPACE_PKGS = ['numina.pipelines', 'numina.pipelines.megara']
 ALL_PKGS = BASE_PKGS + NAMESPACE_PKGS
 
@@ -9,7 +9,7 @@ setup(name='megaradrp',
       version='0.2dev',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
-      url='http://guaix.fis.ucm.es/hg/pymegara',
+      url='http://guaix.fis.ucm.es/hg/megaradrp',
       license='GPLv3',
       description='MEGARA Data Reduction Pipeline',
       packages=ALL_PKGS,
