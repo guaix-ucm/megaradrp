@@ -24,5 +24,5 @@ from numina.core import drp_load
 
 def megara_drp_load():
     '''Entry point to load MEGARA DRP.'''
-    drp_load('megara.drp', 'drp.yaml')
+    return drp_load('megara.drp', 'drp.yaml')
 
