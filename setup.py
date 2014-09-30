@@ -16,6 +16,11 @@ setup(name='megaradrp',
       package_dir={'megara': 'src/megara', 'numina.pipelines': 'src/drp'},
       package_data={'megara.drp': ['drp.yaml', 'primary.txt']},
       install_requires=['numpy', 'astropy', 'scipy', 'numina>=0.12.0'],
+      entry_points = {
+        'numina.pipeline': [
+            'megara = megara.drp.loader:megara_drp_load',
+            ]
+        },
       classifiers=[
                    "Programming Language :: Python :: 2.7",
                    'Development Status :: 3 - Alpha',
