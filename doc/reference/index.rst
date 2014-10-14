@@ -1,9 +1,9 @@
 
 .. _reference:
 
-==================
-PyMegara Reference
-==================
+=====================
+MEGARA DRP Reference
+=====================
 
 
 :Release: |version|
@@ -17,3 +17,19 @@ PyMegara Reference
    sufficient detail.
 
 .. module:: megara
+
+.. toctree::
+   :maxdepth: 2
+
+   recipes
+   dataproducts
+
+   
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
+* :ref:`glossary`
+

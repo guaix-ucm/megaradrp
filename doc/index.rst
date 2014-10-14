@@ -1,22 +1,23 @@
-.. PyMegara documentation master file, created by
-   sphinx-quickstart on Mon Oct 28 19:05:57 2013.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. _contents:
 
-PyMegara Documentation
+MEGARA DRP documentation
 ========================
 
-Welcome. This is the Documentation for PyMegara (version |version|),
+Welcome. This is the Documentation for MEGARA DRP (version |version|).
 
-PyMegara user guide: :ref:`user`
-
-PyMegara reference guide: :ref:`reference`
-
-Contents:
+MEGARA is a...
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
-   user/index
+   intro
+   deploy
+   recipes
+   products
+   auxiliary
+   calibration
+   scientific
+   glossary
    reference/index
+
 
