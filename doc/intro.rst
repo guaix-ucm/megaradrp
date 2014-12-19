@@ -28,7 +28,7 @@ be able to be installed and work properly:
  - `numina <http://guaix.fis.ucm.es/hg/numina/>`_
 
 Additional packages are optionally required:
- - `nose <http://somethingaboutorange.com/mrl/projects/nose>`_ to run the tests
+ - `py.test <http://pytest.org>`_ to run the tests
  - `sphinx`_ to build the documentation
 
 Webpage: https://guaix.fis.ucm.es/projects/megara/

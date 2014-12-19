@@ -2,9 +2,9 @@
 Image data products
 ===================
 
-These data products are saved to disk as FITS files. PyEmir makes use of the FITS headers
+These data products are saved to disk as FITS files. MEGARA DRP makes use of the FITS headers
 to record information about the data processing. This information may be recorded using other
-methods as well, such as the GTC Database or the standalone Pontifex database.
+methods as well, such as the GTC Database.
 
 The following headers are included in all image data products and record information
 about the version of Numina and the name and version of the recipe used.
@@ -21,7 +21,7 @@ about the version of Numina and the name and version of the recipe used.
 Master Bias frames
 *******************
 
-Bias frames are produced by the recipe :class:`~emir.recipes.BiasRecipe`. Each bias frame is a 
+Bias frames are produced by the recipe :class:`~megaradrp.recipes.BiasRecipe`. Each bias frame is a 
 multiextension FITS file with the following extensions.
 
   ===============    =======   ========   =======================
@@ -33,12 +33,12 @@ multiextension FITS file with the following extensions.
   ``MAP``            Image                Number of pixels used to compute the bias level
   ===============    =======   ========   =======================
 
-Master bias frames are represented by :class:`~emir.dataproducts.MasterBias`.
+Master bias frames are represented by :class:`~megaradrp.dataproducts.MasterBias`.
 
 Master Dark frames
 ******************
 
-Master dark frames are produced by the recipe :class:`~emir.recipes.DarkRecipe`. Each dark frame is a 
+Master dark frames are produced by the recipe :class:`~megaradrp.recipes.DarkRecipe`. Each dark frame is a 
 multiextension FITS file with the following extensions.
 
   ===============    =======   ========   =======================
@@ -50,6 +50,6 @@ multiextension FITS file with the following extensions.
   ``MAP``            Image                Number of pixels used to compute the dark level
   ===============    =======   ========   =======================
 
-Master dark frames are represented by :class:`~emir.dataproducts.MasterDark`.
+Master dark frames are represented by :class:`~megaradrp.dataproducts.MasterDark`.
 
 

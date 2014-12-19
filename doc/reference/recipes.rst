@@ -1,8 +1,8 @@
 
-:mod:`megara.drp.recipes` --- Reduction Recipes for MEGARA
+:mod:`megara.drprecipes` --- Reduction Recipes for MEGARA
 ==========================================================
 
-.. module:: megara.drp.recipes
+.. module:: megaradrp.recipes
    :synopsis:  Reduction Recipes for MEGARA
 
 Recipes for auxiliary modes
@@ -12,11 +12,23 @@ Recipes for auxiliary modes
 
    Bias Recipe
 
+.. class:: BiasRecipeRequirement
+
+   Bias Recipe Requirement
+
+.. class:: BiasRecipeResult
+
+   Bias Recipe Result
+
 .. class:: DarkRecipe
 
    Dark Recipe
 
-.. class:: IntensityFlatRecipe
+.. class:: DarkRecipeRequirement
 
-   Intensity Flat Recipe
+   Dark Recipe Requirement
+
+.. class:: DarkRecipeResult
+
+   Dark Recipe Result
 

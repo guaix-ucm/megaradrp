@@ -1,8 +1,8 @@
 
-:mod:`megara.drp.dataproducts` --- Data products of the MEGARA pipeline
+:mod:`megaradrp.dataproducts` --- Data products of the MEGARA pipeline
 ========================================================================
 
-.. module:: megara.drp.dataproducts
+.. module:: megaradrp.dataproducts
    :synopsis:  Data products of the MEGARA pipeline
 
 .. class:: FrameDataProduct

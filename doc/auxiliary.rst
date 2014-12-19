@@ -5,9 +5,9 @@ Bias Image
 ----------
 
 :Mode: Bias Image
-:Recipe class: :class:`~megara.drp.recipes.BiasRecipe`
-:Input class: :class:`~megara.drp.recipes.BiasRecipeInput`
-:Result class: :class:`~megara.drp.recipes.BiasRecipeResult`
+:Recipe class: :class:`~megaradrp.recipes.BiasRecipe`
+:Input class: :class:`~megaradrp.recipes.BiasRecipeInput`
+:Result class: :class:`~megaradrp.recipes.BiasRecipeResult`
 
 The actions to calibrate the zero (pedestal) level of the detector
 plus associated control electronic by taken images with null
@@ -35,9 +35,9 @@ Products
 +-------------------+---------------------------------------------------------+
 | Name              | Type                                                    |
 +===================+=========================================================+
-| ``'biasframe'``   | :class:`~megara.drp.dataproducts.MasterBias`            |
+| ``'biasframe'``   | :class:`~megaradrp.dataproducts.MasterBias`            |
 +-------------------+---------------------------------------------------------+
-| ``'stats'``       | :class:`~megara.drp.dataproducts.ChannelLevelStatistics`|
+| ``'stats'``       | :class:`~megaradrp.dataproducts.ChannelLevelStatistics`|
 +-------------------+---------------------------------------------------------+
 
 .. _ff-recipe-label:
