@@ -58,15 +58,15 @@ modes:
 pipelines:
   default:
     recipes:
-      bias_image: megara.drp.recipes.BiasRecipe
-      dark_image: megara.drp.recipes.DarkRecipe
-      fiber_flat_image: megara.drp.recipes.FiberFlatRecipe
-      mos_image: megara.drp.recipes.FiberMOSRecipe
-      flux_calibration: megara.drp.recipes.calibration.PseudoFluxCalibrationRecipe
+      bias_image: megaradrp.recipes.BiasRecipe
+      dark_image: megaradrp.recipes.DarkRecipe
+      fiber_flat_image: megaradrp.recipes.FiberFlatRecipe
+      mos_image: megaradrp.recipes.FiberMOSRecipe
+      flux_calibration: megaradrp.recipes.calibration.PseudoFluxCalibrationRecipe
       fail: numina.core.utils.AlwaysFailRecipe
       success: numina.core.utils.AlwaysSuccessRecipe
     version: 1
   experimental:
     recipes:
-      bias_image: megara.drp.recipes.experimental.BiasRecipe
+      bias_image: megaradrp.recipes.experimental.BiasRecipe
     version: 1

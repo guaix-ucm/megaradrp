@@ -27,8 +27,8 @@ from numina.core import Requirement, Product, DataProductRequirement
 from numina.core.requirements import ObservationResultRequirement
 from numina.core import define_requirements, define_result
 
-from megara.drp.core import RecipeResult
-from megara.drp.products import MasterBias
+from megaradrp.core import RecipeResult
+from megaradrp.products import MasterBias
 
 _logger = logging.getLogger('numina.recipes.megara')
 

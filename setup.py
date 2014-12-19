@@ -10,12 +10,12 @@ setup(name='megaradrp',
       license='GPLv3',
       description='MEGARA Data Reduction Pipeline',
       packages=find_packages(where='src'),
-      package_dir={'megara': 'src/megara'},
-      package_data={'megara.drp': ['drp.yaml', 'primary.txt']},
+      package_dir={'': 'src'},
+      package_data={'megaradrp': ['drp.yaml', 'primary.txt']},
       install_requires=['numpy', 'astropy', 'scipy', 'numina>=0.12.0'],
       entry_points = {
         'numina.pipeline.1': [
-            'megara = megara.drp.loader:megara_drp_load',
+            'megara = megaradrp.loader:megara_drp_load',
             ]
         },
       classifiers=[

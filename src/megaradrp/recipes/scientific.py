@@ -33,14 +33,14 @@ from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
 
-from megara.drp.core import OverscanCorrector, TrimImage
-from megara.drp.core import ApertureExtractor, FiberFlatCorrector
+from megaradrp.core import OverscanCorrector, TrimImage
+from megaradrp.core import ApertureExtractor, FiberFlatCorrector
 
 # from numina.logger import log_to_history
 
-from megara.drp.core import RecipeResult
-from megara.drp.products import MasterBias, MasterFiberFlat
-from megara.drp.products import MasterSensitivity,  TraceMapType
+from megaradrp.core import RecipeResult
+from megaradrp.products import MasterBias, MasterFiberFlat
+from megaradrp.products import MasterSensitivity,  TraceMapType
 _logger = logging.getLogger('numina.recipes.megara')
 
 
