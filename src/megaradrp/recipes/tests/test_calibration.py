@@ -35,6 +35,7 @@ from megaradrp.recipes import BiasRecipe
 _cache = NuminaDiskCache()
 _cache.load()
 
+
 def test_recipe1():
 
     drps = init_drp_system()
@@ -54,8 +55,7 @@ def test_recipe2():
     BASE_URL = 'http://guaix.fis.ucm.es/~spr/megara_test/BIAS/%s'
     images = ['e99d2937d2c29a27c0ba4eebfcf7918e',
               'e99d2937d2c29a27c0ba4eebfcf7918e',
-              'e99d2937d2c29a27c0ba4eebfcf7918e',
-             ]
+              'e99d2937d2c29a27c0ba4eebfcf7918e']
 
     fs = [download_cache(BASE_URL % i, _cache) for i in images]
 
@@ -77,8 +77,8 @@ def test_recipe2():
     ri = RR(obresult=ob)
 
     result = recipe.run(ri)
-    #assert result.qc >= QC.UNKNOWN
-    
+    # assert result.qc >= QC.UNKNOWN
+
     # Checks on the image
     hdulist = result.biasframe.open()
     assert len(hdulist) == 1
@@ -98,4 +98,3 @@ def test_recipe2():
     # In the end, remove the files
     for f in fs:
         os.remove(f.name)
-
