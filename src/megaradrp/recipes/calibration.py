@@ -384,3 +384,223 @@ class PseudoFluxCalibrationRecipe(BaseRecipe):
         result = PseudoFluxCalibrationRecipeResult(
             calibration=hdu_sens, calibration_rss=hdu_t)
         return result
+
+
+class TwiligthFiberFlatRecipeRequirements(RecipeRequirements):
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
+    obresult = ObservationResultRequirement()
+
+
+class TwiligthFiberFlatRecipeResult(RecipeResult):
+    fiberflat_frame = Product(MasterFiberFlat)
+    fiberflat_rss = Product(MasterFiberFlat)
+    traces = Product(ArrayType)
+
+
+@define_requirements(TwiligthFiberFlatRecipeRequirements)
+@define_result(TwiligthFiberFlatRecipeResult)
+class TwiligthFiberFlatRecipe(BaseRecipe):
+
+    def __init__(self):
+        super(TwiligthFiberFlatRecipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    def run(self, rinput):
+        pass
+
+
+class ArcRecipeRequirements(RecipeRequirements):
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
+    obresult = ObservationResultRequirement()
+
+
+class ArcRecipeResult(RecipeResult):
+    fiberflat_frame = Product(MasterFiberFlat)
+    fiberflat_rss = Product(MasterFiberFlat)
+    traces = Product(ArrayType)
+
+
+@define_requirements(ArcRecipeRequirements)
+@define_result(ArcRecipeResult)
+class ArcRecipe(BaseRecipe):
+
+    def __init__(self):
+        super(ArcRecipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    def run(self, rinput):
+        pass
+
+
+class LCB_IFU_StdStarRecipeRequirements(RecipeRequirements):
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
+    obresult = ObservationResultRequirement()
+
+
+class LCB_IFU_StdStarRecipeResult(RecipeResult):
+    fiberflat_frame = Product(MasterFiberFlat)
+    fiberflat_rss = Product(MasterFiberFlat)
+    traces = Product(ArrayType)
+
+
+@define_requirements(LCB_IFU_StdStarRecipeRequirements)
+@define_result(LCB_IFU_StdStarRecipeResult)
+class LCB_IFU_StdStarRecipe(BaseRecipe):
+
+    def __init__(self):
+        super(LCB_IFU_StdStarRecipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    def run(self, rinput):
+        pass
+
+
+class FiberMOS_StdStarRecipeRequirements(RecipeRequirements):
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
+    obresult = ObservationResultRequirement()
+
+
+class FiberMOS_StdStarRecipeResult(RecipeResult):
+    fiberflat_frame = Product(MasterFiberFlat)
+    fiberflat_rss = Product(MasterFiberFlat)
+    traces = Product(ArrayType)
+
+
+@define_requirements(FiberMOS_StdStarRecipeRequirements)
+@define_result(FiberMOS_StdStarRecipeResult)
+class FiberMOS_StdStarRecipe(BaseRecipe):
+
+    def __init__(self):
+        super(FiberMOS_StdStarRecipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    def run(self, rinput):
+        pass
+
+
+class SensitivityFromStdStarRecipeRequirements(RecipeRequirements):
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
+    obresult = ObservationResultRequirement()
+
+
+class SensitivityFromStdStarRecipeResult(RecipeResult):
+    fiberflat_frame = Product(MasterFiberFlat)
+    fiberflat_rss = Product(MasterFiberFlat)
+    traces = Product(ArrayType)
+
+
+@define_requirements(SensitivityFromStdStarRecipeRequirements)
+@define_result(SensitivityFromStdStarRecipeResult)
+class SensitivityFromStdStarRecipe(BaseRecipe):
+
+    def __init__(self):
+        super(SensitivityFromStdStarRecipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    def run(self, rinput):
+        pass
+
+
+class S_And_E_FromStdStarsRecipeRequirements(RecipeRequirements):
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
+    obresult = ObservationResultRequirement()
+
+
+class S_And_E_FromStdStarsRecipeResult(RecipeResult):
+    fiberflat_frame = Product(MasterFiberFlat)
+    fiberflat_rss = Product(MasterFiberFlat)
+    traces = Product(ArrayType)
+
+
+@define_requirements(S_And_E_FromStdStarsRecipeRequirements)
+@define_result(S_And_E_FromStdStarsRecipeResult)
+class S_And_E_FromStdStarsRecipe(BaseRecipe):
+
+    def __init__(self):
+        super(SensitivityFromStdStarRecipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    def run(self, rinput):
+        pass
+
+
+class BadPixelsMaskRecipeRequirements(RecipeRequirements):
+    obresult = ObservationResultRequirement()
+
+
+class BadPixelsMaskRecipeResult(RecipeResult):
+    biasframe = Product(MasterBias)
+
+
+@define_requirements(BadPixelsMaskRecipeRequirements)
+@define_result(BadPixelsMaskRecipeResult)
+class BadPixelsMaskRecipe(BaseRecipe):
+
+    '''Process BIAS images and create MASTER_BIAS.'''
+
+    def __init__(self):
+        super(BadPixelsMaskRecipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    def run(self, rinput):
+        pass
+
+
+class LinearityTestRecipeRequirements(RecipeRequirements):
+    obresult = ObservationResultRequirement()
+
+
+class LinearityTestRecipeResult(RecipeResult):
+    biasframe = Product(MasterBias)
+
+
+@define_requirements(LinearityTestRecipeRequirements)
+@define_result(LinearityTestRecipeResult)
+class LinearityTestRecipe(BaseRecipe):
+
+    '''Process BIAS images and create MASTER_BIAS.'''
+
+    def __init__(self):
+        super(LinearityTestRecipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    def run(self, rinput):
+        pass
+
+
+class TraceMapRecipeRequirements(RecipeRequirements):
+    obresult = ObservationResultRequirement()
+
+
+class TraceMapRecipeResult(RecipeResult):
+    biasframe = Product(MasterBias)
+
+
+@define_requirements(TraceMapRecipeRequirements)
+@define_result(TraceMapRecipeResult)
+class TraceMapRecipe(BaseRecipe):
+
+    def __init__(self):
+        super(TraceMapRecipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    def run(self, rinput):
+        pass
