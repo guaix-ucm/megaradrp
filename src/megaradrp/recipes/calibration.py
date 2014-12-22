@@ -70,9 +70,10 @@ class BiasRecipe(BaseRecipe):
             version="0.1.0"
         )
 
-    # FIXME find a better way of doing this automatically
-    # @log_to_history(_logger)
     def run(self, rinput):
+        return self.process(rinput.obresult)
+
+    def process(self, obresult):
         _logger.info('starting bias reduction')
 
         cdata = []
@@ -83,7 +84,7 @@ class BiasRecipe(BaseRecipe):
         basicflow = SerialFlow([o_c, t_i])
 
         try:
-            for frame in rinput.obresult.frames:
+            for frame in obresult.frames:
                 hdulist = frame.open()
                 hdulist = basicflow(hdulist)
                 cdata.append(hdulist)
@@ -98,11 +99,9 @@ class BiasRecipe(BaseRecipe):
                 hdulist.close()
 
         hdr = hdu.header
+        hdr = self.set_base_headers(hdr)
         hdr['IMGTYP'] = ('BIAS', 'Image type')
         hdr['NUMTYP'] = ('MASTER_BIAS', 'Data product type')
-        hdr['NUMXVER'] = (__version__, 'Numina package version')
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
         hdr['CCDMEAN'] = data[0].mean()
 
         varhdu = fits.ImageHDU(data[1], name='VARIANCE')
@@ -110,7 +109,7 @@ class BiasRecipe(BaseRecipe):
         hdulist = fits.HDUList([hdu, varhdu, num])
         _logger.info('bias reduction ended')
 
-        result = BiasRecipeResult(biasframe=hdu)
+        result = self.create_result(biasframe=hdu)
         return result
 
 
