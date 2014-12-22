@@ -141,7 +141,7 @@ class DarkRecipe(BaseRecipe):
 
         _logger.info('dark reduction ended')
 
-        result = DarkRecipeResult(darkframe=None)
+        result = self.create_result(darkframe=None)
         return result
 
 
@@ -200,9 +200,7 @@ class FiberFlatRecipe(BaseRecipe):
         hdr = hdu.header
         hdr['IMGTYP'] = ('FIBER_FLAT', 'Image type')
         hdr['NUMTYP'] = ('MASTER_FIBER_FLAT', 'Data product type')
-        hdr['NUMXVER'] = (__version__, 'Numina package version')
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdr = self.set_base_headers(hdr)
         hdr['CCDMEAN'] = data[0].mean()
 
         varhdu = fits.ImageHDU(data[1], name='VARIANCE')
@@ -326,9 +324,7 @@ class PseudoFluxCalibrationRecipe(BaseRecipe):
                 hdulist.close()
 
         hdr = hdu_t.header
-        hdr['NUMXVER'] = (__version__, 'Numina package version')
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdr = self.set_base_headers(hdr)
         hdr['CCDMEAN'] = data_t[0].mean()
         hdr['NUMTYP'] = ('SCIENCE_TARGET', 'Data product type')
 

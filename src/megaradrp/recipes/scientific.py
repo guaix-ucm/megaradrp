@@ -130,9 +130,7 @@ class FiberMOSRecipe(BaseRecipe):
             hdr['CRVAL2'] = 1
             hdr['CDELT2'] = 1
             hdr['CTYPE2'] = 'PIXEL'
-            hdr['NUMXVER'] = (__version__, 'Numina package version')
-            hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-            hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+            hdr = self.set_base_headers(hdr)
             hdr['CCDMEAN'] = data_s[0].mean()
             hdr['NUMTYP'] = (numtyp, 'Data product type')
             return hdr
@@ -157,5 +155,5 @@ class FiberMOSRecipe(BaseRecipe):
 
         _logger.info('MOS reduction ended')
 
-        result = FiberMOSRecipeResult(final=hdu_f, target=hdu_t, sky=hdu_s)
+        result = self.create_result(final=hdu_f, target=hdu_t, sky=hdu_s)
         return result
