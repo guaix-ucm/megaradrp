@@ -34,6 +34,7 @@ from numina.core import Product, DataProductRequirement, Requirement
 from numina.core import define_requirements, define_result
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
+from numina.core import RecipeError
 from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
@@ -74,6 +75,9 @@ class BiasRecipe(BaseRecipe):
     # @log_to_history(_logger)
     def run(self, rinput):
         _logger.info('starting bias reduction')
+
+        if not rinput.obresult.frames:
+            raise RecipeError('Frame list is empty')
 
         cdata = []
 
