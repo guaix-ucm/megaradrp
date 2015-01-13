@@ -74,12 +74,15 @@ class FiberFlatRecipe(BaseRecipe):
         )
 
     def run(self, rinput):
+        return self.process_base(rinput.obresult, rinput.master_bias)
+
+    def process_base(self, obresult, master_bias):
         _logger.info('starting fiber flat reduction')
 
         o_c = OverscanCorrector()
         t_i = TrimImage()
 
-        with rinput.master_bias.open() as hdul:
+        with master_bias.open() as hdul:
             mbias = hdul[0].data.copy()
             b_c = BiasCorrector(mbias)
 
@@ -88,7 +91,7 @@ class FiberFlatRecipe(BaseRecipe):
         cdata = []
 
         try:
-            for frame in rinput.obresult.frames:
+            for frame in obresult.frames:
                 hdulist = frame.open()
                 hdulist = basicflow(hdulist)
                 cdata.append(hdulist)
@@ -164,9 +167,9 @@ class FiberFlatRecipe(BaseRecipe):
 
         _logger.info('fiber flat reduction ended')
 
-        result = FiberFlatRecipeResult(fiberflat_frame=hdu,
-                                       fiberflat_rss=fits.PrimaryHDU(rss_norm),
-                                       traces=borders)
+        result = self.create_result(fiberflat_frame=hdu,
+                                    fiberflat_rss=fits.PrimaryHDU(rss_norm),
+                                    traces=borders)
 
         return result
 
