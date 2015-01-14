@@ -21,11 +21,11 @@ import pytest
 
 
 def pytest_addoption(parser):
-    parser.addoption("--runremote", action="store_true",
+    parser.addoption("--run-remote", action="store_true",
                      help="run remote tests")
 
 
 def pytest_runtest_setup(item):
-    if ('remote_data' in item.keywords and
-            not item.config.getoption("--runremote")):
-        pytest.skip("need --runremote option to run")
+    if ('remote' in item.keywords and
+            not item.config.getoption("--run-remote")):
+        pytest.skip("need --run-remote option to run")
