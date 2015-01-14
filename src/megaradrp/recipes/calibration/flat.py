@@ -106,7 +106,7 @@ class FiberFlatRecipe(BaseRecipeAutoQC):
         varhdu = fits.ImageHDU(data[1], name='VARIANCE')
         num = fits.ImageHDU(data[2], name='MAP')
         result = fits.HDUList([hdu, varhdu, num])
-        
+
         _logger.info('prereduction ended')
 
         return result

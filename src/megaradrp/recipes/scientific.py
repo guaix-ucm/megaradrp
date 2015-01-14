@@ -21,13 +21,10 @@
 
 import logging
 
-import numpy
 from astropy.io import fits
 
-from numina import __version__
-from numina.core import BaseRecipe, RecipeRequirements
+from numina.core import BaseRecipeAutoQC
 from numina.core import Product, DataProductRequirement
-from numina.core import define_requirements, define_result
 from numina.core.requirements import ObservationResultRequirement, Requirement
 from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
@@ -38,13 +35,17 @@ from megaradrp.core import ApertureExtractor, FiberFlatCorrector
 
 # from numina.logger import log_to_history
 
-from megaradrp.core import RecipeResult
 from megaradrp.products import MasterBias, MasterFiberFlat
 from megaradrp.products import MasterSensitivity,  TraceMapType
+
+
 _logger = logging.getLogger('numina.recipes.megara')
 
 
-class FiberMOSRecipeRequirements(RecipeRequirements):
+class FiberMOSRecipe(BaseRecipeAutoQC):
+    '''Process MOS images.'''
+
+    # Requirements
     obresult = ObservationResultRequirement()
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
     master_fiber_flat = DataProductRequirement(
@@ -53,18 +54,10 @@ class FiberMOSRecipeRequirements(RecipeRequirements):
     sensitivity = DataProductRequirement(
         MasterSensitivity, 'Sensitivity', optional=True)
 
-
-class FiberMOSRecipeResult(RecipeResult):
+    # Products
     final = Product(MasterFiberFlat)
     target = Product(MasterFiberFlat)
     sky = Product(MasterFiberFlat)
-
-
-@define_requirements(FiberMOSRecipeRequirements)
-@define_result(FiberMOSRecipeResult)
-class FiberMOSRecipe(BaseRecipe):
-
-    '''Process MOS images.'''
 
     def __init__(self):
         super(FiberMOSRecipe, self).__init__(

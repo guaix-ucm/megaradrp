@@ -28,9 +28,8 @@ from scipy.interpolate import interp1d
 from astropy.io import fits
 from astropy import wcs
 
-from numina.core import BaseRecipe, RecipeRequirements
+from numina.core import BaseRecipeAutoQC
 from numina.core import Product, DataProductRequirement, Requirement
-from numina.core import define_requirements, define_result
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
 from numina.core import RecipeError
@@ -43,7 +42,6 @@ from megaradrp.core import ApertureExtractor, FiberFlatCorrector
 from megaradrp.core import peakdet
 # from numina.logger import log_to_history
 
-from megaradrp.core import RecipeResult
 from megaradrp.products import MasterBias, MasterDark, MasterFiberFlat
 from megaradrp.products import TraceMapType, MasterSensitivity
 
@@ -53,19 +51,12 @@ from .flat import FiberFlatRecipe, TraceMapRecipe, TwiligthFiberFlatRecipe
 _logger = logging.getLogger('numina.recipes.megara')
 
 
-class BiasRecipeRequirements(RecipeRequirements):
+class BiasRecipe(BaseRecipeAutoQC):
+    '''Process BIAS images and create MASTER_BIAS.'''
+
     obresult = ObservationResultRequirement()
 
-
-class BiasRecipeResult(RecipeResult):
     biasframe = Product(MasterBias)
-
-
-@define_requirements(BiasRecipeRequirements)
-@define_result(BiasRecipeResult)
-class BiasRecipe(BaseRecipe):
-
-    '''Process BIAS images and create MASTER_BIAS.'''
 
     def __init__(self):
         super(BiasRecipe, self).__init__(
@@ -119,19 +110,13 @@ class BiasRecipe(BaseRecipe):
         return result
 
 
-class DarkRecipeRequirements(BiasRecipeRequirements):
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
-
-
-class DarkRecipeResult(RecipeResult):
-    darkframe = Product(MasterDark)
-
-
-@define_requirements(DarkRecipeRequirements)
-@define_result(DarkRecipeResult)
-class DarkRecipe(BaseRecipe):
+class DarkRecipe(BaseRecipeAutoQC):
 
     '''Process DARK images and provide MASTER_DARK. '''
+
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
+
+    darkframe = Product(MasterDark)
 
     def __init__(self):
         super(DarkRecipe, self).__init__(
@@ -151,9 +136,8 @@ class DarkRecipe(BaseRecipe):
         return result
 
 
+class PseudoFluxCalibrationRecipe(BaseRecipeAutoQC):
 
-
-class PseudoFluxCalibrationRecipeRequirements(RecipeRequirements):
     obresult = ObservationResultRequirement()
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
     master_fiber_flat = DataProductRequirement(
@@ -162,15 +146,8 @@ class PseudoFluxCalibrationRecipeRequirements(RecipeRequirements):
     reference_spectrum = DataProductRequirement(
         MasterFiberFlat, 'Reference spectrum')
 
-
-class PseudoFluxCalibrationRecipeResult(RecipeResult):
     calibration = Product(MasterSensitivity)
     calibration_rss = Product(MasterSensitivity)
-
-
-@define_requirements(PseudoFluxCalibrationRecipeRequirements)
-@define_result(PseudoFluxCalibrationRecipeResult)
-class PseudoFluxCalibrationRecipe(BaseRecipe):
 
     def __init__(self):
         super(PseudoFluxCalibrationRecipe, self).__init__(
@@ -263,25 +240,19 @@ class PseudoFluxCalibrationRecipe(BaseRecipe):
 
         _logger.info('pseudo flux calibration reduction ended')
 
-        result = PseudoFluxCalibrationRecipeResult(
+        result = self.create_result(
             calibration=hdu_sens, calibration_rss=hdu_t)
         return result
 
 
-class ArcRecipeRequirements(RecipeRequirements):
+class ArcRecipe(BaseRecipeAutoQC):
+
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
     obresult = ObservationResultRequirement()
 
-
-class ArcRecipeResult(RecipeResult):
     fiberflat_frame = Product(MasterFiberFlat)
     fiberflat_rss = Product(MasterFiberFlat)
     traces = Product(ArrayType)
-
-
-@define_requirements(ArcRecipeRequirements)
-@define_result(ArcRecipeResult)
-class ArcRecipe(BaseRecipe):
 
     def __init__(self):
         super(ArcRecipe, self).__init__(
@@ -293,20 +264,14 @@ class ArcRecipe(BaseRecipe):
         pass
 
 
-class LCB_IFU_StdStarRecipeRequirements(RecipeRequirements):
+class LCB_IFU_StdStarRecipe(BaseRecipeAutoQC):
+
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
     obresult = ObservationResultRequirement()
 
-
-class LCB_IFU_StdStarRecipeResult(RecipeResult):
     fiberflat_frame = Product(MasterFiberFlat)
     fiberflat_rss = Product(MasterFiberFlat)
     traces = Product(ArrayType)
-
-
-@define_requirements(LCB_IFU_StdStarRecipeRequirements)
-@define_result(LCB_IFU_StdStarRecipeResult)
-class LCB_IFU_StdStarRecipe(BaseRecipe):
 
     def __init__(self):
         super(LCB_IFU_StdStarRecipe, self).__init__(
@@ -318,20 +283,14 @@ class LCB_IFU_StdStarRecipe(BaseRecipe):
         pass
 
 
-class FiberMOS_StdStarRecipeRequirements(RecipeRequirements):
+class FiberMOS_StdStarRecipe(BaseRecipeAutoQC):
+
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
     obresult = ObservationResultRequirement()
 
-
-class FiberMOS_StdStarRecipeResult(RecipeResult):
     fiberflat_frame = Product(MasterFiberFlat)
     fiberflat_rss = Product(MasterFiberFlat)
     traces = Product(ArrayType)
-
-
-@define_requirements(FiberMOS_StdStarRecipeRequirements)
-@define_result(FiberMOS_StdStarRecipeResult)
-class FiberMOS_StdStarRecipe(BaseRecipe):
 
     def __init__(self):
         super(FiberMOS_StdStarRecipe, self).__init__(
@@ -343,20 +302,14 @@ class FiberMOS_StdStarRecipe(BaseRecipe):
         pass
 
 
-class SensitivityFromStdStarRecipeRequirements(RecipeRequirements):
+class SensitivityFromStdStarRecipe(BaseRecipeAutoQC):
+
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
     obresult = ObservationResultRequirement()
 
-
-class SensitivityFromStdStarRecipeResult(RecipeResult):
     fiberflat_frame = Product(MasterFiberFlat)
     fiberflat_rss = Product(MasterFiberFlat)
     traces = Product(ArrayType)
-
-
-@define_requirements(SensitivityFromStdStarRecipeRequirements)
-@define_result(SensitivityFromStdStarRecipeResult)
-class SensitivityFromStdStarRecipe(BaseRecipe):
 
     def __init__(self):
         super(SensitivityFromStdStarRecipe, self).__init__(
@@ -368,20 +321,14 @@ class SensitivityFromStdStarRecipe(BaseRecipe):
         pass
 
 
-class S_And_E_FromStdStarsRecipeRequirements(RecipeRequirements):
+class S_And_E_FromStdStarsRecipe(BaseRecipeAutoQC):
+
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
     obresult = ObservationResultRequirement()
 
-
-class S_And_E_FromStdStarsRecipeResult(RecipeResult):
     fiberflat_frame = Product(MasterFiberFlat)
     fiberflat_rss = Product(MasterFiberFlat)
     traces = Product(ArrayType)
-
-
-@define_requirements(S_And_E_FromStdStarsRecipeRequirements)
-@define_result(S_And_E_FromStdStarsRecipeResult)
-class S_And_E_FromStdStarsRecipe(BaseRecipe):
 
     def __init__(self):
         super(SensitivityFromStdStarRecipe, self).__init__(
@@ -393,19 +340,13 @@ class S_And_E_FromStdStarsRecipe(BaseRecipe):
         pass
 
 
-class BadPixelsMaskRecipeRequirements(RecipeRequirements):
-    obresult = ObservationResultRequirement()
-
-
-class BadPixelsMaskRecipeResult(RecipeResult):
-    biasframe = Product(MasterBias)
-
-
-@define_requirements(BadPixelsMaskRecipeRequirements)
-@define_result(BadPixelsMaskRecipeResult)
-class BadPixelsMaskRecipe(BaseRecipe):
+class BadPixelsMaskRecipe(BaseRecipeAutoQC):
 
     '''Process BIAS images and create MASTER_BIAS.'''
+
+    obresult = ObservationResultRequirement()
+
+    biasframe = Product(MasterBias)
 
     def __init__(self):
         super(BadPixelsMaskRecipe, self).__init__(
@@ -417,19 +358,13 @@ class BadPixelsMaskRecipe(BaseRecipe):
         pass
 
 
-class LinearityTestRecipeRequirements(RecipeRequirements):
-    obresult = ObservationResultRequirement()
-
-
-class LinearityTestRecipeResult(RecipeResult):
-    biasframe = Product(MasterBias)
-
-
-@define_requirements(LinearityTestRecipeRequirements)
-@define_result(LinearityTestRecipeResult)
-class LinearityTestRecipe(BaseRecipe):
+class LinearityTestRecipe(BaseRecipeAutoQC):
 
     '''Process BIAS images and create MASTER_BIAS.'''
+
+    obresult = ObservationResultRequirement()
+
+    biasframe = Product(MasterBias)
 
     def __init__(self):
         super(LinearityTestRecipe, self).__init__(

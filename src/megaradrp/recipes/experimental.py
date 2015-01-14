@@ -21,31 +21,22 @@
 
 import logging
 
-from numina.core import RecipeRequirements
-from numina.core.recipes import BaseRecipe
-from numina.core import Requirement, Product, DataProductRequirement
-from numina.core.requirements import ObservationResultRequirement
-from numina.core import define_requirements, define_result
 
-from megaradrp.core import RecipeResult
+from numina.core.recipes import BaseRecipeAutoQC
+from numina.core import Product
+from numina.core.requirements import ObservationResultRequirement
+
 from megaradrp.products import MasterBias
 
 _logger = logging.getLogger('numina.recipes.megara')
 
 
-class BiasRecipeRequirements(RecipeRequirements):
+class BiasRecipe(BaseRecipeAutoQC):
+    '''Process BIAS images and create MASTER_BIAS.'''
+
     obs = ObservationResultRequirement()
 
-
-class BiasRecipeResult(RecipeResult):
     biasframe = Product(MasterBias)
-
-
-@define_requirements(BiasRecipeRequirements)
-@define_result(BiasRecipeResult)
-class BiasRecipe(BaseRecipe):
-
-    '''Process BIAS images and create MASTER_BIAS.'''
 
     def __init__(self):
         super(BiasRecipe, self).__init__(
@@ -59,5 +50,5 @@ class BiasRecipe(BaseRecipe):
         _logger.info('stacking images')
         _logger.info('bias reduction ended')
 
-        result = BiasRecipeResult(biasframe=None)
+        result = self.create_result(biasframe=None)
         return result
