@@ -28,9 +28,8 @@ from scipy.interpolate import interp1d
 from astropy.io import fits
 from astropy import wcs
 
-from numina.core import BaseRecipe, RecipeRequirements
+from numina.core import BaseRecipeAutoQC
 from numina.core import Product, DataProductRequirement, Requirement
-from numina.core import define_requirements, define_result
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
 from numina.core import RecipeError
@@ -43,29 +42,22 @@ from megaradrp.core import ApertureExtractor, FiberFlatCorrector
 from megaradrp.core import peakdet
 # from numina.logger import log_to_history
 
-from megaradrp.core import RecipeResult
 from megaradrp.products import MasterBias, MasterDark, MasterFiberFlat
 from megaradrp.products import TraceMapType, MasterSensitivity
 
 _logger = logging.getLogger('numina.recipes.megara')
 
 
-class FiberFlatRecipeRequirements(RecipeRequirements):
+class FiberFlatRecipe(BaseRecipeAutoQC):
+    '''Process FIBER_FLAT images and create MASTER_FIBER_FLAT.'''
+
+    # Requirements
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
     obresult = ObservationResultRequirement()
-
-
-class FiberFlatRecipeResult(RecipeResult):
+    # Products
     fiberflat_frame = Product(MasterFiberFlat)
     fiberflat_rss = Product(MasterFiberFlat)
     traces = Product(ArrayType)
-
-
-@define_requirements(FiberFlatRecipeRequirements)
-@define_result(FiberFlatRecipeResult)
-class FiberFlatRecipe(BaseRecipe):
-
-    '''Process FIBER_FLAT images and create MASTER_FIBER_FLAT.'''
 
     def __init__(self):
         super(FiberFlatRecipe, self).__init__(
@@ -76,8 +68,8 @@ class FiberFlatRecipe(BaseRecipe):
     def run(self, rinput):
         return self.process_base(rinput.obresult, rinput.master_bias)
 
-    def process_base(self, obresult, master_bias):
-        _logger.info('starting fiber flat reduction')
+    def process_common(self, obresult, master_bias):
+        _logger.info('starting prep reduction')
 
         o_c = OverscanCorrector()
         t_i = TrimImage()
@@ -113,11 +105,20 @@ class FiberFlatRecipe(BaseRecipe):
 
         varhdu = fits.ImageHDU(data[1], name='VARIANCE')
         num = fits.ImageHDU(data[2], name='MAP')
-        hdulist = fits.HDUList([hdu, varhdu, num])
+        result = fits.HDUList([hdu, varhdu, num])
+        
+        _logger.info('prereduction ended')
+
+        return result
+
+    def process_base(self, obresult, master_bias):
+        _logger.info('starting fiber flat reduction')
+
+        reduced = self.process_common(obresult, master_bias)
+        mm = reduced[0].data
 
         # Trace extract and normalize
         # Cut a region in the center
-        mm = data[0]
 
         cut = mm[:, 1980:2020]
         colcut = cut.sum(axis=1) / 40.0
@@ -167,27 +168,21 @@ class FiberFlatRecipe(BaseRecipe):
 
         _logger.info('fiber flat reduction ended')
 
-        result = self.create_result(fiberflat_frame=hdu,
+        result = self.create_result(fiberflat_frame=reduced,
                                     fiberflat_rss=fits.PrimaryHDU(rss_norm),
                                     traces=borders)
 
         return result
 
 
-class TwiligthFiberFlatRecipeRequirements(RecipeRequirements):
+class TwiligthFiberFlatRecipe(BaseRecipeAutoQC):
+
     master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
     obresult = ObservationResultRequirement()
 
-
-class TwiligthFiberFlatRecipeResult(RecipeResult):
     fiberflat_frame = Product(MasterFiberFlat)
     fiberflat_rss = Product(MasterFiberFlat)
     traces = Product(ArrayType)
-
-
-@define_requirements(TwiligthFiberFlatRecipeRequirements)
-@define_result(TwiligthFiberFlatRecipeResult)
-class TwiligthFiberFlatRecipe(BaseRecipe):
 
     def __init__(self):
         super(TwiligthFiberFlatRecipe, self).__init__(
@@ -199,17 +194,10 @@ class TwiligthFiberFlatRecipe(BaseRecipe):
         pass
 
 
-class TraceMapRecipeRequirements(RecipeRequirements):
+class TraceMapRecipe(BaseRecipeAutoQC):
+
     obresult = ObservationResultRequirement()
-
-
-class TraceMapRecipeResult(RecipeResult):
     biasframe = Product(MasterBias)
-
-
-@define_requirements(TraceMapRecipeRequirements)
-@define_result(TraceMapRecipeResult)
-class TraceMapRecipe(BaseRecipe):
 
     def __init__(self):
         super(TraceMapRecipe, self).__init__(
