@@ -17,8 +17,6 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from numina.core.recipeinout import RecipeResultAutoQC as RecipeResult
-
 
 from astropy.io import fits
 import numpy as np
