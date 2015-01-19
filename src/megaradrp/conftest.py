@@ -17,15 +17,5 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import pytest
+from numina.tests.pytest_plugins import *
 
-
-def pytest_addoption(parser):
-    parser.addoption("--run-remote", action="store_true",
-                     help="run remote tests")
-
-
-def pytest_runtest_setup(item):
-    if ('remote' in item.keywords and
-            not item.config.getoption("--run-remote")):
-        pytest.skip("need --run-remote option to run")
