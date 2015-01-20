@@ -20,12 +20,10 @@
 '''Tests for the calibration module.'''
 
 import os
-import tarfile
 
 import pytest
 
-from numina.tests.download import download_cache
-from numina.tests.diskcache import NuminaDiskCache
+from numina.tests.testcache import download_cache
 
 from numina.user import main
 from numina.core import init_drp_system, import_object
@@ -34,9 +32,7 @@ from numina.core import DataFrame
 from megaradrp.recipes import BiasRecipe
 
 
-_cache = NuminaDiskCache()
-_cache.load()
-
+BASE_URL = 'http://guaix.fis.ucm.es/~spr/megara_test/'
 
 def test_recipe1():
 
@@ -59,7 +55,7 @@ def test_recipe2():
               'e99d2937d2c29a27c0ba4eebfcf7918e',
               'e99d2937d2c29a27c0ba4eebfcf7918e']
 
-    fs = [download_cache(BASE_URL % i, _cache) for i in images]
+    fs = [download_cache(BASE_URL % i) for i in images]
 
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
@@ -101,28 +97,9 @@ def test_recipe2():
     for f in fs:
         os.remove(f.name)
 
+
 @pytest.mark.remote
-def test_mode_bias_set0(tmpdir):
-
-    oldcwd = tmpdir.chdir()
-
-    # Download tar file
-    BASE_URL = 'http://guaix.fis.ucm.es/~spr/megara_test/%s'
-    base = 'mode_bias_set0.tar.gz'
-
-    downloaded = download_cache(BASE_URL % base, _cache)
-    
-    # Uncompress
-    with tarfile.open(downloaded.name, mode="r:gz") as tar:
-        tar.extractall()
-    
-    _basedir = os.chdir('tpl')
+def test_mode_bias_set0(numinatpldir):
     
     main(['run', 'obsrun.yaml', '-r', 'control.yaml'])
-
-    oldcwd.chdir()
-
-    os.remove(downloaded.name)
-    # Run the main program
-    
 
