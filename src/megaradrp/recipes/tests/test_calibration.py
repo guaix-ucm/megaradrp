@@ -37,45 +37,6 @@ from megaradrp.recipes import BiasRecipe
 _cache = NuminaDiskCache()
 _cache.load()
 
-def download_cache_tofile(url, cache, bsize=2048):
-    import urllib2
-    import hashlib
-    hh = hashlib.md5()
-    hh.update(url)
-    urldigest = hh.hexdigest()
-    update_cache = False
-    if cache.url_is_cached(urldigest):
-        # Retrieve from cache
-        etag = cache.retrieve(urldigest)
-#        print 'is in cache, etag is', etag
-        req = urllib2.Request(url)
-        req.add_header('If-None-Match', etag)
-    else:
-        # print 'resource not in cache'
-        req = urllib2.Request(url)
-    try:
-        source = urllib2.urlopen(req)
-        update_cache = True
-        etag = source.headers.dict['etag']
-    except urllib2.HTTPError as err:
-        if err.code == 304:
-            update_cache = False
-            source = open(cache.cached_filename(urldigest))
-        else:
-            raise
-
-    #
-    with NamedTemporaryFile(delete=False) as fd:
-        block = source.read(bsize)
-        while block:
-            fd.write(block)
-            block = source.read(bsize)
-
-    if update_cache:
-        # print 'updating cache'
-        cache.update(urldigest, fd.name, etag)
-
-    return fd
 
 def test_recipe1():
 
