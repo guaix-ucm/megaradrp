@@ -1,5 +1,5 @@
 #####################
-MEGARA DRP User Guide
+Overview
 #####################
       
 This guide is intended as an introductory overview of MEGARA DRP and

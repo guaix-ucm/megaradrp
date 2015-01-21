@@ -28,8 +28,7 @@ multiextension FITS file with the following extensions.
   Extension name     Type      Version    Contents
   ===============    =======   ========   =======================
   ``PRIMARY``        Primary              The bias level
-  ``VARIANCE``       Image     1          Variance of the bias level obtained from the input frames
-  ``VARIANCE``       Image     2          Variance of the bias level measured on the result frame
+  ``VARIANCE``       Image                Variance of the bias level
   ``MAP``            Image                Number of pixels used to compute the bias level
   ===============    =======   ========   =======================
 
@@ -45,8 +44,7 @@ multiextension FITS file with the following extensions.
   Extension name     Type      Version    Contents
   ===============    =======   ========   =======================
   ``PRIMARY``        Primary              The dark level
-  ``VARIANCE``       Image     1          Variance of the dark level obtained from the input frames
-  ``VARIANCE``       Image     2          Variance of the dark level measured on the result frame
+  ``VARIANCE``       Image                Variance of the dark level
   ``MAP``            Image                Number of pixels used to compute the dark level
   ===============    =======   ========   =======================
 

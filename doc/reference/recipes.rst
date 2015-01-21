@@ -1,5 +1,5 @@
 
-:mod:`megara.drprecipes` --- Reduction Recipes for MEGARA
+:mod:`megaradrp.recipes` --- Reduction Recipes for MEGARA
 ==========================================================
 
 .. module:: megaradrp.recipes
@@ -12,23 +12,17 @@ Recipes for auxiliary modes
 
    Bias Recipe
 
-.. class:: BiasRecipeRequirement
-
-   Bias Recipe Requirement
-
-.. class:: BiasRecipeResult
-
-   Bias Recipe Result
 
 .. class:: DarkRecipe
 
    Dark Recipe
 
-.. class:: DarkRecipeRequirement
+Recipes for calibration modes
+------------------------------
 
-   Dark Recipe Requirement
+TBD
 
-.. class:: DarkRecipeResult
+Recipes for science  modes
+------------------------------
 
-   Dark Recipe Result
-
+TBD

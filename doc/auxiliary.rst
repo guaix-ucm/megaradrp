@@ -35,9 +35,9 @@ Products
 +-------------------+---------------------------------------------------------+
 | Name              | Type                                                    |
 +===================+=========================================================+
-| ``'biasframe'``   | :class:`~megaradrp.dataproducts.MasterBias`            |
+| ``'biasframe'``   | :class:`~megaradrp.dataproducts.MasterBias`             |
 +-------------------+---------------------------------------------------------+
-| ``'stats'``       | :class:`~megaradrp.dataproducts.ChannelLevelStatistics`|
+| ``'stats'``       | :class:`~megaradrp.dataproducts.ChannelLevelStatistics` |
 +-------------------+---------------------------------------------------------+
 
 .. _ff-recipe-label:

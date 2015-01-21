@@ -60,3 +60,6 @@ latex_show_urls = 'footnote'
 #latex_appendices = []
 #latex_domain_indices = True
 
+intersphinx_mapping = {
+  'numina': ('http://numina.readthedocs.org/en/latest/', None)
+}
