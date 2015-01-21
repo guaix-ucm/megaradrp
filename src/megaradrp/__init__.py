@@ -24,7 +24,7 @@ import logging
 # from .simulator import MegaraImageFactory as ImageFactory
 # from .simulator import Megara as Instrument
 
-__version__ = '0.2.0dev'
+__version__ = '0.4dev'
 
 # __all__ = ['Instrument', 'ImageFactory']
 
