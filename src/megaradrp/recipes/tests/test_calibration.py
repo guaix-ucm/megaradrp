@@ -119,7 +119,3 @@ def test_mode_bias_set1(numinatpldir):
 def test_mode_fiber_flat_set0(numinatpldir):
 
     run_recipe()
-
-
-
-
