@@ -55,6 +55,14 @@ modes:
   status: DRAFT
   summary: Summary of Fiber MOS image
   uuid: 9114511f-15d8-40d2-a0b1-e4a6202a3e39
+- date: 2014-12-10
+  description: Lines and mode lines
+  key: trace_map
+  name: Trace Map
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Fiber MOS image
+  uuid: 4e5a5d6f-3bee-4630-836e-0eabdf5e9f9b
 pipelines:
   default:
     recipes:
@@ -63,11 +71,12 @@ pipelines:
       fiber_flat_image: megaradrp.recipes.FiberFlatRecipe
       mos_image: megaradrp.recipes.FiberMOSRecipe
       flux_calibration: megaradrp.recipes.calibration.PseudoFluxCalibrationRecipe
+      trace_map: megaradrp.recipes.calibration.flat.TraceMapRecipe
       fail: numina.core.utils.AlwaysFailRecipe
       success: numina.core.utils.AlwaysSuccessRecipe
     version: 1
   experimental:
     recipes:
       bias_image: megaradrp.recipes.experimental.BiasRecipe
-      fiber_flat_image: megaradrp.recipes.flat.FiberFlatRecipe
+      fiber_flat_image: megaradrp.recipes.calibration.flat.FiberFlatRecipe
     version: 1

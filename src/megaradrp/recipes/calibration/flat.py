@@ -76,6 +76,49 @@ def delicate_centre(x, y):
     return tx, py, pos
 
 
+def process_common(recipe, obresult, master_bias):
+    _logger.info('starting prereduction')
+
+    o_c = OverscanCorrector()
+    t_i = TrimImage()
+
+    with master_bias.open() as hdul:
+        mbias = hdul[0].data.copy()
+        b_c = BiasCorrector(mbias)
+
+    basicflow = SerialFlow([o_c, t_i, b_c])
+
+    cdata = []
+
+    try:
+        for frame in obresult.frames:
+            hdulist = frame.open()
+            hdulist = basicflow(hdulist)
+            cdata.append(hdulist)
+
+        _logger.info('stacking %d images using median', len(cdata))
+
+        data = c_median([d[0].data for d in cdata], dtype='float32')
+        template_header = cdata[0][0].header
+        hdu = fits.PrimaryHDU(data[0], header=template_header)
+    finally:
+        for hdulist in cdata:
+            hdulist.close()
+
+    hdr = hdu.header
+    hdr['IMGTYP'] = ('FIBER_FLAT', 'Image type')
+    hdr['NUMTYP'] = ('MASTER_FIBER_FLAT', 'Data product type')
+    hdr = recipe.set_base_headers(hdr)
+    hdr['CCDMEAN'] = data[0].mean()
+
+    varhdu = fits.ImageHDU(data[1], name='VARIANCE')
+    num = fits.ImageHDU(data[2], name='MAP')
+    result = fits.HDUList([hdu, varhdu, num])
+
+    _logger.info('prereduction ended')
+
+    return result
+
 class FiberFlatRecipe(BaseRecipeAutoQC):
     '''Process FIBER_FLAT images and create MASTER_FIBER_FLAT.'''
 
@@ -96,53 +139,12 @@ class FiberFlatRecipe(BaseRecipeAutoQC):
     def run(self, rinput):
         return self.process_base(rinput.obresult, rinput.master_bias)
 
-    def process_common(self, obresult, master_bias):
-        _logger.info('starting prep reduction')
 
-        o_c = OverscanCorrector()
-        t_i = TrimImage()
-
-        with master_bias.open() as hdul:
-            mbias = hdul[0].data.copy()
-            b_c = BiasCorrector(mbias)
-
-        basicflow = SerialFlow([o_c, t_i, b_c])
-
-        cdata = []
-
-        try:
-            for frame in obresult.frames:
-                hdulist = frame.open()
-                hdulist = basicflow(hdulist)
-                cdata.append(hdulist)
-
-            _logger.info('stacking %d images using median', len(cdata))
-
-            data = c_median([d[0].data for d in cdata], dtype='float32')
-            template_header = cdata[0][0].header
-            hdu = fits.PrimaryHDU(data[0], header=template_header)
-        finally:
-            for hdulist in cdata:
-                hdulist.close()
-
-        hdr = hdu.header
-        hdr['IMGTYP'] = ('FIBER_FLAT', 'Image type')
-        hdr['NUMTYP'] = ('MASTER_FIBER_FLAT', 'Data product type')
-        hdr = self.set_base_headers(hdr)
-        hdr['CCDMEAN'] = data[0].mean()
-
-        varhdu = fits.ImageHDU(data[1], name='VARIANCE')
-        num = fits.ImageHDU(data[2], name='MAP')
-        result = fits.HDUList([hdu, varhdu, num])
-
-        _logger.info('prereduction ended')
-
-        return result
 
     def process_base(self, obresult, master_bias):
         _logger.info('starting fiber flat reduction')
 
-        reduced = self.process_common(obresult, master_bias)
+        reduced = process_common(self, obresult, master_bias)
         mm = reduced[0].data
 
         # Trace extract and normalize
@@ -206,7 +208,7 @@ class FiberFlatRecipe(BaseRecipeAutoQC):
         _logger.info('starting fiber flat reduction')
         import matplotlib.pyplot as plt
         from .peakdetection import peak_detection_mean_window
-        reduced = self.process_common(obresult, master_bias)
+        reduced = process_common(self, obresult, master_bias)
         image = reduced[0].data
 
         maxdis = 1.5
@@ -292,6 +294,7 @@ class TwiligthFiberFlatRecipe(BaseRecipeAutoQC):
 class TraceMapRecipe(BaseRecipeAutoQC):
 
     obresult = ObservationResultRequirement()
+    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
     biasframe = Product(MasterBias)
 
     def __init__(self):
@@ -301,4 +304,10 @@ class TraceMapRecipe(BaseRecipeAutoQC):
         )
 
     def run(self, rinput):
-        pass
+        result = self.process_base(rinput.obresult, rinput.master_bias)
+        return self.create_result(biasframe=result)
+
+    def process_base(self, obresult, master_bias):
+        reduced = process_common(self, obresult, master_bias)
+        return reduced
+        
