@@ -3,7 +3,7 @@ from setuptools import find_packages, setup
 
 
 setup(name='megaradrp',
-      version='0.4dev',
+      version='0.4.dev',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/hg/megaradrp',

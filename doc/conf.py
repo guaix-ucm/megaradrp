@@ -23,7 +23,7 @@ exclude_patterns = ['_build']
 project = u'MEGARA Data Reduction Pipeline'
 copyright = u'2013-2015, Universidad Complutense de Madrid'
 version = '0.4'
-release = '0.4dev'
+release = '0.4.dev'
 show_authors = True
 
 # -- Options for HTML output ---------------------------------------------------
