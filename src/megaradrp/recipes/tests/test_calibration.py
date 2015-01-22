@@ -109,3 +109,12 @@ def test_mode_bias_set1(numinatpldir):
 
     main(['run', 'obsrun.yaml', '-r', 'control.yaml'])
 
+
+@pytest.mark.remote
+def test_mode_fiber_flat_set0(numinatpldir):
+
+    main(['run', 'obsrun.yaml', '-r', 'control.yaml'])
+
+
+
+
