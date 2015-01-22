@@ -69,4 +69,5 @@ pipelines:
   experimental:
     recipes:
       bias_image: megaradrp.recipes.experimental.BiasRecipe
+      fiber_flat_image: megaradrp.recipes.flat.FiberFlatRecipe
     version: 1
