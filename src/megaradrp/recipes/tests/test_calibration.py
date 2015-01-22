@@ -100,6 +100,12 @@ def test_recipe2():
 
 @pytest.mark.remote
 def test_mode_bias_set0(numinatpldir):
-    
+
+    main(['run', 'obsrun.yaml', '-r', 'control.yaml'])
+
+
+@pytest.mark.remote
+def test_mode_bias_set1(numinatpldir):
+
     main(['run', 'obsrun.yaml', '-r', 'control.yaml'])
 
