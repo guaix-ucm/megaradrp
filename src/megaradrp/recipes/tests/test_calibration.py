@@ -34,6 +34,11 @@ from megaradrp.recipes import BiasRecipe
 
 BASE_URL = 'http://guaix.fis.ucm.es/~spr/megara_test/'
 
+
+def run_recipe():
+    main(['run', 'obsrun.yaml', '-r', 'control.yaml'])
+
+
 def test_recipe1():
 
     drps = init_drp_system()
@@ -101,19 +106,19 @@ def test_recipe2():
 @pytest.mark.remote
 def test_mode_bias_set0(numinatpldir):
 
-    main(['run', 'obsrun.yaml', '-r', 'control.yaml'])
+    run_recipe()
 
 
 @pytest.mark.remote
 def test_mode_bias_set1(numinatpldir):
 
-    main(['run', 'obsrun.yaml', '-r', 'control.yaml'])
+    run_recipe()
 
 
 @pytest.mark.remote
 def test_mode_fiber_flat_set0(numinatpldir):
 
-    main(['run', 'obsrun.yaml', '-r', 'control.yaml'])
+    run_recipe()
 
 
 
