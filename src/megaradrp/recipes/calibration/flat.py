@@ -28,8 +28,7 @@ from scipy.interpolate import interp1d
 from astropy.io import fits
 from astropy import wcs
 
-from numina.core import BaseRecipeAutoQC
-from numina.core import Product, DataProductRequirement, Requirement
+from numina.core import Product
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
 from numina.core import RecipeError
@@ -37,13 +36,16 @@ from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
 
+from megaradrp.core import MegaraBaseRecipe
 from megaradrp.core import OverscanCorrector, TrimImage
 from megaradrp.core import ApertureExtractor, FiberFlatCorrector
 from megaradrp.core import peakdet
 # from numina.logger import log_to_history
 
-from megaradrp.products import MasterBias, MasterDark, MasterFiberFlat
+from megaradrp.products import MasterFiberFlat
 from megaradrp.products import TraceMapType, MasterSensitivity
+from megaradrp.requirements import MasterBiasRequirement
+
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -119,11 +121,11 @@ def process_common(recipe, obresult, master_bias):
 
     return result
 
-class FiberFlatRecipe(BaseRecipeAutoQC):
+class FiberFlatRecipe(MegaraBaseRecipe):
     '''Process FIBER_FLAT images and create MASTER_FIBER_FLAT.'''
 
     # Requirements
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
+    master_bias = MasterBiasRequirement()
     obresult = ObservationResultRequirement()
     # Products
     fiberflat_frame = Product(MasterFiberFlat)
@@ -272,9 +274,9 @@ class FiberFlatRecipe(BaseRecipeAutoQC):
         return result
 
 
-class TwiligthFiberFlatRecipe(BaseRecipeAutoQC):
+class TwiligthFiberFlatRecipe(MegaraBaseRecipe):
 
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
+    master_bias = MasterBiasRequirement()
     obresult = ObservationResultRequirement()
 
     fiberflat_frame = Product(MasterFiberFlat)
@@ -291,11 +293,11 @@ class TwiligthFiberFlatRecipe(BaseRecipeAutoQC):
         pass
 
 
-class TraceMapRecipe(BaseRecipeAutoQC):
+class TraceMapRecipe(MegaraBaseRecipe):
 
     obresult = ObservationResultRequirement()
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
-    biasframe = Product(MasterBias)
+    master_bias = MasterBiasRequirement()
+    traces = Product(TraceMapType)
 
     def __init__(self):
         super(TraceMapRecipe, self).__init__(
@@ -305,7 +307,7 @@ class TraceMapRecipe(BaseRecipeAutoQC):
 
     def run(self, rinput):
         result = self.process_base(rinput.obresult, rinput.master_bias)
-        return self.create_result(biasframe=result)
+        return self.create_result(traces=result)
 
     def process_base(self, obresult, master_bias):
         reduced = process_common(self, obresult, master_bias)

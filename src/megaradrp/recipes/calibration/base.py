@@ -28,7 +28,7 @@ from scipy.interpolate import interp1d
 from astropy.io import fits
 from astropy import wcs
 
-from numina.core import BaseRecipeAutoQC
+
 from numina.core import Product, DataProductRequirement, Requirement
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
@@ -37,11 +37,13 @@ from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
 
+from megaradrp.core import MegaraBaseRecipe
 from megaradrp.core import OverscanCorrector, TrimImage
 from megaradrp.core import ApertureExtractor, FiberFlatCorrector
 from megaradrp.core import peakdet
 # from numina.logger import log_to_history
-
+from megaradrp.requirements import MasterBiasRequirement
+from megaradrp.requirements import MasterFiberFlatRequirement
 from megaradrp.products import MasterBias, MasterDark, MasterFiberFlat
 from megaradrp.products import TraceMapType, MasterSensitivity
 
@@ -49,7 +51,7 @@ from megaradrp.products import TraceMapType, MasterSensitivity
 _logger = logging.getLogger('numina.recipes.megara')
 
 
-class BiasRecipe(BaseRecipeAutoQC):
+class BiasRecipe(MegaraBaseRecipe):
     '''Process BIAS images and create MASTER_BIAS.'''
 
     obresult = ObservationResultRequirement()
@@ -108,11 +110,11 @@ class BiasRecipe(BaseRecipeAutoQC):
         return result
 
 
-class DarkRecipe(BaseRecipeAutoQC):
+class DarkRecipe(MegaraBaseRecipe):
 
     '''Process DARK images and provide MASTER_DARK. '''
 
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
+    master_bias = MasterBiasRequirement()
 
     darkframe = Product(MasterDark)
 
@@ -134,12 +136,11 @@ class DarkRecipe(BaseRecipeAutoQC):
         return result
 
 
-class PseudoFluxCalibrationRecipe(BaseRecipeAutoQC):
+class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
 
     obresult = ObservationResultRequirement()
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
-    master_fiber_flat = DataProductRequirement(
-        MasterFiberFlat, 'Master fiber flat calibration')
+    master_bias = MasterBiasRequirement()
+    master_fiber_flat = MasterFiberFlatRequirement()
     traces = Requirement(TraceMapType, 'Trace information of the Apertures')
     reference_spectrum = DataProductRequirement(
         MasterFiberFlat, 'Reference spectrum')
@@ -243,9 +244,9 @@ class PseudoFluxCalibrationRecipe(BaseRecipeAutoQC):
         return result
 
 
-class ArcRecipe(BaseRecipeAutoQC):
+class ArcRecipe(MegaraBaseRecipe):
 
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
+    master_bias = MasterBiasRequirement()
     obresult = ObservationResultRequirement()
 
     fiberflat_frame = Product(MasterFiberFlat)
@@ -262,9 +263,9 @@ class ArcRecipe(BaseRecipeAutoQC):
         pass
 
 
-class LCB_IFU_StdStarRecipe(BaseRecipeAutoQC):
+class LCB_IFU_StdStarRecipe(MegaraBaseRecipe):
 
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
+    master_bias = MasterBiasRequirement()
     obresult = ObservationResultRequirement()
 
     fiberflat_frame = Product(MasterFiberFlat)
@@ -281,9 +282,9 @@ class LCB_IFU_StdStarRecipe(BaseRecipeAutoQC):
         pass
 
 
-class FiberMOS_StdStarRecipe(BaseRecipeAutoQC):
+class FiberMOS_StdStarRecipe(MegaraBaseRecipe):
 
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
+    master_bias = MasterBiasRequirement()
     obresult = ObservationResultRequirement()
 
     fiberflat_frame = Product(MasterFiberFlat)
@@ -300,9 +301,9 @@ class FiberMOS_StdStarRecipe(BaseRecipeAutoQC):
         pass
 
 
-class SensitivityFromStdStarRecipe(BaseRecipeAutoQC):
+class SensitivityFromStdStarRecipe(MegaraBaseRecipe):
 
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
+    master_bias = MasterBiasRequirement()
     obresult = ObservationResultRequirement()
 
     fiberflat_frame = Product(MasterFiberFlat)
@@ -319,9 +320,9 @@ class SensitivityFromStdStarRecipe(BaseRecipeAutoQC):
         pass
 
 
-class S_And_E_FromStdStarsRecipe(BaseRecipeAutoQC):
+class S_And_E_FromStdStarsRecipe(MegaraBaseRecipe):
 
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
+    master_bias = MasterBiasRequirement()
     obresult = ObservationResultRequirement()
 
     fiberflat_frame = Product(MasterFiberFlat)
@@ -338,7 +339,7 @@ class S_And_E_FromStdStarsRecipe(BaseRecipeAutoQC):
         pass
 
 
-class BadPixelsMaskRecipe(BaseRecipeAutoQC):
+class BadPixelsMaskRecipe(MegaraBaseRecipe):
 
     '''Process BIAS images and create MASTER_BIAS.'''
 
@@ -356,7 +357,7 @@ class BadPixelsMaskRecipe(BaseRecipeAutoQC):
         pass
 
 
-class LinearityTestRecipe(BaseRecipeAutoQC):
+class LinearityTestRecipe(MegaraBaseRecipe):
 
     '''Process BIAS images and create MASTER_BIAS.'''
 

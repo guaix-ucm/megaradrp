@@ -24,28 +24,27 @@ import logging
 import numpy
 from astropy.io import fits
 
-from numina.core import Product, DataProductRequirement
-from numina.core import BaseRecipeAutoQC
+from numina.core import Product
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
-
 from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
 
+from megaradrp.core import MegaraBaseRecipe
 from megaradrp.core import OverscanCorrector, TrimImage
 from megaradrp.core import peakdet
-from megaradrp.products import MasterBias, MasterFiberFlat
-
+from megaradrp.products import MasterFiberFlat
+from megaradrp.requirements import MasterBiasRequirement
 
 _logger = logging.getLogger('numina.recipes.megara')
 
 
-class FiberFlatRecipe(BaseRecipeAutoQC):
+class FiberFlatRecipe(MegaraBaseRecipe):
 
     '''Process FIBER_FLAT images and create MASTER_FIBER_FLAT.'''
 
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
+    master_bias = MasterBiasRequirement()
     obresult = ObservationResultRequirement()
 
     fiberflat_frame = Product(MasterFiberFlat)

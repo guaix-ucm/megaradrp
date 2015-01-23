@@ -23,33 +23,33 @@ import logging
 
 from astropy.io import fits
 
-from numina.core import BaseRecipeAutoQC
 from numina.core import Product, DataProductRequirement
 from numina.core.requirements import ObservationResultRequirement, Requirement
 from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
 
+from megaradrp.core import MegaraBaseRecipe
 from megaradrp.core import OverscanCorrector, TrimImage
 from megaradrp.core import ApertureExtractor, FiberFlatCorrector
 
 # from numina.logger import log_to_history
-
-from megaradrp.products import MasterBias, MasterFiberFlat
+from megaradrp.requirements import MasterBiasRequirement
+from megaradrp.requirements import MasterFiberFlatRequirement
+from megaradrp.products import MasterFiberFlat
 from megaradrp.products import MasterSensitivity,  TraceMapType
 
 
 _logger = logging.getLogger('numina.recipes.megara')
 
 
-class FiberMOSRecipe(BaseRecipeAutoQC):
+class FiberMOSRecipe(MegaraBaseRecipe):
     '''Process MOS images.'''
 
     # Requirements
     obresult = ObservationResultRequirement()
-    master_bias = DataProductRequirement(MasterBias, 'Master bias calibration')
-    master_fiber_flat = DataProductRequirement(
-        MasterFiberFlat, 'Master fiber flat calibration')
+    master_bias = MasterBiasRequirement()
+    master_fiber_flat = MasterFiberFlatRequirement()
     traces = Requirement(TraceMapType, 'Trace information of the Apertures')
     sensitivity = DataProductRequirement(
         MasterSensitivity, 'Sensitivity', optional=True)

@@ -22,16 +22,17 @@
 import logging
 
 
-from numina.core.recipes import BaseRecipeAutoQC
+
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
 
+from megaradrp.core import MegaraBaseRecipe
 from megaradrp.products import MasterBias
 
 _logger = logging.getLogger('numina.recipes.megara')
 
 
-class BiasRecipe(BaseRecipeAutoQC):
+class BiasRecipe(MegaraBaseRecipe):
     '''Process BIAS images and create MASTER_BIAS.'''
 
     obs = ObservationResultRequirement()
