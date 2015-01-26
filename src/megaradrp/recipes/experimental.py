@@ -18,38 +18,3 @@
 #
 
 '''Recipes with experimental features.'''
-
-import logging
-
-
-
-from numina.core import Product
-from numina.core.requirements import ObservationResultRequirement
-
-from megaradrp.core import MegaraBaseRecipe
-from megaradrp.products import MasterBias
-
-_logger = logging.getLogger('numina.recipes.megara')
-
-
-class BiasRecipe(MegaraBaseRecipe):
-    '''Process BIAS images and create MASTER_BIAS.'''
-
-    obs = ObservationResultRequirement()
-
-    biasframe = Product(MasterBias)
-
-    def __init__(self):
-        super(BiasRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
-        )
-
-    def run(self, recipe_input):
-        _logger.info('starting bias reduction')
-
-        _logger.info('stacking images')
-        _logger.info('bias reduction ended')
-
-        result = self.create_result(biasframe=None)
-        return result
