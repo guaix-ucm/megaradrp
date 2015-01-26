@@ -1,22 +1,39 @@
-.. PyMegara documentation master file, created by
-   sphinx-quickstart on Mon Oct 28 19:05:57 2013.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. _contents:
 
-PyMegara Documentation
+MEGARA DRP documentation
 ========================
 
-Welcome. This is the Documentation for PyMegara (version |version|),
+Welcome. This is the Documentation for MEGARA DRP (version |version|).
 
-PyMegara user guide: :ref:`user`
+MEGARA (Multi-Espectrógrafo en GTC de Alta Resolución para Astronomía) is 
+an optical Integral-Field Unit (IFU) and Multi-Object Spectrograph (MOS) 
+designed for the GTC 10.4m telescope in La Palma.
 
-PyMegara reference guide: :ref:`reference`
+MEGARA DRP is the official Data Reduction Pipeline for MEGARA. It can
+be run as a standalone module (via a command line interface) or
+integrated in the GTC Control System. 
 
-Contents:
+
+User documentation
+------------------
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
-   user/index
+   intro
+   installation
+   testing
+   running
+   modes
+
+
+Developer documentation
+-------------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   recipes
+   products
    reference/index
-
+   glossary

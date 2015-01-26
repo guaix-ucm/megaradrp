@@ -1,21 +1,24 @@
 
 from setuptools import find_packages, setup
 
-BASE_PKGS=['megara', 'megara.drp', 'megara.drp.recipes']
-NAMESPACE_PKGS = ['numina.pipelines', 'numina.pipelines.megara']
-ALL_PKGS = BASE_PKGS + NAMESPACE_PKGS
 
 setup(name='megaradrp',
-      version='0.3.0',
+      version='0.4.0',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
-      url='http://guaix.fis.ucm.es/projects/megara',
+      url='http://guaix.fis.ucm.es/hg/megaradrp',
       license='GPLv3',
       description='MEGARA Data Reduction Pipeline',
-      packages=ALL_PKGS,
-      package_dir={'megara': 'src/megara', 'numina.pipelines': 'src/drp'},
-      package_data={'megara.drp': ['drp.yaml', 'primary.txt']},
-      install_requires=['numpy', 'astropy', 'scipy', 'numina>=0.12.0'],
+      packages=find_packages(where='src'),
+      package_dir={'': 'src'},
+      package_data={'megaradrp': ['drp.yaml', 'primary.txt']},
+      install_requires=['numpy', 'astropy', 'scipy', 'numina>=0.13.0'],
+      zip_safe=False,
+      entry_points = {
+        'numina.pipeline.1': [
+            'megara = megaradrp.loader:megara_drp_load',
+            ]
+        },
       classifiers=[
                    "Programming Language :: Python :: 2.7",
                    'Development Status :: 3 - Alpha',
