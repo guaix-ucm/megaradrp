@@ -12,7 +12,7 @@ setup(name='megaradrp',
       packages=find_packages(where='src'),
       package_dir={'': 'src'},
       package_data={'megaradrp': ['drp.yaml', 'primary.txt']},
-      install_requires=['numpy', 'astropy', 'scipy', 'numina>=0.12.0'],
+      install_requires=['numpy', 'astropy', 'scipy', 'numina>=0.13.0'],
       zip_safe=False,
       entry_points = {
         'numina.pipeline.1': [
