@@ -2,7 +2,7 @@
 Testing
 ########
 
-This section describes the testing framework and options for testing MEGAR DRP
+This section describes the testing framework and options for testing MEGARA DRP
 
 **************
 Running tests

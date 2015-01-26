@@ -42,7 +42,7 @@ other things) that can be installed inside the environment with one command.
   
 The requirements of megaradrp will be downloaded and installed inside
 the virtual environment. Once the installation is finished, you can check
-by listing the installed recipes::
+by listing the installed recipes with the command line interface tool ``numina``::
 
   (myenv) $ ./bin/numina show
   Bias Image: Recipe to process bias images
@@ -68,7 +68,7 @@ Building from source
 The latest stable version of MEGARA DRP can be downloaded from  
 https://pypi.python.org/pypi/megaradrp
 
-To install MEGARA DRP, use the standard installation procedure:::
+To install MEGARA DRP, use the standard installation procedure::
 
     $ tar zxvf megaradrp-X.Y.Z.tar.gz
     $ cd megaradrp-X.Y.Z
@@ -76,18 +76,18 @@ To install MEGARA DRP, use the standard installation procedure:::
     
 The `install` command provides options to change the target directory. By 
 default installation requires administrative privileges. The different 
-installation options can be checked with::: 
+installation options can be checked with::
 
    $ python setup.py install --help
    
 Development version
 -------------------
 
-The development version can be checked out with:::
+The development version can be checked out with::
 
     $ hg clone http://guaix.fis.ucm.es/hg/megaradrp/
 
-And then installed following the standard procedure:::
+And then installed following the standard procedure::
 
     $ cd megaradrp
     $ python setup.py install
