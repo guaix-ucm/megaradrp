@@ -11,4 +11,4 @@ classes contained in the package, see the :ref:`reference`.
 
    This "User Guide" is still a work in progress; some of the material
    is not organized, and several aspects of MEGARA DRP are not yet covered
-   sufficient detail.
+   in sufficient detail.
