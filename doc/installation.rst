@@ -15,7 +15,7 @@ be able to be installed and work properly:
 
 Additional packages are optionally required:
 
- - `py.test <http://pytest.org>`_ to run the tests
+ - `py.test <http://pytest.org>`_ >= 2.5 to run the tests
  - `sphinx`_ to build the documentation
 
 
@@ -45,21 +45,12 @@ The requirements of megaradrp will be downloaded and installed inside
 the virtual environment. Once the installation is finished, you can check
 by listing the installed recipes with the command line interface tool ``numina``::
 
-  (myenv) $ ./bin/numina show
-  Bias Image: Recipe to process bias images
+  (myenv) $ ./bin/numina show-instruments
+  INFO: Numina simple recipe runner version 0.13.0
   Instrument: MEGARA
-  Recipe: megara.drp.recipes.BiasRecipe
-  Key: bias_image
-  UUID: a7ea9c0c-76a6-4609-8413-0157102ec284
-  --
-  Dark current Image: Summary of Dark current Image
-  Instrument: MEGARA
-  Recipe: megara.drp.recipes.DarkRecipe
-  Key: dark_image
-  UUID: 5b15db30-7774-4823-9645-e8ca27a866af
-  --
-  ...
-
+   has configuration 'default'
+   has pipeline 'default', version 1
+   has pipeline 'experimental', version 1
 
 ***********************
 Building from source
