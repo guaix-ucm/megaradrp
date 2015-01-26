@@ -6,14 +6,15 @@ Installation
 Requirements
 ***********************
 
-MEGARA DRP requires the following packages installed in order to
+The MEGARA Pipeline package requires the following packages installed in order to
 be able to be installed and work properly:
 
- 
+ - `python 2.7 <https://www.python.org>`_
  - `setuptools <http://peak.telecommunity.com/DevCenter/setuptools>`_
- - `numina <http://guaix.fis.ucm.es/hg/numina/>`_ >= 0.13
+ - `numina <https://pypi.python.org/pypi/numina/>`_ >= 0.13
 
 Additional packages are optionally required:
+
  - `py.test <http://pytest.org>`_ to run the tests
  - `sphinx`_ to build the documentation
 
@@ -163,11 +164,12 @@ deactivate it just type deactivate::
   (myenv) $ deactivate
   $ 
 
-****************************************************
-Installing MEGARA Pipelinein the GTC Control System
-****************************************************
+*********************
+Installing MEGARA DFP
+*********************
 
-This section described how to install the MEGARA Pipeline inside the GTC Control system.
+This section described how to install the MEGARA Pipeline inside
+the GTC Control system.
 
 TDB
 

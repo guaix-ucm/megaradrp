@@ -4,9 +4,7 @@ Running the pipeline
 #####################
 
 The MEGARA DRP is run through a command line interface
-provided by numina.
-
-:ref:`numina:creation`
+provided by :program:`numina`.
 
 The run mode of numina requires:
  
