@@ -11,6 +11,9 @@ be able to be installed and work properly:
 
  - `python 2.7 <https://www.python.org>`_
  - `setuptools <http://peak.telecommunity.com/DevCenter/setuptools>`_
+ - `numpy <http://www.numpy.org/>`_
+ - `scipy <http://www.scipy.org/>`_
+ - `astropy <http://www.astropy.org/>`_ >= 0.4
  - `numina <https://pypi.python.org/pypi/numina/>`_ >= 0.13
 
 Additional packages are optionally required:
