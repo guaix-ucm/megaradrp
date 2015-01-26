@@ -17,7 +17,10 @@
 
    Master dark MEGARA frame
 
-.. class:: MasterIntensityFlat
+.. class:: MasterFiberFlat
 
-   Master flar MEGARA frame
+   Master flat MEGARA frame
 
+.. class:: TraceMapType
+
+   Master

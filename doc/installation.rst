@@ -163,6 +163,16 @@ deactivate it just type deactivate::
   (myenv) $ deactivate
   $ 
 
+****************************************************
+Installing MEGARA Pipelinein the GTC Control System
+****************************************************
+
+This section described how to install the MEGARA Pipeline inside the GTC Control system.
+
+TDB
+
+
+
 .. _virtualenv: http://pypi.python.org/pypi/virtualenv
 .. _sphinx: http://sphinx.pocoo.org
 

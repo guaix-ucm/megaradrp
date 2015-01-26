@@ -42,7 +42,7 @@ htmlhelp_basename = 'megaradrpdoc'
 
 
 latex_documents = [
-  ('index', 'megaradrp.tex', u'MEGARA DRP Documentation',
+  ('index', 'megaradrp.tex', u'MEGARA Pipeline Documentation',
    u'Sergio Pascual', 'manual', 1),
 ]
 latex_logo = '_static/megara.png'

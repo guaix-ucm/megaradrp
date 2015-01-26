@@ -2,7 +2,7 @@
 .. _reference:
 
 =====================
-MEGARA DRP Reference
+Reference
 =====================
 
 

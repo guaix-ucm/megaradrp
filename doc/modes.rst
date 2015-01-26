@@ -1,33 +1,15 @@
 Observing modes
 ==================
 
-TBD
+Observing modes are prescribed method of observing with MEGARA. 
+Each observing mode is processed with one reduction recipe. In the following
+we describe the observing modes and its corresponding recipe.
+
+Observing modes are described in full detail elsewhere (document TEC/MEG/05)
 
 .. toctree::
    :maxdepth: 1
 
-   auxiliary
    calibration
+   auxiliary
    scientific
-
-
-.. raw:: pdf
-
-    PageBreak
-
-DFP Recipes Parameters
-++++++++++++++++++++++
-
-:class:  ``focus.TelescopeRoughFocusRecipe``  
-:mode:  TS rough focus 
-:requires:
-    -  Product: ``MasterBias`` 
-    -  Product: ``MasterDark``  
-    -  Product: ``MasterBadPixelMask`` 
-    -  Product: ``NonLinearityCorrection`` 
-    -  Product: ``MasterIntensityFlatField`` 
-    -  Parameter: objects 
-    -  Parameter: focus_range         
-:provides:  ``TelescopeFocus`` 
-
-
