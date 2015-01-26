@@ -11,10 +11,6 @@ Spectrograph focus
 --------------------
 :Usage: Online
 
-Optical-axis alignment
------------------------
-:Usage: Online
-
 Fine acquisition with the LCB IFU
 ----------------------------------
 :Usage: Online
