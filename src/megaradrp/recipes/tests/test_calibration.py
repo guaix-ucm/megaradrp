@@ -76,7 +76,7 @@ def test_recipe2():
 
     # FIXME: these should be created by a RecipeInputBuilder
     recipe = BiasRecipe()
-    RR = BiasRecipe.RecipeRequirements
+    RR = BiasRecipe.RecipeRequirements  # @UndefinedVariable
     ri = RR(obresult=ob)
 
     result = recipe.run(ri)
