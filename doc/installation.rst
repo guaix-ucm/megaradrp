@@ -11,7 +11,7 @@ be able to be installed and work properly:
 
  
  - `setuptools <http://peak.telecommunity.com/DevCenter/setuptools>`_
- - `numina <http://guaix.fis.ucm.es/hg/numina/>`_
+ - `numina <http://guaix.fis.ucm.es/hg/numina/>`_ >= 0.13
 
 Additional packages are optionally required:
  - `py.test <http://pytest.org>`_ to run the tests
