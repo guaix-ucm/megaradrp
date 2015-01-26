@@ -74,7 +74,7 @@ def test_recipe2():
 
     assert RecipeClass is BiasRecipe
 
-    # FIXME: these should be created by a RecipeInputBuilder
+    # TODO: these should be created by a RecipeInputBuilder
     recipe = BiasRecipe()
     RR = BiasRecipe.RecipeRequirements  # @UndefinedVariable
     ri = RR(obresult=ob)

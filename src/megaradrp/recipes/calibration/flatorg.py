@@ -153,4 +153,3 @@ class FiberFlatRecipe(MegaraBaseRecipe):
                                     traces=borders)
 
         return result
-

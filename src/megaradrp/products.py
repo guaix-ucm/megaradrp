@@ -37,7 +37,6 @@
 
 '''
 
-import numpy
 
 from numina.core import DataFrameType, DataProductType
 
@@ -62,7 +61,4 @@ class TraceMapType(DataProductType):
 
     def __init__(self, default=None):
         super(TraceMapType, self).__init__(
-            ptype=numpy.ndarray, default=default)
-
-    def store(self, obj):
-        return numpy.loadtxt(obj)
+            ptype=dict, default=default)
