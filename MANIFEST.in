@@ -1,5 +1,5 @@
 include MANIFEST.in *.txt
-include src/megara/drp/*.txt
-include src/megara/drp/*.yaml
+include src/megaradrp/*.txt
+include src/megaradrp/*.yaml
 recursive-include doc *
 
