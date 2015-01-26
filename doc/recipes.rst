@@ -33,16 +33,11 @@ The Recipe announces the required parameters with the following syntax (the synt
     class SomeRecipe(RecipeBase):        
         ...
 
-When the reduction is run from the command line using Numina CLI, the program
-checks that the required values are provided or have default values. When the
-reduction is automatically executed using Pontifex, the program searches the
-operation database looking for the most appropriated data products (in this
-case, a MasterDark frame).
 
 When the Recipe is properly configured, it is executed with an observing block
 data structure as input. When run using Numina CLI, this data structure is
-created from a text file. When run with Pontifex, the observing block data
-structure is created from the contents of the database.
+created from an user-provided text file. The recipe requirements values are 
+either provided ina text file or have default values.
 
 Recipe Products
 --------------- 
