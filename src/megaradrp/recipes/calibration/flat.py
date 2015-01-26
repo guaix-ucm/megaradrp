@@ -274,7 +274,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         return result
 
 
-class TwiligthFiberFlatRecipe(MegaraBaseRecipe):
+class TwilightFiberFlatRecipe(MegaraBaseRecipe):
 
     master_bias = MasterBiasRequirement()
     obresult = ObservationResultRequirement()
@@ -284,7 +284,7 @@ class TwiligthFiberFlatRecipe(MegaraBaseRecipe):
     traces = Product(ArrayType)
 
     def __init__(self):
-        super(TwiligthFiberFlatRecipe, self).__init__(
+        super(TwilightFiberFlatRecipe, self).__init__(
             author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
