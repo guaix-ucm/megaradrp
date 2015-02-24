@@ -20,6 +20,8 @@
 '''Load MEGARA DRP'''
 
 from numina.core import drp_load
+# FIXME: This import is needed for the moment, dont remove
+import megaradrp.store  # @UnusedImport
 
 
 def megara_drp_load():
