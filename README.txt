@@ -13,6 +13,6 @@ be able to be installed and work properly:
  - astropy >= 0.4 (http://www.astropy.org/)
  - numina >= 0.13 (http://guaix.fis.ucm.es/projects/numina/)
 
-Webpage: https://guaix.fis.ucm.es/projects/megara
+Webpage: https://guaix.fis.ucm.es/megara
 Maintainer: sergiopr@fis.ucm.es
 
