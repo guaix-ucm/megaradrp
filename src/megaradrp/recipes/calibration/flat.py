@@ -37,7 +37,7 @@ from megaradrp.core import peakdet
 # from numina.logger import log_to_history
 
 from megaradrp.products import MasterFiberFlat
-from megaradrp.products import TraceMapType
+from megaradrp.products import TraceMapType, TraceMap
 from megaradrp.requirements import MasterBiasRequirement
 
 from .traces import domefun
@@ -212,7 +212,11 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         data = result[0].data
 
-        fit_traces = domefun(data, cstart=2000, hs=20)
+        # fit_traces = domefun(data, cstart=2000, hs=20)
+
+        fit_traces = TraceMap([{'fibid':1, 'start':0, 'stop':4096, 'fitparms': [1,2,3]},
+                      {'fibid':2, 'start':0, 'stop':4096, 'fitparms': [1,2,3]}
+                      ])
 
         return self.create_result(fiberflat_frame=result,
                                   traces=fit_traces)
