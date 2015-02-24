@@ -57,8 +57,13 @@ class MasterSensitivity(DataFrameType):
     pass
 
 
+class TraceMap(object):
+    def __init__(self, mm):
+        self.mm = mm
+
+
 class TraceMapType(DataProductType):
 
     def __init__(self, default=None):
         super(TraceMapType, self).__init__(
-            ptype=dict, default=default)
+            ptype=TraceMap, default=default)
