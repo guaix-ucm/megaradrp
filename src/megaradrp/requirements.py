@@ -25,7 +25,7 @@ from .products import MasterBias, MasterDark, MasterFiberFlat
 
 
 class MasterBiasRequirement(DataProductRequirement):
-    def __init__(self, optional=True):
+    def __init__(self, optional=False):
         super(MasterBiasRequirement,
               self).__init__(MasterBias,
                              'Master BIAS image',
