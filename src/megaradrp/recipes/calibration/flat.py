@@ -41,7 +41,7 @@ from megaradrp.products import TraceMapType, TraceMap
 from megaradrp.requirements import MasterBiasRequirement
 
 from megaradrp.trace.traces import init_traces
-from megaradrp.trace._traces import tracing
+from megaradrp.trace._traces import tracing  # @UnresolvedImport
         
 _logger = logging.getLogger('numina.recipes.megara')
 
