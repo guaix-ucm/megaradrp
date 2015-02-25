@@ -6,15 +6,15 @@ from setuptools import setup, Extension
 try:
     from Cython.Distutils import build_ext
     ext1 = Extension('megaradrp.trace._traces',
-                     ['src/megaradrp/trace/traces.pyx',
-                      'src/megaradrp/trace/Trace.cpp'],
+                     ['megaradrp/trace/traces.pyx',
+                      'megaradrp/trace/Trace.cpp'],
                      language='c++')
     cmdclass = {'build_ext': build_ext}
 except ImportError:
     print('We do not have Cython, just using the generated files')
     ext1 = Extension('megaradrp.trace._traces',
-                     ['src/megaradrp/trace/traces.cpp',
-                      'src/megaradrp/trace/Trace.cpp'],
+                     ['megaradrp/trace/traces.cpp',
+                      'megaradrp/trace/Trace.cpp'],
                      language='c++')
     cmdclass = {}
 
@@ -25,8 +25,7 @@ setup(name='megaradrp',
       url='http://guaix.fis.ucm.es/hg/megaradrp',
       license='GPLv3',
       description='MEGARA Data Reduction Pipeline',
-      packages=find_packages(where='src'),
-      package_dir={'': 'src'},
+      packages=find_packages(),
       package_data={'megaradrp': ['drp.yaml', 'primary.txt']},
       install_requires=['numpy', 'astropy', 'scipy', 'numina>=0.13.0'],
       zip_safe=False,
