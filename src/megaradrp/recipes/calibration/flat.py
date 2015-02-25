@@ -40,9 +40,9 @@ from megaradrp.products import MasterFiberFlat
 from megaradrp.products import TraceMapType, TraceMap
 from megaradrp.requirements import MasterBiasRequirement
 
-from .traces import domefun
-
-
+from megaradrp.trace.traces import init_traces
+from megaradrp.trace._traces import tracing
+        
 _logger = logging.getLogger('numina.recipes.megara')
 
 
@@ -214,12 +214,50 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         # fit_traces = domefun(data, cstart=2000, hs=20)
 
-        fit_traces = TraceMap([{'fibid':1, 'start':0, 'stop':4096, 'fitparms': [1,2,3]},
-                      {'fibid':2, 'start':0, 'stop':4096, 'fitparms': [1,2,3]}
-                      ])
+        cstart = 2000
+        hs = 3
+        step1 = 2
+        background1 = 150.0
+        npred = 1
+        maxdis1 = 2.0
 
+        _logger.info('find peaks in column %i', cstart)
+
+        central_peaks = init_traces(data, center=cstart, hs=hs,
+                                background=background1, npred=npred)
+
+        
+
+        tracelist = []
+        if data.dtype.byteorder != '=':
+            _logger.debug('byteswapping image')
+            image2 = data.byteswap().newbyteorder()
+        else:
+            image2 = data
+            
+        _logger.info('trace peaks')
+        for trace in central_peaks.values():
+
+            mm = tracing(image2, x=cstart, y=trace.trace_f[0], step=step1,
+                         hs=hs, background=background1, maxdis=maxdis1)
+
+            pfit = numpy.polyfit(mm[:,0], mm[:,1], deg=5)
+            
+            tracelist.append({'fibid': trace.fibid, 'boxid': trace.boxid,
+                              'start':0, 'stop':4095,
+                              'fitparms': pfit.tolist()})
+
+            #plt.title('cython version, fiber %i' % trace.fibid)
+            #plt.plot(mm[:,0], mm[:,1], 'r*')
+            #xpix = np.arange(0, 2000, 1)
+            #p = numpy.poly1d(pfit)
+            #plt.plot(xpix, p(xpix), 'b')
+            #plt.show()    
+
+        result_traces = TraceMap(tracelist)
+                      
         return self.create_result(fiberflat_frame=result,
-                                  traces=fit_traces)
+                                  traces=result_traces)
 
     def process_base(self, obresult, master_bias):
         reduced = process_common(self, obresult, master_bias)

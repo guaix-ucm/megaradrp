@@ -26,7 +26,7 @@ import logging
 import numpy as np
 from scipy.interpolate import UnivariateSpline
 
-from .peakdetection import peak_detection_mean_window
+from megaradrp.trace.peakdetection import peak_detection_mean_window
 
 _logger = logging.getLogger('megara.trace')
 

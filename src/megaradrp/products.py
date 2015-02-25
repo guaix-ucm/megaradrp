@@ -58,8 +58,8 @@ class MasterSensitivity(DataFrameType):
 
 
 class TraceMap(object):
-    def __init__(self, mm):
-        self.mm = mm
+    def __init__(self, traces):
+        self.traces = traces
 
 
 class TraceMapType(DataProductType):

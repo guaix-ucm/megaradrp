@@ -30,6 +30,11 @@ def store_trace(obj, where):
     filename = 'traces.yaml'
 
     with open(filename, 'w') as fd:
-        yaml.dump(obj.mm, fd)
+        yaml.dump(obj.traces, fd)
 
     return filename
+
+def tm_repr(dumper, data):
+    return dumper.represent_mapping('!trace', data.__dict__)
+
+#yaml.add_representer(TraceMap, tm_repr)
