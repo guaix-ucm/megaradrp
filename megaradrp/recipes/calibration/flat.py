@@ -35,7 +35,6 @@ from numina.flow.processing import BiasCorrector
 
 from megaradrp.core import MegaraBaseRecipe
 from megaradrp.core import OverscanCorrector, TrimImage
-from megaradrp.core import peakdet
 # from numina.logger import log_to_history
 
 from megaradrp.products import MasterFiberFlat
@@ -44,43 +43,9 @@ from megaradrp.requirements import MasterBiasRequirement
 
 from megaradrp.trace.traces import init_traces
 from megaradrp.trace._traces import tracing  # @UnresolvedImport
+from megaradrp.core import apextract2
 
-
-
-
-
-import numpy as np
-import math
-
-
-
-        
 _logger = logging.getLogger('numina.recipes.megara')
-
-
-def other(a, b):
-    start = wcs_to_pix(a)
-    end = wcs_to_pix(b)
-
-    next = start + 1
-    prev = end - 1
-    print(start, start-0.5, start+0.5, min(start+0.5, b)-a)
-    for i in range(next, prev+1):
-        print(i,  1.0)
-    if end > start:
-        print(end, end-0.5, end+0.5, b - (end-0.5))
-
-def fill_other(data, a, b):
-    start = wcs_to_pix(a)
-    end = wcs_to_pix(b)
-    data[start] = min(start+0.5, b)-a
-    data[start+1:end] = 1.0
-    if end > start:
-        data[end] = b - (end-0.5)
-    return data
-
-def wcs_to_pix(x):
-    return int(math.floor(x + 0.5))
 
 
 def process_common(recipe, obresult, master_bias):
@@ -158,9 +123,11 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     
         tracemap = self.trace(reduced[0].data, cstart, step)
         
-        rss = self.extract(reduced[0].data, tracemap)
+        rss = apextract2(reduced[0].data, tracemap)
         
-        rss_norm = rss
+        rss[rss <= 0] = 1
+        
+        rss_norm = rss / rss.mean()
         
         _logger.info('fiber flat reduction ended')
 
@@ -219,58 +186,6 @@ class FiberFlatRecipe(MegaraBaseRecipe):
                       
         return result_traces
 
-    def extract_region(self, data, border1, border2, pesos, xpos):
-        
-        extend = (border1.min(), border2.max())
-        extend_pix = (wcs_to_pix(extend[0]), wcs_to_pix(extend[1])+1)
-        region = slice(extend_pix[0],extend_pix[1])
-
-        for x, a,b in zip(xpos, border1, border2):
-            fill_other(pesos[:,x], a, b)
-
-            final2d = data[region,:] * pesos[region,:]
-
-        pesos[region,:] = 0.0
-        final = final2d.sum(axis=0)
-        return final
-
-
-    def extract(self, data, tracemap):
-
-        pols = [np.poly1d(trace['fitparms']) for trace in tracemap.traces]
-
-        rss = np.empty((len(pols), data.shape[1]))
-
-        xpos = np.arange(data.shape[1])
-
-        pesos = np.zeros_like(data)
-
-
-        # extract the first trace
-        p1 = pols[0]
-        p2 = pols[1]
-        pix_2 = p2(xpos)
-        pix_1 = p1(xpos)
-        pix_12 = 0.5 * (pix_2 + pix_1)
-        # Use the half distance in the first trace
-        pix_01 = 1.5 * pix_1 - 0.5 * pix_2
-        # Extract on the other side
-        rss[0] = self.extract_region(data, pix_01, pix_12, pesos, xpos)
-        
-        fibid = 2
-        for p2 in pols[2:-1]:
-
-            print ('fiber', fibid)            
-            pix_1, pix_01 = pix_2, pix_12 
-            pix_2 = p2(xpos)
-
-            pix_12 = 0.5 * (pix_2 + pix_1)
-            
-            rss[fibid - 1] = self.extract_region(data, pix_01, pix_12, pesos, xpos)
-            
-            fibid += 1
-
-        return rss
 
 class TwilightFiberFlatRecipe(MegaraBaseRecipe):
 
