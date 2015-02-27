@@ -143,10 +143,10 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         # fit_traces = domefun(data, cstart=2000, hs=20)
 
         cstart = cstart
-        hs = 3
+        hs = 1
         step1 = step
-        background1 = 150.0
-        npred = 1
+        background1 = 10.0
+        npred = 3
         maxdis1 = 2.0
 
         _logger.info('find peaks in column %i', cstart)
@@ -155,6 +155,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
                                 background=background1, npred=npred)
 
         
+        _logger.info(' %i peaks found', len(central_peaks))
 
         tracelist = []
         if data.dtype.byteorder != '=':
@@ -239,7 +240,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         central_peaks = init_traces(data, center=cstart, hs=hs,
                                 background=background1, npred=npred)
 
-        
+        _logger.info(' %i peaks found', len(central_peaks))
 
         tracelist = []
         if data.dtype.byteorder != '=':

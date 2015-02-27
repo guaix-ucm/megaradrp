@@ -143,8 +143,8 @@ class FiberTrace(Trace):
 
 def init_traces(image, center, hs, background, npred, maxdis=9.0):
 
-    ixmin= 100
-    ixmax = 4000
+    ixmin= 0
+    ixmax = image.shape[0]
 
     xx = np.arange(image.shape[0])
 
