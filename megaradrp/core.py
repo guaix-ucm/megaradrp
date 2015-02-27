@@ -22,7 +22,7 @@ from astropy.io import fits
 import numpy as np
 
 from numina.core import BaseRecipeAutoQC as MegaraBaseRecipe  # @UnusedImport
-
+from megaradrp.products import TraceMap
 
 # row / column
 _binning = {'11': [1, 1], '21': [1, 2], '12': [2, 1], '22': [2, 2]}
@@ -289,6 +289,36 @@ class ApertureExtractor(TagOptionalCorrector):
         return img
 
 
+class ApertureExtractor2(TagOptionalCorrector):
+
+    '''A Node that extracts apertures.'''
+
+    def __init__(self, trace, datamodel=None, mark=True,
+                 tagger=None, dtype='float32'):
+
+        if tagger is None:
+            tagger = TagFits('NUM-MAE', 'MEGARA Aperture extractor')
+        
+        # FIXME: more hacks
+        import yaml
+        with open(trace) as fd:
+            self.trace = TraceMap(yaml.load(fd))
+
+        super(ApertureExtractor2, self).__init__(datamodel=datamodel,
+                                                tagger=tagger,
+                                                mark=mark,
+                                                dtype=dtype)
+
+
+    def _run(self, img):
+        imgid = self.get_imgid(img)
+        _logger.debug('extracting apertures2 in image %s', imgid)
+        rss = apextract2(img[0].data, self.trace)
+        img[0].data = rss
+
+        return img
+
+
 class FiberFlatCorrector(TagOptionalCorrector):
 
     '''A Node that corrects from fiber flat.'''
@@ -327,6 +357,74 @@ def apextract(data, trace):
         sl = (slice(l, r), )
         m = data[sl].sum(axis=0)
         rss[idx] = m
+    return rss
+
+import math
+
+
+def wcs_to_pix(x):
+    return int(math.floor(x + 0.5))
+
+
+def fill_other(data, a, b):
+    start = wcs_to_pix(a)
+    end = wcs_to_pix(b)
+    data[start] = min(start+0.5, b)-a
+    data[start+1:end] = 1.0
+    if end > start:
+        data[end] = b - (end-0.5)
+    return data
+
+def extract_region(data, border1, border2, pesos, xpos):
+        
+    extend = (border1.min(), border2.max())
+    extend_pix = (wcs_to_pix(extend[0]), wcs_to_pix(extend[1])+1)
+    region = slice(extend_pix[0],extend_pix[1])
+
+    for x, a,b in zip(xpos, border1, border2):
+        fill_other(pesos[:,x], a, b)
+
+        final2d = data[region,:] * pesos[region,:]
+
+    pesos[region,:] = 0.0
+    final = final2d.sum(axis=0)
+    return final
+
+
+def apextract2(data, tracemap):
+    '''Extract apertures using a tracemap.'''
+    
+    # FIXME: a little hackish
+    
+    pols = [np.poly1d(t['fitparms']) for t in tracemap.traces]
+    
+    borders = []
+    pix_12 = 0.5 * (pols[1] + pols[0])
+    # Use the half distance in the first trace
+    pix_01 = 1.5 * pols[0] - 0.5 * pols[1]
+    pix_2 = pols[1]    
+    borders.append((pix_01, pix_12))
+
+    for p2 in pols[2:-1]:
+     
+        pix_1, pix_01 = pix_2, pix_12 
+        pix_2 = p2
+
+        pix_12 = 0.5 * (pix_2 + pix_1)
+        borders.append((pix_01, pix_12))
+
+    # extract the last trace
+    pix_1, pix_01 = pix_2, pix_12 
+    pix_12 = 2 * pix_1 - pix_01
+    borders.append((pix_01, pix_12))
+
+    rss = np.empty((len(pols), data.shape[1]))
+
+    from megaradrp.trace.extract import superex
+    
+    superex(data, borders, out=rss)
+
+
     return rss
 
 

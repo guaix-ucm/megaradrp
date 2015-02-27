@@ -69,7 +69,7 @@ pipelines:
       bias_image: megaradrp.recipes.BiasRecipe
       dark_image: megaradrp.recipes.DarkRecipe
       fiber_flat_image: megaradrp.recipes.FiberFlatRecipe
-      mos_image: megaradrp.recipes.FiberMOSRecipe
+      mos_image: megaradrp.recipes.scientific.FiberMOSRecipe2
       flux_calibration: megaradrp.recipes.calibration.PseudoFluxCalibrationRecipe
       trace_map: megaradrp.recipes.calibration.flat.TraceMapRecipe
       fail: numina.core.utils.AlwaysFailRecipe
