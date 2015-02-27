@@ -315,7 +315,6 @@ class ApertureExtractor2(TagOptionalCorrector):
         _logger.debug('extracting apertures2 in image %s', imgid)
         rss = apextract2(img[0].data, self.trace)
         img[0].data = rss
-
         return img
 
 
@@ -338,12 +337,14 @@ class FiberFlatCorrector(TagOptionalCorrector):
             self.corr = fiberflat[0].data
         elif isinstance(fiberflat, np.ndarray):
             self.corr = fiberflat
-
+        self.corrmean = self.corr.mean()
         self.corrid = self.get_imgid(fiberflat)
 
     def _run(self, img):
         imgid = self.get_imgid(img)
         _logger.debug('correct from fiber flat in image %s', imgid)
+
+        img[0].data = img[0].data / self.corr
 
         return img
 
