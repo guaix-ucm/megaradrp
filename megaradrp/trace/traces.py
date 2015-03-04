@@ -10,7 +10,7 @@ import math
 from astropy.io import fits
 
 
-from peakdetection import peak_detection_mean_window
+from .peakdetection import peak_detection_mean_window
 
 
 def wcs_to_pix(x):
