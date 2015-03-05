@@ -45,7 +45,7 @@ from megaradrp.core import peakdet
 from megaradrp.requirements import MasterBiasRequirement
 from megaradrp.requirements import MasterFiberFlatRequirement
 from megaradrp.products import MasterBias, MasterDark, MasterFiberFlat
-from megaradrp.products import TraceMapType, MasterSensitivity
+from megaradrp.products import TraceMap, MasterSensitivity
 
 
 _logger = logging.getLogger('numina.recipes.megara')
@@ -141,7 +141,7 @@ class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
     master_fiber_flat = MasterFiberFlatRequirement()
-    traces = Requirement(TraceMapType, 'Trace information of the Apertures')
+    traces = Requirement(TraceMap, 'Trace information of the Apertures')
     reference_spectrum = DataProductRequirement(
         MasterFiberFlat, 'Reference spectrum')
 

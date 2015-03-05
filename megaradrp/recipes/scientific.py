@@ -38,7 +38,7 @@ from megaradrp.core import ApertureExtractor2
 from megaradrp.requirements import MasterBiasRequirement
 from megaradrp.requirements import MasterFiberFlatRequirement
 from megaradrp.products import MasterFiberFlat
-from megaradrp.products import MasterSensitivity,  TraceMapType
+from megaradrp.products import MasterSensitivity,  TraceMap
 
 
 _logger = logging.getLogger('numina.recipes.megara')
@@ -51,7 +51,7 @@ class FiberMOSRecipe(MegaraBaseRecipe):
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
     master_fiber_flat = MasterFiberFlatRequirement()
-    traces = Requirement(TraceMapType, 'Trace information of the Apertures')
+    traces = Requirement(TraceMap, 'Trace information of the Apertures')
     sensitivity = DataProductRequirement(
         MasterSensitivity, 'Sensitivity', optional=True)
 
@@ -160,7 +160,7 @@ class FiberMOSRecipe2(MegaraBaseRecipe):
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
     master_fiber_flat = MasterFiberFlatRequirement()
-    traces = Requirement(TraceMapType, 'Trace information of the Apertures')
+    traces = Requirement(TraceMap, 'Trace information of the Apertures')
     sensitivity = DataProductRequirement(
         MasterSensitivity, 'Sensitivity', optional=True)
 

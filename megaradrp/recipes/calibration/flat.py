@@ -38,7 +38,7 @@ from megaradrp.core import OverscanCorrector, TrimImage
 # from numina.logger import log_to_history
 
 from megaradrp.products import MasterFiberFlat
-from megaradrp.products import TraceMapType, TraceMap
+from megaradrp.products import TraceMap
 from megaradrp.requirements import MasterBiasRequirement
 
 from megaradrp.trace.traces import init_traces
@@ -101,7 +101,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     # Products
     fiberflat_frame = Product(MasterFiberFlat)
     fiberflat_rss = Product(MasterFiberFlat)
-    traces = Product(TraceMapType)
+    traces = Product(TraceMap)
 
     def __init__(self):
         super(FiberFlatRecipe, self).__init__(
@@ -183,9 +183,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
             #plt.plot(xpix, p(xpix), 'b')
             #plt.show()    
 
-        result_traces = TraceMap(tracelist)
-                      
-        return result_traces
+        return tracelist
 
 
 class TwilightFiberFlatRecipe(MegaraBaseRecipe):
@@ -212,7 +210,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
     fiberflat_frame = Product(MasterFiberFlat)
-    traces = Product(TraceMapType)
+    traces = Product(TraceMap)
 
     def __init__(self):
         super(TraceMapRecipe, self).__init__(
@@ -268,10 +266,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
             #plt.plot(xpix, p(xpix), 'b')
             #plt.show()    
 
-        result_traces = TraceMap(tracelist)
-                      
         return self.create_result(fiberflat_frame=result,
-                                  traces=result_traces)
+                                  traces=tracelist)
 
     def process_base(self, obresult, master_bias):
         reduced = process_common(self, obresult, master_bias)

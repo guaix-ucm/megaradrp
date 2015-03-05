@@ -299,10 +299,7 @@ class ApertureExtractor2(TagOptionalCorrector):
         if tagger is None:
             tagger = TagFits('NUM-MAE', 'MEGARA Aperture extractor')
         
-        # FIXME: more hacks
-        import yaml
-        with open(trace) as fd:
-            self.trace = TraceMap(yaml.load(fd))
+        self.trace = trace
 
         super(ApertureExtractor2, self).__init__(datamodel=datamodel,
                                                 tagger=tagger,
@@ -397,7 +394,7 @@ def apextract2(data, tracemap):
     
     # FIXME: a little hackish
     
-    pols = [np.poly1d(t['fitparms']) for t in tracemap.traces]
+    pols = [np.poly1d(t['fitparms']) for t in tracemap]
     
     borders = []
     pix_12 = 0.5 * (pols[1] + pols[0])

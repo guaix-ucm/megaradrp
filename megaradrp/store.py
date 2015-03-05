@@ -17,24 +17,20 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
-from numina.user.store import store
-
-from .products import TraceMap
 import yaml
 
+from numina.user.dump import dump
 
-@store.register(TraceMap)
-def store_trace(obj, where):
-    # save fits file
-    filename = 'traces.yaml'
+from .products import TraceMap
+
+
+@dump.register(TraceMap)
+def _(tag, obj, where):
+
+    filename = where.destination + '.yaml'
 
     with open(filename, 'w') as fd:
         yaml.dump(obj.traces, fd)
 
     return filename
 
-def tm_repr(dumper, data):
-    return dumper.represent_mapping('!trace', data.__dict__)
-
-#yaml.add_representer(TraceMap, tm_repr)

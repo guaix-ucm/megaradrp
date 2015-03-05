@@ -40,6 +40,9 @@ setup(name='megaradrp',
       entry_points = {
         'numina.pipeline.1': [
             'megara = megaradrp.loader:megara_drp_load',
+            ],
+         'numina.storage.1': [
+            'megara_default = megaradrp.loader:load_cli_storage',
             ]
         },
       classifiers=[
