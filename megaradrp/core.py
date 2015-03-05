@@ -17,6 +17,7 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from __future__ import print_function
 
 from astropy.io import fits
 import numpy as np
@@ -77,13 +78,13 @@ def create(image, direction='normal', bins='11'):
     pcol1 = (rb1, cbl)
     ocol1 = (rb1, cbr)
     orow1 = (rb1m, cb)
-    print trim1, ocol1, orow1, pcol1
+    print(trim1, ocol1, orow1, pcol1)
 
     trim2 = (rb2, cb)
     pcol2 = (rb2, cbr)
     ocol2 = (rb2, cbl)
     orow2 = (rb2m, cb)
-    print trim2, ocol2, orow2, pcol2
+    print(trim2, ocol2, orow2, pcol2)
 
     finaldata = np.zeros(fshape, dtype='float32')
 
