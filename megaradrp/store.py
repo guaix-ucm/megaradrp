@@ -21,8 +21,7 @@ import logging
 
 import yaml
 
-from numina.user.dump import dump
-from numina.user.load import load
+from numina.store import dump, load
 
 from .products import TraceMap
 
