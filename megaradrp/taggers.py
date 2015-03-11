@@ -64,13 +64,9 @@ def get_tags_from_full_ob(ob, reqtags=None):
     return alltags
 
 
-def tagger_IMAGE_BIAS(obsres):
+def tagger_empty(obsres):
     return get_tags_from_full_ob(obsres, reqtags=[])
 
-def tagger_STARE_IMAGE(obsres):
+def tagger_vph(obsres):
     return get_tags_from_full_ob(obsres, reqtags=['vph'])
-
-def tagger_fiber_flat_image(obsres):
-    return get_tags_from_full_ob(obsres, reqtags=['vph'])
-
 
