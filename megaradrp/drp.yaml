@@ -9,6 +9,7 @@ modes:
   reference: numina
   status: FINAL
   summary: A mode where the recipe successes
+  tagger: null
 - date: 2013-11-12
   description: A mode where the recipe fails, used for testing
   key: fail
@@ -16,6 +17,7 @@ modes:
   reference: numina
   status: FINAL
   summary: A mode where the recipe fails
+  tagger: null
 - date: 2012-05-21
   description: Recipe to process bias images
   key: bias_image
@@ -23,6 +25,7 @@ modes:
   reference: IPUREMI_323
   status: DRAFT
   summary: Recipe to process bias images
+  tagger: null
 - date: 2012-05-21
   description: Lines and mode lines
   key: dark_image
@@ -31,6 +34,7 @@ modes:
   status: DRAFT
   summary: Summary of Dark current Image
   uuid: 5b15db30-7774-4823-9645-e8ca27a866af
+  tagger: null
 - date: 2014-04-23
   description: Lines and mode lines
   key: fiber_flat_image
@@ -39,6 +43,7 @@ modes:
   status: DRAFT
   summary: Summary of Fiber Flat Image
   uuid: 8a20058f-8887-4b6d-9b65-c113258eccee
+  tagger: megaradrp.taggers.tagger_vph
 - date: 2014-04-25
   description: Lines and mode lines
   key: mos_image
@@ -47,6 +52,7 @@ modes:
   status: DRAFT
   summary: Summary of Fiber MOS image
   uuid: 6b2ea25b-e6e4-4e0c-b374-825c70387668
+  tagger: megaradrp.taggers.tagger_vph
 - date: 2014-04-28
   description: Lines and mode lines
   key: flux_calibration
@@ -55,6 +61,7 @@ modes:
   status: DRAFT
   summary: Summary of Fiber MOS image
   uuid: 9114511f-15d8-40d2-a0b1-e4a6202a3e39
+  tagger: megaradrp.taggers.tagger_vph
 - date: 2014-12-10
   description: Lines and mode lines
   key: trace_map
@@ -63,6 +70,7 @@ modes:
   status: DRAFT
   summary: Summary of Fiber MOS image
   uuid: 4e5a5d6f-3bee-4630-836e-0eabdf5e9f9b
+  tagger: megaradrp.taggers.tagger_vph
 pipelines:
   default:
     recipes:
