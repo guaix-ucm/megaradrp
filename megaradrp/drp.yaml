@@ -87,3 +87,10 @@ pipelines:
     recipes:
       fiber_flat_image: megaradrp.recipes.calibration.flat.FiberFlatRecipe
     version: 1
+products:
+- name: megaradrp.products.TraceMap
+  alias: TraceMap
+- name: megaradrp.products.MasterFiberFlat
+  alias: MasterFiberFlat
+- name: megaradrp.products.MasterSensitivity
+  alias: MasterSensitivity
