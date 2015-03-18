@@ -4306,7 +4306,7 @@ __pyx_fuse_0__pyx_f_9megaradrp_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx_v_p
  *         # fit the peak with three points
  *         result = interp_max_3(arr[nearp-1:nearp+2, col])             # <<<<<<<<<<<<<<
  * 
- *         trace.push_back(col, result[0] + nearp)
+ *         trace.push_back(col, result[0] + nearp, 0.0)
  */
     __pyx_t_7.data = __pyx_v_arr.data;
     __pyx_t_7.memview = __pyx_v_arr.memview;
@@ -4354,15 +4354,15 @@ __pyx_v_result = __pyx_fuse_0__pyx_f_9megaradrp_5trace_7_traces_interp_max_3(__p
     /* "megaradrp/trace/traces.pyx":175
  *         result = interp_max_3(arr[nearp-1:nearp+2, col])
  * 
- *         trace.push_back(col, result[0] + nearp)             # <<<<<<<<<<<<<<
+ *         trace.push_back(col, result[0] + nearp, 0.0)             # <<<<<<<<<<<<<<
  * 
  *     return trace
  */
-    __pyx_v_trace.push_back(__pyx_v_col, ((__pyx_v_result[0]) + __pyx_v_nearp));
+    __pyx_v_trace.push_back(__pyx_v_col, ((__pyx_v_result[0]) + __pyx_v_nearp), 0.0);
   }
 
   /* "megaradrp/trace/traces.pyx":177
- *         trace.push_back(col, result[0] + nearp)
+ *         trace.push_back(col, result[0] + nearp, 0.0)
  * 
  *     return trace             # <<<<<<<<<<<<<<
  * 
@@ -4762,7 +4762,7 @@ __pyx_fuse_1__pyx_f_9megaradrp_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx_v_p
  *         # fit the peak with three points
  *         result = interp_max_3(arr[nearp-1:nearp+2, col])             # <<<<<<<<<<<<<<
  * 
- *         trace.push_back(col, result[0] + nearp)
+ *         trace.push_back(col, result[0] + nearp, 0.0)
  */
     __pyx_t_7.data = __pyx_v_arr.data;
     __pyx_t_7.memview = __pyx_v_arr.memview;
@@ -4810,15 +4810,15 @@ __pyx_v_result = __pyx_fuse_1__pyx_f_9megaradrp_5trace_7_traces_interp_max_3(__p
     /* "megaradrp/trace/traces.pyx":175
  *         result = interp_max_3(arr[nearp-1:nearp+2, col])
  * 
- *         trace.push_back(col, result[0] + nearp)             # <<<<<<<<<<<<<<
+ *         trace.push_back(col, result[0] + nearp, 0.0)             # <<<<<<<<<<<<<<
  * 
  *     return trace
  */
-    __pyx_v_trace.push_back(__pyx_v_col, ((__pyx_v_result[0]) + __pyx_v_nearp));
+    __pyx_v_trace.push_back(__pyx_v_col, ((__pyx_v_result[0]) + __pyx_v_nearp), 0.0);
   }
 
   /* "megaradrp/trace/traces.pyx":177
- *         trace.push_back(col, result[0] + nearp)
+ *         trace.push_back(col, result[0] + nearp, 0.0)
  * 
  *     return trace             # <<<<<<<<<<<<<<
  * 
@@ -5218,7 +5218,7 @@ __pyx_fuse_2__pyx_f_9megaradrp_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx_v_p
  *         # fit the peak with three points
  *         result = interp_max_3(arr[nearp-1:nearp+2, col])             # <<<<<<<<<<<<<<
  * 
- *         trace.push_back(col, result[0] + nearp)
+ *         trace.push_back(col, result[0] + nearp, 0.0)
  */
     __pyx_t_7.data = __pyx_v_arr.data;
     __pyx_t_7.memview = __pyx_v_arr.memview;
@@ -5266,15 +5266,15 @@ __pyx_v_result = __pyx_fuse_2__pyx_f_9megaradrp_5trace_7_traces_interp_max_3(__p
     /* "megaradrp/trace/traces.pyx":175
  *         result = interp_max_3(arr[nearp-1:nearp+2, col])
  * 
- *         trace.push_back(col, result[0] + nearp)             # <<<<<<<<<<<<<<
+ *         trace.push_back(col, result[0] + nearp, 0.0)             # <<<<<<<<<<<<<<
  * 
  *     return trace
  */
-    __pyx_v_trace.push_back(__pyx_v_col, ((__pyx_v_result[0]) + __pyx_v_nearp));
+    __pyx_v_trace.push_back(__pyx_v_col, ((__pyx_v_result[0]) + __pyx_v_nearp), 0.0);
   }
 
   /* "megaradrp/trace/traces.pyx":177
- *         trace.push_back(col, result[0] + nearp)
+ *         trace.push_back(col, result[0] + nearp, 0.0)
  * 
  *     return trace             # <<<<<<<<<<<<<<
  * 
@@ -5674,7 +5674,7 @@ __pyx_fuse_3__pyx_f_9megaradrp_5trace_7_traces_colapse_mean(__pyx_t_5, __pyx_v_p
  *         # fit the peak with three points
  *         result = interp_max_3(arr[nearp-1:nearp+2, col])             # <<<<<<<<<<<<<<
  * 
- *         trace.push_back(col, result[0] + nearp)
+ *         trace.push_back(col, result[0] + nearp, 0.0)
  */
     __pyx_t_7.data = __pyx_v_arr.data;
     __pyx_t_7.memview = __pyx_v_arr.memview;
@@ -5722,15 +5722,15 @@ __pyx_v_result = __pyx_fuse_3__pyx_f_9megaradrp_5trace_7_traces_interp_max_3(__p
     /* "megaradrp/trace/traces.pyx":175
  *         result = interp_max_3(arr[nearp-1:nearp+2, col])
  * 
- *         trace.push_back(col, result[0] + nearp)             # <<<<<<<<<<<<<<
+ *         trace.push_back(col, result[0] + nearp, 0.0)             # <<<<<<<<<<<<<<
  * 
  *     return trace
  */
-    __pyx_v_trace.push_back(__pyx_v_col, ((__pyx_v_result[0]) + __pyx_v_nearp));
+    __pyx_v_trace.push_back(__pyx_v_col, ((__pyx_v_result[0]) + __pyx_v_nearp), 0.0);
   }
 
   /* "megaradrp/trace/traces.pyx":177
- *         trace.push_back(col, result[0] + nearp)
+ *         trace.push_back(col, result[0] + nearp, 0.0)
  * 
  *     return trace             # <<<<<<<<<<<<<<
  * 
@@ -6715,14 +6715,14 @@ static PyObject *__pyx_pf_9megaradrp_5trace_7_traces_2tracing(CYTHON_UNUSED PyOb
   /* "megaradrp/trace/traces.pyx":187
  *     cdef Trace trace
  *     # Initial values
- *     trace.push_back(x, y)             # <<<<<<<<<<<<<<
+ *     trace.push_back(x, y, 0.0)             # <<<<<<<<<<<<<<
  * 
  *     _internal_tracing(arr, trace, x, y, step=step, hs=hs,
  */
-  __pyx_v_trace.push_back(__pyx_v_x, __pyx_v_y);
+  __pyx_v_trace.push_back(__pyx_v_x, __pyx_v_y, 0.0);
 
   /* "megaradrp/trace/traces.pyx":189
- *     trace.push_back(x, y)
+ *     trace.push_back(x, y, 0.0)
  * 
  *     _internal_tracing(arr, trace, x, y, step=step, hs=hs,             # <<<<<<<<<<<<<<
  *                       maxdis=maxdis, background=background,
@@ -7124,14 +7124,14 @@ static PyObject *__pyx_pf_9megaradrp_5trace_7_traces_4tracing(CYTHON_UNUSED PyOb
   /* "megaradrp/trace/traces.pyx":187
  *     cdef Trace trace
  *     # Initial values
- *     trace.push_back(x, y)             # <<<<<<<<<<<<<<
+ *     trace.push_back(x, y, 0.0)             # <<<<<<<<<<<<<<
  * 
  *     _internal_tracing(arr, trace, x, y, step=step, hs=hs,
  */
-  __pyx_v_trace.push_back(__pyx_v_x, __pyx_v_y);
+  __pyx_v_trace.push_back(__pyx_v_x, __pyx_v_y, 0.0);
 
   /* "megaradrp/trace/traces.pyx":189
- *     trace.push_back(x, y)
+ *     trace.push_back(x, y, 0.0)
  * 
  *     _internal_tracing(arr, trace, x, y, step=step, hs=hs,             # <<<<<<<<<<<<<<
  *                       maxdis=maxdis, background=background,
@@ -7533,14 +7533,14 @@ static PyObject *__pyx_pf_9megaradrp_5trace_7_traces_6tracing(CYTHON_UNUSED PyOb
   /* "megaradrp/trace/traces.pyx":187
  *     cdef Trace trace
  *     # Initial values
- *     trace.push_back(x, y)             # <<<<<<<<<<<<<<
+ *     trace.push_back(x, y, 0.0)             # <<<<<<<<<<<<<<
  * 
  *     _internal_tracing(arr, trace, x, y, step=step, hs=hs,
  */
-  __pyx_v_trace.push_back(__pyx_v_x, __pyx_v_y);
+  __pyx_v_trace.push_back(__pyx_v_x, __pyx_v_y, 0.0);
 
   /* "megaradrp/trace/traces.pyx":189
- *     trace.push_back(x, y)
+ *     trace.push_back(x, y, 0.0)
  * 
  *     _internal_tracing(arr, trace, x, y, step=step, hs=hs,             # <<<<<<<<<<<<<<
  *                       maxdis=maxdis, background=background,
@@ -7942,14 +7942,14 @@ static PyObject *__pyx_pf_9megaradrp_5trace_7_traces_8tracing(CYTHON_UNUSED PyOb
   /* "megaradrp/trace/traces.pyx":187
  *     cdef Trace trace
  *     # Initial values
- *     trace.push_back(x, y)             # <<<<<<<<<<<<<<
+ *     trace.push_back(x, y, 0.0)             # <<<<<<<<<<<<<<
  * 
  *     _internal_tracing(arr, trace, x, y, step=step, hs=hs,
  */
-  __pyx_v_trace.push_back(__pyx_v_x, __pyx_v_y);
+  __pyx_v_trace.push_back(__pyx_v_x, __pyx_v_y, 0.0);
 
   /* "megaradrp/trace/traces.pyx":189
- *     trace.push_back(x, y)
+ *     trace.push_back(x, y, 0.0)
  * 
  *     _internal_tracing(arr, trace, x, y, step=step, hs=hs,             # <<<<<<<<<<<<<<
  *                       maxdis=maxdis, background=background,

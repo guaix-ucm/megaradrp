@@ -10,7 +10,7 @@ class Trace {
   public:
     Trace();
     double predict(double x) const;
-    void push_back(double x, double y);
+    void push_back(double x, double y, double p);
     void reverse();
     std::vector<double> xtrace;
     std::vector<double> ytrace;

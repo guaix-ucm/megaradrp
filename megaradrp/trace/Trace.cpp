@@ -11,10 +11,10 @@ namespace Numina {
   Trace::Trace() 
   {}
   
-  void Trace::push_back(double x, double y) {
+  void Trace::push_back(double x, double y, double p) {
     xtrace.push_back(x);
     ytrace.push_back(y);
-    ptrace.push_back(0.0);
+    ptrace.push_back(p);
   }
 
   void Trace::reverse() {
