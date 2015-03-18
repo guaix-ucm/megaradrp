@@ -14,6 +14,7 @@ class Trace {
     void reverse();
     std::vector<double> xtrace;
     std::vector<double> ytrace;
+    std::vector<double> ptrace;
   };
 
 } // namespace numina

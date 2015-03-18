@@ -14,11 +14,13 @@ namespace Numina {
   void Trace::push_back(double x, double y) {
     xtrace.push_back(x);
     ytrace.push_back(y);
+    ptrace.push_back(0.0);
   }
 
   void Trace::reverse() {
     std::reverse(xtrace.begin(), xtrace.end());
     std::reverse(ytrace.begin(), ytrace.end());
+    std::reverse(ptrace.begin(), ptrace.end());
   }
 
   double Trace::predict(double x) const {

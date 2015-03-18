@@ -22,6 +22,7 @@ cdef extern from "Trace.h" namespace "Numina":
         double predict(double x) nogil
         vector[double] xtrace
         vector[double] ytrace
+        vector[double] ptrace
         void reverse() nogil
 
 cdef vector[int] local_max(double* mm, size_t n, double background) nogil:
@@ -193,11 +194,12 @@ def tracing(FType[:, :] arr, double x, double y, size_t step=1,
                      maxdis=maxdis, background=background,
                      direction=+1)
 
-    result = numpy.empty((trace.xtrace.size(), 2), dtype='float')
+    result = numpy.empty((trace.xtrace.size(), 3), dtype='float')
     
     for i in range(trace.xtrace.size()):
         result[i,0] = trace.xtrace[i]
         result[i,1] = trace.ytrace[i]
+        result[i,2] = trace.ptrace[i]
     
     return result
 
