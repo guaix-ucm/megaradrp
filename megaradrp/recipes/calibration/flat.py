@@ -167,8 +167,10 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         _logger.info('trace peaks')
         for trace in central_peaks.values():
 
-            mm = tracing(image2, x=cstart, y=trace.trace_f[0], step=step1,
-                         hs=hs, background=background1, maxdis=maxdis1)
+            mm = tracing(image2, x=cstart, y=trace.trace_f[0],
+                         p=trace.peak_f[0], step=step1, hs=hs,
+                         background=background1, maxdis=maxdis1
+                         )
 
             pfit = numpy.polyfit(mm[:,0], mm[:,1], deg=5)
             

@@ -172,19 +172,19 @@ cdef Trace _internal_tracing(FType[:, :] arr, Trace& trace, double x, double y,
         # fit the peak with three points
         result = interp_max_3(arr[nearp-1:nearp+2, col])
         
-        trace.push_back(col, result[0] + nearp, 0.0)
+        trace.push_back(col, result[0] + nearp, result[1])
 
     return trace
 
 @cython.cdivision(True)
 @cython.boundscheck(False)
-def tracing(FType[:, :] arr, double x, double y, size_t step=1, 
+def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1, 
                      size_t hs=1, double background=150.0,
                      double maxdis=2.0):
     
     cdef Trace trace 
     # Initial values    
-    trace.push_back(x, y, 0.0)
+    trace.push_back(x, y, p)
 
     _internal_tracing(arr, trace, x, y, step=step, hs=hs, 
                       maxdis=maxdis, background=background,
