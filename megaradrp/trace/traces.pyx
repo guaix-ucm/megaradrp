@@ -44,6 +44,28 @@ cdef extern from "Trace.h" namespace "Numina":
         vector[double] ptrace
         void reverse() nogil
 
+cdef class cTrace:
+
+    cdef Trace *thisptr
+    
+    def __cinit__(self):
+        self.thisptr = new Trace()
+        
+    def __dealloc__(self):
+        del self.thisptr
+
+    def append_f(self, x, y, val):
+        self.thisptr.push_back(x, y, val)
+
+    def append_c(self, xi, yi, vali):
+        pass
+    
+    def reverse(self):
+        self.thisptr.reverse()
+    
+    def predict(self, x):
+        return self.thisptr.predict(x)
+
 cdef vector[int] local_max(double* mm, size_t n, double background) nogil:
     
     cdef vector[int] result

@@ -166,9 +166,10 @@ class FiberFlatRecipe(MegaraBaseRecipe):
             
         _logger.info('trace peaks')
         for trace in central_peaks.values():
+            x, y, p = trace.start
 
-            mm = tracing(image2, x=cstart, y=trace.trace_f[0],
-                         p=trace.peak_f[0], step=step1, hs=hs,
+            mm = tracing(image2, x=x, y=y,
+                         p=p, step=step1, hs=hs,
                          background=background1, maxdis=maxdis1
                          )
 
