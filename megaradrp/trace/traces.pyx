@@ -117,7 +117,7 @@ cdef int colapse_mean(FType[:, :] arr, vector[double]& out) nogil:
 @cython.cdivision(True)
 @cython.boundscheck(False)
 cdef Trace _internal_tracing(FType[:, :] arr, Trace& trace, double x, double y,
-                             size_t step=1, size_t hs=1, 
+                             size_t step=1, size_t hs=1, size_t tol=2,
                              double maxdis=2.0, double background=150.0,
                              int direction=-1) nogil:
 
@@ -129,7 +129,7 @@ cdef Trace _internal_tracing(FType[:, :] arr, Trace& trace, double x, double y,
     
     cdef int axis = 1
     cdef size_t i
-
+    cdef size_t tolcounter = tol
     cdef size_t axis_size = arr.shape[1]
     cdef const char* aa = "aaaaaa"
     
@@ -182,7 +182,17 @@ cdef Trace _internal_tracing(FType[:, :] arr, Trace& trace, double x, double y,
         if ipeak < 0 or dis > maxdis:
             # printf("peak is not found %i\n", ipeak)
             # peak is not found
-            return trace
+            if tolcounter > 0:
+                # Try again
+                tolcounter -= 1
+                continue
+            else:
+                # No more tries
+                # Exit now
+                return trace
+
+        # Reset counter
+        tolcounter = tol 
         #printf("peak %f\n", peaks[ipeak] + pred_off)
         #printf("col %i pred %f\n", col, prediction)
 
@@ -199,18 +209,18 @@ cdef Trace _internal_tracing(FType[:, :] arr, Trace& trace, double x, double y,
 @cython.cdivision(True)
 @cython.boundscheck(False)
 def tracing(FType[:, :] arr, double x, double y, double p, size_t step=1, 
-                     size_t hs=1, double background=150.0,
+                     size_t hs=1, size_t tol=2, double background=150.0,
                      double maxdis=2.0):
     
     cdef Trace trace 
     # Initial values    
     trace.push_back(x, y, p)
 
-    _internal_tracing(arr, trace, x, y, step=step, hs=hs, 
+    _internal_tracing(arr, trace, x, y, step=step, hs=hs, tol=tol,
                       maxdis=maxdis, background=background,
                       direction=-1)
     trace.reverse()
-    _internal_tracing(arr, trace, x, y, step=step, hs=hs, 
+    _internal_tracing(arr, trace, x, y, step=step, hs=hs, tol=tol,
                      maxdis=maxdis, background=background,
                      direction=+1)
 
