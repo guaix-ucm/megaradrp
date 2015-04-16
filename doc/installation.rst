@@ -165,7 +165,9 @@ Installing MEGARA DFP
 This section described how to install the MEGARA Pipeline inside
 the GTC Control system.
 
-TDB
+Please refer to :ref:`Numina manual <numina:solaris10>` to install Numina
+and its dependences under Solaris 10.
+
 
 
 
