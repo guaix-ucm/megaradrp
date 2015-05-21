@@ -24,6 +24,7 @@ import numpy as np
 
 from numina.core import BaseRecipeAutoQC as MegaraBaseRecipe  # @UnusedImport
 from megaradrp.products import TraceMap
+from megarardrp.trace.peakdetection import peakdet
 
 # row / column
 _binning = {'11': [1, 1], '21': [1, 2], '12': [2, 1], '22': [2, 2]}
@@ -427,50 +428,3 @@ def apextract2(data, tracemap):
     return rss
 
 
-def peakdet(v, delta, x=None, back=0.0):
-    '''Basic peak detection.'''
-
-    if x is None:
-        x = np.arange(len(v))
-
-    v = np.asarray(v)
-
-    if len(v) != len(x):
-        raise ValueError('Input vectors v and x must have same length')
-
-    if not np.isscalar(delta):
-        raise TypeError('Input argument delta must be a scalar')
-
-    if delta <= 0:
-        raise ValueError('Input argument delta must be positive')
-
-    maxtab = []
-    mintab = []
-
-    mn, mx = np.Inf, -np.Inf
-    mnpos, mxpos = np.NaN, np.NaN
-
-    lookformax = True
-
-    for i, this in enumerate(v):
-        if this > mx and this > back:
-            mx = this
-            mxpos = x[i]
-        if this < mn:
-            mn = this
-            mnpos = x[i]
-
-        if lookformax:
-            if this < mx - delta and this > back:
-                maxtab.append((mxpos, mx))
-                mn = this
-                mnpos = x[i]
-                lookformax = False
-        else:
-            if this > mn + delta:
-                mintab.append((mnpos, mn))
-                mx = this
-                mxpos = x[i]
-                lookformax = True
-
-    return np.array(maxtab), np.array(mintab)
