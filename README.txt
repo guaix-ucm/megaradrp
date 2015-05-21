@@ -10,7 +10,7 @@ be able to be installed and work properly:
  - setuptools (http://peak.telecommunity.com/DevCenter/setuptools)
  - numpy (http://www.numpy.org/)
  - scipy (http://www.scipy.org)
- - astropy >= 0.4 (http://www.astropy.org/)
+ - astropy >= 0.4, < 1.0 (http://www.astropy.org/)
  - numina >= 0.13 (http://guaix.fis.ucm.es/projects/numina/)
 
 Webpage: https://guaix.fis.ucm.es/megara
