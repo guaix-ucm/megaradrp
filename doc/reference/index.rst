@@ -2,7 +2,7 @@
 .. _reference:
 
 =====================
-Reference
+API Reference
 =====================
 
 
