@@ -124,7 +124,7 @@ Running the pipeline
 :program:`numina` copies the images (calibrations and raw data) from directory 
 ``datadir`` to directory ``workdir``, where the processing happens. 
 The result is stored in directory ``resultsdir``. 
-The default values are for each directory are``_data``, ``_work`` and ``_results``.
+The default values are for each directory are ``_data``, ``_work`` and ``_results``.
 All these directories can be defined in the command line using flags::
 
   $ numina run --workdir /tmp/test1 --datadir /scrat/obs/run12222 obs.yaml -r requires.raml

@@ -5,7 +5,6 @@ Bias
 -----
 
 :Mode: Bias
-:Usage: Offline
 :Recipe class: :class:`~megaradrp.recipes.calibration.BiasRecipe`
 
 The actions to calibrate the zero (pedestal) level of the detector
@@ -45,7 +44,6 @@ Dark
 -----
 
 :Mode: Dark
-:Usage: Offline
 :Recipe class: :class:`~megaradrp.recipes.calibration.DarkRecipe`
 
 Requirements
@@ -62,7 +60,6 @@ Slit-flat
 ------------
 
 :Mode: Slit-flat
-:Usage: Offline
 :Recipe class: :class:`~megaradrp.recipes.calibration.SlitFlatRecipe`
 
 Requeriments
@@ -80,7 +77,6 @@ Fiber-flat
 ------------
 
 :Mode: Fiber-flat
-:Usage: Offline
 :Recipe class: :class:`~megaradrp.recipes.calibration.FiberFlatRecipe`
 
 Requirements
@@ -96,7 +92,6 @@ Twilight fiber-flat
 ---------------------
 
 :Mode: Twilight fiber-flat
-:Usage: Offline
 :Recipe class: :class:`~megaradrp.recipes.calibration.TwiligthFiberFlatRecipe`
 
 Requeriments
@@ -112,7 +107,6 @@ Arc
 ------------
 
 :Mode: Arc
-:Usage: Offline
 :Recipe class: :class:`~megaradrp.recipes.calibration.ArcRecipe`
 
 Requirements
@@ -128,7 +122,6 @@ Standard star with the LCB IFU
 ---------------------------------
 
 :Mode: Standard start with the LCB IFU
-:Usage: Offline
 :Recipe class: :class:`~megaradrp.recipes.calibration.LCB_IFU_StdStarRecipe`
 
 Requirements
@@ -144,7 +137,6 @@ Standard star with the Fiber MOS
 ----------------------------------
 
 :Mode: Standard start with the FIBER MOS
-:Usage: Offline
 :Recipe class: :class:`~megaradrp.recipes.calibration.FiberMOS_StdStarRecipe`
 
 Requirements
@@ -160,7 +152,6 @@ Bad-pixels mask
 ----------------------------------
 
 :Mode: Bad-pixels mask
-:Usage: Offline
 :Recipe class: :class:`~megaradrp.recipes.calibration.BadPixelsMaskRecipe`
 
 Requirements
@@ -176,7 +167,6 @@ Linearity tests
 ----------------------------------
 
 :Mode: Linearity tests
-:Usage: Offline
 :Recipe class: :class:`~megaradrp.recipes.calibration.LinearityTestRecipe`
 
 Requirements
@@ -193,7 +183,6 @@ Trace
 ----------------------------------
 
 :Mode: Trace
-:Usage: Offline
 :Recipe class: :class:`~megaradrp.recipes.calibration.TraceMapRecipe`
 
 Requirements

@@ -38,7 +38,7 @@ To install with pip, simply run:::
     have Numpy installed, since otherwise pip will sometimes try to upgrade 
     your Numpy installation, which may not always be desired.
 
-MEGARA DRP is registered in the Python Package Index. That means (among 
+MEGARA DRP is registered in the `Python Package Index <https://pypi.python.org>`_. That means (among 
 other things) that can be installed inside the environment with one command.
 
 
@@ -157,18 +157,6 @@ deactivate it just type deactivate::
 
   (myenv) $ deactivate
   $ 
-
-*********************
-Installing MEGARA DFP
-*********************
-
-This section described how to install the MEGARA Pipeline inside
-the GTC Control system.
-
-Please refer to :ref:`Numina manual <numina:solaris10>` to install Numina
-and its dependences under Solaris 10.
-
-
 
 
 .. _virtualenv: http://pypi.python.org/pypi/virtualenv

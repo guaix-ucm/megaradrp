@@ -5,10 +5,6 @@ Overview
 This guide is intended as an introductory overview of MEGARA Reduction Pipeline 
 packages and explains how to install and make use of its most important features.
 
-The MEGARA Pipeline can be used as an stand-alone application (referred as 
-MEGARA Data Reduction Pipeline or MEGARA DRP) or 
-integrated in the GTC Control System (MEGARA Data Factory Pipeline or MEGARA DFP).
-
 For detailed reference documentation of the functions and
 classes contained in the package, see the :ref:`reference`.
     
