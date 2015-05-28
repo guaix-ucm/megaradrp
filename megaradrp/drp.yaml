@@ -71,6 +71,15 @@ modes:
   summary: Summary of Fiber MOS image
   uuid: 4e5a5d6f-3bee-4630-836e-0eabdf5e9f9b
   tagger: megaradrp.taggers.tagger_vph
+- date: 2015-05-29
+  description: Process an Arc image
+  key: arc_calibration
+  name: Arc Calibration
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Arc Calibration
+  uuid: c1842e00-2005-48bb-9a0e-8a8161f97fdf
+  tagger: megaradrp.taggers.tagger_vph
 pipelines:
   default:
     recipes:
@@ -80,6 +89,7 @@ pipelines:
       mos_image: megaradrp.recipes.scientific.FiberMOSRecipe2
       flux_calibration: megaradrp.recipes.calibration.PseudoFluxCalibrationRecipe
       trace_map: megaradrp.recipes.calibration.flat.TraceMapRecipe
+      arc_calibration: megaradrp.recipes.calibration.arc.ArcCalibrationRecipe
       fail: numina.core.utils.AlwaysFailRecipe
       success: numina.core.utils.AlwaysSuccessRecipe
     version: 1
