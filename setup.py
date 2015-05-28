@@ -59,5 +59,5 @@ setup(name='megaradrp',
                    "Operating System :: OS Independent",
                    "Topic :: Scientific/Engineering :: Astronomy",
                    ],
-    long_description=open('README.txt').read()
+    long_description=open('README.rst').read()
 )
