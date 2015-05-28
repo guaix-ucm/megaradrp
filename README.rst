@@ -1,3 +1,9 @@
+
+.. image:: https://readthedocs.org/projects/megara-drp/badge/?version=latest
+   :target: https://readthedocs.org/projects/megara-drp/?badge=latest
+   :alt: Documentation Status
+
+
 This is Megara DRP, the data reduction pipeline for MEGARA
 
 Megara DRP is distributed under GNU GPL, either version 3 of the License,
