@@ -51,14 +51,14 @@ def get_tags_from_full_ob(ob, reqtags=None):
             
             for t in reqtags:
                 if alltags[t] != header[t]:
-                    msg = 'wrong tag %s in file %s' % (thisfile[t], fname)
+                    msg = 'wrong tag %s in file %s' % (t, fname)
                     raise ValueError(msg)
 
     for prod in cfiles:
         prodtags = prod.tags
         for t in reqtags:
             if alltags[t] != prodtags[t]:
-                msg = 'wrong tag %s in product %s' % (thisfile[t], prod)
+                msg = 'wrong tag %s in product %s' % (t, prod)
                 raise ValueError(msg)
 
     return alltags
