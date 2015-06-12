@@ -113,7 +113,7 @@ For example::
   # format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
   # enabled: true
   
-The # character is a comment, so every line starting with it can safely 
+The # character is a comment, so every line starting with it can be safely 
 removed. The names of FITS files in the requirements section must be edited to 
 point to existing files.
 
@@ -134,7 +134,7 @@ See :ref:`numina:cli` for a full description of the command line interface.
 Following the example, we create a directory ``_data`` in our current directory and copy
 there the raw frames from ``r0121.fits`` to ``r0132.fits``and the master bias ``master_bias-1.fits``.
 
-The we run::
+Then we run::
 
   $ numina run obsresult.yaml -r requirements.yaml
   INFO: Numina simple recipe runner version 0.13dev

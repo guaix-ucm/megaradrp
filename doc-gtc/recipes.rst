@@ -37,7 +37,7 @@ syntax (the syntax is subject to changes).
 
 
 When the Recipe is properly configured, it is executed with RecipeInput 
-data estrcuture as input.
+data structure as input.
 
 Recipe Products
 --------------- 
