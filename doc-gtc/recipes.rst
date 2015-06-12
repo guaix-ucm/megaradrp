@@ -1,6 +1,23 @@
 Reduction Recipes
 ==================
 
+Execution environment of the Recipes
+------------------------------------
+
+Recipes have different execution environments. Some recipes are designed to
+process observing modes required while observing at the telescope. These modes
+are related to visualization, acquisition and focusing. The corresponding
+Recipes are integrated in the GTC environment. We call these recipes the **Data
+Factory Pipeline**, (DFP).
+
+Other group of recipes are devoted to scientific observing modes and auxiliary calibrations.
+These Recipes constitute the **Data Reduction Pipeline**, (DRP). The software is meant to be standalone,
+users shall download the software and run it in their own computers, with
+reduction parameters and calibrations provided by the instrument team.
+
+Users of the DRP may use the simple Numina CLI (Command Line Interface).
+Users of the DFP shall interact with the software through the GTC Inspector.
+
 Recipe Parameters
 -----------------
 MEGARA Recipes based on Numina have a list of required parameters needed
