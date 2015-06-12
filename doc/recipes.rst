@@ -37,7 +37,7 @@ The Recipe announces the required parameters with the following syntax (the synt
 When the Recipe is properly configured, it is executed with an observing block
 data structure as input. When run using Numina CLI, this data structure is
 created from an user-provided text file. The recipe requirements values are 
-either provided ina text file or have default values.
+either provided in a text file or have default values.
 
 Recipe Products
 --------------- 
