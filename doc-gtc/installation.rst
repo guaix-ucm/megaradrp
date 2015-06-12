@@ -26,13 +26,30 @@ Additional packages are optionally required:
 Installing MEGARA DFP
 *********************
 
-This section described how to install the MEGARA Pipeline inside
+This section describes how to install the MEGARA Pipeline inside
 the GTC Control system.
 
 Please refer to :ref:`Numina manual <numina:solaris10>` to install Numina
 and its dependences under Solaris 10.
 
-TBD
+Building from source
+---------------------
+
+
+The latest stable version of MEGARA DRP can be downloaded from
+https://pypi.python.org/pypi/megaradrp
+
+To install MEGARA DRP, use the standard installation procedure::
+
+    $ tar zxvf megaradrp-X.Y.Z.tar.gz
+    $ cd megaradrp-X.Y.Z
+    $ python setup.py install --prefix GTC_PATH
+    
+The `install` command provides options to change the target directory. By
+default installation requires administrative privileges. The different
+installation options can be checked with::
+
+   $ python setup.py install --help
 
 
 .. _virtualenv: http://pypi.python.org/pypi/virtualenv
