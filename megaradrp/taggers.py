@@ -23,7 +23,7 @@ from astropy.io import fits
 def get_tags_from_full_ob(ob, reqtags=None):
     # each instrument should have one
     # perhaps each mode...
-    files = ob.files
+    files = ob.images
     cfiles = ob.children
     alltags = {}
 
