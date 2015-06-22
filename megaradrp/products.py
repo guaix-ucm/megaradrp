@@ -39,21 +39,26 @@
 
 
 from numina.core import DataFrameType, DataProductType
+from numina.core.products import DataProductTag
 
 
-class MasterBias(DataFrameType):
+class MEGARAProductFrame(DataFrameType, DataProductTag):
     pass
 
 
-class MasterDark(DataFrameType):
+class MasterBias(MEGARAProductFrame):
     pass
 
 
-class MasterFiberFlat(DataFrameType):
+class MasterDark(MEGARAProductFrame):
     pass
 
 
-class MasterSensitivity(DataFrameType):
+class MasterFiberFlat(MEGARAProductFrame):
+    pass
+
+
+class MasterSensitivity(MEGARAProductFrame):
     pass
 
 
