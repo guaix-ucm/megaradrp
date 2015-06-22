@@ -25,7 +25,7 @@ from numina.store import dump, load
 
 from .products import TraceMap
 
-_logger = logging.getLogger('megaradrp')
+_logger = logging.getLogger('megaradrp.store')
 
 
 _logger.debug('register dump functions')
