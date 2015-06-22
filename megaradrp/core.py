@@ -24,7 +24,7 @@ import numpy as np
 
 from numina.core import BaseRecipeAutoQC as MegaraBaseRecipe  # @UnusedImport
 from megaradrp.products import TraceMap
-from megarardrp.trace.peakdetection import peakdet
+from megaradrp.trace.peakdetection import peakdet
 
 # row / column
 _binning = {'11': [1, 1], '21': [1, 2], '12': [2, 1], '22': [2, 2]}
