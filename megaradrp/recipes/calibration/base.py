@@ -60,7 +60,6 @@ class BiasRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(BiasRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
@@ -120,7 +119,6 @@ class DarkRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(DarkRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
@@ -150,7 +148,6 @@ class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(PseudoFluxCalibrationRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
@@ -255,7 +252,6 @@ class ArcRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(ArcRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
@@ -274,7 +270,6 @@ class LCB_IFU_StdStarRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(LCB_IFU_StdStarRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
@@ -293,7 +288,6 @@ class FiberMOS_StdStarRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(FiberMOS_StdStarRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
@@ -312,7 +306,6 @@ class SensitivityFromStdStarRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(SensitivityFromStdStarRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
@@ -331,7 +324,6 @@ class S_And_E_FromStdStarsRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(SensitivityFromStdStarRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
@@ -349,7 +341,6 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(BadPixelsMaskRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
@@ -367,7 +358,6 @@ class LinearityTestRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(LinearityTestRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
