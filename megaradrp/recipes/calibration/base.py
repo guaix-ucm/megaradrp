@@ -70,7 +70,7 @@ class BiasRecipe(MegaraBaseRecipe):
     def process(self, obresult):
         _logger.info('starting bias reduction')
 
-        if not obresult.frames:
+        if not obresult.images:
             raise RecipeError('Frame list is empty')
 
         cdata = []
@@ -81,7 +81,7 @@ class BiasRecipe(MegaraBaseRecipe):
         basicflow = SerialFlow([o_c, t_i])
 
         try:
-            for frame in obresult.frames:
+            for frame in obresult.images:
                 hdulist = frame.open()
                 hdulist = basicflow(hdulist)
                 cdata.append(hdulist)
@@ -174,7 +174,7 @@ class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
         t_data = []
 
         try:
-            for frame in rinput.obresult.frames:
+            for frame in rinput.obresult.images:
                 hdulist = frame.open()
                 hdulist = basicflow(hdulist)
                 t_data.append(hdulist)

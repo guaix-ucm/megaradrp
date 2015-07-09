@@ -63,7 +63,7 @@ def process_common(recipe, obresult, master_bias):
     cdata = []
 
     try:
-        for frame in obresult.frames:
+        for frame in obresult.images:
             hdulist = frame.open()
             hdulist = basicflow(hdulist)
             cdata.append(hdulist)
