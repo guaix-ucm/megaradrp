@@ -62,7 +62,6 @@ class FiberMOSRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(FiberMOSRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
@@ -171,7 +170,6 @@ class FiberMOSRecipe2(MegaraBaseRecipe):
 
     def __init__(self):
         super(FiberMOSRecipe2, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
