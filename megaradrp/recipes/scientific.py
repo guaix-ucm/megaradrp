@@ -87,7 +87,7 @@ class FiberMOSRecipe(MegaraBaseRecipe):
         s_data = []
 
         try:
-            for frame in rinput.obresult.frames:
+            for frame in rinput.obresult.images:
                 hdulist = frame.open()
                 hdulist = basicflow(hdulist)
                 p_type = hdulist[0].header.get('OBSTYPE')
@@ -196,7 +196,7 @@ class FiberMOSRecipe2(MegaraBaseRecipe):
         s_data = []
 
         try:
-            for frame in rinput.obresult.frames:
+            for frame in rinput.obresult.images:
                 hdulist = frame.open()
                 hdulist = basicflow(hdulist)
                 p_type = hdulist[0].header.get('OBSTYPE')

@@ -72,7 +72,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         cdata = []
 
         try:
-            for frame in rinput.obresult.frames:
+            for frame in rinput.obresult.images:
                 hdulist = frame.open()
                 hdulist = basicflow(hdulist)
                 cdata.append(hdulist)

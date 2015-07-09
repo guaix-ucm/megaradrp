@@ -25,7 +25,7 @@ import pytest
 
 from numina.tests.testcache import download_cache
 
-from numina.user import main
+from numina.user.cli import main
 from numina.core import init_drp_system, import_object
 from numina.core import ObservationResult
 from numina.core import DataFrame
@@ -65,7 +65,7 @@ def test_recipe2():
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'bias_image'
-    ob.frames = [DataFrame(filename=f.name) for f in fs]
+    ob.images = [DataFrame(filename=f.name) for f in fs]
 
     instrument = drps.get(ob.instrument)
     pipeline = instrument.pipelines.get('default')
