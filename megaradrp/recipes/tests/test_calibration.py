@@ -25,7 +25,7 @@ import pytest
 
 from numina.tests.testcache import download_cache
 
-from numina.user import main
+from numina.user.cli import main
 from numina.core import init_drp_system, import_object
 from numina.core import ObservationResult
 from numina.core import DataFrame
