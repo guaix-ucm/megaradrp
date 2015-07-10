@@ -63,7 +63,7 @@ def process_common(recipe, obresult, master_bias):
     cdata = []
 
     try:
-        for frame in obresult.frames:
+        for frame in obresult.images:
             hdulist = frame.open()
             hdulist = basicflow(hdulist)
             cdata.append(hdulist)
@@ -105,7 +105,6 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(FiberFlatRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
@@ -200,7 +199,6 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(TwilightFiberFlatRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
@@ -217,7 +215,6 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(TraceMapRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 

@@ -65,7 +65,7 @@ def test_recipe2():
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'bias_image'
-    ob.frames = [DataFrame(filename=f.name) for f in fs]
+    ob.images = [DataFrame(filename=f.name) for f in fs]
 
     instrument = drps.get(ob.instrument)
     pipeline = instrument.pipelines.get('default')

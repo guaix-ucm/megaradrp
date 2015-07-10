@@ -19,7 +19,7 @@ except ImportError:
     cmdclass = {}
 
 setup(name='megaradrp',
-      version='0.5.dev',
+      version='0.5.dev0',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       url='http://guaix.fis.ucm.es/hg/megaradrp',
@@ -29,7 +29,7 @@ setup(name='megaradrp',
       package_data={'megaradrp': ['drp.yaml', 'primary.txt']},
       install_requires=[
          'numpy',
-         'astropy >= 0.4, < 0.5',
+         'astropy >= 1.0',
          'scipy',
          'numina >= 0.13.0',
          ],

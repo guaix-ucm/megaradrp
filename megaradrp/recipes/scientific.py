@@ -62,7 +62,6 @@ class FiberMOSRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(FiberMOSRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
@@ -87,7 +86,7 @@ class FiberMOSRecipe(MegaraBaseRecipe):
         s_data = []
 
         try:
-            for frame in rinput.obresult.frames:
+            for frame in rinput.obresult.images:
                 hdulist = frame.open()
                 hdulist = basicflow(hdulist)
                 p_type = hdulist[0].header.get('OBSTYPE')
@@ -171,7 +170,6 @@ class FiberMOSRecipe2(MegaraBaseRecipe):
 
     def __init__(self):
         super(FiberMOSRecipe2, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
@@ -196,7 +194,7 @@ class FiberMOSRecipe2(MegaraBaseRecipe):
         s_data = []
 
         try:
-            for frame in rinput.obresult.frames:
+            for frame in rinput.obresult.images:
                 hdulist = frame.open()
                 hdulist = basicflow(hdulist)
                 p_type = hdulist[0].header.get('OBSTYPE')
