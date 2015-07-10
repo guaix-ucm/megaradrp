@@ -9,18 +9,12 @@ try:
                      ['megaradrp/trace/traces.pyx',
                       'megaradrp/trace/Trace.cpp'],
                      language='c++')
-    ext2 = Extension('megaradrp.trace._extract',
-                     ['megaradrp/trace/extract.pyx'],
-                     language='c++')
     cmdclass = {'build_ext': build_ext}
 except ImportError:
     print('We do not have Cython, just using the generated files')
     ext1 = Extension('megaradrp.trace._traces',
                      ['megaradrp/trace/traces.cpp',
                       'megaradrp/trace/Trace.cpp'],
-                     language='c++')
-    ext2 = Extension('megaradrp.trace._extract',
-                     ['megaradrp/trace/extract.cpp'],
                      language='c++')
     cmdclass = {}
 
@@ -40,7 +34,7 @@ setup(name='megaradrp',
          'numina >= 0.13.0',
          ],
       zip_safe=False,
-      ext_modules=[ext1, ext2],
+      ext_modules=[ext1],
       cmdclass=cmdclass,
       entry_points = {
         'numina.pipeline.1': [
