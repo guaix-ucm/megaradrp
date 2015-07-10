@@ -25,6 +25,7 @@ import numpy as np
 from numina.core import BaseRecipeAutoQC as MegaraBaseRecipe  # @UnusedImport
 from megaradrp.products import TraceMap
 from megarardrp.trace.peakdetection import peakdet
+from numina.array.trace.extract import extract_simple_rss
 
 # row / column
 _binning = {'11': [1, 1], '21': [1, 2], '12': [2, 1], '22': [2, 2]}
@@ -312,7 +313,7 @@ class ApertureExtractor2(TagOptionalCorrector):
     def _run(self, img):
         imgid = self.get_imgid(img)
         _logger.debug('extracting apertures2 in image %s', imgid)
-        rss = apextract2(img[0].data, self.trace)
+        rss = apextract_tracemap(img[0].data, self.trace)
         img[0].data = rss
         return img
 
@@ -391,7 +392,7 @@ def extract_region(data, border1, border2, pesos, xpos):
     return final
 
 
-def apextract2(data, tracemap):
+def apextract_tracemap(data, tracemap):
     '''Extract apertures using a tracemap.'''
     
     # FIXME: a little hackish
@@ -420,9 +421,7 @@ def apextract2(data, tracemap):
 
     rss = np.empty((len(pols), data.shape[1]))
 
-    from megaradrp.trace.extract import superex
-    
-    superex(data, borders, out=rss)
+    rss = extract_simple_rss(data, borders)
 
 
     return rss
