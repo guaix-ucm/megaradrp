@@ -26,6 +26,7 @@ from numina.core import BaseRecipeAutoQC as MegaraBaseRecipe  # @UnusedImport
 from megaradrp.products import TraceMap
 from megarardrp.trace.peakdetection import peakdet
 from numina.array.trace.extract import extract_simple_rss
+from numina.array.utils import wcs_to_pix_1d
 
 # row / column
 _binning = {'11': [1, 1], '21': [1, 2], '12': [2, 1], '22': [2, 2]}
@@ -173,26 +174,21 @@ def apextract(data, trace):
         rss[idx] = m
     return rss
 
-import math
-
-
-def wcs_to_pix(x):
-    return int(math.floor(x + 0.5))
-
 
 def fill_other(data, a, b):
-    start = wcs_to_pix(a)
-    end = wcs_to_pix(b)
+    start = wcs_to_pix_1d(a)
+    end = wcs_to_pix_1d(b)
     data[start] = min(start+0.5, b)-a
     data[start+1:end] = 1.0
     if end > start:
         data[end] = b - (end-0.5)
     return data
 
+
 def extract_region(data, border1, border2, pesos, xpos):
         
     extend = (border1.min(), border2.max())
-    extend_pix = (wcs_to_pix(extend[0]), wcs_to_pix(extend[1])+1)
+    extend_pix = (wcs_to_pix_1d(extend[0]), wcs_to_pix_1d(extend[1])+1)
     region = slice(extend_pix[0],extend_pix[1])
 
     for x, a,b in zip(xpos, border1, border2):
