@@ -41,74 +41,76 @@ from megaradrp.products import MasterFiberFlat
 from megaradrp.products import TraceMap
 from megaradrp.requirements import MasterBiasRequirement
 
-from megaradrp.trace.traces import init_traces
-from megaradrp.trace._traces import tracing  # @UnresolvedImport
-from megaradrp.core import apextract2
+from megaradrp.core import apextract_tracemap
 
 _logger = logging.getLogger('numina.recipes.megara')
 
 
-def process_common(recipe, obresult, master_bias):
-    _logger.info('starting prereduction')
-
-    o_c = OverscanCorrector()
-    t_i = TrimImage()
-
-    with master_bias.open() as hdul:
-        mbias = hdul[0].data.copy()
-        b_c = BiasCorrector(mbias)
-
-    basicflow = SerialFlow([o_c, t_i, b_c])
-
-    cdata = []
-
-    try:
-        for frame in obresult.frames:
-            hdulist = frame.open()
-            hdulist = basicflow(hdulist)
-            cdata.append(hdulist)
-
-        _logger.info('stacking %d images using median', len(cdata))
-
-        data = c_median([d[0].data for d in cdata], dtype='float32')
-        template_header = cdata[0][0].header
-        hdu = fits.PrimaryHDU(data[0], header=template_header)
-    finally:
-        for hdulist in cdata:
-            hdulist.close()
-
-    hdr = hdu.header
-    hdr['IMGTYP'] = ('FIBER_FLAT', 'Image type')
-    hdr['NUMTYP'] = ('MASTER_FIBER_FLAT', 'Data product type')
-    hdr = recipe.set_base_headers(hdr)
-    hdr['CCDMEAN'] = data[0].mean()
-
-    varhdu = fits.ImageHDU(data[1], name='VARIANCE')
-    num = fits.ImageHDU(data[2], name='MAP')
-    result = fits.HDUList([hdu, varhdu, num])
-
-    _logger.info('prereduction ended')
-
-    return result
-
-
 class ArcCalibrationRecipe(MegaraBaseRecipe):
-    '''Process FIBER_FLAT images and create MASTER_FIBER_FLAT.'''
+    '''Process ARC images and create WL_CALIBRATION.'''
 
     # Requirements
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
-    master_trace = None
+    master_trace = Requirement(TraceMap, 'Trace information of the Apertures')
     # Products
-    arc_frame = Product(MasterFiberFlat)
+    arc_image = Product(DataFrameType)
+    arc_rss = Product(DataFrameType)
 
     def __init__(self):
         super(ArcCalibrationRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
     def run(self, rinput):
-        return self.create_result(arc_frame=None)
+        # Basic processing
+        reduced = self.process_common(rinput.obresult, rinput.master_bias)
 
-    
+        _logger.info('extract fibers')
+        rss = apextract_tracemap(reduced[0].data, rinput.tracemap)
+
+        # WL calibration goes here
+        return self.create_result(arc_image=reduced, arc_rss=rss)
+
+    def process_common(self, obresult, master_bias):
+        _logger.info('starting prereduction')
+
+        o_c = OverscanCorrector()
+        t_i = TrimImage()
+
+        with master_bias.open() as hdul:
+            mbias = hdul[0].data.copy()
+            b_c = BiasCorrector(mbias)
+
+        basicflow = SerialFlow([o_c, t_i, b_c])
+
+        cdata = []
+
+        try:
+            for frame in obresult.images:
+                hdulist = frame.open()
+                hdulist = basicflow(hdulist)
+                cdata.append(hdulist)
+
+            _logger.info('stacking %d images using median', len(cdata))
+
+            data = c_median([d[0].data for d in cdata], dtype='float32')
+            template_header = cdata[0][0].header
+            hdu = fits.PrimaryHDU(data[0], header=template_header)
+        finally:
+            for hdulist in cdata:
+                hdulist.close()
+
+        hdr = hdu.header
+        hdr['IMGTYP'] = ('FIBER_FLAT', 'Image type')
+        hdr['NUMTYP'] = ('MASTER_FIBER_FLAT', 'Data product type')
+        hdr = self.set_base_headers(hdr)
+        hdr['CCDMEAN'] = data[0].mean()
+
+        varhdu = fits.ImageHDU(data[1], name='VARIANCE')
+        num = fits.ImageHDU(data[2], name='MAP')
+        result = fits.HDUList([hdu, varhdu, num])
+
+        _logger.info('prereduction ended')
+
+        return result

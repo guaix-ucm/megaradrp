@@ -43,7 +43,7 @@ from megaradrp.requirements import MasterBiasRequirement
 
 from megaradrp.trace.traces import init_traces
 from megaradrp.trace._traces import tracing  # @UnresolvedImport
-from megaradrp.core import apextract2
+from megaradrp.core import apextract_tracemap
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -123,7 +123,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     
         tracemap = self.trace(reduced[0].data, cstart, step)
         
-        rss = apextract2(reduced[0].data, tracemap)
+        rss = apextract_tracemap(reduced[0].data, tracemap)
         
         rss[rss <= 0] = 1
         
