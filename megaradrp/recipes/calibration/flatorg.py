@@ -53,7 +53,6 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(FiberFlatRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
@@ -72,7 +71,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         cdata = []
 
         try:
-            for frame in rinput.obresult.frames:
+            for frame in rinput.obresult.images:
                 hdulist = frame.open()
                 hdulist = basicflow(hdulist)
                 cdata.append(hdulist)
