@@ -38,8 +38,8 @@ from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
 
 from megaradrp.core import MegaraBaseRecipe
-from megaradrp.core import OverscanCorrector, TrimImage
-from megaradrp.core import ApertureExtractor, FiberFlatCorrector
+from megaradrp.processing import OverscanCorrector, TrimImage
+from megaradrp.processing import ApertureExtractor, FiberFlatCorrector
 from megaradrp.core import peakdet
 # from numina.logger import log_to_history
 from megaradrp.requirements import MasterBiasRequirement

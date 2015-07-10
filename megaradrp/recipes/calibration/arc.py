@@ -34,7 +34,7 @@ from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
 
 from megaradrp.core import MegaraBaseRecipe
-from megaradrp.core import OverscanCorrector, TrimImage
+from megaradrp.processing import OverscanCorrector, TrimImage
 # from numina.logger import log_to_history
 
 from megaradrp.products import MasterFiberFlat
@@ -53,6 +53,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
     master_trace = Requirement(TraceMap, 'Trace information of the Apertures')
+    line_catalog = Requirement(ArrayType, 'Catalog of lines')
     # Products
     arc_image = Product(DataFrameType)
     arc_rss = Product(DataFrameType)
