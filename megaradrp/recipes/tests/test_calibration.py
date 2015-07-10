@@ -25,7 +25,7 @@ import pytest
 
 from numina.tests.testcache import download_cache
 
-from numina.user import main
+from numina.user.cli import main
 from numina.core import init_drp_system, import_object
 from numina.core import ObservationResult
 from numina.core import DataFrame
@@ -36,11 +36,12 @@ BASE_URL = 'http://guaix.fis.ucm.es/~spr/megara_test/'
 
 
 def run_recipe():
+    print "run_recipe()"
     main(['run', 'obsrun.yaml', '-r', 'control.yaml'])
 
 
 def test_recipe1():
-
+    print "test_recipe1()"
     drps = init_drp_system()
     instrument = drps.get('MEGARA')
     pipeline = instrument.pipelines.get('default')

@@ -17,5 +17,7 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from calibration import BiasRecipe, DarkRecipe, FiberFlatRecipe
-from scientific.cFiberMOSRecipe import FiberMOSRecipe
+'''Calibration Recipes for Megara'''
+
+from cFiberMOSRecipe import FiberMOSRecipe
+
