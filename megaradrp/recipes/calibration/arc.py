@@ -27,12 +27,18 @@ import numpy
 from astropy.io import fits
 
 from numina.core import Product
+from numina.core import Requirement, Product, Parameter
+from numina.core import DataFrameType
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
 from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
 
+# FIXME:
+from emirdrp.products import LinesCatalog
+import emirdrp.store
+# This is a emir thing
 from megaradrp.core import MegaraBaseRecipe
 from megaradrp.processing import OverscanCorrector, TrimImage
 # from numina.logger import log_to_history
@@ -52,8 +58,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     # Requirements
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
-    master_trace = Requirement(TraceMap, 'Trace information of the Apertures')
-    line_catalog = Requirement(ArrayType, 'Catalog of lines')
+    tracemap = Requirement(TraceMap, 'Trace information of the Apertures')
+    lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
+    polynomial_degree = Parameter(2, 'Polynomial degree of the arc calibration')
     # Products
     arc_image = Product(DataFrameType)
     arc_rss = Product(DataFrameType)
@@ -63,15 +70,125 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             version="0.1.0"
         )
 
+    def per(self):
+        print(obresult)
+
     def run(self, rinput):
         # Basic processing
         reduced = self.process_common(rinput.obresult, rinput.master_bias)
 
         _logger.info('extract fibers')
-        rss = apextract_tracemap(reduced[0].data, rinput.tracemap)
+        rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
+        rsshdu = fits.PrimaryHDU(rssdata, header=reduced[0].header)
+        rss = fits.HDUList([rsshdu])
+
+        # Skip any other inputs for the moment
+        coeff_table = self.calibrate_wl(rssdata, rinput.lines_catalog, rinput.polynomial_degree)
 
         # WL calibration goes here
         return self.create_result(arc_image=reduced, arc_rss=rss)
+
+    def calibrate_wl(self, rss, lines_catalog, poldeg, times_sigma=3.0):
+        # FIXME: remove this later
+        from emirdrp.wavecal.arccalibration import arccalibration_direct, fit_solution, gen_triplets_master
+        from emirdrp.wavecal.statsummary import sigmaG
+        from emirdrp.wavecal.findpeaks1D import findPeaks_spectrum, refinePeaks_spectrum
+        from scipy.interpolate import interp1d
+        import matplotlib.pyplot as plt
+        # 
+        # read master table (TBM) and generate auxiliary parameters (valid for
+        # all the slits) for the wavelength calibration
+        wv_master = lines_catalog[:,0]
+        ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
+                  gen_triplets_master(wv_master, LDEBUG=True)
+        # FIXME: this depends on the spectral and dispersion axes
+        nspec = rss.shape[0]
+        coeff_table = numpy.zeros((nspec, poldeg + 1))
+        # Loop over rows in RSS
+        nwinwidth = 5
+        for idx, row in enumerate(rss):
+            # find peaks (initial search providing integer numbers)
+            threshold = numpy.median(row)+times_sigma*sigmaG(row)
+            ipeaks_int = findPeaks_spectrum(row, nwinwidth=nwinwidth, 
+                                                 data_threshold=threshold,
+                                                 LDEBUG=True, LPLOT=False)
+            # refine peaks fitting an appropriate function (providing float 
+            # numbers)
+            ipeaks_float = refinePeaks_spectrum(row, ipeaks_int, nwinwidth, 
+                                                method=2, LDEBUG=False)
+
+   
+            # define interpolation function and interpolate the refined peak 
+            # location, passing from index number (within the row array) 
+            # to channel number (note that this step takes care of the fact 
+            # that the extracted spectrum may correspond to a subregion in the 
+            # spectral direction)
+
+            # FIXME: xchannel ???
+            # This comes from Nico's code, so probably pixels
+            # will start in 1
+            naxis1 = row.shape[0]
+            xchannel = numpy.arange(1, naxis1 + 1)
+
+            finterp_channel = interp1d(range(xchannel.size), xchannel, 
+                                       kind='linear')
+            xpeaks_refined = finterp_channel(ipeaks_float)
+    
+            if False: # TBR (to be removed in the future)
+                print('xpeaks_refined (channel):\n',xpeaks_refined)
+                # plot extracted spectrum
+                fig = plt.figure()
+                ax = fig.add_subplot(111)
+                ax.set_xlim([1,naxis1])
+                ax.plot(xchannel,row,'k-')
+                ax.plot(xchannel[ipeaks_int], row[ipeaks_int], 'ro')
+                ax.plot([1,naxis1],[threshold, threshold], linestyle='dashed')
+                ylim = ax.get_ylim()
+                for xdum in zip(xpeaks_refined,xpeaks_refined):
+                    ax.plot(xdum, ylim, linestyle='dotted', color='magenta')
+                plt.show()
+                #plt.show(block=False)
+                #input('press <RETURN> to continue...')
+
+           # wavelength calibration
+            try:
+                solution = arccalibration_direct(wv_master,
+                                                 ntriplets_master,
+                                                 ratios_master_sorted,
+                                                 triplets_master_sorted_list,
+                                                 xpeaks_refined,
+                                                 naxis1,
+                                                 wv_ini_search=3500, 
+                                                 wv_end_search=10000,
+                                                 error_xpos_arc=0.3,
+                                                 times_sigma_r=3.0,
+                                                 frac_triplets_for_sum=0.50,
+                                                     times_sigma_TheilSen=10.0,
+                                                 poly_degree=2,
+                                                 times_sigma_polfilt=10.0,
+                                                 times_sigma_inclusion=5.0,
+                                                 LDEBUG=False,
+                                                 LPLOT=False)
+
+                numpy_array_with_coeff, crval1_approx, cdelt1_approx = \
+                  fit_solution(wv_master,
+                               xpeaks_refined,
+                               solution,
+                               naxis1,
+                               poly_degree=2,
+                               weighted=False,
+                               LDEBUG=True,
+                               LPLOT=False)
+                
+                print('>>> approximate crval1, cdelt1:',crval1_approx,cdelt1_approx)
+                print('>>> fitted coefficients.......:\n',numpy_array_with_coeff)
+                input('press <RETURN> to continue...')
+                coeff_table[idx] = numpy_array_with_coeff
+            except ValueError as error:
+                _logger.error("%s", error)
+
+        return coeff_table
+
 
     def process_common(self, obresult, master_bias):
         _logger.info('starting prereduction')
