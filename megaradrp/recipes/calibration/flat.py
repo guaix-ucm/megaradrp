@@ -34,7 +34,7 @@ from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
 
 from megaradrp.core import MegaraBaseRecipe
-from megaradrp.core import OverscanCorrector, TrimImage
+from megaradrp.processing import OverscanCorrector, TrimImage
 # from numina.logger import log_to_history
 
 from megaradrp.products import MasterFiberFlat
@@ -42,8 +42,9 @@ from megaradrp.products import TraceMap
 from megaradrp.requirements import MasterBiasRequirement
 
 from megaradrp.trace.traces import init_traces
-from megaradrp.trace._traces import tracing  # @UnresolvedImport
-from megaradrp.core import apextract2
+#from megaradrp.trace._traces import tracing  # @UnresolvedImport
+from numina.array.trace.traces import trace
+from megaradrp.core import apextract_tracemap
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -122,7 +123,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     
         tracemap = self.trace(reduced[0].data, cstart, step)
         
-        rss = apextract2(reduced[0].data, tracemap)
+        rss = apextract_tracemap(reduced[0].data, tracemap)
         
         rss[rss <= 0] = 1
         
@@ -166,9 +167,8 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         _logger.info('trace peaks')
         for trace in central_peaks.values():
             x, y, p = trace.start
-
-            mm = tracing(image2, x=x, y=y,
-                         p=p, step=step1, hs=hs,
+            mm = trace(image2, x=x, y=y,
+                         step=step1, hs=hs,
                          background=background1, maxdis=maxdis1
                          )
 
@@ -248,14 +248,14 @@ class TraceMapRecipe(MegaraBaseRecipe):
             image2 = data
             
         _logger.info('trace peaks')
-        for trace in central_peaks.values():
+        for dtrace in central_peaks.values():
 
-            mm = tracing(image2, x=cstart, y=trace.trace_f[0], step=step1,
+            mm = trace(image2, x=cstart, y=dtrace.start[1], step=step1,
                          hs=hs, background=background1, maxdis=maxdis1)
 
             pfit = numpy.polyfit(mm[:,0], mm[:,1], deg=5)
             
-            tracelist.append({'fibid': trace.fibid, 'boxid': trace.boxid,
+            tracelist.append({'fibid': dtrace.fibid, 'boxid': dtrace.boxid,
                               'start':0, 'stop':4095,
                               'fitparms': pfit.tolist()})
 
