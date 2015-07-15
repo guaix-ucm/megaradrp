@@ -35,10 +35,15 @@ from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
 
-# FIXME:
-from emirdrp.products import LinesCatalog
-import emirdrp.store
-# This is a emir thing
+# For WL calibration
+# FIXME: remove this later
+from numina.core.products import LinesCatalog
+from scipy.interpolate import interp1d
+import matplotlib.pyplot as plt
+from numina.array.wavecal.arccalibration import arccalibration_direct, fit_solution, gen_triplets_master
+from numina.array.wavecal.statsummary import sigmaG
+from numina.array.wavecal.findpeaks1D import findPeaks_spectrum, refinePeaks_spectrum
+
 from megaradrp.core import MegaraBaseRecipe
 from megaradrp.processing import OverscanCorrector, TrimImage
 # from numina.logger import log_to_history
@@ -89,12 +94,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         return self.create_result(arc_image=reduced, arc_rss=rss)
 
     def calibrate_wl(self, rss, lines_catalog, poldeg, times_sigma=3.0):
-        # FIXME: remove this later
-        from emirdrp.wavecal.arccalibration import arccalibration_direct, fit_solution, gen_triplets_master
-        from emirdrp.wavecal.statsummary import sigmaG
-        from emirdrp.wavecal.findpeaks1D import findPeaks_spectrum, refinePeaks_spectrum
-        from scipy.interpolate import interp1d
-        import matplotlib.pyplot as plt
         # 
         # read master table (TBM) and generate auxiliary parameters (valid for
         # all the slits) for the wavelength calibration
