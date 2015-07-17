@@ -44,7 +44,6 @@ from megaradrp.requirements import MasterBiasRequirement
 from megaradrp.trace.traces import init_traces
 from megaradrp.trace._traces import tracing  # @UnresolvedImport
 from megaradrp.core import apextract_tracemap
-
 _logger = logging.getLogger('numina.recipes.megara')
 
 
@@ -249,14 +248,14 @@ class TraceMapRecipe(MegaraBaseRecipe):
             image2 = data
             
         _logger.info('trace peaks')
-        for trace in central_peaks.values():
+        for dtrace in central_peaks.values():
 
-            mm = tracing(image2, x=cstart, y=trace.trace_f[0], step=step1,
+            mm = trace(image2, x=cstart, y=dtrace.start[1], step=step1,
                          hs=hs, background=background1, maxdis=maxdis1)
 
             pfit = numpy.polyfit(mm[:,0], mm[:,1], deg=5)
             
-            tracelist.append({'fibid': trace.fibid, 'boxid': trace.boxid,
+            tracelist.append({'fibid': dtrace.fibid, 'boxid': dtrace.boxid,
                               'start':0, 'stop':4095,
                               'fitparms': pfit.tolist()})
 
