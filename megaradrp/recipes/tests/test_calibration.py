@@ -114,6 +114,10 @@ def test_mode_bias_set1(numinatpldir):
 
     run_recipe()
 
+@pytest.mark.remote
+def test_mode_trace_map_set0(numinatpldir):
+
+    run_recipe()
 
 @pytest.mark.remote
 def test_mode_fiber_flat_set0(numinatpldir):
