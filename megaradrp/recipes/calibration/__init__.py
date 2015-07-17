@@ -19,13 +19,15 @@
 
 '''Calibration Recipes for Megara'''
 
-from cBias import BiasRecipe
-from cDark import DarkRecipe
-from cFiberFlat import FiberFlatRecipe
+from cBias import BiasRecipe as cBias
+# from cDark import DarkRecipe
+# from cFiberFlat import FiberFlatRecipe
 
 # TODO: Nothing is done from this point
-from cArc import ArcRecipe
-
+from base import BiasRecipe
+from base import ArcRecipe
+from base import DarkRecipe
+from flat import FiberFlatRecipe
 from .base import PseudoFluxCalibrationRecipe
 from .flat import TraceMapRecipe, TwilightFiberFlatRecipe
 from .base import LCB_IFU_StdStarRecipe, FiberMOS_StdStarRecipe

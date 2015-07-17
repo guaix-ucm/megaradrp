@@ -1,36 +1,51 @@
 __author__ = 'Pica4x6'
 
-import logging
+import os
 
-from numina.core import Product
+from numina.core.oresult import ObservationResult
+from numina.core.dataframe import DataFrame
 
-from cBase import BaseRecipeAutoQC as MegaraBaseRecipe
-from megaradrp.requirements import MasterBiasRequirement
-from megaradrp.products import MasterDark
+from megaradrp.recipes.cBase import BaseRecipe
 
-_logger = logging.getLogger('numina.recipes.megara')
 
-class DarkRecipe(MegaraBaseRecipe):
+class DarkRecipe(BaseRecipe):
+    '''Process BIAS images and create MASTER_BIAS.'''
 
-    '''Process DARK images and provide MASTER_DARK. '''
+    def __init__(self, obsrun , workenv):
+        super(DarkRecipe,self).__init__(workenv)
 
-    # master_bias = MasterBiasRequirement()
+        self.flow = []
+        self.result = None
+        self.obsrun = obsrun
 
-    darkframe = Product(MasterDark)
+        #TODO Poner esto mejor
+        lista = []
+        for aux in self.obsrun['frames']:
+            filename = os.path.abspath(os.path.join(self.workenv['workdir'], aux))
+            lista.append(DataFrame(filename=filename))
+        self.obsresult = ObservationResult(mode='dark_image')
+        self.obsresult.images=lista
+        self.obsresult.instrument = 'MEGARA'
 
-    def __init__(self):
-        super(DarkRecipe, self).__init__(
-            author="Sergio Pascual <sergiopr@fis.ucm.es>",
-            version="0.1.0"
-        )
+    @property
+    def requirement(self):
+        req = {'MasterBiasRequirement':''}
+        return req
 
-    # FIXME find a better way of doing this automatically
-    # @log_to_history(_logger)
-    def run(self, rinput):
+    def __createTask(self, end, running, start):
+        #TODO ver si es necesario dar el path completo. Puede estar en virtuenv o sepa dios donde...
+        path = os.path.dirname(os.path.abspath(__file__))
+        parameters = {'path':path,
+                      'end':end,
+                      'start':start,
+                      'running':running}
+        self.task = parameters
 
-        _logger.info('starting dark reduction')
+    def store(self):
+        super(DarkRecipe,self).store(self.result, self.__class__.__name__)
 
-        _logger.info('dark reduction ended')
 
-        result = self.create_result(darkframe=None)
-        return result
+    def run(self, rinput=None):
+        # TODO cDark. Metodo run()
+        pass
+

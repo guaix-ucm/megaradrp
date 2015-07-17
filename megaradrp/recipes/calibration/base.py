@@ -38,8 +38,8 @@ from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
 
 from megaradrp.core import MegaraBaseRecipe
-from megaradrp.core import OverscanCorrector, TrimImage
-from megaradrp.core import ApertureExtractor, FiberFlatCorrector
+from megaradrp.processing import OverscanCorrector, TrimImage
+from megaradrp.processing import ApertureExtractor, FiberFlatCorrector
 from megaradrp.core import peakdet
 # from numina.logger import log_to_history
 from megaradrp.requirements import MasterBiasRequirement
@@ -51,90 +51,90 @@ from megaradrp.products import TraceMap, MasterSensitivity
 _logger = logging.getLogger('numina.recipes.megara')
 
 
-# class BiasRecipe(MegaraBaseRecipe):
-#     '''Process BIAS images and create MASTER_BIAS.'''
+class BiasRecipe(MegaraBaseRecipe):
+    '''Process BIAS images and create MASTER_BIAS.'''
+
+    obresult = ObservationResultRequirement()
+
+    biasframe = Product(MasterBias)
+
+    def __init__(self):
+        super(BiasRecipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    def run(self, rinput):
+        return self.process(rinput.obresult)
+
+    def process(self, obresult):
+        _logger.info('starting bias reduction')
+
+        if not obresult.images:
+            raise RecipeError('Frame list is empty')
+
+        cdata = []
+
+        o_c = OverscanCorrector()
+        t_i = TrimImage()
+
+        basicflow = SerialFlow([o_c, t_i])
+
+        try:
+            for frame in obresult.images:
+                print 'FRame', frame
+                hdulist = frame.open()
+                hdulist = basicflow(hdulist)
+                cdata.append(hdulist)
+
+            _logger.info('stacking %d images using median', len(cdata))
+
+            data = c_median([d[0].data for d in cdata], dtype='float32')
+            template_header = cdata[0][0].header
+            hdu = fits.PrimaryHDU(data[0], header=template_header)
+        finally:
+            for hdulist in cdata:
+                hdulist.close()
+
+        hdr = hdu.header
+        hdr = self.set_base_headers(hdr)
+        hdr['IMGTYP'] = ('BIAS', 'Image type')
+        hdr['NUMTYP'] = ('MASTER_BIAS', 'Data product type')
+        hdr['CCDMEAN'] = data[0].mean()
+
+        varhdu = fits.ImageHDU(data[1], name='VARIANCE')
+        num = fits.ImageHDU(data[2], name='MAP')
+        hdulist = fits.HDUList([hdu, varhdu, num])
+        _logger.info('bias reduction ended')
+
+        result = self.create_result(biasframe=hdu)
+        return result
+
 #
-#     obresult = ObservationResultRequirement()
-#
-#     biasframe = Product(MasterBias)
-#
-#     def __init__(self):
-#         super(BiasRecipe, self).__init__(
-#             author="Sergio Pascual <sergiopr@fis.ucm.es>",
-#             version="0.1.0"
-#         )
-#
-#     def run(self, rinput):
-#         return self.process(rinput.obresult)
-#
-#     def process(self, obresult):
-#         _logger.info('starting bias reduction')
-#
-#         if not obresult.images:
-#             raise RecipeError('Frame list is empty')
-#
-#         cdata = []
-#
-#         o_c = OverscanCorrector()
-#         t_i = TrimImage()
-#
-#         basicflow = SerialFlow([o_c, t_i])
-#
-#         try:
-#             for frame in obresult.images:
-#                 print 'FRame', frame
-#                 hdulist = frame.open()
-#                 hdulist = basicflow(hdulist)
-#                 cdata.append(hdulist)
-#
-#             _logger.info('stacking %d images using median', len(cdata))
-#
-#             data = c_median([d[0].data for d in cdata], dtype='float32')
-#             template_header = cdata[0][0].header
-#             hdu = fits.PrimaryHDU(data[0], header=template_header)
-#         finally:
-#             for hdulist in cdata:
-#                 hdulist.close()
-#
-#         hdr = hdu.header
-#         hdr = self.set_base_headers(hdr)
-#         hdr['IMGTYP'] = ('BIAS', 'Image type')
-#         hdr['NUMTYP'] = ('MASTER_BIAS', 'Data product type')
-#         hdr['CCDMEAN'] = data[0].mean()
-#
-#         varhdu = fits.ImageHDU(data[1], name='VARIANCE')
-#         num = fits.ImageHDU(data[2], name='MAP')
-#         hdulist = fits.HDUList([hdu, varhdu, num])
-#         _logger.info('bias reduction ended')
-#
-#         result = self.create_result(biasframe=hdu)
-#         return result
-#
-#
-# class DarkRecipe(MegaraBaseRecipe):
-#
-#     '''Process DARK images and provide MASTER_DARK. '''
-#
-#     master_bias = MasterBiasRequirement()
-#
-#     darkframe = Product(MasterDark)
-#
-#     def __init__(self):
-#         super(DarkRecipe, self).__init__(
-#             author="Sergio Pascual <sergiopr@fis.ucm.es>",
-#             version="0.1.0"
-#         )
-#
-#     # FIXME find a better way of doing this automatically
-#     # @log_to_history(_logger)
-#     def run(self, rinput):
-#
-#         _logger.info('starting dark reduction')
-#
-#         _logger.info('dark reduction ended')
-#
-#         result = self.create_result(darkframe=None)
-#         return result
+class DarkRecipe(MegaraBaseRecipe):
+
+    '''Process DARK images and provide MASTER_DARK. '''
+
+    master_bias = MasterBiasRequirement()
+
+    darkframe = Product(MasterDark)
+
+    def __init__(self):
+        super(DarkRecipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    # FIXME find a better way of doing this automatically
+    # @log_to_history(_logger)
+    def run(self, rinput):
+
+        _logger.info('starting dark reduction')
+
+        _logger.info('dark reduction ended')
+
+        result = self.create_result(darkframe=None)
+        return result
 
 
 class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
@@ -245,23 +245,23 @@ class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
         return result
 
 
-# class ArcRecipe(MegaraBaseRecipe):
-#
-#     master_bias = MasterBiasRequirement()
-#     obresult = ObservationResultRequirement()
-#
-#     fiberflat_frame = Product(MasterFiberFlat)
-#     fiberflat_rss = Product(MasterFiberFlat)
-#     traces = Product(ArrayType)
-#
-#     def __init__(self):
-#         super(ArcRecipe, self).__init__(
-#             author="Sergio Pascual <sergiopr@fis.ucm.es>",
-#             version="0.1.0"
-#         )
-#
-#     def run(self, rinput):
-#         pass
+class ArcRecipe(MegaraBaseRecipe):
+
+    master_bias = MasterBiasRequirement()
+    obresult = ObservationResultRequirement()
+
+    fiberflat_frame = Product(MasterFiberFlat)
+    fiberflat_rss = Product(MasterFiberFlat)
+    traces = Product(ArrayType)
+
+    def __init__(self):
+        super(ArcRecipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
+            version="0.1.0"
+        )
+
+    def run(self, rinput):
+        pass
 
 
 class LCB_IFU_StdStarRecipe(MegaraBaseRecipe):

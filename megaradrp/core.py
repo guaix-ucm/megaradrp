@@ -25,6 +25,8 @@ import numpy as np
 from numina.core import BaseRecipeAutoQC as MegaraBaseRecipe  # @UnusedImport
 from megaradrp.products import TraceMap
 from megaradrp.trace.peakdetection import peakdet
+from numina.array.trace.extract import extract_simple_rss
+from numina.array.utils import wc_to_pix_1d as wcs_to_pix_1d
 
 # row / column
 _binning = {'11': [1, 1], '21': [1, 2], '12': [2, 1], '22': [2, 2]}
@@ -161,193 +163,6 @@ def trim_and_o_array(array, direction='normal', bins='11'):
     finaldata[nr:, :] = direcfun(array[nr + oscan2:, psc1:nc2 + psc1])
     return finaldata
 
-from numina.flow.processing import TagOptionalCorrector, TagFits
-import logging
-
-_logger = logging.getLogger('numina.recipes.megara')
-
-
-class OverscanCorrector(TagOptionalCorrector):
-
-    '''A Node that corrects a frame from overscan.'''
-
-    def __init__(self, datamodel=None, mark=True,
-                 tagger=None, dtype='float32'):
-
-        # FIXME: these should come from the header
-        bng = [1, 1]
-        nr = 2056 / bng[0]
-        nc = 2048 / bng[1]
-        nr2 = 2 * nr
-        nc2 = 2 * nc
-        oscan1 = 50 / bng[0]
-        oscan2 = oscan1 * 2
-        psc1 = 50 / bng[0]
-        psc2 = 2 * psc1
-        fshape = (nr2 + oscan2, nc2 + psc2)
-        # Row block 1
-        rb1 = slice(0, nr)
-        rb1m = slice(nr, nr + oscan1)
-        # Row block 2
-        rb2 = slice(nr + oscan2, nr2 + oscan2)
-        rb2m = slice(nr + oscan1, nr + oscan2)
-        # Col block
-        cb = slice(psc1, nc2 + psc1)
-
-        # Col block left
-        cbl = slice(0, psc1)
-        # Col block right
-        cbr = slice(nc2 + psc1, nc2 + psc2)
-
-        # Mode normal
-        self.trim1 = (rb1, cb)
-        self.pcol1 = (rb1, cbl)
-        self.ocol1 = (rb1, cbr)
-        self.orow1 = (rb1m, cb)
-
-        self.trim2 = (rb2, cb)
-        self.pcol2 = (rb2, cbr)
-        self.ocol2 = (rb2, cbl)
-        self.orow2 = (rb2m, cb)
-
-        if tagger is None:
-            tagger = TagFits('NUM-OVPE', 'Over scan/prescan')
-
-        super(OverscanCorrector, self).__init__(datamodel=datamodel,
-                                                tagger=tagger,
-                                                mark=mark,
-                                                dtype=dtype)
-
-    def _run(self, img):
-        data = img[0].data
-
-        p1 = data[self.pcol1].mean()
-        _logger.debug('prescan1 is %f', p1)
-        or1 = data[self.orow1].mean()
-        _logger.debug('row overscan1 is %f', or1)
-        oc1 = data[self.ocol1].mean()
-        _logger.debug('col overscan1 is %f', oc1)
-        avg = (p1 + or1 + oc1) / 3.0
-        _logger.debug('average scan1 is %f', avg)
-        data[self.trim1] -= avg
-
-        p2 = data[self.pcol2].mean()
-        _logger.debug('prescan2 is %f', p2)
-        or2 = data[self.orow2].mean()
-        _logger.debug('row overscan2 is %f', or2)
-        oc2 = data[self.ocol2].mean()
-        _logger.debug('col overscan2 is %f', oc2)
-        avg = (p2 + or2 + oc2) / 3.0
-        _logger.debug('average scan2 is %f', avg)
-        data[self.trim2] -= avg
-        return img
-
-
-class TrimImage(TagOptionalCorrector):
-
-    '''A Node that trims images.'''
-
-    def __init__(self, datamodel=None, mark=True,
-                 tagger=None, dtype='float32'):
-
-        if tagger is None:
-            tagger = TagFits('NUM-TRIM', 'Trimming')
-
-        super(TrimImage, self).__init__(datamodel=datamodel,
-                                        tagger=tagger,
-                                        mark=mark,
-                                        dtype=dtype)
-
-    def _run(self, img):
-        _logger.debug('trimming image %s', img)
-
-        img[0] = trim_and_o_hdu(img[0])
-
-        return img
-
-
-class ApertureExtractor(TagOptionalCorrector):
-
-    '''A Node that extracts apertures.'''
-
-    def __init__(self, trace, datamodel=None, mark=True,
-                 tagger=None, dtype='float32'):
-
-        if tagger is None:
-            tagger = TagFits('NUM-MAE', 'MEGARA Aperture extractor')
-
-        super(ApertureExtractor, self).__init__(datamodel=datamodel,
-                                                tagger=tagger,
-                                                mark=mark,
-                                                dtype=dtype)
-        self.trace = trace
-
-    def _run(self, img):
-        imgid = self.get_imgid(img)
-        _logger.debug('extracting apertures in image %s', imgid)
-        rss = apextract(img[0].data, self.trace)
-        img[0].data = rss
-
-        return img
-
-
-class ApertureExtractor2(TagOptionalCorrector):
-
-    '''A Node that extracts apertures.'''
-
-    def __init__(self, trace, datamodel=None, mark=True,
-                 tagger=None, dtype='float32'):
-
-        if tagger is None:
-            tagger = TagFits('NUM-MAE', 'MEGARA Aperture extractor')
-        
-        self.trace = trace
-
-        super(ApertureExtractor2, self).__init__(datamodel=datamodel,
-                                                tagger=tagger,
-                                                mark=mark,
-                                                dtype=dtype)
-
-
-    def _run(self, img):
-        imgid = self.get_imgid(img)
-        _logger.debug('extracting apertures2 in image %s', imgid)
-        rss = apextract2(img[0].data, self.trace)
-        img[0].data = rss
-        return img
-
-
-class FiberFlatCorrector(TagOptionalCorrector):
-
-    '''A Node that corrects from fiber flat.'''
-
-    def __init__(self, fiberflat, datamodel=None, mark=True,
-                 tagger=None, dtype='float32'):
-
-        if tagger is None:
-            tagger = TagFits('NUM-MFF', 'MEGARA Fiber flat correction')
-
-        super(FiberFlatCorrector, self).__init__(datamodel=datamodel,
-                                                 tagger=tagger,
-                                                 mark=mark,
-                                                 dtype=dtype)
-
-        if isinstance(fiberflat, fits.HDUList):
-            self.corr = fiberflat[0].data
-        elif isinstance(fiberflat, np.ndarray):
-            self.corr = fiberflat
-        self.corrmean = self.corr.mean()
-        self.corrid = self.get_imgid(fiberflat)
-
-    def _run(self, img):
-        imgid = self.get_imgid(img)
-        _logger.debug('correct from fiber flat in image %s', imgid)
-
-        img[0].data = img[0].data / self.corr
-
-        return img
-
-
 def apextract(data, trace):
     '''Extract apertures.'''
     rss = np.empty((trace.shape[0], data.shape[1]), dtype='float32')
@@ -359,26 +174,21 @@ def apextract(data, trace):
         rss[idx] = m
     return rss
 
-import math
-
-
-def wcs_to_pix(x):
-    return int(math.floor(x + 0.5))
-
 
 def fill_other(data, a, b):
-    start = wcs_to_pix(a)
-    end = wcs_to_pix(b)
+    start = wcs_to_pix_1d(a)
+    end = wcs_to_pix_1d(b)
     data[start] = min(start+0.5, b)-a
     data[start+1:end] = 1.0
     if end > start:
         data[end] = b - (end-0.5)
     return data
 
+
 def extract_region(data, border1, border2, pesos, xpos):
         
     extend = (border1.min(), border2.max())
-    extend_pix = (wcs_to_pix(extend[0]), wcs_to_pix(extend[1])+1)
+    extend_pix = (wcs_to_pix_1d(extend[0]), wcs_to_pix_1d(extend[1])+1)
     region = slice(extend_pix[0],extend_pix[1])
 
     for x, a,b in zip(xpos, border1, border2):
@@ -391,7 +201,7 @@ def extract_region(data, border1, border2, pesos, xpos):
     return final
 
 
-def apextract2(data, tracemap):
+def apextract_tracemap(data, tracemap):
     '''Extract apertures using a tracemap.'''
     
     # FIXME: a little hackish
@@ -420,11 +230,7 @@ def apextract2(data, tracemap):
 
     rss = np.empty((len(pols), data.shape[1]))
 
-    from megaradrp.trace.extract import superex
-    
-    superex(data, borders, out=rss)
+    rss = extract_simple_rss(data, borders)
 
 
     return rss
-
-

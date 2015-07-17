@@ -34,7 +34,7 @@ from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
 
 from megaradrp.core import MegaraBaseRecipe
-from megaradrp.core import OverscanCorrector, TrimImage
+from megaradrp.processing import OverscanCorrector, TrimImage
 # from numina.logger import log_to_history
 
 from megaradrp.products import MasterFiberFlat
@@ -43,7 +43,7 @@ from megaradrp.requirements import MasterBiasRequirement
 
 from megaradrp.trace.traces import init_traces
 from megaradrp.trace._traces import tracing  # @UnresolvedImport
-from megaradrp.core import apextract2
+from megaradrp.core import apextract_tracemap
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -63,7 +63,7 @@ def process_common(recipe, obresult, master_bias):
     cdata = []
 
     try:
-        for frame in obresult.images:
+        for frame in obresult.frames:
             hdulist = frame.open()
             hdulist = basicflow(hdulist)
             cdata.append(hdulist)
@@ -111,23 +111,23 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     def run(self, rinput):
         return self.process_base1(rinput.obresult, rinput.master_bias)
 
-    
+
     def process_base1(self, obresult, master_bias):
         _logger.info('starting fiber flat reduction')
 
         reduced = process_common(self, obresult, master_bias)
-        
+
         cstart = 2000
         step = 2
-    
+
         tracemap = self.trace(reduced[0].data, cstart, step)
-        
-        rss = apextract2(reduced[0].data, tracemap)
-        
+
+        rss = apextract_tracemap(reduced[0].data, tracemap)
+
         rss[rss <= 0] = 1
-        
+
         rss_norm = rss / rss.mean()
-        
+
         _logger.info('fiber flat reduction ended')
 
         result = self.create_result(fiberflat_frame=reduced,
@@ -153,7 +153,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         central_peaks = init_traces(data, center=cstart, hs=hs,
                                 background=background1, npred=npred)
 
-        
+
         _logger.info(' %i peaks found', len(central_peaks))
 
         tracelist = []
@@ -162,13 +162,12 @@ class FiberFlatRecipe(MegaraBaseRecipe):
             image2 = data.byteswap().newbyteorder()
         else:
             image2 = data
-            
+
         _logger.info('trace peaks')
         for trace in central_peaks.values():
             x, y, p = trace.start
-
-            mm = tracing(image2, x=x, y=y,
-                         p=p, step=step1, hs=hs,
+            mm = trace(image2, x=x, y=y,
+                         step=step1, hs=hs,
                          background=background1, maxdis=maxdis1
                          )
 
@@ -199,6 +198,7 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(TwilightFiberFlatRecipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
@@ -215,6 +215,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(TraceMapRecipe, self).__init__(
+            author="Sergio Pascual <sergiopr@fis.ucm.es>",
             version="0.1.0"
         )
 
