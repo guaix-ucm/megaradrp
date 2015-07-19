@@ -69,14 +69,12 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     # Products
     arc_image = Product(DataFrameType)
     arc_rss = Product(DataFrameType)
+    wlcalib = Product(ArrayType)
 
     def __init__(self):
         super(ArcCalibrationRecipe, self).__init__(
             version="0.1.0"
         )
-
-    def per(self):
-        print(obresult)
 
     def run(self, rinput):
         # Basic processing
@@ -91,9 +89,10 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         coeff_table = self.calibrate_wl(rssdata, rinput.lines_catalog, rinput.polynomial_degree)
 
         # WL calibration goes here
-        return self.create_result(arc_image=reduced, arc_rss=rss)
+        return self.create_result(arc_image=reduced, arc_rss=rss,
+                                  wlcalib=coeff_table)
 
-    def calibrate_wl(self, rss, lines_catalog, poldeg, times_sigma=3.0):
+    def calibrate_wl(self, rss, lines_catalog, poldeg, times_sigma=50.0):
         # 
         # read master table (TBM) and generate auxiliary parameters (valid for
         # all the slits) for the wavelength calibration
@@ -106,11 +105,12 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         # Loop over rows in RSS
         nwinwidth = 5
         for idx, row in enumerate(rss):
+            _logger.info('Starting row %d', idx)
             # find peaks (initial search providing integer numbers)
             threshold = numpy.median(row)+times_sigma*sigmaG(row)
             ipeaks_int = findPeaks_spectrum(row, nwinwidth=nwinwidth, 
                                                  data_threshold=threshold,
-                                                 LDEBUG=True, LPLOT=False)
+                                                 LDEBUG=False, LPLOT=False)
             # refine peaks fitting an appropriate function (providing float 
             # numbers)
             ipeaks_float = refinePeaks_spectrum(row, ipeaks_int, nwinwidth, 
@@ -134,10 +134,10 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             xpeaks_refined = finterp_channel(ipeaks_float)
     
             if False: # TBR (to be removed in the future)
-                print('xpeaks_refined (channel):\n',xpeaks_refined)
                 # plot extracted spectrum
                 fig = plt.figure()
                 ax = fig.add_subplot(111)
+                ax.set_title('row %d' % idx)
                 ax.set_xlim([1,naxis1])
                 ax.plot(xchannel,row,'k-')
                 ax.plot(xchannel[ipeaks_int], row[ipeaks_int], 'ro')
@@ -158,17 +158,18 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                                  xpeaks_refined,
                                                  naxis1,
                                                  wv_ini_search=3500, 
-                                                 wv_end_search=10000,
-                                                 error_xpos_arc=0.3,
+                                                 wv_end_search=4500,
+                                                 error_xpos_arc=2.0,
                                                  times_sigma_r=3.0,
                                                  frac_triplets_for_sum=0.50,
-                                                     times_sigma_TheilSen=10.0,
+                                                 times_sigma_TheilSen=10.0,
                                                  poly_degree=2,
                                                  times_sigma_polfilt=10.0,
                                                  times_sigma_inclusion=5.0,
                                                  LDEBUG=False,
                                                  LPLOT=False)
-
+                _logger.info('Solution for row %d completed', idx)
+                _logger.info('Fitting solution for row %d', idx)
                 numpy_array_with_coeff, crval1_approx, cdelt1_approx = \
                   fit_solution(wv_master,
                                xpeaks_refined,
@@ -176,14 +177,13 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                naxis1,
                                poly_degree=2,
                                weighted=False,
-                               LDEBUG=True,
+                               LDEBUG=False,
                                LPLOT=False)
                 
-                print('>>> approximate crval1, cdelt1:',crval1_approx,cdelt1_approx)
-                print('>>> fitted coefficients.......:\n',numpy_array_with_coeff)
-                input('press <RETURN> to continue...')
+                _logger.info('approximate crval1, cdelt1: %f %f',crval1_approx,cdelt1_approx)
+                _logger.info('fitted coefficients %s',numpy_array_with_coeff)
                 coeff_table[idx] = numpy_array_with_coeff
-            except ValueError as error:
+            except TypeError as error:
                 _logger.error("%s", error)
 
         return coeff_table
