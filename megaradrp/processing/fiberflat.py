@@ -1,5 +1,3 @@
-__author__ = 'Pica4x6'
-
 #
 # Copyright 2011-2015 Universidad Complutense de Madrid
 #
@@ -59,3 +57,4 @@ class FiberFlatCorrector(TagOptionalCorrector):
         img[0].data = img[0].data / self.corr
 
         return img
+

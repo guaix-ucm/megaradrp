@@ -1,4 +1,3 @@
-__author__ = 'Pica4x6'
 #
 # Copyright 2011-2015 Universidad Complutense de Madrid
 #
@@ -124,3 +123,4 @@ class TrimImage(TagOptionalCorrector):
         img[0] = trim_and_o_hdu(img[0])
 
         return img
+

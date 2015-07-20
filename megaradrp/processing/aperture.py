@@ -62,7 +62,7 @@ class ApertureExtractor2(TagOptionalCorrector):
 
         if tagger is None:
             tagger = TagFits('NUM-MAE', 'MEGARA Aperture extractor')
-
+        
         self.trace = trace
 
         super(ApertureExtractor2, self).__init__(datamodel=datamodel,
@@ -77,3 +77,4 @@ class ApertureExtractor2(TagOptionalCorrector):
         rss = apextract_tracemap(img[0].data, self.trace)
         img[0].data = rss
         return img
+
