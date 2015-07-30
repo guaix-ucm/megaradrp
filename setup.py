@@ -1,7 +1,7 @@
 
-from setuptools import find_packages, setup
+from setuptools import find_packages
 from setuptools import setup, Extension
-
+import numpy
 # try to handle gracefully Cython
 try:
     from Cython.Distutils import build_ext
@@ -20,8 +20,7 @@ except ImportError:
 
 setup(name='megaradrp',
       version='0.5.dev0',
-      author='Sergio Pascual',
-      author_email='sergiopr@fis.ucm.es',
+      include_dirs = [numpy.get_include()],
       url='http://guaix.fis.ucm.es/hg/megaradrp',
       license='GPLv3',
       description='MEGARA Data Reduction Pipeline',
