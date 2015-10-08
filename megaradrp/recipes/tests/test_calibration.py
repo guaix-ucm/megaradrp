@@ -26,11 +26,12 @@ import pytest
 from numina.tests.testcache import download_cache
 
 from numina.user.cli import main
-from numina.core import init_drp_system, import_object
+from numina.core import import_object
+from numina.core.pipeline import DrpSystem
 from numina.core import ObservationResult
 from numina.core import DataFrame
 from megaradrp.recipes import BiasRecipe
-
+from megaradrp.loader import megara_drp_load, load_cli_storage
 
 BASE_URL = 'http://guaix.fis.ucm.es/~spr/megara_test/'
 
@@ -39,11 +40,13 @@ def run_recipe():
     main(['run', 'obsrun.yaml', '-r', 'control.yaml'])
 
 
-def test_recipe1():
+def test_recipe1(drpmocker):
 
-    drps = init_drp_system()
-    instrument = drps.get('MEGARA')
-    pipeline = instrument.pipelines.get('default')
+    drpmocker.add_drp('MEGARA', megara_drp_load)
+
+    insdrp = DrpSystem().query_by_name('MEGARA')
+    pipeline = insdrp.pipelines.get('default')
+
     recipe_fqn = pipeline.recipes.get('bias_image')
     RecipeClass = import_object(recipe_fqn)
 
@@ -51,9 +54,7 @@ def test_recipe1():
 
 
 @pytest.mark.remote
-def test_recipe2():
-
-    drps = init_drp_system()
+def test_recipe2(drpmocker):
 
     BASE_URL = 'http://guaix.fis.ucm.es/~spr/megara_test/BIAS/%s'
     images = ['e99d2937d2c29a27c0ba4eebfcf7918e',
@@ -65,19 +66,23 @@ def test_recipe2():
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'bias_image'
-    ob.images = [DataFrame(filename=f.name) for f in fs]
+    ob.frames = [DataFrame(filename=f.name) for f in fs]
 
-    instrument = drps.get(ob.instrument)
-    pipeline = instrument.pipelines.get('default')
+
+    drpmocker.add_drp('MEGARA', megara_drp_load)
+
+    # Here we could directly import the required pipeline,
+    # but the idea is to test all the process
+    insdrp = DrpSystem().query_by_name(ob.instrument)
+    pipeline = insdrp.pipelines.get('default')
     recipe_fqn = pipeline.recipes.get(ob.mode)
     RecipeClass = import_object(recipe_fqn)
 
     assert RecipeClass is BiasRecipe
 
-    # TODO: these should be created by a RecipeInputBuilder
+    # TODO: these should be created by a build_recipe_input method
     recipe = BiasRecipe()
-    RR = BiasRecipe.RecipeRequirements  # @UndefinedVariable
-    ri = RR(obresult=ob)
+    ri = recipe.create_input(obresult=ob)
 
     result = recipe.run(ri)
     # assert result.qc >= QC.UNKNOWN
@@ -104,22 +109,36 @@ def test_recipe2():
 
 
 @pytest.mark.remote
-def test_mode_bias_set0(numinatpldir):
+@pytest.mark.usefixtures("numinatpldir")
+def test_mode_bias_set0(drpmocker):
+
+    drpmocker.add_drp('MEGARA', megara_drp_load)
 
     run_recipe()
 
 
 @pytest.mark.remote
-def test_mode_bias_set1(numinatpldir):
+@pytest.mark.usefixtures("numinatpldir")
+def test_mode_bias_set1(drpmocker):
+    drpmocker.add_drp('MEGARA', megara_drp_load)
 
     run_recipe()
 
 @pytest.mark.remote
-def test_mode_trace_map_set0(numinatpldir):
+@pytest.mark.usefixtures("numinatpldir")
+def test_mode_trace_map_set0(drpmocker):
+    drpmocker.add_drp('MEGARA', megara_drp_load)
 
     run_recipe()
 
 @pytest.mark.remote
-def test_mode_fiber_flat_set0(numinatpldir):
+@pytest.mark.usefixtures("numinatpldir")
+def test_mode_fiber_flat_set0(drpmocker):
+    drpmocker.add_drp('MEGARA', megara_drp_load)
+
+    # FIXME: this was completely crazy to debug
+    # if we don't load store/dump functions
+    # tracemap is loaded as a its filename
+    load_cli_storage()
 
     run_recipe()
