@@ -17,29 +17,28 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Tests for the arc mode recipe module.'''
-
-import os
+"""Tests for the arc mode recipe module."""
 
 import pytest
 
-from numina.tests.testcache import download_cache
-
 from numina.user.cli import main
-from numina.core import init_drp_system, import_object
-from numina.core import ObservationResult
-from numina.core import DataFrame
-from megaradrp.recipes import BiasRecipe
 
+from megaradrp.loader import megara_drp_load
+from megaradrp.loader import load_cli_storage
 
 BASE_URL = 'http://guaix.fis.ucm.es/~spr/megara_test/'
 
 
 def run_recipe():
+
     main(['run', 'obsrun.yaml', '-r', 'control.yaml'])
 
 
 @pytest.mark.remote
-def test_mode_arc_calibration_set0(numinatpldir):
+@pytest.mark.usefixtures("numinatpldir")
+def test_mode_arc_calibration_set0(drpmocker):
+
+    drpmocker.add_drp('MEGARA', megara_drp_load)
+    load_cli_storage()
 
     run_recipe()

@@ -26,7 +26,6 @@ import logging
 import numpy
 from astropy.io import fits
 
-from numina.core import Product
 from numina.core import Requirement, Product, Parameter
 from numina.core import DataFrameType
 from numina.core.products import ArrayType
@@ -40,15 +39,16 @@ from numina.flow.processing import BiasCorrector
 from numina.core.products import LinesCatalog
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
-from numina.array.wavecal.arccalibration import arccalibration_direct, fit_solution, gen_triplets_master
+from numina.array.wavecal.arccalibration import arccalibration_direct
+from numina.array.wavecal.arccalibration import fit_solution
+from numina.array.wavecal.arccalibration import gen_triplets_master
 from numina.array.wavecal.statsummary import sigmaG
-from numina.array.wavecal.findpeaks1D import findPeaks_spectrum, refinePeaks_spectrum
+from numina.array.peaks.findpeaks1D import findPeaks_spectrum
+from numina.array.peaks.findpeaks1D import refinePeaks_spectrum
 
 from megaradrp.core import MegaraBaseRecipe
 from megaradrp.processing import OverscanCorrector, TrimImage
-# from numina.logger import log_to_history
 
-from megaradrp.products import MasterFiberFlat
 from megaradrp.products import TraceMap
 from megaradrp.requirements import MasterBiasRequirement
 
@@ -65,7 +65,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     master_bias = MasterBiasRequirement()
     tracemap = Requirement(TraceMap, 'Trace information of the Apertures')
     lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
-    polynomial_degree = Parameter(2, 'Polynomial degree of the arc calibration')
+    polynomial_degree = Parameter(2, 'Polynomial degree of arc calibration')
     # Products
     arc_image = Product(DataFrameType)
     arc_rss = Product(DataFrameType)
@@ -86,7 +86,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         rss = fits.HDUList([rsshdu])
 
         # Skip any other inputs for the moment
-        coeff_table = self.calibrate_wl(rssdata, rinput.lines_catalog, rinput.polynomial_degree)
+        coeff_table = self.calibrate_wl(rssdata, rinput.lines_catalog,
+                                        rinput.polynomial_degree)
 
         # WL calibration goes here
         return self.create_result(arc_image=reduced, arc_rss=rss,
@@ -98,7 +99,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         # all the slits) for the wavelength calibration
         wv_master = lines_catalog[:,0]
         ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
-                  gen_triplets_master(wv_master, LDEBUG=True)
+                  gen_triplets_master(wv_master)
         # FIXME: this depends on the spectral and dispersion axes
         nspec = rss.shape[0]
         coeff_table = numpy.zeros((nspec, poldeg + 1))
@@ -109,12 +110,11 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             # find peaks (initial search providing integer numbers)
             threshold = numpy.median(row)+times_sigma*sigmaG(row)
             ipeaks_int = findPeaks_spectrum(row, nwinwidth=nwinwidth, 
-                                                 data_threshold=threshold,
-                                                 LDEBUG=False, LPLOT=False)
+                                                 data_threshold=threshold)
             # refine peaks fitting an appropriate function (providing float 
             # numbers)
             ipeaks_float = refinePeaks_spectrum(row, ipeaks_int, nwinwidth, 
-                                                method=2, LDEBUG=False)
+                                                method=2)
 
    
             # define interpolation function and interpolate the refined peak 
@@ -157,30 +157,27 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                                  triplets_master_sorted_list,
                                                  xpeaks_refined,
                                                  naxis1,
-                                                 wv_ini_search=3500, 
+                                                 wv_ini_search=3500,
                                                  wv_end_search=4500,
                                                  error_xpos_arc=2.0,
                                                  times_sigma_r=3.0,
                                                  frac_triplets_for_sum=0.50,
-                                                 times_sigma_TheilSen=10.0,
-                                                 poly_degree=2,
+                                                 times_sigma_theil_sen=10.0,
+                                                 poly_degree_wfit=2,
                                                  times_sigma_polfilt=10.0,
-                                                 times_sigma_inclusion=5.0,
-                                                 LDEBUG=False,
-                                                 LPLOT=False)
+                                                 times_sigma_inclusion=5.0)
+
                 _logger.info('Solution for row %d completed', idx)
                 _logger.info('Fitting solution for row %d', idx)
                 numpy_array_with_coeff, crval1_approx, cdelt1_approx = \
                   fit_solution(wv_master,
                                xpeaks_refined,
                                solution,
-                               naxis1,
-                               poly_degree=2,
-                               weighted=False,
-                               LDEBUG=False,
-                               LPLOT=False)
+                               poly_degree_wfit=2,
+                               weighted=False)
                 
-                _logger.info('approximate crval1, cdelt1: %f %f',crval1_approx,cdelt1_approx)
+                _logger.info('approximate crval1, cdelt1: %f %f',
+                             crval1_approx,cdelt1_approx)
                 _logger.info('fitted coefficients %s',numpy_array_with_coeff)
                 coeff_table[idx] = numpy_array_with_coeff
             except TypeError as error:
