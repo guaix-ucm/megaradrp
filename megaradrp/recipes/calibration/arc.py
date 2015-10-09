@@ -145,12 +145,10 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                                  error_xpos_arc=2.0,
                                                  times_sigma_r=3.0,
                                                  frac_triplets_for_sum=0.50,
-                                                 times_sigma_TheilSen=10.0,
-                                                 poly_degree=2,
+                                                 times_sigma_theil_sen=10.0,
+                                                 poly_degree_wfit=2,
                                                  times_sigma_polfilt=10.0,
-                                                 times_sigma_inclusion=5.0,
-                                                 LDEBUG=False,
-                                                 LPLOT=False)
+                                                 times_sigma_inclusion=5.0)
                 _logger.info('Solution for row %d completed', idx)
                 _logger.info('Fitting solution for row %d', idx)
                 numpy_array_with_coeff, crval1_approx, cdelt1_approx = \
