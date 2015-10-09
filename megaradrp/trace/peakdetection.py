@@ -22,17 +22,6 @@
 import numpy as np
 from scipy.ndimage.filters import generic_filter
 
-
-def _vecS1(k, data):
-    '''max filter for peak detection.'''
-
-    def func(x):
-        return x[k] - 0.5 * (x[:k].max() + x[k+1:].max())
-
-    ap = generic_filter(data, func, size=2*k+1)
-    return ap
-
-
 def _vecS2(k, data):
     '''min filter for peak detection.'''
 
@@ -44,8 +33,7 @@ def _vecS2(k, data):
 
 
 # http://tcs-trddc.com/trddc_website/pdf/srl/palshikar_sapdts_2009.pdf
-def _generic_peak_filtering(method, y, x=None, k=3, h=1.0, background=0.0,
-                            xmin=None, xmax=None):
+def _generic_peak_filtering(method, y, x=None, k=3, h=1.0, background=0.0,xmin=None, xmax=None):
     '''Helper class for filtered peak finding.'''
 
     if x is None:
@@ -93,27 +81,14 @@ def _generic_peak_filtering(method, y, x=None, k=3, h=1.0, background=0.0,
     return np.array(result)
 
 
-def peak_detection_mean_window(y, x=None, k=3, h=1.0, background=0.0,
-                               xmin=None, xmax=None):
+def peak_detection_mean_window(y, x=None, k=3, h=1.0, background=0.0, xmin=None, xmax=None):
     '''Detect peaks using a mean filter in a 2*k +1 window.
 
     The filter value is the central point minus the mean of the 2*k
     adjacent points.
     '''
-    return _generic_peak_filtering(_vecS2, y, x=x, k=k, h=h,
-                                   background=background,
-                                   xmin=xmin, xmax=xmax)
+    return _generic_peak_filtering(_vecS2, y, x=x, k=k, h=h,background=background,xmin=xmin, xmax=xmax)
 
-
-def peak_detection_max_window(y, x=None, k=3, h=1.0, background=0.0,
-                              xmin=None, xmax=None):
-    '''Detect peaks using a max filter in a 2*k +1 window.
-
-    The filter value is the central point minus the mean of the max
-    of the k-left and the max of the k-rigth neighbours.
-    '''
-    return _generic_peak_filtering(_vecS1, y, x=x, k=k, h=h,
-                                   background=background, xmin=xmin, xmax=xmax)
 
 
 def peakdet(v, delta, x=None, back=0.0):
@@ -163,52 +138,3 @@ def peakdet(v, delta, x=None, back=0.0):
                 lookformax = True
 
     return np.array(maxtab), np.array(mintab)
-
-
-def peak_detection_basic(v, delta, x=None, back=0.0):
-    '''Basic peak detection.'''
-
-    if x is None:
-        x = np.arange(len(v))
-
-    v = np.asarray(v)
-
-    if len(v) != len(x):
-        raise ValueError('Input vectors v and x must have same length')
-
-    if not np.isscalar(delta):
-        raise TypeError('Input argument delta must be a scalar')
-
-    if delta <= 0:
-        raise ValueError('Input argument delta must be positive')
-
-    maxtab = []
-    mintab = []
-
-    mn, mx = np.Inf, -np.Inf
-    mnpos, mxpos = np.NaN, np.NaN
-
-    lookformax = True
-
-    for i, this in enumerate(v):
-        if this > mx and this > back:
-            mx = this
-            mxpos = x[i]
-        if this < mn:
-            mn = this
-            mnpos = x[i]
-
-        if lookformax:
-            if this < mx - delta and this > back:
-                maxtab.append((mxpos, mx))
-                mn = this
-                mnpos = x[i]
-                lookformax = False
-        else:
-            if this > mn + delta:
-                mintab.append((mnpos, mn))
-                mx = this
-                mxpos = x[i]
-                lookformax = True
-
-    return np.array(maxtab)

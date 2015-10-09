@@ -132,24 +132,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             finterp_channel = interp1d(range(xchannel.size), xchannel, 
                                        kind='linear')
             xpeaks_refined = finterp_channel(ipeaks_float)
-    
-            if False: # TBR (to be removed in the future)
-                # plot extracted spectrum
-                fig = plt.figure()
-                ax = fig.add_subplot(111)
-                ax.set_title('row %d' % idx)
-                ax.set_xlim([1,naxis1])
-                ax.plot(xchannel,row,'k-')
-                ax.plot(xchannel[ipeaks_int], row[ipeaks_int], 'ro')
-                ax.plot([1,naxis1],[threshold, threshold], linestyle='dashed')
-                ylim = ax.get_ylim()
-                for xdum in zip(xpeaks_refined,xpeaks_refined):
-                    ax.plot(xdum, ylim, linestyle='dotted', color='magenta')
-                plt.show()
-                #plt.show(block=False)
-                #input('press <RETURN> to continue...')
 
-           # wavelength calibration
             try:
                 solution = arccalibration_direct(wv_master,
                                                  ntriplets_master,
@@ -157,16 +140,17 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                                  triplets_master_sorted_list,
                                                  xpeaks_refined,
                                                  naxis1,
-                                                 wv_ini_search=3500,
+                                                 wv_ini_search=3500, 
                                                  wv_end_search=4500,
                                                  error_xpos_arc=2.0,
                                                  times_sigma_r=3.0,
                                                  frac_triplets_for_sum=0.50,
-                                                 times_sigma_theil_sen=10.0,
-                                                 poly_degree_wfit=2,
+                                                 times_sigma_TheilSen=10.0,
+                                                 poly_degree=2,
                                                  times_sigma_polfilt=10.0,
-                                                 times_sigma_inclusion=5.0)
-
+                                                 times_sigma_inclusion=5.0,
+                                                 LDEBUG=False,
+                                                 LPLOT=False)
                 _logger.info('Solution for row %d completed', idx)
                 _logger.info('Fitting solution for row %d', idx)
                 numpy_array_with_coeff, crval1_approx, cdelt1_approx = \

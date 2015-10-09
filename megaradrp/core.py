@@ -22,9 +22,7 @@ from __future__ import print_function
 from astropy.io import fits
 import numpy as np
 
-from numina.core import BaseRecipeAutoQC as MegaraBaseRecipe  # @UnusedImport
-from megaradrp.products import TraceMap
-from megaradrp.trace.peakdetection import peakdet
+from numina.core import BaseRecipeAutoQC as MegaraBaseRecipe
 from numina.array.trace.extract import extract_simple_rss
 from numina.array.utils import wc_to_pix_1d as wcs_to_pix_1d
 
@@ -153,7 +151,6 @@ def trim_and_o_array(array, direction='normal', bins='11'):
     nc2 = H_X_DIM * 2 / bng[1]
 
     nr = H_Y_DIM / bng[0]
-    nc = H_X_DIM / bng[1]
 
     oscan2 = OSCANW / bng[0]
     psc1 = PSCANW / bng[0]
@@ -227,8 +224,6 @@ def apextract_tracemap(data, tracemap):
     pix_1, pix_01 = pix_2, pix_12 
     pix_12 = 2 * pix_1 - pix_01
     borders.append((pix_01, pix_12))
-
-    rss = np.empty((len(pols), data.shape[1]))
 
     rss = extract_simple_rss(data, borders)
 
