@@ -1,9 +1,5 @@
-language:
-  - python        # Used for linux tests
-
-os:
-  - linux
-#  - osx
+language: python
+sudo: false
 
 matrix:
   include:
@@ -19,62 +15,33 @@ cache:
     - $HOME/.cache/pip
     - $HOME/.local
 
-#matrix:
-#
-#  # Don't wait for allowed failures
-#  fast_finish: true
-#
-#  include:
-#
-#    # Try MacOS X
-#    - os: osx
-#      env: PYTHON_VERSION=2.7 SETUP_CMD='test' OPTIONAL_DEPS=true
-#
-#    - os: linux
-#      env: PYTHON_VERSION=2.7 SETUP_CMD='test --open-files'
-#    - os: linux
-#      env: PYTHON_VERSION=3.4 SETUP_CMD='test --open-files'
-
-
-
 before_install:
-#  - echo $TRAVIS_OS_NAME
-#  - echo ${TRAVIS_PYTHON_VERSION:0:1}
-#  - echo $TRAVIS_PYTHON_VERSION
-#  - echo $python
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ $python == "2.7" ]; then wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh; fi ; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then chmod +x miniconda.sh; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then ./miniconda.sh -b -p /home/travis/mc; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then export PATH=/home/travis/mc/bin:$PATH; fi
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update; fi
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then if [ $python == "2.7" ]; then wget http://repo.continuum.io/miniconda/Miniconda-latest-MacOSX-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh; fi ; fi
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then chmod +x miniconda.sh; fi
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then ./miniconda.sh -b; fi
-  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then if [ $python == "2.7" ]; then export PATH=/Users/travis/miniconda/bin:$PATH; else export PATH=/Users/travis/miniconda3/bin:$PATH; fi ; fi
+  - if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; then wget http://repo.continuum.io/miniconda/Miniconda-3.5.5-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-3.5.5-Linux-x86_64.sh -O miniconda.sh; fi
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b -p /home/travis/mc
+  - export PATH=/home/travis/mc/bin:$PATH
+
 
 install:
   # See:
   # https://groups.google.com/a/continuum.io/forum/#!topic/conda/RSFENqovnro
-  - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
+  # - conda update --yes --no-deps conda
+  # OK, this used to *fix* the build, but now it *breaks* the build.
+  # If you're reading this, good luck out there. I'm not sure what to tell you.
   - conda update --yes conda
-  - conda list
-  - conda install --yes numpy
   - conda create -n testenv --yes --file requirements.txt
-  - conda list
   - source activate testenv
+  - pip install pytest-benchmark pytest-cov
+  - pip install setuptools
   - pip install -e git+git://github.com/guaix-ucm/numina.git#egg=numina
-  - echo $PATH
-  - which python
-  - conda info
-  - conda list
-  - python setup.py install
+  - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
   # Build in place so we can run tests
   - python setup.py build_ext --inplace
-  - pwd
+
 
 script:
   - py.test -s -v megaradrp
-  - if [[ $COVERAGE == true ]]; then coverage run --source emirdrp -m py.test; fi
+  - if [[ $COVERAGE == true ]]; then py.test megaradrp --cov=megaradrp; fi
 
 after_success:
   - if [[ $COVERAGE == true ]]; then coveralls; fi
