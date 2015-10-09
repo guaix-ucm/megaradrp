@@ -3,6 +3,12 @@
    :target: https://readthedocs.org/projects/megara-drp/?badge=latest
    :alt: Documentation Status
 
+.. image:: https://travis-ci.org/guaix-ucm/megaradrp.svg?branch=master
+    :target: https://travis-ci.org/guaix-ucm/megaradrp
+
+.. image:: https://coveralls.io/repos/guaix-ucm/megaradrp/badge.svg?branch=master&service=github 
+    :target: https://coveralls.io/github/guaix-ucm/megaradrp?branch=master 
+
 
 This is Megara DRP, the data reduction pipeline for MEGARA
 
@@ -16,7 +22,7 @@ be able to be installed and work properly:
  - setuptools (http://peak.telecommunity.com/DevCenter/setuptools)
  - numpy (http://www.numpy.org/)
  - scipy (http://www.scipy.org)
- - astropy >= 0.4 (http://www.astropy.org/)
+ - astropy >= 1.0 (http://www.astropy.org/)
  - numina >= 0.13 (http://guaix.fis.ucm.es/projects/numina/)
 
 Webpage: https://guaix.fis.ucm.es/megara
