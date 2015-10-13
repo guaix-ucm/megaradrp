@@ -30,7 +30,6 @@ from numina.core import Requirement, Product, Parameter
 from numina.core import DataFrameType
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
-from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
 
@@ -45,7 +44,7 @@ from numina.array.wavecal.statsummary import sigmaG
 from numina.array.peaks.findpeaks1D import findPeaks_spectrum
 from numina.array.peaks.findpeaks1D import refinePeaks_spectrum
 
-from megaradrp.core import MegaraBaseRecipe
+from megaradrp.recipes.calibration.cBase import MegaraBaseRecipe
 from megaradrp.processing import OverscanCorrector, TrimImage
 
 from megaradrp.products import TraceMap
@@ -71,9 +70,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     wlcalib = Product(ArrayType)
 
     def __init__(self):
-        super(ArcCalibrationRecipe, self).__init__(
-            version="0.1.0"
-        )
+        super(ArcCalibrationRecipe, self).__init__(version="0.1.0")
 
     def run(self, rinput):
         # Basic processing
@@ -179,22 +176,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         basicflow = SerialFlow([o_c, t_i, b_c])
 
-        cdata = []
-
-        try:
-            for frame in obresult.images:
-                hdulist = frame.open()
-                hdulist = basicflow(hdulist)
-                cdata.append(hdulist)
-
-            _logger.info('stacking %d images using median', len(cdata))
-
-            data = c_median([d[0].data for d in cdata], dtype='float32')
-            template_header = cdata[0][0].header
-            hdu = fits.PrimaryHDU(data[0], header=template_header)
-        finally:
-            for hdulist in cdata:
-                hdulist.close()
+        hdu, data = self.hdu_creation(obresult, basicflow)
 
         hdr = hdu.header
         hdr['IMGTYP'] = ('FIBER_FLAT', 'Image type')
