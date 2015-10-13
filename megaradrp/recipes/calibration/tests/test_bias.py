@@ -11,7 +11,7 @@ from numina.core import DataFrame
 from megaradrp.recipes.calibration.bias import BiasRecipe
 from megaradrp.loader import megara_drp_load
 
-# @pytest.mark.remote
+@pytest.mark.remote
 def test_bias(drpmocker):
 
     BASE_URL = 'http://guaix.fis.ucm.es/~spr/megara_test/BIAS/%s'
