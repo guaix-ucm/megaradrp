@@ -19,5 +19,3 @@
 
 from .calibration import DarkRecipe, FiberFlatRecipe
 from .scientific import FiberMOSRecipe
-
-from megaradrp.recipes.calibration.bias import BiasRecipe

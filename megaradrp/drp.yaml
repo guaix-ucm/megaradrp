@@ -83,7 +83,7 @@ modes:
 pipelines:
   default:
     recipes:
-      bias_image: megaradrp.recipes.BiasRecipe
+      bias_image: megaradrp.recipes.calibration.bias.BiasRecipe
       dark_image: megaradrp.recipes.DarkRecipe
       fiber_flat_image: megaradrp.recipes.FiberFlatRecipe
       mos_image: megaradrp.recipes.scientific.FiberMOSRecipe2
