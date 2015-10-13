@@ -37,7 +37,7 @@ class FiberTraceInfo(object):
         self.start = None
 
 
-def init_traces(image, center, hs, background, npred, maxdis=9.0):
+def init_traces(image, center, hs, background, maxdis=9.0):
 
     ixmin= 0
     ixmax = image.shape[0]

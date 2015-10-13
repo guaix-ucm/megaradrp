@@ -1,22 +1,8 @@
 
 from setuptools import find_packages
-from setuptools import setup, Extension
+from setuptools import setup
 import numpy
-# try to handle gracefully Cython
-try:
-    from Cython.Distutils import build_ext
-    ext1 = Extension('megaradrp.trace._traces',
-                     ['megaradrp/trace/traces.pyx',
-                      'megaradrp/trace/Trace.cpp'],
-                     language='c++')
-    cmdclass = {'build_ext': build_ext}
-except ImportError:
-    print('We do not have Cython, just using the generated files')
-    ext1 = Extension('megaradrp.trace._traces',
-                     ['megaradrp/trace/traces.cpp',
-                      'megaradrp/trace/Trace.cpp'],
-                     language='c++')
-    cmdclass = {}
+
 
 setup(name='megaradrp',
       version='0.5.dev0',
@@ -33,8 +19,6 @@ setup(name='megaradrp',
          'numina >= 0.13.0',
          ],
       zip_safe=False,
-      ext_modules=[ext1],
-      cmdclass=cmdclass,
       entry_points = {
         'numina.pipeline.1': [
             'MEGARA = megaradrp.loader:megara_drp_load',
