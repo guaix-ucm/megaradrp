@@ -19,11 +19,10 @@
 
 '''Calibration Recipes for Megara'''
 
-from .base import BiasRecipe, DarkRecipe
+from .base import DarkRecipe
 from .base import PseudoFluxCalibrationRecipe
 from .flat import TraceMapRecipe, TwilightFiberFlatRecipe
 from .flat import FiberFlatRecipe
-from .base import ArcRecipe
 from .base import LCB_IFU_StdStarRecipe, FiberMOS_StdStarRecipe
 from .base import SensitivityFromStdStarRecipe, S_And_E_FromStdStarsRecipe
 from .base import BadPixelsMaskRecipe, LinearityTestRecipe

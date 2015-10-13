@@ -17,9 +17,6 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-
-from astropy.io import fits
-
 def get_tags_from_full_ob(ob, reqtags=None):
     # each instrument should have one
     # perhaps each mode...

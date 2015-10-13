@@ -38,7 +38,6 @@ from numina.flow.processing import BiasCorrector
 # FIXME: remove this later
 from numina.core.products import LinesCatalog
 from scipy.interpolate import interp1d
-import matplotlib.pyplot as plt
 from numina.array.wavecal.arccalibration import arccalibration_direct
 from numina.array.wavecal.arccalibration import fit_solution
 from numina.array.wavecal.arccalibration import gen_triplets_master

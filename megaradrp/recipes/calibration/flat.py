@@ -173,13 +173,12 @@ class TraceMapRecipe(MegaraBaseRecipe):
         hs = 3
         step1 = 2
         background1 = 150.0
-        npred = 1
         maxdis1 = 2.0
 
         _logger.info('find peaks in column %i', cstart)
 
         central_peaks = init_traces(data, center=cstart, hs=hs,
-                                background=background1, npred=npred)
+                                background=background1)
 
         _logger.info(' %i peaks found', len(central_peaks))
 
