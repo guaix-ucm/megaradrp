@@ -2,19 +2,13 @@ import logging
 
 from astropy.io import fits
 
-from numina.array.combine import median as c_median
-from numina.core import BaseRecipe
-from numina.core.dataholders import Product
-from numina.core.metarecipes import RecipeType
-from numina.core.products import QualityControlProduct
-from numina.core.recipeinout import add_product
 
-from six import with_metaclass
+from numina.array.combine import median as c_median
+from numina.core import BaseRecipeAutoQC
 
 _logger = logging.getLogger('numina.recipes.megara')
 
-@add_product(qc=Product(QualityControlProduct, dest='qc'))
-class MegaraBaseRecipe (with_metaclass(RecipeType, BaseRecipe)):
+class MegaraBaseRecipe (BaseRecipeAutoQC):
 
     def __init__(self, version):
         super(MegaraBaseRecipe, self).__init__(version=version)
