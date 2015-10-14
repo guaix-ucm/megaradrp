@@ -3,12 +3,10 @@ import logging
 from astropy.io import fits
 
 from megaradrp.recipes.calibration.cBase import MegaraBaseRecipe
-from megaradrp.processing import OverscanCorrector, TrimImage
 from megaradrp.products import MasterBias
 
 from numina.core import Product, RecipeError
 from numina.core.requirements import ObservationResultRequirement
-from numina.flow import SerialFlow
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -29,11 +27,7 @@ class BiasRecipe(MegaraBaseRecipe):
         if not rinput.obresult.images:
             raise RecipeError('Frame list is empty')
 
-        o_c = OverscanCorrector()
-        t_i = TrimImage()
-        basicflow = SerialFlow([o_c, t_i])
-
-        hdu, data = self.hdu_creation(rinput.obresult, basicflow)
+        hdu, data = self.hdu_creation(rinput.obresult)
 
         hdr = hdu.header
         hdr = self.set_base_headers(hdr)

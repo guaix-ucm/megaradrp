@@ -28,7 +28,7 @@ from numina.tests.testcache import download_cache
 from numina.user.cli import main
 from numina.core import import_object
 from numina.core.pipeline import DrpSystem
-from megaradrp.recipes.calibration.bias import BiasRecipe
+from megaradrp.recipes.calibration.BiasRecipe import BiasRecipe
 from megaradrp.loader import megara_drp_load, load_cli_storage
 
 BASE_URL = 'http://guaix.fis.ucm.es/~spr/megara_test/'

@@ -30,11 +30,7 @@ from numina.core import Requirement, Product, Parameter
 from numina.core import DataFrameType
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
-from numina.flow import SerialFlow
-from numina.flow.processing import BiasCorrector
 
-# For WL calibration
-# FIXME: remove this later
 from numina.core.products import LinesCatalog
 from scipy.interpolate import interp1d
 from numina.array.wavecal.arccalibration import arccalibration_direct
@@ -45,7 +41,6 @@ from numina.array.peaks.findpeaks1D import findPeaks_spectrum
 from numina.array.peaks.findpeaks1D import refinePeaks_spectrum
 
 from megaradrp.recipes.calibration.cBase import MegaraBaseRecipe
-from megaradrp.processing import OverscanCorrector, TrimImage
 
 from megaradrp.products import TraceMap
 from megaradrp.requirements import MasterBiasRequirement
@@ -74,7 +69,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
     def run(self, rinput):
         # Basic processing
-        reduced = self.process_common(rinput.obresult, rinput.master_bias)
+        reduced = self.bias_process_common(rinput.obresult, rinput.master_bias)
 
         _logger.info('extract fibers')
         rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
@@ -163,31 +158,3 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         return coeff_table
 
-
-    def process_common(self, obresult, master_bias):
-        _logger.info('starting prereduction')
-
-        o_c = OverscanCorrector()
-        t_i = TrimImage()
-
-        with master_bias.open() as hdul:
-            mbias = hdul[0].data.copy()
-            b_c = BiasCorrector(mbias)
-
-        basicflow = SerialFlow([o_c, t_i, b_c])
-
-        hdu, data = self.hdu_creation(obresult, basicflow)
-
-        hdr = hdu.header
-        hdr['IMGTYP'] = ('FIBER_FLAT', 'Image type')
-        hdr['NUMTYP'] = ('MASTER_FIBER_FLAT', 'Data product type')
-        hdr = self.set_base_headers(hdr)
-        hdr['CCDMEAN'] = data[0].mean()
-
-        varhdu = fits.ImageHDU(data[1], name='VARIANCE')
-        num = fits.ImageHDU(data[2], name='MAP')
-        result = fits.HDUList([hdu, varhdu, num])
-
-        _logger.info('prereduction ended')
-
-        return result

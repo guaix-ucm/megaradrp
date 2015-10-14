@@ -8,7 +8,7 @@ from numina.core import import_object
 from numina.core.pipeline import DrpSystem
 from numina.core import ObservationResult
 from numina.core import DataFrame
-from megaradrp.recipes.calibration.bias import BiasRecipe
+from megaradrp.recipes.calibration.BiasRecipe import BiasRecipe
 from megaradrp.loader import megara_drp_load
 
 @pytest.mark.remote
