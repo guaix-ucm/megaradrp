@@ -36,7 +36,7 @@
     MOSAIC DataFrameType
 
 '''
-
+import yaml
 
 from numina.core import DataFrameType, DataProductType
 from numina.core.products import DataProductTag
@@ -68,3 +68,20 @@ class TraceMap(DataProductType):
         super(TraceMap, self).__init__(
             ptype=dict, default=default)
 
+
+    def __numina_dump__(self, obj, where):
+
+        filename = where.destination + '.yaml'
+
+        with open(filename, 'w') as fd:
+            yaml.dump(obj, fd)
+
+        return filename
+
+
+    def __numina_load__(tag, obj):
+
+        with open(obj, 'r') as fd:
+            traces = yaml.load(fd)
+
+        return traces
