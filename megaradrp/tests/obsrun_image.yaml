@@ -1,0 +1,5 @@
+id: 1
+mode: arc_calibration
+instrument: MEGARA
+images:
+  - test.fits

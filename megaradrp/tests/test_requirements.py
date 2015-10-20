@@ -1,5 +1,5 @@
 #
-# Copyright 2014 Universidad Complutense de Madrid
+# Copyright 2011-2014 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,11 +17,22 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Load MEGARA DRP'''
+'''Tests for the calibration module.'''
 
-from numina.core import drp_load
+from megaradrp.requirements import MasterBiasRequirement, MasterDarkRequirement
+from megaradrp.requirements import MasterFiberFlatRequirement
 
 
-def megara_drp_load():
-    '''Entry point to load MEGARA DRP.'''
-    return drp_load('megaradrp', 'drp.yaml')
+def test_MasterBiasRequirement():
+    obj = MasterBiasRequirement()
+    assert isinstance(obj, MasterBiasRequirement)
+
+
+def test_MasterDarkRequirement():
+    obj = MasterDarkRequirement()
+    assert isinstance(obj, MasterDarkRequirement)
+
+
+def test_MasterFiberFlatRequirement():
+    obj = MasterFiberFlatRequirement()
+    assert isinstance(obj, MasterFiberFlatRequirement)

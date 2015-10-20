@@ -29,7 +29,7 @@ from numina.user.cli import main
 from numina.core import import_object
 from numina.core.pipeline import DrpSystem
 from megaradrp.recipes.calibration.BiasRecipe import BiasRecipe
-from megaradrp.loader import megara_drp_load, load_cli_storage
+from megaradrp.loader import megara_drp_load
 
 BASE_URL = 'http://guaix.fis.ucm.es/~spr/megara_test/'
 
@@ -81,6 +81,5 @@ def test_mode_fiber_flat_set0(drpmocker):
     # FIXME: this was completely crazy to debug
     # if we don't load store/dump functions
     # tracemap is loaded as a its filename
-    load_cli_storage()
 
     run_recipe()
