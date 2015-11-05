@@ -17,53 +17,12 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-def get_tags_from_full_ob(ob, reqtags=None):
-    # each instrument should have one
-    # perhaps each mode...
-    files = ob.images
-    cfiles = ob.children
-    alltags = {}
-
-    if reqtags is None:
-        reqtags = []
-
-    # Init alltags...
-    # Open first image
-    if files:
-        for fname in files[:1]:
-            with fname.open() as fd:
-                header = fd[0].header
-                for t in reqtags:
-                    alltags[t] = header[t]
-    else:
-
-        for prod in cfiles[:1]:
-            prodtags = prod.tags
-            for t in reqtags:
-                alltags[t] = prodtags[t]
-    
-    for fname in files:
-        with fname.open() as fd:
-            header = fd[0].header
-            
-            for t in reqtags:
-                if alltags[t] != header[t]:
-                    msg = 'wrong tag %s in file %s' % (t, fname)
-                    raise ValueError(msg)
-
-    for prod in cfiles:
-        prodtags = prod.tags
-        for t in reqtags:
-            if alltags[t] != prodtags[t]:
-                msg = 'wrong tag %s in product %s' % (t, prod)
-                raise ValueError(msg)
-
-    return alltags
+from numina.core.taggers import get_tags_from_full_ob
 
 
 def tagger_empty(obsres):
-    return get_tags_from_full_ob(obsres, reqtags=[])
+    return {}
+
 
 def tagger_vph(obsres):
     return get_tags_from_full_ob(obsres, reqtags=['vph'])
-
