@@ -29,7 +29,8 @@ from astropy.io import fits
 from astropy import wcs
 
 
-from numina.core import Product, DataProductRequirement, Requirement
+from numina.core import Product, Requirement
+from numina.core.requirements import DataProductRequirement
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
 from numina.array.combine import median as c_median
@@ -42,37 +43,12 @@ from megaradrp.processing import ApertureExtractor, FiberFlatCorrector
 # from numina.logger import log_to_history
 from megaradrp.requirements import MasterBiasRequirement
 from megaradrp.requirements import MasterFiberFlatRequirement
-from megaradrp.products import MasterBias, MasterDark, MasterFiberFlat
+from megaradrp.products import MasterBias, MasterFiberFlat
 from megaradrp.products import TraceMap, MasterSensitivity
 
 
 _logger = logging.getLogger('numina.recipes.megara')
 
-
-
-class DarkRecipe(MegaraBaseRecipe):
-
-    '''Process DARK images and provide MASTER_DARK. '''
-
-    master_bias = MasterBiasRequirement()
-
-    darkframe = Product(MasterDark)
-
-    def __init__(self):
-        super(DarkRecipe, self).__init__(
-            version="0.1.0"
-        )
-
-    # FIXME find a better way of doing this automatically
-    # @log_to_history(_logger)
-    def run(self, rinput):
-
-        _logger.info('starting dark reduction')
-
-        _logger.info('dark reduction ended')
-
-        result = self.create_result(darkframe=None)
-        return result
 
 
 class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
@@ -181,41 +157,6 @@ class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
             calibration=hdu_sens, calibration_rss=hdu_t)
         return result
 
-
-class LCB_IFU_StdStarRecipe(MegaraBaseRecipe):
-
-    master_bias = MasterBiasRequirement()
-    obresult = ObservationResultRequirement()
-
-    fiberflat_frame = Product(MasterFiberFlat)
-    fiberflat_rss = Product(MasterFiberFlat)
-    traces = Product(ArrayType)
-
-    def __init__(self):
-        super(LCB_IFU_StdStarRecipe, self).__init__(
-            version="0.1.0"
-        )
-
-    def run(self, rinput):
-        pass
-
-
-class FiberMOS_StdStarRecipe(MegaraBaseRecipe):
-
-    master_bias = MasterBiasRequirement()
-    obresult = ObservationResultRequirement()
-
-    fiberflat_frame = Product(MasterFiberFlat)
-    fiberflat_rss = Product(MasterFiberFlat)
-    traces = Product(ArrayType)
-
-    def __init__(self):
-        super(FiberMOS_StdStarRecipe, self).__init__(
-            version="0.1.0"
-        )
-
-    def run(self, rinput):
-        pass
 
 
 class SensitivityFromStdStarRecipe(MegaraBaseRecipe):
