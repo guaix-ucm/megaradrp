@@ -22,27 +22,25 @@
 from __future__ import division, print_function
 
 import logging
-import numpy
 
+import numpy
 from astropy.io import fits
+
+from scipy.interpolate import interp1d
 
 from numina.core import Requirement, Product, Parameter, DataFrameType
 from numina.core.products import ArrayType, LinesCatalog
 from numina.core.requirements import ObservationResultRequirement
-
 from numina.array.wavecal.arccalibration import arccalibration_direct
 from numina.array.wavecal.arccalibration import fit_solution
 from numina.array.wavecal.arccalibration import gen_triplets_master
 from numina.array.wavecal.statsummary import sigmaG
 from numina.array.peaks.findpeaks1D import findPeaks_spectrum
 from numina.array.peaks.findpeaks1D import refinePeaks_spectrum
-
 from megaradrp.core import apextract_tracemap
 from megaradrp.products import TraceMap
 from megaradrp.recipes.calibration.cBase import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement
-
-from scipy.interpolate import interp1d
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -85,9 +83,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         # 
         # read master table (TBM) and generate auxiliary parameters (valid for
         # all the slits) for the wavelength calibration
-        wv_master = lines_catalog[:,0]
+        wv_master = lines_catalog[:, 0]
         ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
-                  gen_triplets_master(wv_master)
+            gen_triplets_master(wv_master)
         # FIXME: this depends on the spectral and dispersion axes
         nspec = rss.shape[0]
         coeff_table = numpy.zeros((nspec, poldeg + 1))
@@ -96,7 +94,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         for idx, row in enumerate(rss):
             _logger.info('Starting row %d', idx)
             # find peaks (initial search providing integer numbers)
-            threshold = numpy.median(row)+times_sigma*sigmaG(row)
+            threshold = numpy.median(row) + times_sigma * sigmaG(row)
             ipeaks_int = findPeaks_spectrum(row, nwinwidth, threshold)
             # refine peaks fitting an appropriate function (providing float 
             # numbers)
@@ -114,7 +112,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             naxis1 = row.shape[0]
             xchannel = numpy.arange(1, naxis1 + 1)
 
-            finterp_channel = interp1d(range(xchannel.size), xchannel, 
+            finterp_channel = interp1d(range(xchannel.size), xchannel,
                                        kind='linear')
             xpeaks_refined = finterp_channel(ipeaks_float)
 
@@ -125,7 +123,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                                  triplets_master_sorted_list,
                                                  xpeaks_refined,
                                                  naxis1,
-                                                 wv_ini_search=3500, 
+                                                 wv_ini_search=3500,
                                                  wv_end_search=4500,
                                                  error_xpos_arc=2.0,
                                                  times_sigma_r=3.0,
@@ -138,16 +136,17 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 _logger.info('Solution for row %d completed', idx)
                 _logger.info('Fitting solution for row %d', idx)
                 numpy_array_with_coeff, crval1_approx, cdelt1_approx = \
-                  fit_solution(wv_master,
-                               xpeaks_refined,
-                               solution,
-                               poly_degree_wfit=2,
-                               weighted=False)
-                
-                _logger.info('approximate crval1, cdelt1: %f %f',crval1_approx,
+                    fit_solution(wv_master,
+                                 xpeaks_refined,
+                                 solution,
+                                 poly_degree_wfit=2,
+                                 weighted=False)
+
+                _logger.info('approximate crval1, cdelt1: %f %f',
+                             crval1_approx,
                              cdelt1_approx)
 
-                _logger.info('fitted coefficients %s',numpy_array_with_coeff)
+                _logger.info('fitted coefficients %s', numpy_array_with_coeff)
 
                 coeff_table[idx] = numpy_array_with_coeff
 
@@ -155,4 +154,3 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 _logger.error("%s", error)
 
         return coeff_table
-

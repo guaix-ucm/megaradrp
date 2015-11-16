@@ -18,58 +18,64 @@
 #
 
 
-from megaradrp.taggers import get_tags_from_full_ob,tagger_empty,tagger_vph
+from megaradrp.taggers import get_tags_from_full_ob, tagger_empty, tagger_vph
 from numina.core.oresult import obsres_from_dict
 import yaml
 import os, inspect
 import pytest
 
+
 def test_get_tags_from_full_ob(benchmark):
     loaded_obs = {}
-    with open(os.path.dirname(inspect.getfile(inspect.currentframe()))+'/obsrun_image.yaml') as fd:
+    with open(os.path.dirname(inspect.getfile(
+            inspect.currentframe())) + '/obsrun_image.yaml') as fd:
         for doc in yaml.load_all(fd):
             loaded_obs[doc['id']] = doc
 
     obsres = obsres_from_dict((loaded_obs[doc['id']]))
-    obsres.frames[0].filename = os.path.dirname(inspect.getfile(inspect.currentframe()))+'/test.fits'
-    obj = benchmark(get_tags_from_full_ob,obsres)
+    obsres.frames[0].filename = os.path.dirname(
+        inspect.getfile(inspect.currentframe())) + '/test.fits'
+    obj = benchmark(get_tags_from_full_ob, obsres)
     assert obj == {}
-
 
 
 def test_tagger_empty(benchmark):
     loaded_obs = {}
-    with open(os.path.dirname(inspect.getfile(inspect.currentframe()))+'/obsrun_image.yaml') as fd:
+    with open(os.path.dirname(inspect.getfile(
+            inspect.currentframe())) + '/obsrun_image.yaml') as fd:
         for doc in yaml.load_all(fd):
             loaded_obs[doc['id']] = doc
 
     obsres = obsres_from_dict((loaded_obs[doc['id']]))
-    obsres.frames[0].filename = os.path.dirname(inspect.getfile(inspect.currentframe()))+'/test.fits'
-    obj = benchmark(tagger_empty,obsres)
+    obsres.frames[0].filename = os.path.dirname(
+        inspect.getfile(inspect.currentframe())) + '/test.fits'
+    obj = benchmark(tagger_empty, obsres)
     assert obj == {}
-
 
 
 def test_tagger_vph(benchmark):
     loaded_obs = {}
-    with open(os.path.dirname(inspect.getfile(inspect.currentframe()))+'/obsrun_image.yaml') as fd:
+    with open(os.path.dirname(inspect.getfile(
+            inspect.currentframe())) + '/obsrun_image.yaml') as fd:
         for doc in yaml.load_all(fd):
             loaded_obs[doc['id']] = doc
 
     obsres = obsres_from_dict((loaded_obs[doc['id']]))
-    obsres.frames[0].filename = os.path.dirname(inspect.getfile(inspect.currentframe()))+'/test.fits'
-    obj = benchmark(tagger_vph,obsres)
+    obsres.frames[0].filename = os.path.dirname(
+        inspect.getfile(inspect.currentframe())) + '/test.fits'
+    obj = benchmark(tagger_vph, obsres)
     assert obj == {'vph': 'VPH405_LR'}
 
 
 def test_get_tags_from_full_ob_no_images(benchmark):
     loaded_obs = {}
-    with open(os.path.dirname(inspect.getfile(inspect.currentframe()))+'/obsrun_no_images.yaml') as fd:
+    with open(os.path.dirname(inspect.getfile(
+            inspect.currentframe())) + '/obsrun_no_images.yaml') as fd:
         for doc in yaml.load_all(fd):
             loaded_obs[doc['id']] = doc
 
     obsres = obsres_from_dict((loaded_obs[doc['id']]))
-    obj = benchmark(tagger_vph,obsres)
+    obj = benchmark(tagger_vph, obsres)
     assert obj == {}
 
 
