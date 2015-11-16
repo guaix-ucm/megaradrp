@@ -19,7 +19,6 @@
 
 '''Calibration Recipes for Megara'''
 
-from .base import PseudoFluxCalibrationRecipe
-from .base import FiberMOS_StdStarRecipe
-from .base import SensitivityFromStdStarRecipe, S_And_E_FromStdStarsRecipe
-from .base import BadPixelsMaskRecipe, LinearityTestRecipe
+# from .base import PseudoFluxCalibrationRecipe
+# from .base import SensitivityFromStdStarRecipe, S_And_E_FromStdStarsRecipe
+# from .base import LinearityTestRecipe
