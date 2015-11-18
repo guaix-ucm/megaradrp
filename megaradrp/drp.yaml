@@ -83,19 +83,19 @@ modes:
 pipelines:
   default:
     recipes:
-      bias_image: megaradrp.recipes.calibration.bias.BiasRecipe
+      bias_image: megaradrp.recipes.calibration.BiasRecipe.BiasRecipe
       dark_image: megaradrp.recipes.DarkRecipe
-      fiber_flat_image: megaradrp.recipes.FiberFlatRecipe
+      fiber_flat_image: megaradrp.recipes.calibration.FiberFlatRecipe.FiberFlatRecipe
       mos_image: megaradrp.recipes.scientific.FiberMOSRecipe2
       flux_calibration: megaradrp.recipes.calibration.PseudoFluxCalibrationRecipe
-      trace_map: megaradrp.recipes.calibration.flat.TraceMapRecipe
-      arc_calibration: megaradrp.recipes.calibration.arc.ArcCalibrationRecipe
+      trace_map: megaradrp.recipes.calibration.TraceMapRecipe.TraceMapRecipe
+      arc_calibration: megaradrp.recipes.calibration.ArcCalibrationRecipe.ArcCalibrationRecipe
       fail: numina.core.utils.AlwaysFailRecipe
       success: numina.core.utils.AlwaysSuccessRecipe
     version: 1
   experimental:
     recipes:
-      fiber_flat_image: megaradrp.recipes.calibration.flat.FiberFlatRecipe
+      fiber_flat_image: megaradrp.recipes.calibration.FiberFlatRecipe.FiberFlatRecipe
     version: 1
 products:
 - name: megaradrp.products.TraceMap

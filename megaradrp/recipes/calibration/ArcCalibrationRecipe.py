@@ -26,32 +26,21 @@ import logging
 import numpy
 from astropy.io import fits
 
-from numina.core import Requirement, Product, Parameter
-from numina.core import DataFrameType
-from numina.core.products import ArrayType
-from numina.core.requirements import ObservationResultRequirement
-from numina.array.combine import median as c_median
-from numina.flow import SerialFlow
-from numina.flow.processing import BiasCorrector
-
-# For WL calibration
-# FIXME: remove this later
-from numina.core.products import LinesCatalog
 from scipy.interpolate import interp1d
+
+from numina.core import Requirement, Product, Parameter, DataFrameType
+from numina.core.products import ArrayType, LinesCatalog
+from numina.core.requirements import ObservationResultRequirement
 from numina.array.wavecal.arccalibration import arccalibration_direct
 from numina.array.wavecal.arccalibration import fit_solution
 from numina.array.wavecal.arccalibration import gen_triplets_master
 from numina.array.wavecal.statsummary import sigmaG
 from numina.array.peaks.findpeaks1D import findPeaks_spectrum
 from numina.array.peaks.findpeaks1D import refinePeaks_spectrum
-
-from megaradrp.core import MegaraBaseRecipe
-from megaradrp.processing import OverscanCorrector, TrimImage
-
-from megaradrp.products import TraceMap
-from megaradrp.requirements import MasterBiasRequirement
-
 from megaradrp.core import apextract_tracemap
+from megaradrp.products import TraceMap
+from megaradrp.recipes.calibration.cBase import MegaraBaseRecipe
+from megaradrp.requirements import MasterBiasRequirement
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -71,13 +60,11 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     wlcalib = Product(ArrayType)
 
     def __init__(self):
-        super(ArcCalibrationRecipe, self).__init__(
-            version="0.1.0"
-        )
+        super(ArcCalibrationRecipe, self).__init__("0.1.0")
 
     def run(self, rinput):
         # Basic processing
-        reduced = self.process_common(rinput.obresult, rinput.master_bias)
+        reduced = self.bias_process_common(rinput.obresult, rinput.master_bias)
 
         _logger.info('extract fibers')
         rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
@@ -96,9 +83,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         # 
         # read master table (TBM) and generate auxiliary parameters (valid for
         # all the slits) for the wavelength calibration
-        wv_master = lines_catalog[:,0]
+        wv_master = lines_catalog[:, 0]
         ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
-                  gen_triplets_master(wv_master)
+            gen_triplets_master(wv_master)
         # FIXME: this depends on the spectral and dispersion axes
         nspec = rss.shape[0]
         coeff_table = numpy.zeros((nspec, poldeg + 1))
@@ -107,15 +94,12 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         for idx, row in enumerate(rss):
             _logger.info('Starting row %d', idx)
             # find peaks (initial search providing integer numbers)
-            threshold = numpy.median(row)+times_sigma*sigmaG(row)
-            ipeaks_int = findPeaks_spectrum(row, nwinwidth=nwinwidth, 
-                                                 data_threshold=threshold)
+            threshold = numpy.median(row) + times_sigma * sigmaG(row)
+            ipeaks_int = findPeaks_spectrum(row, nwinwidth, threshold)
             # refine peaks fitting an appropriate function (providing float 
             # numbers)
-            ipeaks_float = refinePeaks_spectrum(row, ipeaks_int, nwinwidth, 
-                                                method=2)
+            ipeaks_float = refinePeaks_spectrum(row, ipeaks_int, nwinwidth)
 
-   
             # define interpolation function and interpolate the refined peak 
             # location, passing from index number (within the row array) 
             # to channel number (note that this step takes care of the fact 
@@ -128,7 +112,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             naxis1 = row.shape[0]
             xchannel = numpy.arange(1, naxis1 + 1)
 
-            finterp_channel = interp1d(range(xchannel.size), xchannel, 
+            finterp_channel = interp1d(range(xchannel.size), xchannel,
                                        kind='linear')
             xpeaks_refined = finterp_channel(ipeaks_float)
 
@@ -139,7 +123,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                                  triplets_master_sorted_list,
                                                  xpeaks_refined,
                                                  naxis1,
-                                                 wv_ini_search=3500, 
+                                                 wv_ini_search=3500,
                                                  wv_end_search=4500,
                                                  error_xpos_arc=2.0,
                                                  times_sigma_r=3.0,
@@ -148,64 +132,25 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                                  poly_degree_wfit=2,
                                                  times_sigma_polfilt=10.0,
                                                  times_sigma_inclusion=5.0)
+
                 _logger.info('Solution for row %d completed', idx)
                 _logger.info('Fitting solution for row %d', idx)
                 numpy_array_with_coeff, crval1_approx, cdelt1_approx = \
-                  fit_solution(wv_master,
-                               xpeaks_refined,
-                               solution,
-                               poly_degree_wfit=2,
-                               weighted=False)
-                
+                    fit_solution(wv_master,
+                                 xpeaks_refined,
+                                 solution,
+                                 poly_degree_wfit=2,
+                                 weighted=False)
+
                 _logger.info('approximate crval1, cdelt1: %f %f',
-                             crval1_approx,cdelt1_approx)
-                _logger.info('fitted coefficients %s',numpy_array_with_coeff)
+                             crval1_approx,
+                             cdelt1_approx)
+
+                _logger.info('fitted coefficients %s', numpy_array_with_coeff)
+
                 coeff_table[idx] = numpy_array_with_coeff
+
             except TypeError as error:
                 _logger.error("%s", error)
 
         return coeff_table
-
-
-    def process_common(self, obresult, master_bias):
-        _logger.info('starting prereduction')
-
-        o_c = OverscanCorrector()
-        t_i = TrimImage()
-
-        with master_bias.open() as hdul:
-            mbias = hdul[0].data.copy()
-            b_c = BiasCorrector(mbias)
-
-        basicflow = SerialFlow([o_c, t_i, b_c])
-
-        cdata = []
-
-        try:
-            for frame in obresult.images:
-                hdulist = frame.open()
-                hdulist = basicflow(hdulist)
-                cdata.append(hdulist)
-
-            _logger.info('stacking %d images using median', len(cdata))
-
-            data = c_median([d[0].data for d in cdata], dtype='float32')
-            template_header = cdata[0][0].header
-            hdu = fits.PrimaryHDU(data[0], header=template_header)
-        finally:
-            for hdulist in cdata:
-                hdulist.close()
-
-        hdr = hdu.header
-        hdr['IMGTYP'] = ('FIBER_FLAT', 'Image type')
-        hdr['NUMTYP'] = ('MASTER_FIBER_FLAT', 'Data product type')
-        hdr = self.set_base_headers(hdr)
-        hdr['CCDMEAN'] = data[0].mean()
-
-        varhdu = fits.ImageHDU(data[1], name='VARIANCE')
-        num = fits.ImageHDU(data[2], name='MAP')
-        result = fits.HDUList([hdu, varhdu, num])
-
-        _logger.info('prereduction ended')
-
-        return result

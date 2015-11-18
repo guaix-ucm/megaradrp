@@ -25,9 +25,3 @@ from numina.core import drp_load
 def megara_drp_load():
     '''Entry point to load MEGARA DRP.'''
     return drp_load('megaradrp', 'drp.yaml')
-
-
-def load_cli_storage():
-    '''Entry point to load storage functions for the CLI.'''
-    import megaradrp.store 
-    return 0

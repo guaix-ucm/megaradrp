@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2011-2014 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,37 +17,22 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import logging
+'''Tests for the calibration module.'''
 
-import yaml
-
-from numina.store import dump, load
-
-from .products import TraceMap
-
-_logger = logging.getLogger('megaradrp.store')
+from megaradrp.requirements import MasterBiasRequirement, MasterDarkRequirement
+from megaradrp.requirements import MasterFiberFlatRequirement
 
 
-_logger.debug('register dump functions')
+def test_MasterBiasRequirement():
+    obj = MasterBiasRequirement()
+    assert isinstance(obj, MasterBiasRequirement)
 
 
-@dump.register(TraceMap)
-def _d(tag, obj, where):
-
-    filename = where.destination + '.yaml'
-
-    with open(filename, 'w') as fd:
-        yaml.dump(obj, fd)
-
-    return filename
-
-_logger.debug('register load functions')
+def test_MasterDarkRequirement():
+    obj = MasterDarkRequirement()
+    assert isinstance(obj, MasterDarkRequirement)
 
 
-@load.register(TraceMap)
-def _l(tag, obj):
-
-    with open(obj, 'r') as fd:
-        traces = yaml.load(fd)
-
-    return traces
+def test_MasterFiberFlatRequirement():
+    obj = MasterFiberFlatRequirement()
+    assert isinstance(obj, MasterFiberFlatRequirement)

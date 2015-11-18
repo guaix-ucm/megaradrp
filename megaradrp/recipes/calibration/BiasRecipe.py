@@ -2,14 +2,11 @@ import logging
 
 from astropy.io import fits
 
-from megaradrp.core import MegaraBaseRecipe
-from megaradrp.processing import OverscanCorrector, TrimImage
+from megaradrp.recipes.calibration.cBase import MegaraBaseRecipe
 from megaradrp.products import MasterBias
 
-from numina.array.combine import median as c_median
 from numina.core import Product, RecipeError
 from numina.core.requirements import ObservationResultRequirement
-from numina.flow import SerialFlow
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -24,33 +21,13 @@ class BiasRecipe(MegaraBaseRecipe):
         super(BiasRecipe, self).__init__(version="0.1.0")
 
     def run(self, rinput):
-        return self.process(rinput.obresult)
 
-    def process(self, obresult):
         _logger.info('starting bias reduction')
 
-        if not obresult.images:
+        if not rinput.obresult.images:
             raise RecipeError('Frame list is empty')
 
-        cdata = []
-        o_c = OverscanCorrector()
-        t_i = TrimImage()
-        basicflow = SerialFlow([o_c, t_i])
-
-        try:
-            for frame in obresult.images:
-                hdulist = frame.open()
-                hdulist = basicflow(hdulist)
-                cdata.append(hdulist)
-
-            _logger.info('stacking %d images using median', len(cdata))
-
-            data = c_median([d[0].data for d in cdata], dtype='float32')
-            template_header = cdata[0][0].header
-            hdu = fits.PrimaryHDU(data[0], header=template_header)
-        finally:
-            for hdulist in cdata:
-                hdulist.close()
+        hdu, data = self.hdu_creation(rinput.obresult)
 
         hdr = hdu.header
         hdr = self.set_base_headers(hdr)
