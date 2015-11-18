@@ -1,19 +1,19 @@
-#####################
+############
 Installation
-#####################
+############
       
-***********************
+************
 Requirements
-***********************
+************
 
 The MEGARA Pipeline package requires the following packages installed in order to
 be able to be installed and work properly:
 
  - `python 2.7 <https://www.python.org>`_
  - `setuptools <http://peak.telecommunity.com/DevCenter/setuptools>`_
- - `numpy <http://www.numpy.org/>`_
+ - `numpy <http://www.numpy.org/>`_ >= 1.7
  - `scipy <http://www.scipy.org/>`_
- - `astropy <http://www.astropy.org/>`_ >= 0.4
+ - `astropy <http://www.astropy.org/>`_ >= 1.0
  - `numina <https://pypi.python.org/pypi/numina/>`_ >= 0.13
 
 Additional packages are optionally required:
@@ -22,9 +22,9 @@ Additional packages are optionally required:
  - `sphinx`_ to build the documentation
 
 
-***********************
+*********************
 Installing MEGARA DRP
-***********************
+*********************
 
 Using pip
 ---------
@@ -55,9 +55,9 @@ by listing the installed recipes with the command line interface tool ``numina``
    has pipeline 'default', version 1
    has pipeline 'experimental', version 1
 
-***********************
+********************
 Building from source
-***********************
+********************
 
 
 The latest stable version of MEGARA DRP can be downloaded from  
@@ -80,7 +80,7 @@ Development version
 
 The development version can be checked out with::
 
-    $ hg clone http://guaix.fis.ucm.es/hg/megaradrp/
+    $ git clone https://github.com/guaix-ucm/megaradrp.git
 
 And then installed following the standard procedure::
 
@@ -88,7 +88,7 @@ And then installed following the standard procedure::
     $ python setup.py install
 
 Building the documentation
----------------------------
+--------------------------
 The MEGARA DRP documentation is base on `sphinx`_. With the package 
 installed, the html documentation can be built from the `doc` directory::
 
@@ -100,9 +100,9 @@ The documentation will be copied to a directory under `build/sphinx`.
 The documentation can be built in different formats. The complete list will appear
 if you type `make` 
 
-***************************************
+**************************
 Deployment with Virtualenv
-***************************************
+**************************
 
 `Virtualenv`_ is a tool to build isolated Python environments.
 
@@ -135,7 +135,7 @@ If you need to create the virtualenv without global packages, drop the
 system-site-packages flag.
 
 Activate the environment
--------------------------
+------------------------
 Once the environment is created, you need to activate it. Just change
 directory into it and load with your command line interpreter the 
 script bin/activate.
@@ -165,11 +165,92 @@ Installing MEGARA DFP
 This section described how to install the MEGARA Pipeline inside
 the GTC Control system.
 
+In the following we assume that we are installing with user `gcsop`.
+
+Login in the `gcsop` account and activate the GTC environment::
+
+    $ /opt/gcs/tools/nrp -p linux -s bash
+
+Change working directory to ``/work/gcsop/src_python/gtc``::
+
+    $ cd /work/gcsop/src_python/gtc
+    $ ls
+    AL  DSL  SSL
+
+We have to install `numina` under `DSL` and `megaradrp` under `AL`.
+
+
 Please refer to :ref:`Numina manual <numina:solaris10>` to install Numina
 and its dependences under Solaris 10.
 
+Install numina
+--------------
 
+First, install all the dependencies:
 
+ - setuptools
+ - six
+ - numpy >= 1.7
+ - scipy
+ - astropy >= 1.0
+ - PyYaml
+ - singledispatch
+
+If you are installing a development version, Cython is also required.
+
+Most are available as precompiled packages in Linux.
+Please refer to :ref:`Numina manual <numina:solaris10>` to install Numina
+and its dependences under Solaris 10.
+
+Then, download the source code, either from PyPI or github::
+
+    $ pwd
+    /work/gcsop/src_python/gtc/DSL/
+    $ git clone https://github.com/guaix-ucm/numina.git
+    $ cd numina
+
+Create a file `numina.mod` with the following content::
+
+    NAME=numina
+    TYPE=device
+
+    l:numina:python:y
+
+And then build and install using `nmk`::
+
+    $ nmk -t module.rebuild
+    $ nmk -t module.install
+
+Install megaradrp
+-----------------
+
+Change directory to `/work/gcsop/src_python/gtc/AL/` and download the source code
+of `megaradrp`, either from `PyPI <https://pypi.python.org/pypi/megaradrp>`_
+or from `github <https://github.com/guaix-ucm/megaradrp>`_::
+
+    $ pwd
+    /work/gcsop/src_python/gtc/AL/
+    $ git clone https://github.com/guaix-ucm/megaradrp.git
+    $ cd megaradrp
+
+Create a file `megaradrp.mod` with the following content::
+
+    NAME=megaradrp
+    TYPE=device
+
+    l:megaradrp:python:y
+
+And then build and install using `nmk`::
+
+    $ nmk -t module.rebuild
+    $ nmk -t module.install
+
+You can check that everything works by running the `numina` command line tool::
+
+    $ numina show-instruments
+    Instrument: MEGARA
+     has configuration 'default'
+     has pipeline 'default', version 1
 
 .. _virtualenv: http://pypi.python.org/pypi/virtualenv
 .. _sphinx: http://sphinx.pocoo.org
