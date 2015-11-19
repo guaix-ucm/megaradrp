@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2014 Universidad Complutense de Madrid
+# Copyright 2011-2015 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,7 +17,7 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Calibration Recipes for Megara'''
+"""Calibration Recipes for Megara"""
 
 import logging
 
@@ -29,7 +29,7 @@ from astropy.io import fits
 from astropy import wcs
 
 
-from numina.core import Product, DataProductRequirement, Requirement
+from numina.core import Product, Requirement
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
 from numina.array.combine import median as c_median
@@ -81,7 +81,7 @@ class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
     master_bias = MasterBiasRequirement()
     master_fiber_flat = MasterFiberFlatRequirement()
     traces = Requirement(TraceMap, 'Trace information of the Apertures')
-    reference_spectrum = DataProductRequirement(
+    reference_spectrum = Requirement(
         MasterFiberFlat, 'Reference spectrum')
 
     calibration = Product(MasterSensitivity)
