@@ -19,18 +19,16 @@
 
 import logging
 
-
 from numina.flow.processing import TagOptionalCorrector, TagFits
 
-from ..core import apextract, apextract_tracemap
+from megaradrp.core.processing import apextract, apextract_tracemap
 
 
 _logger = logging.getLogger('numina.processing')
 
 
 class ApertureExtractor(TagOptionalCorrector):
-
-    '''A Node that extracts apertures.'''
+    """A Node that extracts apertures."""
 
     def __init__(self, trace, datamodel=None, mark=True,
                  tagger=None, dtype='float32'):
@@ -54,8 +52,7 @@ class ApertureExtractor(TagOptionalCorrector):
 
 
 class ApertureExtractor2(TagOptionalCorrector):
-
-    '''A Node that extracts apertures.'''
+    """A Node that extracts apertures."""
 
     def __init__(self, trace, datamodel=None, mark=True,
                  tagger=None, dtype='float32'):
