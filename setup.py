@@ -21,11 +21,8 @@ setup(name='megaradrp',
       zip_safe=False,
       entry_points = {
         'numina.pipeline.1': [
-            'MEGARA = megaradrp.loader:megara_drp_load',
+            'MEGARA = megaradrp.loader:load_drp',
             ],
-         'numina.storage.1': [
-            'megara_default = megaradrp.loader:load_cli_storage',
-            ]
         },
       classifiers=[
                    "Programming Language :: Python :: 2.7",

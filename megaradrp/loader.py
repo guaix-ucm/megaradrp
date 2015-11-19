@@ -1,5 +1,5 @@
 #
-# Copyright 2014 Universidad Complutense de Madrid
+# Copyright 2014-2015 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,17 +17,12 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Load MEGARA DRP'''
+"""Load MEGARA DRP"""
 
 from numina.core import drp_load
 
 
-def megara_drp_load():
-    '''Entry point to load MEGARA DRP.'''
+def load_drp():
+    """Entry point to load MEGARA DRP."""
     return drp_load('megaradrp', 'drp.yaml')
 
-
-def load_cli_storage():
-    '''Entry point to load storage functions for the CLI.'''
-    import megaradrp.store 
-    return 0
