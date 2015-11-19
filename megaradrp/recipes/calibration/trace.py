@@ -24,16 +24,17 @@ from __future__ import division, print_function
 import logging
 import numpy
 
+from astropy.io import fits
+
 from numina.array.trace.traces import trace
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
 
+from megaradrp.core import apextract_tracemap
+from megaradrp.products import MasterFiberFlat, TraceMap
 from megaradrp.core import MegaraBaseRecipe
-from megaradrp.products import MasterFiberFlat
-from megaradrp.products import TraceMap
 from megaradrp.requirements import MasterBiasRequirement
 from megaradrp.trace.traces import init_traces
-from .flat import process_common
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -52,11 +53,21 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
     def run(self, rinput):
 
-        result = self.process_base(rinput.obresult, rinput.master_bias)
+        # Basic processing
+        reduced = self.bias_process_common(rinput.obresult, rinput.master_bias)
 
-        data = result[0].data
+        _logger.info('extract fibers')
+        rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
+        # FIXME: we are ignoring here all the possible bad pixels
+        # and WL distortion when doing the normalization
+        # rssdata /= rssdata.mean() #Originally uncomment
+        rsshdu = fits.PrimaryHDU(rssdata, header=reduced[0].header)
+        rss = fits.HDUList([rsshdu])
 
-        # fit_traces = domefun(data, cstart=2000, hs=20)
+        _logger.info('extraction completed')
+        _logger.info('fiber flat reduction ended')
+
+        data = rss[0].data
 
         cstart = 2000
         hs = 3
@@ -77,7 +88,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
             image2 = data.byteswap().newbyteorder()
         else:
             image2 = data
-            
+
         _logger.info('trace peaks')
         for dtrace in central_peaks.values():
 
@@ -85,14 +96,9 @@ class TraceMapRecipe(MegaraBaseRecipe):
                          hs=hs, background=background1, maxdis=maxdis1)
 
             pfit = numpy.polyfit(mm[:,0], mm[:,1], deg=5)
-            
+
             tracelist.append({'fibid': dtrace.fibid, 'boxid': dtrace.boxid,
                               'start':0, 'stop':4095,
                               'fitparms': pfit.tolist()})
 
-        return self.create_result(fiberflat_frame=result,
-                                  traces=tracelist)
-
-    def process_base(self, obresult, master_bias):
-        reduced = process_common(self, obresult, master_bias)
-        return reduced
+        return self.create_result(fiberflat_frame=rss, traces=tracelist)

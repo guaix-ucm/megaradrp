@@ -97,7 +97,7 @@ class S_And_E_FromStdStarsRecipe(MegaraBaseRecipe):
     traces = Product(ArrayType)
 
     def __init__(self):
-        super(SensitivityFromStdStarRecipe, self).__init__(
+        super(S_And_E_FromStdStarsRecipe, self).__init__(
             version="0.1.0"
         )
 

@@ -1,21 +1,37 @@
+#
+# Copyright 2014-2015 Universidad Complutense de Madrid
+#
+# This file is part of Megara DRP
+#
+# Megara DRP is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Megara DRP is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
+#
+
 import logging
 
 from astropy.io import fits
 
-from megaradrp.core import MegaraBaseRecipe
-from megaradrp.processing import OverscanCorrector, TrimImage
-from megaradrp.products import MasterBias
-
-from numina.array.combine import median as c_median
 from numina.core import Product, RecipeError
 from numina.core.requirements import ObservationResultRequirement
-from numina.flow import SerialFlow
+
+from megaradrp.core import MegaraBaseRecipe
+from megaradrp.products import MasterBias
 
 _logger = logging.getLogger('numina.recipes.megara')
 
 
 class BiasRecipe(MegaraBaseRecipe):
-    '''Process BIAS images and create MASTER_BIAS.'''
+    """Process BIAS images and create MASTER_BIAS."""
 
     obresult = ObservationResultRequirement()
     biasframe = Product(MasterBias)
@@ -24,33 +40,13 @@ class BiasRecipe(MegaraBaseRecipe):
         super(BiasRecipe, self).__init__(version="0.1.0")
 
     def run(self, rinput):
-        return self.process(rinput.obresult)
 
-    def process(self, obresult):
         _logger.info('starting bias reduction')
 
-        if not obresult.images:
+        if not rinput.obresult.images:
             raise RecipeError('Frame list is empty')
 
-        cdata = []
-        o_c = OverscanCorrector()
-        t_i = TrimImage()
-        basicflow = SerialFlow([o_c, t_i])
-
-        try:
-            for frame in obresult.images:
-                hdulist = frame.open()
-                hdulist = basicflow(hdulist)
-                cdata.append(hdulist)
-
-            _logger.info('stacking %d images using median', len(cdata))
-
-            data = c_median([d[0].data for d in cdata], dtype='float32')
-            template_header = cdata[0][0].header
-            hdu = fits.PrimaryHDU(data[0], header=template_header)
-        finally:
-            for hdulist in cdata:
-                hdulist.close()
+        hdu, data = self.hdu_creation(rinput.obresult)
 
         hdr = hdu.header
         hdr = self.set_base_headers(hdr)
@@ -63,5 +59,5 @@ class BiasRecipe(MegaraBaseRecipe):
         hdulist = fits.HDUList([hdu, varhdu, num])
         _logger.info('bias reduction ended')
 
-        result = self.create_result(biasframe=hdu)
+        result = self.create_result(biasframe=hdulist)
         return result
