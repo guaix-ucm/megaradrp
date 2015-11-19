@@ -17,17 +17,15 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Calibration Recipes for Megara'''
+"""Calibration Recipes for Megara"""
 
 from __future__ import division, print_function
 
 import logging
 
-import numpy
 from astropy.io import fits
 
 from numina.core import Product, Requirement
-from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
 from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
@@ -35,15 +33,9 @@ from numina.flow.processing import BiasCorrector
 
 from megaradrp.core import MegaraBaseRecipe
 from megaradrp.processing import OverscanCorrector, TrimImage
-# from numina.logger import log_to_history
-
 from megaradrp.products import MasterFiberFlat
 from megaradrp.products import TraceMap
 from megaradrp.requirements import MasterBiasRequirement
-
-from megaradrp.trace.traces import init_traces
-#from megaradrp.trace._traces import tracing  # @UnresolvedImport
-from numina.array.trace.traces import trace
 from megaradrp.core import apextract_tracemap
 
 _logger = logging.getLogger('numina.recipes.megara')
@@ -129,88 +121,3 @@ class FiberFlatRecipe(MegaraBaseRecipe):
                                     fiberflat_rss=rss)
 
         return result
-
-
-class TwilightFiberFlatRecipe(MegaraBaseRecipe):
-
-    master_bias = MasterBiasRequirement()
-    obresult = ObservationResultRequirement()
-
-    fiberflat_frame = Product(MasterFiberFlat)
-    fiberflat_rss = Product(MasterFiberFlat)
-    traces = Product(ArrayType)
-
-    def __init__(self):
-        super(TwilightFiberFlatRecipe, self).__init__(
-            version="0.1.0"
-        )
-
-    def run(self, rinput):
-        pass
-
-
-class TraceMapRecipe(MegaraBaseRecipe):
-
-    obresult = ObservationResultRequirement()
-    master_bias = MasterBiasRequirement()
-    fiberflat_frame = Product(MasterFiberFlat)
-    traces = Product(TraceMap)
-
-    def __init__(self):
-        super(TraceMapRecipe, self).__init__(
-            version="0.1.0"
-        )
-
-    def run(self, rinput):
-
-        result = self.process_base(rinput.obresult, rinput.master_bias)
-
-        data = result[0].data
-
-        # fit_traces = domefun(data, cstart=2000, hs=20)
-
-        cstart = 2000
-        hs = 3
-        step1 = 2
-        background1 = 150.0
-        maxdis1 = 2.0
-
-        _logger.info('find peaks in column %i', cstart)
-
-        central_peaks = init_traces(data, center=cstart, hs=hs,
-                                background=background1)
-
-        _logger.info(' %i peaks found', len(central_peaks))
-
-        tracelist = []
-        if data.dtype.byteorder != '=':
-            _logger.debug('byteswapping image')
-            image2 = data.byteswap().newbyteorder()
-        else:
-            image2 = data
-            
-        _logger.info('trace peaks')
-        for dtrace in central_peaks.values():
-
-            mm = trace(image2, x=cstart, y=dtrace.start[1], step=step1,
-                         hs=hs, background=background1, maxdis=maxdis1)
-
-            pfit = numpy.polyfit(mm[:,0], mm[:,1], deg=5)
-            
-            tracelist.append({'fibid': dtrace.fibid, 'boxid': dtrace.boxid,
-                              'start':0, 'stop':4095,
-                              'fitparms': pfit.tolist()})
-
-            #plt.title('cython version, fiber %i' % trace.fibid)
-            #plt.plot(mm[:,0], mm[:,1], 'r*')
-            #xpix = np.arange(0, 2000, 1)
-            #p = numpy.poly1d(pfit)
-            #plt.plot(xpix, p(xpix), 'b')
-            #plt.show()    
-
-        return self.create_result(fiberflat_frame=result,
-                                  traces=tracelist)
-
-    def process_base(self, obresult, master_bias):
-        reduced = process_common(self, obresult, master_bias)
-        return reduced
