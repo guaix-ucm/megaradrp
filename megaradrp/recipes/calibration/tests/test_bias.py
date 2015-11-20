@@ -9,7 +9,7 @@ from numina.core.pipeline import DrpSystem
 from numina.core import ObservationResult
 from numina.core import DataFrame
 from megaradrp.recipes.calibration.bias import BiasRecipe
-from megaradrp.loader import megara_drp_load
+from megaradrp.loader import load_drp
 
 @pytest.mark.remote
 def test_bias(drpmocker):
@@ -26,7 +26,7 @@ def test_bias(drpmocker):
     ob.mode = 'bias_image'
     ob.frames = [DataFrame(filename=f.name) for f in fs]
 
-    drpmocker.add_drp('MEGARA', megara_drp_load)
+    drpmocker.add_drp('MEGARA', load_drp)
 
     # Here we could directly import the required pipeline,
     # but the idea is to test all the process

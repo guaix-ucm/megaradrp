@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2011-2015 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,27 +17,32 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Tests for the arc mode recipe module."""
+"""Bad PIxel Mask (BPM) recipe"""
 
-import pytest
+import logging
 
-from numina.user.cli import main
+from numina.core import Product
+from numina.core.requirements import ObservationResultRequirement
 
-from megaradrp.loader import load_drp
-
-
-BASE_URL = 'http://guaix.fis.ucm.es/~spr/megara_test/'
-
-
-def run_recipe():
-
-    main(['run', 'obsrun.yaml', '-r', 'control.yaml'])
+from megaradrp.core import MegaraBaseRecipe
+from megaradrp.products import MasterBias
 
 
-@pytest.mark.remote
-@pytest.mark.usefixtures("numinatpldir")
-def test_mode_arc_calibration_set0(drpmocker):
+_logger = logging.getLogger('numina.recipes.megara')
 
-    drpmocker.add_drp('MEGARA', load_drp)
 
-    run_recipe()
+class BadPixelsMaskRecipe(MegaraBaseRecipe):
+
+    '''Process BIAS images and create MASTER_BIAS.'''
+
+    obresult = ObservationResultRequirement()
+
+    biasframe = Product(MasterBias)
+
+    def __init__(self):
+        super(BadPixelsMaskRecipe, self).__init__(
+            version="0.1.0"
+        )
+
+    def run(self, rinput):
+        pass

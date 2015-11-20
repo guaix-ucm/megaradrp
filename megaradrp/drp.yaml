@@ -82,21 +82,17 @@ modes:
   tagger: megaradrp.taggers.tagger_vph
 pipelines:
   default:
+    version: 1
     recipes:
       bias_image: megaradrp.recipes.calibration.bias.BiasRecipe
-      dark_image: megaradrp.recipes.DarkRecipe
-      fiber_flat_image: megaradrp.recipes.FiberFlatRecipe
+      dark_image: megaradrp.recipes.calibration.dark.DarkRecipe
+      fiber_flat_image: megaradrp.recipes.calibration.flat.FiberFlatRecipe
       mos_image: megaradrp.recipes.scientific.FiberMOSRecipe2
-      flux_calibration: megaradrp.recipes.calibration.PseudoFluxCalibrationRecipe
-      trace_map: megaradrp.recipes.calibration.flat.TraceMapRecipe
+      flux_calibration: megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipe
+      trace_map: megaradrp.recipes.calibration.trace.TraceMapRecipe
       arc_calibration: megaradrp.recipes.calibration.arc.ArcCalibrationRecipe
       fail: numina.core.utils.AlwaysFailRecipe
       success: numina.core.utils.AlwaysSuccessRecipe
-    version: 1
-  experimental:
-    recipes:
-      fiber_flat_image: megaradrp.recipes.calibration.flat.FiberFlatRecipe
-    version: 1
 products:
 - name: megaradrp.products.TraceMap
   alias: TraceMap

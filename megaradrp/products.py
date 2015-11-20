@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2014 Universidad Complutense de Madrid
+# Copyright 2011-2015 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,7 +17,7 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Products of the Megara Pipeline'''
+"""Products of the Megara Pipeline"""
 
 
 '''
@@ -37,6 +37,7 @@
 
 '''
 
+import yaml
 
 from numina.core import DataFrameType, DataProductType
 from numina.core.products import DataProductTag
@@ -68,3 +69,18 @@ class TraceMap(DataProductType):
         super(TraceMap, self).__init__(
             ptype=dict, default=default)
 
+    def __numina_dump__(self, obj, where):
+
+        filename = where.destination + '.yaml'
+
+        with open(filename, 'w') as fd:
+            yaml.dump(obj, fd)
+
+        return filename
+
+    def __numina_load__(tag, obj):
+
+        with open(obj, 'r') as fd:
+            traces = yaml.load(fd)
+
+        return traces

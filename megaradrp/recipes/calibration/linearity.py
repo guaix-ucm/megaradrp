@@ -17,37 +17,30 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+"""Calibration Recipes for Megara"""
+
 import logging
 
-import yaml
+from numina.core import Product
+from numina.core.requirements import ObservationResultRequirement
 
-from numina.store import dump, load
+from megaradrp.core import MegaraBaseRecipe
+from megaradrp.products import MasterBias
 
-from .products import TraceMap
+_logger = logging.getLogger('numina.recipes.megara')
 
-_logger = logging.getLogger('megaradrp.store')
+class LinearityTestRecipe(MegaraBaseRecipe):
 
+    """Process LINTEST images and create LINEARITY_CORRECTON."""
 
-_logger.debug('register dump functions')
+    obresult = ObservationResultRequirement()
 
+    biasframe = Product(MasterBias)
 
-@dump.register(TraceMap)
-def _d(tag, obj, where):
+    def __init__(self):
+        super(LinearityTestRecipe, self).__init__(
+            version="0.1.0"
+        )
 
-    filename = where.destination + '.yaml'
-
-    with open(filename, 'w') as fd:
-        yaml.dump(obj, fd)
-
-    return filename
-
-_logger.debug('register load functions')
-
-
-@load.register(TraceMap)
-def _l(tag, obj):
-
-    with open(obj, 'r') as fd:
-        traces = yaml.load(fd)
-
-    return traces
+    def run(self, rinput):
+        pass

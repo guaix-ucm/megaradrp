@@ -21,7 +21,7 @@ import logging
 
 from numina.flow.processing import TagOptionalCorrector, TagFits
 
-from ..core import trim_and_o_hdu
+from ..core.processing import trim_and_o_hdu
 
 _logger = logging.getLogger('megara.processing')
 

@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2014 Universidad Complutense de Madrid
+# Copyright 2011-2015 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,19 +17,15 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Tests for the calibration module.'''
-
-import os
+"""Tests for the calibration module."""
 
 import pytest
-
-from numina.tests.testcache import download_cache
 
 from numina.user.cli import main
 from numina.core import import_object
 from numina.core.pipeline import DrpSystem
 from megaradrp.recipes.calibration.bias import BiasRecipe
-from megaradrp.loader import megara_drp_load, load_cli_storage
+from megaradrp.loader import load_drp
 
 BASE_URL = 'http://guaix.fis.ucm.es/~spr/megara_test/'
 
@@ -40,7 +36,7 @@ def run_recipe():
 
 def test_recipe1(drpmocker):
 
-    drpmocker.add_drp('MEGARA', megara_drp_load)
+    drpmocker.add_drp('MEGARA', load_drp)
 
     insdrp = DrpSystem().query_by_name('MEGARA')
     pipeline = insdrp.pipelines.get('default')
@@ -50,11 +46,12 @@ def test_recipe1(drpmocker):
 
     assert RecipeClass is BiasRecipe
 
+
 @pytest.mark.remote
 @pytest.mark.usefixtures("numinatpldir")
 def test_mode_bias_set0(drpmocker):
 
-    drpmocker.add_drp('MEGARA', megara_drp_load)
+    drpmocker.add_drp('MEGARA', load_drp)
 
     run_recipe()
 
@@ -62,25 +59,23 @@ def test_mode_bias_set0(drpmocker):
 @pytest.mark.remote
 @pytest.mark.usefixtures("numinatpldir")
 def test_mode_bias_set1(drpmocker):
-    drpmocker.add_drp('MEGARA', megara_drp_load)
+
+    drpmocker.add_drp('MEGARA', load_drp)
 
     run_recipe()
+
 
 @pytest.mark.remote
 @pytest.mark.usefixtures("numinatpldir")
 def test_mode_trace_map_set0(drpmocker):
-    drpmocker.add_drp('MEGARA', megara_drp_load)
 
+    drpmocker.add_drp('MEGARA', load_drp)
     run_recipe()
+
 
 @pytest.mark.remote
 @pytest.mark.usefixtures("numinatpldir")
 def test_mode_fiber_flat_set0(drpmocker):
-    drpmocker.add_drp('MEGARA', megara_drp_load)
 
-    # FIXME: this was completely crazy to debug
-    # if we don't load store/dump functions
-    # tracemap is loaded as a its filename
-    load_cli_storage()
-
+    drpmocker.add_drp('MEGARA', load_drp)
     run_recipe()

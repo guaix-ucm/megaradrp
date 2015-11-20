@@ -17,14 +17,14 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Typical requirements of recipes'''
+"""Typical requirements of recipes"""
 
-from numina.core import DataProductRequirement
+from numina.core import Requirement
 
 from .products import MasterBias, MasterDark, MasterFiberFlat
 
 
-class MasterBiasRequirement(DataProductRequirement):
+class MasterBiasRequirement(Requirement):
     def __init__(self, optional=False):
         super(MasterBiasRequirement,
               self).__init__(MasterBias,
@@ -33,13 +33,13 @@ class MasterBiasRequirement(DataProductRequirement):
                              )
 
 
-class MasterDarkRequirement(DataProductRequirement):
+class MasterDarkRequirement(Requirement):
     def __init__(self):
         super(MasterDarkRequirement,
               self).__init__(MasterDark, 'Master DARK image')
 
 
-class MasterFiberFlatRequirement(DataProductRequirement):
+class MasterFiberFlatRequirement(Requirement):
     def __init__(self):
         super(MasterFiberFlatRequirement,
               self).__init__(MasterFiberFlat,

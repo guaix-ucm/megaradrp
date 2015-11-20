@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2014 Universidad Complutense de Madrid
+# Copyright 2011-2015 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -23,7 +23,7 @@ import logging
 
 from astropy.io import fits
 
-from numina.core import Product, DataProductRequirement
+from numina.core import Product, Requirement
 from numina.core.requirements import ObservationResultRequirement, Requirement
 from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
@@ -33,8 +33,6 @@ from megaradrp.core import MegaraBaseRecipe
 from megaradrp.processing import OverscanCorrector, TrimImage
 from megaradrp.processing import ApertureExtractor, FiberFlatCorrector
 from megaradrp.processing import ApertureExtractor2
-
-# from numina.logger import log_to_history
 from megaradrp.requirements import MasterBiasRequirement
 from megaradrp.requirements import MasterFiberFlatRequirement
 from megaradrp.products import MasterFiberFlat
@@ -52,7 +50,7 @@ class FiberMOSRecipe(MegaraBaseRecipe):
     master_bias = MasterBiasRequirement()
     master_fiber_flat = MasterFiberFlatRequirement()
     traces = Requirement(TraceMap, 'Trace information of the Apertures')
-    sensitivity = DataProductRequirement(
+    sensitivity = Requirement(
         MasterSensitivity, 'Sensitivity', optional=True)
 
     # Products
@@ -160,7 +158,7 @@ class FiberMOSRecipe2(MegaraBaseRecipe):
     master_bias = MasterBiasRequirement()
     master_fiber_flat = MasterFiberFlatRequirement()
     traces = Requirement(TraceMap, 'Trace information of the Apertures')
-    sensitivity = DataProductRequirement(
+    sensitivity = Requirement(
         MasterSensitivity, 'Sensitivity', optional=True)
 
     # Products
