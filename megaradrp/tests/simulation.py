@@ -109,8 +109,9 @@ class MegaraDetector(object):
 
         elec_mean = self.eq * self._det
         elec = numpy.random.poisson(elec_mean)
+        elec_pre = self.saturate(elec)
         # Do binning in the array
-        elec_v = binning(elec, self.blocks[0], self.blocks[1])
+        elec_v = binning(elec_pre, self.blocks[0], self.blocks[1])
         elec_p = elec_v.reshape(elec_v.shape[0], elec_v.shape[1], -1)
         elec_f = elec_p.sum(axis=-1)
 
@@ -127,6 +128,27 @@ class MegaraDetector(object):
     def reset(self):
         """Reset the detector."""
         self._det[:] = 0.0
+
+    def saturate(self, x):
+        """Compute non-linearity and saturation."""
+        a = -1.2 / 45000.0
+        #b = 1.0
+        #c = -7000.0
+        #det = math.sqrt(b**2-4*a*c)
+        #u1 = (-b+det) / (2*a)
+
+        f1 = lambda x:x
+
+        def f2(x):
+            return x + a* (x - 45000)**2
+
+        f3 = lambda x: 52000
+
+        p1 = x < 45000
+        p3 = x >= 54312 # 45000 + u1
+        p2 = numpy.logical_and(~p1, ~p3)
+
+        return numpy.piecewise(x, [p1, p2, p3], [f1, f2, f3])
 
     @classmethod
     def init_regions(cls, detshape, oscan, pscan, bng):
