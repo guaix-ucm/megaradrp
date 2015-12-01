@@ -21,8 +21,8 @@
 
 
 import numpy
-
 from numpy.lib.stride_tricks import as_strided as ast
+import astropy.io.fits as fits
 
 
 def binning(arr, br, bc):
@@ -222,6 +222,24 @@ class MegaraDetector(object):
 
         return (fshape, (base1, base2), geom1, geom2)
 
+    def metadata(self):
+        return {}
+
+
+class MegaraImageFactory(object):
+    CARDS_P = [
+        ('OBSERVAT', 'ORM', 'Name of observatory'),
+        ('TELESCOP', 'GTC', 'Telescope id.'),
+        ('INSTRUME', 'MEGARA', 'Name of the Instrument'),
+        ('ORIGIN', 'Simulator', 'FITS file originator'),
+    ]
+
+    def create(self, mode, meta, data):
+        pheader = fits.Header(self.CARDS_P)
+        hdu1 = fits.PrimaryHDU(data, header=pheader)
+        hdul = fits.HDUList([hdu1])
+        return hdul
+
 
 def simulate_bias(detector):
     """Simulate a BIAS array."""
@@ -242,3 +260,38 @@ def simulate_flat(detector, exposure, source):
     detector.expose(source=source, time=exposure)
     final = detector.readout()
     return final
+
+
+def simulate_bias_fits(factory, detector):
+    """Simulate a FITS array."""
+    final = simulate_bias(detector)
+
+    meta = {'detector': detector.metadata()}
+    data = final
+
+    fitsfile = factory.create('bias', meta=meta, data=data)
+
+    return fitsfile
+
+
+def simulate_dark_fits(factory, detector, exposure):
+    """Simulate a DARK FITS."""
+    final = simulate_dark(detector, exposure)
+
+    meta = {'detector': detector.metadata()}
+    data = final
+
+    fitsfile = factory.create('dark', meta=meta, data=data)
+
+    return fitsfile
+
+
+def simulate_flat_fits(factory, detector, exposure, source):
+    """Simulate a FLAT FITS,"""
+    final = simulate_flat(detector, exposure, source)
+
+    meta = {'detector': detector.metadata()}
+    data = final
+
+    fitsfile = factory.create('flat', meta=meta, data=data)
+    return fitsfile
