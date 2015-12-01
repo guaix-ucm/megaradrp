@@ -43,28 +43,34 @@ def binning(arr, br, bc):
 
 class VirtualDetector(object):
     """Each of the channels."""
-    def __init__(self, base, geom, directfun, gain, bias, ron):
+    def __init__(self, base, geom, directfun, readpars):
 
         self.base = base
         self.trim, self.pcol, self.ocol, self.orow = geom
 
         self.direcfun = directfun
 
-        self.bias = bias
-        self.gain = gain
-        self.ron = ron
+        self.readpars = readpars
 
     def readout_in_buffer(self, elec, final):
 
         final[self.trim] = self.direcfun(elec[self.base])
 
-        final[self.trim] = final[self.trim] / self.gain
+        final[self.trim] = final[self.trim] / self.readpars.gain
 
         # We could use different RON and BIAS in each section
         for section in [self.trim, self.pcol, self.ocol, self.orow]:
-            final[section] = self.bias + numpy.random.normal(final[section], self.ron)
+            final[section] = self.readpars.bias + numpy.random.normal(final[section], self.readpars.ron)
 
         return final
+
+class ReadParams(object):
+    """Readout parameters of each channel."""
+    def __init__(self, gain=1.0, ron=2.0, bias=1000.0):
+        self.gain = gain
+        self.ron = ron
+        self.bias = bias
+
 
 class MegaraDetector(object):
     """Simple MEGARA detector."""
@@ -72,7 +78,7 @@ class MegaraDetector(object):
     _binning = {'11': [1, 1], '21': [1, 2], '12': [2, 1], '22': [2, 2]}
     _direc = ['normal', 'mirror']
 
-    def __init__(self, shape, oscan, pscan, eq=1.0, dark=0.0, gain=1.0, bias=100, ron=2.0,
+    def __init__(self, shape, oscan, pscan, eq=1.0, dark=0.0, readpars1=None, readpars2=None,
                  bins='11', direction='normal'):
 
         if bins not in self._binning:
@@ -86,15 +92,18 @@ class MegaraDetector(object):
         else:
             directfun = numpy.fliplr
 
+        readpars1 = readpars1 if not None else ReadParams()
+        readpars2 = readpars2 if not None else ReadParams()
+
         self.blocks = self._binning[bins]
 
         self.fshape, a0, geom1, geom2 = self.init_regions(shape, oscan, pscan, self.blocks)
 
         base1, base2 = a0
 
-        self.virt1 = VirtualDetector(base1, geom1, directfun, gain, bias, ron)
+        self.virt1 = VirtualDetector(base1, geom1, directfun, readpars1)
 
-        self.virt2 = VirtualDetector(base2, geom2, directfun, gain, bias, ron)
+        self.virt2 = VirtualDetector(base2, geom2, directfun, readpars2)
 
         self._det = numpy.zeros(shape, dtype='float64')
 
