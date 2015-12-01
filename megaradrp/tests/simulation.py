@@ -154,32 +154,35 @@ class MegaraDetector(object):
         # Row block 1
         rb1 = slice(0, nr)
         rb1m = slice(nr, nr + oscan1)
-        rb1p = slice(0, nr + oscan1)
+
         # Row block 2
         rb2 = slice(nr + oscan2, nr2 + oscan2)
         rb2m = slice(nr + oscan1, nr + oscan2)
-        rb2p = slice(nr + oscan1, nr2 + oscan2)
+
         # Col block
         cb = slice(psc1, nc2 + psc1)
         # Col block left
         cbl = slice(0, psc1)
         # Col block right
         cbr = slice(nc2 + psc1, nc2 + psc2)
+        # Col block full
+        cbf = slice(0, nc2 + psc2)
 
         # Mode normal
         trim1 = (rb1, cb)
-        # presscan
-        pcol1 = (rb1p, cbl)
+        # prescan
+        pcol1 = (rb1, cbl)
         # overscan
-        ocol1 = (rb1p, cbr)
-        orow1 = (rb1m, cb)
+        ocol1 = (rb1, cbr)
+        orow1 = (rb1m, cbf)
 
         trim2 = (rb2, cb)
         # prescan
-        pcol2 = (rb2p, cbr)
+        pcol2 = (rb2, cbr)
         # overscan
-        ocol2 = (rb2p, cbl)
-        orow2 = (rb2m, cb)
+        ocol2 = (rb2, cbl)
+        orow2 = (rb2m, cbf)
+
         base1 = (slice(0, nr), slice(0,nc2))
         base2 = (slice(nr, nr2), slice(0,nc2))
 
