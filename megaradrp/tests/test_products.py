@@ -20,18 +20,47 @@
 from megaradrp.products import TraceMap
 from tempfile import NamedTemporaryFile
 import pytest
+import yaml
 
 @pytest.mark.xfail
-def test_traceMap(benchmark=None):
+def test_fail_traceMap(benchmark=None):
     my_obj = TraceMap()
     my_obj._datatype_load('')
 
-def test_traceMap(benchmark=None):
+def test_load_traceMap(benchmark=None):
+    data = dict(A = 'a',
+                B = dict(C = 'c',
+                         D = 'd',
+                         E = 'e',)
+                )
+
     my_obj = TraceMap()
-    my_file =NamedTemporaryFile()
-    print (my_file.name)
+    my_file = NamedTemporaryFile()
+    with open(my_file.name, 'w') as fd:
+        yaml.dump(data, fd)
     my_open_file = my_obj._datatype_load(my_file.name)
-    print (my_open_file)
+    assert (my_open_file == {'A': 'a', 'B': {'C': 'c', 'E': 'e', 'D': 'd'}})
+
+
+def test_dump_traceMap(benchmark=None):
+    class aux(object):
+        def __init__(self, destination):
+            self.destination = destination
+
+    data = dict(A = 'a',
+                B = dict(C = 'c',
+                         D = 'd',
+                         E = 'e',)
+                )
+
+    my_obj = TraceMap()
+    my_file = NamedTemporaryFile()
+    work_env = aux(my_file.name)
+    my_open_file = my_obj._datatype_dump(data, work_env)
+    with open(my_open_file, 'r') as fd:
+        traces = yaml.load(fd)
+    assert (traces == {'A': 'a', 'B': {'C': 'c', 'E': 'e', 'D': 'd'}})
 
 if __name__ == "__main__":
-    test_traceMap()
+    test_load_traceMap()
+    test_dump_traceMap()
