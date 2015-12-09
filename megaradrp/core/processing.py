@@ -80,9 +80,16 @@ def trim_and_o_array(array, direction='normal', bins='11'):
     oscan2 = OSCANW / bng[0]
     psc1 = PSCANW / bng[0]
 
+    # finaldata = np.empty((shape_number, shape_number), dtype='float32')
+    # finaldata[0:shape_number//2,0:shape_number] = array[0:shape_number//2,PSCANW:shape_number+PSCANW]
+    # finaldata[shape_number//2:shape_number,0:shape_number] = array[shape_number//2+2*OSCANW:shape_number+2*OSCANW,PSCANW:shape_number+PSCANW]
+
     finaldata = np.empty((nr2, nc2), dtype='float32')
     finaldata[:nr, :] = direcfun(array[:nr, psc1:nc2 + psc1])
+    # finaldata[:nr, :] = direcfun(array[:nr,psc1:nc2+psc1])
     finaldata[nr:, :] = direcfun(array[nr + oscan2:, psc1:nc2 + psc1])
+    # finaldata[nr:, :] = direcfun(array[nr+2*oscan2:nc2+2*oscan2, psc1:nc2 + psc1])
+    # finaldata[nr:, :] = direcfun(array[nr+oscan2:nc2+2*oscan2, psc1:nc2 + psc1])
     return finaldata
 
 

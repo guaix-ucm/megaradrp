@@ -66,8 +66,7 @@ class MasterSensitivity(MEGARAProductFrame):
 class TraceMap(DataProductType):
 
     def __init__(self, default=None):
-        super(TraceMap, self).__init__(
-            ptype=dict, default=default)
+        super(TraceMap, self).__init__(ptype=dict, default=default)
 
     def __numina_dump__(self, obj, where):
 

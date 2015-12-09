@@ -21,8 +21,8 @@
 
 
 import numpy
-
 from numpy.lib.stride_tricks import as_strided as ast
+import astropy.io.fits as fits
 
 
 def binning(arr, br, bc):
@@ -43,28 +43,34 @@ def binning(arr, br, bc):
 
 class VirtualDetector(object):
     """Each of the channels."""
-    def __init__(self, base, geom, directfun, gain, bias, ron):
+    def __init__(self, base, geom, directfun, readpars):
 
         self.base = base
         self.trim, self.pcol, self.ocol, self.orow = geom
 
         self.direcfun = directfun
 
-        self.bias = bias
-        self.gain = gain
-        self.ron = ron
+        self.readpars = readpars
 
     def readout_in_buffer(self, elec, final):
 
         final[self.trim] = self.direcfun(elec[self.base])
 
-        final[self.trim] = final[self.trim] / self.gain
+        final[self.trim] = final[self.trim] / self.readpars.gain
 
         # We could use different RON and BIAS in each section
         for section in [self.trim, self.pcol, self.ocol, self.orow]:
-            final[section] = self.bias + numpy.random.normal(final[section], self.ron)
+            final[section] = self.readpars.bias + numpy.random.normal(final[section], self.readpars.ron)
 
         return final
+
+class ReadParams(object):
+    """Readout parameters of each channel."""
+    def __init__(self, gain=1.0, ron=2.0, bias=1000.0):
+        self.gain = gain
+        self.ron = ron
+        self.bias = bias
+
 
 class MegaraDetector(object):
     """Simple MEGARA detector."""
@@ -72,7 +78,7 @@ class MegaraDetector(object):
     _binning = {'11': [1, 1], '21': [1, 2], '12': [2, 1], '22': [2, 2]}
     _direc = ['normal', 'mirror']
 
-    def __init__(self, shape, oscan, pscan, eq=1.0, dark=0.0, gain=1.0, bias=100, ron=2.0,
+    def __init__(self, shape, oscan, pscan, eq=1.0, dark=0.0, readpars1=None, readpars2=None,
                  bins='11', direction='normal'):
 
         if bins not in self._binning:
@@ -86,15 +92,18 @@ class MegaraDetector(object):
         else:
             directfun = numpy.fliplr
 
+        readpars1 = readpars1 if not None else ReadParams()
+        readpars2 = readpars2 if not None else ReadParams()
+
         self.blocks = self._binning[bins]
 
         self.fshape, a0, geom1, geom2 = self.init_regions(shape, oscan, pscan, self.blocks)
 
         base1, base2 = a0
 
-        self.virt1 = VirtualDetector(base1, geom1, directfun, gain, bias, ron)
+        self.virt1 = VirtualDetector(base1, geom1, directfun, readpars1)
 
-        self.virt2 = VirtualDetector(base2, geom2, directfun, gain, bias, ron)
+        self.virt2 = VirtualDetector(base2, geom2, directfun, readpars2)
 
         self._det = numpy.zeros(shape, dtype='float64')
 
@@ -109,8 +118,9 @@ class MegaraDetector(object):
 
         elec_mean = self.eq * self._det
         elec = numpy.random.poisson(elec_mean)
+        elec_pre = self.saturate(elec)
         # Do binning in the array
-        elec_v = binning(elec, self.blocks[0], self.blocks[1])
+        elec_v = binning(elec_pre, self.blocks[0], self.blocks[1])
         elec_p = elec_v.reshape(elec_v.shape[0], elec_v.shape[1], -1)
         elec_f = elec_p.sum(axis=-1)
 
@@ -128,7 +138,28 @@ class MegaraDetector(object):
         """Reset the detector."""
         self._det[:] = 0.0
 
-    @classmethod
+    def saturate(self, x):
+        """Compute non-linearity and saturation."""
+        a = -1.2 / 45000.0
+        #b = 1.0
+        #c = -7000.0
+        #det = math.sqrt(b**2-4*a*c)
+        #u1 = (-b+det) / (2*a)
+
+        f1 = lambda x:x
+
+        def f2(x):
+            return x + a* (x - 45000)**2
+
+        f3 = lambda x: 52000
+
+        p1 = x < 45000
+        p3 = x >= 54312 # 45000 + u1
+        p2 = numpy.logical_and(~p1, ~p3)
+
+        return numpy.piecewise(x, [p1, p2, p3], [f1, f2, f3])
+
+    # @classmethod
     def init_regions(cls, detshape, oscan, pscan, bng):
         """Create a image with overscan for testing."""
 
@@ -154,26 +185,35 @@ class MegaraDetector(object):
         # Row block 1
         rb1 = slice(0, nr)
         rb1m = slice(nr, nr + oscan1)
+
         # Row block 2
         rb2 = slice(nr + oscan2, nr2 + oscan2)
         rb2m = slice(nr + oscan1, nr + oscan2)
+
         # Col block
         cb = slice(psc1, nc2 + psc1)
         # Col block left
         cbl = slice(0, psc1)
         # Col block right
         cbr = slice(nc2 + psc1, nc2 + psc2)
+        # Col block full
+        cbf = slice(0, nc2 + psc2)
 
         # Mode normal
         trim1 = (rb1, cb)
+        # prescan
         pcol1 = (rb1, cbl)
+        # overscan
         ocol1 = (rb1, cbr)
-        orow1 = (rb1m, cb)
+        orow1 = (rb1m, cbf)
 
         trim2 = (rb2, cb)
+        # prescan
         pcol2 = (rb2, cbr)
+        # overscan
         ocol2 = (rb2, cbl)
-        orow2 = (rb2m, cb)
+        orow2 = (rb2m, cbf)
+
         base1 = (slice(0, nr), slice(0,nc2))
         base2 = (slice(nr, nr2), slice(0,nc2))
 
@@ -181,6 +221,39 @@ class MegaraDetector(object):
         geom2 = trim2, pcol2, ocol2, orow2
 
         return (fshape, (base1, base2), geom1, geom2)
+
+    def metadata(self):
+        return {}
+
+
+class MegaraImageFactory(object):
+    CARDS_P = [
+        ('OBSERVAT', 'ORM', 'Name of observatory'),
+        ('TELESCOP', 'GTC', 'Telescope id.'),
+        ('INSTRUME', 'MEGARA', 'Name of the Instrument'),
+        ('ORIGIN', 'Simulator', 'FITS file originator'),
+    ]
+
+    def create(self, mode, meta, data):
+        pheader = fits.Header(self.CARDS_P)
+        hdu1 = fits.PrimaryHDU(data, header=pheader)
+        hdul = fits.HDUList([hdu1])
+        return hdul
+
+
+class MegaraDetectorSat(MegaraDetector):
+
+    def saturate(self, x):
+        y = super(MegaraDetectorSat, self).saturate(x)
+
+        # Some pixels have a special nonlineary given by
+        # y[100,3000] = self.esp_nonlinearity(x[100,3000])
+        # y[3000,3000] = self.esp_nonlinearity(x[3000,3000])
+        return y
+
+    def esp_nonlinearity(self, x):
+        sat = 12000.0
+        return sat * (1-sat / (sat + x))
 
 
 def simulate_bias(detector):
@@ -202,3 +275,38 @@ def simulate_flat(detector, exposure, source):
     detector.expose(source=source, time=exposure)
     final = detector.readout()
     return final
+
+
+def simulate_bias_fits(factory, detector):
+    """Simulate a FITS array."""
+    final = simulate_bias(detector)
+
+    meta = {'detector': detector.metadata()}
+    data = final
+
+    fitsfile = factory.create('bias', meta=meta, data=data)
+
+    return fitsfile
+
+
+def simulate_dark_fits(factory, detector, exposure):
+    """Simulate a DARK FITS."""
+    final = simulate_dark(detector, exposure)
+
+    meta = {'detector': detector.metadata()}
+    data = final
+
+    fitsfile = factory.create('dark', meta=meta, data=data)
+
+    return fitsfile
+
+
+def simulate_flat_fits(factory, detector, exposure, source):
+    """Simulate a FLAT FITS,"""
+    final = simulate_flat(detector, exposure, source)
+
+    meta = {'detector': detector.metadata()}
+    data = final
+
+    fitsfile = factory.create('flat', meta=meta, data=data)
+    return fitsfile

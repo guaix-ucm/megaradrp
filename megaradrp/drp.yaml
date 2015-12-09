@@ -80,11 +80,21 @@ modes:
   summary: Summary of Arc Calibration
   uuid: c1842e00-2005-48bb-9a0e-8a8161f97fdf
   tagger: megaradrp.taggers.tagger_vph
+- date: 2012-05-21
+  description: Bad Pixels
+  key: bpm
+  name: Bad Pixel Mask
+  reference: xxx
+  status: DRAFT
+  summary: Bad Pixel Mask
+  uuid: xxxxxx
+  tagger: null
 pipelines:
   default:
     version: 1
     recipes:
       bias_image: megaradrp.recipes.calibration.bias.BiasRecipe
+      bpm: megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe
       dark_image: megaradrp.recipes.calibration.dark.DarkRecipe
       fiber_flat_image: megaradrp.recipes.calibration.flat.FiberFlatRecipe
       mos_image: megaradrp.recipes.scientific.FiberMOSRecipe2
