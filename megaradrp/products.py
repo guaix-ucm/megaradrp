@@ -64,12 +64,10 @@ class MasterSensitivity(MEGARAProductFrame):
 
 
 class TraceMap(DataProductType):
-
     def __init__(self, default=None):
         super(TraceMap, self).__init__(ptype=dict, default=default)
 
-    def __numina_dump__(self, obj, where):
-
+    def _datatype_dump(self, obj, where):
         filename = where.destination + '.yaml'
 
         with open(filename, 'w') as fd:
@@ -77,9 +75,10 @@ class TraceMap(DataProductType):
 
         return filename
 
-    def __numina_load__(tag, obj):
-
-        with open(obj, 'r') as fd:
-            traces = yaml.load(fd)
-
+    def _datatype_load(self, obj):
+        try:
+            with open(obj, 'r') as fd:
+                traces = yaml.load(fd)
+        except IOError as e:
+            raise e
         return traces
