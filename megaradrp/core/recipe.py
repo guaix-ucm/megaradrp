@@ -42,11 +42,15 @@ class MegaraBaseRecipe(BaseRecipe):
                        'ArcCalibrationRecipe':[OverscanCorrector, TrimImage, BiasCorrector],
                        'FiberFlatRecipe':[OverscanCorrector, TrimImage, BiasCorrector],
                        'TraceMapRecipe':[OverscanCorrector, TrimImage, BiasCorrector],
+                       'BadPixelsMaskRecipe':[OverscanCorrector, TrimImage, BiasCorrector],
                        }
         super(MegaraBaseRecipe, self).__init__(version=version)
 
     def __generate_flow(self, params):
-        flow = self.__flow[self.__class__.__name__]
+        import copy
+        ff  = self.__flow[self.__class__.__name__]
+        flow = copy.deepcopy(ff)
+        # flow = self.__flow[self.__class__.__name__]
         try:
             for cont in range(len(flow)):
                 if issubclass(BiasCorrector, flow[cont]):
@@ -58,7 +62,7 @@ class MegaraBaseRecipe(BaseRecipe):
         except Exception as e:
             _logger.error(e)
             raise(e)
-
+        del flow
         return basicflow
 
     def bias_process_common(self, obresult, master_bias):

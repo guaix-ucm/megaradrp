@@ -159,7 +159,7 @@ class MegaraDetector(object):
 
         return numpy.piecewise(x, [p1, p2, p3], [f1, f2, f3])
 
-    @classmethod
+    # @classmethod
     def init_regions(cls, detshape, oscan, pscan, bng):
         """Create a image with overscan for testing."""
 
@@ -239,6 +239,21 @@ class MegaraImageFactory(object):
         hdu1 = fits.PrimaryHDU(data, header=pheader)
         hdul = fits.HDUList([hdu1])
         return hdul
+
+
+class MegaraDetectorSat(MegaraDetector):
+
+    def saturate(self, x):
+        y = super(MegaraDetectorSat, self).saturate(x)
+
+        # Some pixels have a special nonlineary given by
+        # y[100,3000] = self.esp_nonlinearity(x[100,3000])
+        # y[3000,3000] = self.esp_nonlinearity(x[3000,3000])
+        return y
+
+    def esp_nonlinearity(self, x):
+        sat = 12000.0
+        return sat * (1-sat / (sat + x))
 
 
 def simulate_bias(detector):

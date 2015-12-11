@@ -63,3 +63,6 @@ def test_bias(drpmocker):
     # In the end, remove the files
     for f in fs:
         os.remove(f.name)
+
+if __name__ == "__main__":
+    test_bias()

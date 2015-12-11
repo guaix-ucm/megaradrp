@@ -19,30 +19,73 @@
 
 """Bad PIxel Mask (BPM) recipe"""
 
-import logging
-
-from numina.core import Product
-from numina.core.requirements import ObservationResultRequirement
+import astropy.io.fits as fits
+import numpy as np
+import os
 
 from megaradrp.core import MegaraBaseRecipe
-from megaradrp.products import MasterBias
+from megaradrp.requirements import MasterBiasRequirement
 
-
-_logger = logging.getLogger('numina.recipes.megara')
-
+from numina.array.cosmetics import cosmetics, ccdmask
+from numina.core import Product, DataFrameType
+from numina.core.requirements import ObservationResultRequirement
 
 class BadPixelsMaskRecipe(MegaraBaseRecipe):
-
-    '''Process BIAS images and create MASTER_BIAS.'''
-
     obresult = ObservationResultRequirement()
+    master_bias = MasterBiasRequirement()
 
-    biasframe = Product(MasterBias)
+    bpm_image = Product(DataFrameType)
 
     def __init__(self):
-        super(BadPixelsMaskRecipe, self).__init__(
-            version="0.1.0"
-        )
+        super(BadPixelsMaskRecipe, self).__init__(version="0.1.0")
 
     def run(self, rinput):
-        pass
+        import copy
+        copia = copy.deepcopy(rinput.obresult)
+        copia2 = copy.deepcopy(rinput.obresult)
+        fin = len(rinput.obresult.images)
+        for cont in range(1, 1 + len(rinput.obresult.images) // 2):
+            del (copia.images[fin - cont])
+            del (copia2.images[0])
+
+        temporary_path = os.path.dirname(
+            os.path.abspath(copia.images[0].filename))
+
+        reduced1 = self.bias_process_common(copia, rinput.master_bias)
+        reduced2 = self.bias_process_common(copia2, rinput.master_bias)
+
+        fits.writeto('%s/reduced10.fits' % temporary_path, reduced1[0].data,
+                     clobber=True)
+        fits.writeto('%s/reduced20.fits' % temporary_path, reduced2[0].data,
+                     clobber=True)
+
+        mask = np.zeros(reduced1[0].data.shape, dtype='int')
+        bpm = cosmetics(reduced1[0].data, reduced2[0].data, mask)
+        print ('# bad pixels cosmetics', bpm.sum())
+
+        mask = np.zeros(reduced1[0].data.shape, dtype='int')
+        bpm2 = ccdmask(reduced1[0].data, reduced2[0].data, mask, mode='full')
+        print ('# bad pixels ccdmask', bpm2[1].sum())
+
+        fits.writeto('%s/maskresult1.fits' % temporary_path, bpm.astype(int),
+                     clobber=True)
+
+        fits.writeto('%s/maskresult2.fits' % temporary_path, bpm2[1],
+                     clobber=True)
+        fits.writeto('%s/result20.fits' % temporary_path, bpm2[0],
+                     clobber=True)
+
+
+        # hdu, data = self.hdu_creation(rinput.obresult, {'bpm':bpm})
+        #
+        # hdr = hdu.header
+        # # FIXME: this is incorrect in general
+        # hdr = self.set_base_headers(hdr)
+        # hdr['CCDMEAN'] = data[0].mean()
+        #
+        # varhdu = fits.ImageHDU(data[1], name='VARIANCE')
+        # num = fits.ImageHDU(data[2], name='MAP')
+        #
+        # reduced = fits.HDUList([hdu, varhdu, num])
+        #
+        # return self.create_result(bpm_image=reduced)
