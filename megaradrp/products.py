@@ -19,7 +19,6 @@
 
 """Products of the Megara Pipeline"""
 
-
 '''
     RAW_BIAS DataFrameType
     RAW_DARK DataFrameType
