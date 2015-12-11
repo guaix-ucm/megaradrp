@@ -55,20 +55,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         # Basic processing
         reduced = self.bias_process_common(rinput.obresult, rinput.master_bias)
-
-        _logger.info('extract fibers')
-        rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
-        # FIXME: we are ignoring here all the possible bad pixels
-        # and WL distortion when doing the normalization
-        # rssdata /= rssdata.mean() #Originally uncomment
-        rsshdu = fits.PrimaryHDU(rssdata, header=reduced[0].header)
-        rss = fits.HDUList([rsshdu])
-
-        _logger.info('extraction completed')
-        _logger.info('fiber flat reduction ended')
-
-        data = rss[0].data
-
+        data = reduced[0].data
         cstart = 2000
         hs = 3
         step1 = 2
@@ -82,13 +69,15 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         _logger.info(' %i peaks found', len(central_peaks))
 
-        tracelist = []
+
+        # The byteswapping is required by the cython module
         if data.dtype.byteorder != '=':
             _logger.debug('byteswapping image')
             image2 = data.byteswap().newbyteorder()
         else:
             image2 = data
 
+        tracelist = []
         _logger.info('trace peaks')
         for dtrace in central_peaks.values():
 
@@ -101,4 +90,4 @@ class TraceMapRecipe(MegaraBaseRecipe):
                               'start':0, 'stop':4095,
                               'fitparms': pfit.tolist()})
 
-        return self.create_result(fiberflat_frame=rss, traces=tracelist)
+        return self.create_result(fiberflat_frame=reduced, traces=tracelist)
