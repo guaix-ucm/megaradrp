@@ -61,11 +61,11 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
 
         mask = np.zeros(reduced1[0].data.shape, dtype='int')
         bpm = cosmetics(reduced1[0].data, reduced2[0].data, mask)
-        print '# bad pixels cosmetics', bpm.sum()
+        print ('# bad pixels cosmetics', bpm.sum())
 
         mask = np.zeros(reduced1[0].data.shape, dtype='int')
         bpm2 = ccdmask(reduced1[0].data, reduced2[0].data, mask, mode='full')
-        print '# bad pixels ccdmask', bpm2[1].sum()
+        print ('# bad pixels ccdmask', bpm2[1].sum())
 
         fits.writeto('%s/maskresult1.fits' % temporary_path, bpm.astype(int),
                      clobber=True)
