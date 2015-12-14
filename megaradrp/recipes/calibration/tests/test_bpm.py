@@ -106,11 +106,11 @@ def test_bpm():
 
     for aux in range(number * 2):
         names.append('%s/flat_%s.fits' % (temporary_path, aux))
-    ob.frames = [DataFrame(filename=file(nombre).name) for nombre in names]
+    ob.frames = [DataFrame(filename=open(nombre).name) for nombre in names]
 
     recipe = BadPixelsMaskRecipe()
     ri = recipe.create_input(obresult=ob, master_bias=DataFrame(
-        filename=file(temporary_path + '/master_bias_data0.fits').name))
+        filename=open(temporary_path + '/master_bias_data0.fits').name))
     recipe.run(ri)
 
     shutil.rmtree(temporary_path)
