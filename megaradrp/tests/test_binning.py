@@ -1,7 +1,7 @@
 
 import numpy as np
 
-from .simulation import binning
+from megaradrp.tests.simulation import binning
 
 def test_binning():
     nr = 6
@@ -23,3 +23,7 @@ def test_binning():
     res = np.array([[ 18,  26,  34,  42], [ 82,  90,  98, 106], [146, 154, 162, 170]])
 
     assert np.all(carr.sum(axis=-1) == res)
+
+
+if __name__ == "__main__":
+    test_binning()

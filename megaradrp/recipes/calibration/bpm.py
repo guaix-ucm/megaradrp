@@ -19,30 +19,42 @@
 
 """Bad PIxel Mask (BPM) recipe"""
 
-import logging
-
-from numina.core import Product
+import astropy.io.fits as fits
+import numpy as np
+from numina.array.cosmetics import ccdmask
+from numina.core import Product, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 
 from megaradrp.core import MegaraBaseRecipe
-from megaradrp.products import MasterBias
-
-
-_logger = logging.getLogger('numina.recipes.megara')
+from megaradrp.requirements import MasterBiasRequirement
 
 
 class BadPixelsMaskRecipe(MegaraBaseRecipe):
-
-    '''Process BIAS images and create MASTER_BIAS.'''
-
     obresult = ObservationResultRequirement()
+    master_bias = MasterBiasRequirement()
 
-    biasframe = Product(MasterBias)
+    bpm_image = Product(DataFrameType)
 
     def __init__(self):
-        super(BadPixelsMaskRecipe, self).__init__(
-            version="0.1.0"
-        )
+        super(BadPixelsMaskRecipe, self).__init__(version="0.1.0")
 
     def run(self, rinput):
-        pass
+        import copy
+
+        N = len(rinput.obresult.frames)
+        obresult1 = copy.copy(rinput.obresult)
+        obresult1.frames = rinput.obresult.frames[:N//2]
+        obresult2 = copy.copy(rinput.obresult)
+        obresult2.frames = rinput.obresult.frames[N//2:]
+
+        reduced1 = self.bias_process_common(obresult1, rinput.master_bias)
+        reduced2 = self.bias_process_common(obresult2, rinput.master_bias)
+
+        mask = np.zeros(reduced1[0].data.shape, dtype='int')
+
+        bpm = ccdmask(reduced1[0].data, reduced2[0].data, mask, mode='full')
+        hdu = fits.PrimaryHDU(bpm)
+
+        reduced = fits.HDUList([hdu])
+
+        return self.create_result(bpm_image=reduced)
