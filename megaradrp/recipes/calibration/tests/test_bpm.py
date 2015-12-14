@@ -25,6 +25,7 @@ import astropy.io.fits as fits
 import numpy as np
 
 from numina.core import DataFrame, ObservationResult
+
 from megaradrp.tests.simulation import simulate_flat, simulate_bias
 from megaradrp.tests.simulation import ReadParams, MegaraDetectorSat
 from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
