@@ -24,7 +24,7 @@ from astropy.io import fits
 from numina.core import Product, RecipeError
 from numina.core.requirements import ObservationResultRequirement
 
-from megaradrp.core import MegaraBaseRecipe
+from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import MasterBias
 
 _logger = logging.getLogger('numina.recipes.megara')

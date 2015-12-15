@@ -25,7 +25,7 @@ from numina.core import Product
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
 
-from megaradrp.core import MegaraBaseRecipe
+from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import MasterFiberFlat
 from megaradrp.requirements import MasterBiasRequirement
 

@@ -25,7 +25,7 @@ from numina.array.cosmetics import ccdmask
 from numina.core import Product, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 
-from megaradrp.core import MegaraBaseRecipe
+from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement
 
 

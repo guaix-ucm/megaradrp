@@ -28,7 +28,7 @@ from numina.core import BaseRecipe
 from numina.core.dataholders import Product
 from numina.core.products import QualityControlProduct
 
-from megaradrp.processing import OverscanCorrector, TrimImage
+from megaradrp.processing.trimover import OverscanCorrector, TrimImage
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -40,6 +40,7 @@ class MegaraBaseRecipe(BaseRecipe):
     def __init__(self, version):
         self.__flow = {'BiasRecipe':[OverscanCorrector, TrimImage],
                        'ArcCalibrationRecipe':[OverscanCorrector, TrimImage, BiasCorrector],
+                       # 'ArcCalibrationRecipe':[BadPixelsMaskCorrector,OverscanCorrector, TrimImage, BiasCorrector],
                        'FiberFlatRecipe':[OverscanCorrector, TrimImage, BiasCorrector],
                        'TraceMapRecipe':[OverscanCorrector, TrimImage, BiasCorrector],
                        'BadPixelsMaskRecipe':[OverscanCorrector, TrimImage, BiasCorrector],
