@@ -53,7 +53,7 @@ def test_trim_and_o_fail():
     with pytest.raises(ValueError) as excinfo:
         trim_and_o('%s/flat.fits' % (temporary_path), out='%s/result.fits' % (temporary_path), direction=direction)
     shutil.rmtree(temporary_path)
-    assert excinfo.value.message == "%s must be either 'normal' or 'mirror'" % direction
+    assert excinfo.value.args[0] == "%s must be either 'normal' or 'mirror'" % direction
 
 def test_trim_and_o_fail2():
     temporary_path = mkdtemp()
@@ -65,13 +65,13 @@ def test_trim_and_o_fail2():
     with pytest.raises(ValueError) as excinfo:
         trim_and_o('%s/flat.fits' % (temporary_path), out='%s/result.fits' % (temporary_path), bins=bins)
     shutil.rmtree(temporary_path)
-    assert excinfo.value.message == "%s must be one if '11', '12', '21, '22'" % bins
+    assert excinfo.value.args[0] == "%s must be one if '11', '12', '21, '22'" % bins
 
 
 
 
 
-# if __name__ == "__main__":
-#     test_trim_and_o()
-#     test_trim_and_o_fail()
-#     test_trim_and_o_fail2()
+if __name__ == "__main__":
+    # test_trim_and_o()
+    test_trim_and_o_fail()
+    test_trim_and_o_fail2()
