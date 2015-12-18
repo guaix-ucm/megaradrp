@@ -42,7 +42,7 @@ from numina.array.peaks.findpeaks1D import refinePeaks_spectrum
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import TraceMap
-from megaradrp.requirements import MasterBiasRequirement
+from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.core.processing import apextract_tracemap
 
 _logger = logging.getLogger('numina.recipes.megara')
@@ -54,6 +54,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     # Requirements
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
+    master_bpm = MasterBPMRequirement()
     tracemap = Requirement(TraceMap, 'Trace information of the Apertures')
     lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
     polynomial_degree = Parameter(2, 'Polynomial degree of arc calibration')
@@ -67,7 +68,11 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
     def run(self, rinput):
         # Basic processing
-        reduced = self.bias_process_common(rinput.obresult, rinput.master_bias)
+        with rinput.master_bias.open() as hdul:
+            mbias = hdul[0].data.copy()
+
+        reduced = self.bias_process_common(rinput.obresult, {'biasmap':mbias,
+                                                             'bpm':None})
 
         _logger.info('extract fibers')
         rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)

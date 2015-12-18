@@ -23,7 +23,7 @@ from tempfile import mkdtemp
 
 import astropy.io.fits as fits
 import numpy as np
-
+import pytest
 from numina.core import DataFrame, ObservationResult
 
 from megaradrp.tests.simulation import simulate_flat, simulate_bias
@@ -49,7 +49,7 @@ def generate_bias(detector, number, temporary_path):
     ri = recipe.create_input(obresult=ob)
     return recipe.run(ri)
 
-
+# @pytest.mark.remote
 def test_bpm():
     number = 5
     PSCAN = 50
@@ -66,7 +66,7 @@ def test_bpm():
     bias = 1000.0
 
     eq = 0.8 * np.ones(DSHAPE)
-    eq[0:15, 0:170] = 0.0
+    eq[5:6, 0:170] = 0.0
 
     temporary_path = mkdtemp()
 
@@ -111,8 +111,8 @@ def test_bpm():
     recipe = BadPixelsMaskRecipe()
     ri = recipe.create_input(obresult=ob, master_bias=DataFrame(
         filename=open(temporary_path + '/master_bias_data0.fits').name))
-    recipe.run(ri)
-
+    aux = recipe.run(ri)
+    fits.writeto('%s/master_bpm.fits' % temporary_path, aux.bpm_image.frame[0].data[1], clobber=True)
     shutil.rmtree(temporary_path)
 
 
