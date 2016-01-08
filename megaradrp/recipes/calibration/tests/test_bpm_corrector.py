@@ -21,8 +21,6 @@
 
 from numina.core import DataFrame, ObservationResult
 import astropy.io.fits as fits
-import numpy as np
-import os
 from numina.core.requirements import ObservationResultRequirement
 from numina.flow.processing import BadPixelCorrector
 
@@ -30,13 +28,15 @@ from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
 
+from megaradrp.recipes.calibration.tests.test_bpm_common import crear_archivos
 
 class TestRecipe(MegaraBaseRecipe):
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
     master_bpm = MasterBPMRequirement()
 
-    def __init__(self):
+    def __init__(self, directorio):
+        self.directorio = directorio
         super(TestRecipe, self).__init__(version="0.1.0")
         self._MegaraBaseRecipe__flow['TestRecipe'] = [OverscanCorrector,
                                                       TrimImage,
@@ -44,8 +44,6 @@ class TestRecipe(MegaraBaseRecipe):
 
     def run(self, rinput):
         import copy
-
-        directorio = os.path.dirname(os.path.abspath(__file__))
 
         N = len(rinput.obresult.frames)
         obresult1 = copy.copy(rinput.obresult)
@@ -59,7 +57,8 @@ class TestRecipe(MegaraBaseRecipe):
         params['biasmap'] = mbias
 
         reduced1 = self.bias_process_common(obresult1, params)
-        fits.writeto(directorio + '/tmp2/reduced_flat.fits', reduced1[0].data, clobber=True)
+        fits.writeto(self.directorio + '/reduced_flat.fits', reduced1[0].data,
+                     clobber=True)
 
         try:
             with rinput.master_bpm.open() as hdul:
@@ -69,37 +68,32 @@ class TestRecipe(MegaraBaseRecipe):
             pass
 
         reduced1 = self.bias_process_common(obresult1, params)
-        fits.writeto(directorio + '/tmp2/reduced_flat_bpm.fits', reduced1[0].data, clobber=True)
+        fits.writeto(self.directorio + '/reduced_flat_bpm.fits',
+                     reduced1[0].data, clobber=True)
 
         return True
 
 
 def test_bpm_corrector():
-    number = 5
-    DSHAPE = (2056 * 2, 2048 * 2)
+    import shutil
+    from tempfile import mkdtemp
 
-    eq = 0.8 * np.ones(DSHAPE)
-    eq[0:15, 0:170] = 0.0
+    directorio = mkdtemp()
+    names = crear_archivos(directorio)
 
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'bias_image'
-    names = []
-
-    directorio = os.path.dirname(os.path.abspath(__file__))
-
-    for aux in range(number):
-        names.append('%s/tmp2/flat_%s.fits' % (directorio,aux))
     ob.frames = [DataFrame(filename=open(nombre).name) for nombre in names]
 
-    recipe = TestRecipe()
+    recipe = TestRecipe(directorio)
     ri = recipe.create_input(obresult=ob, master_bias=DataFrame(
-        filename=open(directorio + '/tmp2/master_bias_data0.fits').name),
+        filename=open(directorio + '/master_bias_data0.fits').name),
                              master_bpm=DataFrame(filename=open(
-                                 directorio+ '/tmp2/master_bpm.fits').name))
+                                 directorio + '/master_bpm.fits').name))
 
     recipe.run(ri)
-
+    shutil.rmtree(directorio)
 
 if __name__ == "__main__":
     test_bpm_corrector()
