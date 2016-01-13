@@ -34,9 +34,10 @@ from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
 
-from megaradrp.core import MegaraBaseRecipe
-from megaradrp.processing import OverscanCorrector, TrimImage
-from megaradrp.processing import ApertureExtractor, FiberFlatCorrector
+from megaradrp.core.recipe import MegaraBaseRecipe
+from megaradrp.processing.trimover import OverscanCorrector, TrimImage
+from megaradrp.processing.fiberflat import FiberFlatCorrector
+from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.requirements import MasterBiasRequirement
 from megaradrp.requirements import MasterFiberFlatRequirement
 from megaradrp.products import MasterFiberFlat

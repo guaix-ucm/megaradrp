@@ -30,9 +30,9 @@ from numina.array.trace.traces import trace
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
 
-from megaradrp.core import apextract_tracemap
+from megaradrp.core.processing import apextract_tracemap
 from megaradrp.products import MasterFiberFlat, TraceMap
-from megaradrp.core import MegaraBaseRecipe
+from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement
 from megaradrp.trace.traces import init_traces
 

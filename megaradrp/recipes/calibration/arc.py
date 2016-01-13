@@ -40,7 +40,7 @@ from numina.array.wavecal.statsummary import sigmaG
 from numina.array.peaks.findpeaks1D import findPeaks_spectrum
 from numina.array.peaks.findpeaks1D import refinePeaks_spectrum
 
-from megaradrp.core import MegaraBaseRecipe
+from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import TraceMap
 from megaradrp.requirements import MasterBiasRequirement
 from megaradrp.core.processing import apextract_tracemap

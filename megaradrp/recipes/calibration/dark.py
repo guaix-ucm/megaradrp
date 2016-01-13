@@ -23,7 +23,7 @@ import logging
 
 from numina.core import Product
 
-from megaradrp.core import MegaraBaseRecipe
+from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement
 from megaradrp.products import MasterDark
 

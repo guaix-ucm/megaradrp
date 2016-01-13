@@ -34,16 +34,12 @@ def trim_and_o(image, out='trimmed.fits', direction='normal', bins='11'):
     """Trim a MEGARA image with overscan."""
 
     with fits.open(image) as hdul:
-        hdu = trim_and_o_hdu(hdul[0])
+        hdu = trim_and_o_hdu(hdul[0], direction, bins)
         hdu.writeto(out, clobber=True)
 
 
-def trim_and_o_hdu(hdu):
+def trim_and_o_hdu(hdu, direction='normal', bins = '11'):
     """Trim a MEGARA HDU with overscan."""
-
-    # FIXME: this should come from the header
-    direction = 'normal'
-    bins = '11'
 
     finaldata = trim_and_o_array(hdu.data, direction=direction, bins=bins)
 
@@ -98,30 +94,6 @@ def apextract(data, trace):
     return rss
 
 
-def fill_other(data, a, b):
-    start = wcs_to_pix_1d(a)
-    end = wcs_to_pix_1d(b)
-    data[start] = min(start+0.5, b)-a
-    data[start+1:end] = 1.0
-    if end > start:
-        data[end] = b - (end-0.5)
-    return data
-
-
-def extract_region(data, border1, border2, pesos, xpos):
-        
-    extend = (border1.min(), border2.max())
-    extend_pix = (wcs_to_pix_1d(extend[0]), wcs_to_pix_1d(extend[1])+1)
-    region = slice(extend_pix[0],extend_pix[1])
-
-    for x, a,b in zip(xpos, border1, border2):
-        fill_other(pesos[:,x], a, b)
-
-    final2d = data[region,:] * pesos[region,:]
-
-    pesos[region,:] = 0.0
-    final = final2d.sum(axis=0)
-    return final
 
 
 def apextract_tracemap(data, tracemap):

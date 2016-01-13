@@ -28,11 +28,11 @@ from astropy.io import fits
 from numina.core import Product, Requirement
 from numina.core.requirements import ObservationResultRequirement
 
-from megaradrp.core import MegaraBaseRecipe
+from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import MasterFiberFlat
 from megaradrp.products import TraceMap
 from megaradrp.requirements import MasterBiasRequirement
-from megaradrp.core import apextract_tracemap
+from megaradrp.core.processing import apextract_tracemap
 
 _logger = logging.getLogger('numina.recipes.megara')
 
