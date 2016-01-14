@@ -70,9 +70,12 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         reduced = self.bias_process_common(rinput.obresult, rinput.master_bias)
 
         _logger.info('extract fibers')
+        _logger.info('extract fibers, %i', len(rinput.tracemap))
         rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
         rsshdu = fits.PrimaryHDU(rssdata, header=reduced[0].header)
         rss = fits.HDUList([rsshdu])
+
+        _logger.info('extracted %i fibers', rssdata.shape[0])
 
         # Skip any other inputs for the moment
         coeff_table = self.calibrate_wl(rssdata, rinput.lines_catalog,
