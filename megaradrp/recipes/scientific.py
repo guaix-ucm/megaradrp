@@ -28,14 +28,16 @@ from numina.core.requirements import ObservationResultRequirement, Requirement
 from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
+from numina.core.products import ArrayType
 
-from megaradrp.core import MegaraBaseRecipe
-from megaradrp.processing import OverscanCorrector, TrimImage
-from megaradrp.processing import ApertureExtractor, FiberFlatCorrector
-from megaradrp.processing import ApertureExtractor2
+from megaradrp.core.recipe import MegaraBaseRecipe
+from megaradrp.processing.trimover import OverscanCorrector, TrimImage
+from megaradrp.processing.aperture import ApertureExtractor
+from megaradrp.processing.fiberflat import FiberFlatCorrector
+from megaradrp.processing.aperture import ApertureExtractor2
 from megaradrp.requirements import MasterBiasRequirement
 from megaradrp.requirements import MasterFiberFlatRequirement
-from megaradrp.products import MasterFiberFlat
+from megaradrp.products import MasterFiberFlat, WavelengthCalibration
 from megaradrp.products import MasterSensitivity,  TraceMap
 
 
@@ -151,15 +153,14 @@ class FiberMOSRecipe(MegaraBaseRecipe):
 
 
 class FiberMOSRecipe2(MegaraBaseRecipe):
-    '''Process MOS images.'''
+    """Process MOS images."""
 
     # Requirements
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
     master_fiber_flat = MasterFiberFlatRequirement()
     traces = Requirement(TraceMap, 'Trace information of the Apertures')
-    sensitivity = Requirement(
-        MasterSensitivity, 'Sensitivity', optional=True)
+    wlcalib = Requirement(WavelengthCalibration, 'Wavelength calibration table')
 
     # Products
     final = Product(MasterFiberFlat)
@@ -186,7 +187,7 @@ class FiberMOSRecipe2(MegaraBaseRecipe):
         with rinput.master_fiber_flat.open() as hdul:
             f_f_c = FiberFlatCorrector(hdul)
 
-        basicflow = SerialFlow([o_c, t_i, b_c, a_e, f_f_c])
+        basicflow = SerialFlow([o_c, t_i, b_c, a_e])
 
         t_data = []
         s_data = []
@@ -201,11 +202,11 @@ class FiberMOSRecipe2(MegaraBaseRecipe):
                 else:
                     t_data.append(hdulist)
 
-            _logger.info('stacking %d sky images using median', len(s_data))
+            #_logger.info('stacking %d sky images using median', len(s_data))
 
-            data_s = c_median([d[0].data for d in s_data], dtype='float32')
-            template_header = s_data[0][0].header
-            hdu_s = fits.PrimaryHDU(data_s[0], header=template_header)
+            #data_s = c_median([d[0].data for d in s_data], dtype='float32')
+            #template_header = s_data[0][0].header
+            #hdu_s = fits.PrimaryHDU(data_s[0], header=template_header)
 
             data_t = c_median([d[0].data for d in t_data], dtype='float32')
             template_header = t_data[0][0].header
@@ -213,46 +214,50 @@ class FiberMOSRecipe2(MegaraBaseRecipe):
         finally:
             for hdulist in t_data:
                 hdulist.close()
-            for hdulist in s_data:
-                hdulist.close()
+            #for hdulist in s_data:
+            #    hdulist.close()
 
-        wlr = (3673.12731884058, 4417.497427536232)
-        size = hdu_t.data.shape[1]
-        delt = (wlr[1] - wlr[0]) / (size - 1)
+        final = resample_rss(hdu_t.data, rinput.wlcalib)
 
-        def add_wcs(hdr, numtyp):
-            hdr['CRPIX1'] = 1
-            hdr['CRVAL1'] = wlr[0]
-            hdr['CDELT1'] = delt
-            hdr['CTYPE1'] = 'WAVELENGTH'
-            hdr['CRPIX2'] = 1
-            hdr['CRVAL2'] = 1
-            hdr['CDELT2'] = 1
-            hdr['CTYPE2'] = 'PIXEL'
-            hdr = self.set_base_headers(hdr)
-            hdr['CCDMEAN'] = data_s[0].mean()
-            hdr['NUMTYP'] = (numtyp, 'Data product type')
-            return hdr
-
-        add_wcs(hdu_s.header, 'SCIENCE_SKY')
-
-        add_wcs(hdu_t.header, 'SCIENCE_TARGET')
-
-        _logger.info('subtract SKY RSS from target RSS')
-        final = data_t[0] - data_s[0]
-        hdu_f = fits.PrimaryHDU(final, header=template_header)
-
-        add_wcs(hdu_f.header, 'SCIENCE_FINAL')
-
-        if rinput.sensitivity:
-            _logger.info('apply sensitivity')
-            with rinput.sensitivity.open() as hdul:
-                sens = hdul[0].data
-                hdu_f.data *= sens
-        else:
-            _logger.info('sensitivity is not defined, ignoring')
+        hdu_f = fits.PrimaryHDU(final)
 
         _logger.info('MOS reduction ended')
 
-        result = self.create_result(final=hdu_f, target=hdu_t, sky=hdu_s)
+        result = self.create_result(final=hdu_f, target=hdu_t, sky=hdu_t)
         return result
+
+
+def resample_rss(rss_old, wcalib):
+
+    import math
+    import numpy
+    import scipy.interpolate as ii
+    from numpy.polynomial.polynomial import polyval
+
+    nfibers = rss_old.shape[0]
+    nsamples = rss_old.shape[1]
+    z = [0, nsamples-1]
+    res = polyval(z, wcalib.T)
+    all_delt = (res[:,1] - res[:,0]) / nsamples
+
+    delts = all_delt.min()
+
+    # first pixel is
+    wl_min = res[:,0].min()
+    # last pixel is
+    wl_max = res[:,1].max()
+
+    npix = int(math.ceil((wl_max - wl_min) / delts))
+    new_x = numpy.arange(npix)
+    new_wl = wl_min + delts * new_x
+
+    old_x = numpy.arange(nsamples)
+    old_wls = polyval(old_x, wcalib.T)
+
+    rss_resampled = numpy.zeros((nfibers, npix))
+
+    for idx in range(nfibers):
+        interpolator = ii.interp1d(old_wls[idx], rss_old[idx], bounds_error=False, fill_value=0.0, copy=False)
+        rss_resampled[idx] = interpolator(new_wl)
+
+    return rss_resampled
