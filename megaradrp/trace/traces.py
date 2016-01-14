@@ -48,27 +48,27 @@ def init_traces(image, center, hs, background, maxdis=9.0):
     cut = image[:,cut_region]
     colcut = cut.mean(axis=1)
     maxt = peak_detection_mean_window(colcut, x=xx, k=3, xmin=ixmin, xmax=ixmax, background=background)
-    #npeaks = len(maxt)
+
     peakdist = np.diff(maxt[:,1])
-    # number of peaks    #
+    npeaks = maxt.shape[0]
+
+    # Count the number of groups
+    # fibers separated by more than "maxdis" pixels
+    group_changes = np.nonzero(peakdist > maxdis)[0]
+    # Fill groups
+    groups = np.ones(npeaks, dtype='int')
+    for p in group_changes:
+        groups[p+1:] += 1
+
     fiber_traces = {}
-    fibid = 1
-    gcounter = 0
-    boxid = 1
-    for _xpeak, dis in zip(maxt[:,1], peakdist):
-        gcounter += 1
-        if dis > maxdis:
-            #print(xpeak, dis, gcounter, boxid, fibid)
-            gcounter = 0
-            boxid += 1
-        fiber_traces[fibid] = FiberTraceInfo(fibid, boxid)
-        fibid += 1
+    for fibid in range(1, npeaks+1):
+        fiber_traces[fibid] = FiberTraceInfo(fibid, int(groups[fibid-1]))
 
+    # Window to fix the center of the trace
     fw = 2
-
     for fibid, trace in fiber_traces.items():
-        _xi, _yi, _vali = center, maxt[fibid,1], maxt[fibid,2]
-        pixmax = int(maxt[fibid,0])
+        _xi, _yi, _vali = center, maxt[fibid-1,1], maxt[fibid-1,2]
+        pixmax = int(maxt[fibid-1,0])
         # Take 2*2+1 pix
         # This part and interp_max_3(image[nearp3-1:nearp3+2, col])
         # should do the same
