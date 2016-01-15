@@ -109,8 +109,11 @@ class MegaraDetector(object):
 
         self.eq = eq
         self.dark = dark
+        # Exposure time since last reset
+        self._time_last = 0.0
 
     def expose(self, source=0.0, time=0.0):
+        self._time_last = time
         self._det += (source + self.dark) * time
 
     def readout(self):
@@ -223,7 +226,7 @@ class MegaraDetector(object):
         return (fshape, (base1, base2), geom1, geom2)
 
     def metadata(self):
-        return {}
+        return {'exposed': self._time_last}
 
 
 class MegaraImageFactory(object):
@@ -236,6 +239,20 @@ class MegaraImageFactory(object):
 
     def create(self, mode, meta, data):
         pheader = fits.Header(self.CARDS_P)
+
+        # Detector
+        meta_det = meta.get('detector', {})
+
+        exptime = meta_det.get('exposed', 0.0)
+        pheader['EXPTIME'] = exptime
+        pheader['EXPOSED'] = exptime
+
+        # VPH
+        meta_vph = meta.get('vph', {})
+
+        vph_name = meta_vph.get('name', 'unknown')
+        pheader['VPH'] = vph_name
+
         hdu1 = fits.PrimaryHDU(data, header=pheader)
         hdul = fits.HDUList([hdu1])
         return hdul
