@@ -45,7 +45,10 @@ class DarkRecipe(MegaraBaseRecipe):
 
         hdu, data = self.hdu_creation(rinput.obresult, {'biasmap':mbias})
 
-        hdu[0].data = hdu[0].data/3600 #3600 is the exposure time. Should be taken from the header
+        try:
+            hdu[0].data = hdu[0].data/hdu[0].header['EXPTIME']
+        except:
+            pass
 
         result = self.create_result(darkframe=hdu)
         return result
