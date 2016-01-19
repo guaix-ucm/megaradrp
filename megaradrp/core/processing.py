@@ -94,37 +94,36 @@ def apextract(data, trace):
     return rss
 
 
-
-
 def apextract_tracemap(data, tracemap):
     """Extract apertures using a tracemap."""
     
     # FIXME: a little hackish
     
     pols = [np.poly1d(t['fitparms']) for t in tracemap]
-    
+
     borders = []
-    pix_12 = 0.5 * (pols[1] + pols[0])
+
+    # These are polynomial, they can be summed
+
+    # Estimate left border for the first trace
+    pix_12 = 0.5 * (pols[0] + pols[1])
     # Use the half distance in the first trace
     pix_01 = 1.5 * pols[0] - 0.5 * pols[1]
-    pix_2 = pols[1]    
+
     borders.append((pix_01, pix_12))
 
-    for p2 in pols[2:-1]:
-     
-        pix_1, pix_01 = pix_2, pix_12 
-        pix_2 = p2
-
-        pix_12 = 0.5 * (pix_2 + pix_1)
+    for idx in range(1, len(pols)-1):
+        pix_01 = pix_12
+        pix_12 = 0.5 * (pols[idx] + pols[idx+1])
         borders.append((pix_01, pix_12))
 
-    # extract the last trace
-    pix_1, pix_01 = pix_2, pix_12 
-    pix_12 = 2 * pix_1 - pix_01
+    # Estimate right border for the last trace
+    pix_01 = pix_12
+    # Use the half distance in last trace
+    pix_12 = 1.5 * pols[-1] - 0.5 * pols[-2]
+
     borders.append((pix_01, pix_12))
 
     rss = extract_simple_rss(data, borders)
 
     return rss
-
-

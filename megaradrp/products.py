@@ -38,8 +38,10 @@
 
 import yaml
 
+
 from numina.core import DataFrameType, DataProductType
 from numina.core.products import DataProductTag
+from numina.core.products import ArrayType
 
 
 class MEGARAProductFrame(DataFrameType, DataProductTag):
@@ -83,3 +85,8 @@ class TraceMap(DataProductType):
         except IOError as e:
             raise e
         return traces
+
+
+class WavelengthCalibration(ArrayType, DataProductTag):
+    pass
+
