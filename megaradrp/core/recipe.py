@@ -41,6 +41,7 @@ class MegaraBaseRecipe(BaseRecipe):
         self.__flow = {'ArcCalibrationRecipe':[OverscanCorrector, TrimImage, BiasCorrector, BadPixelCorrector],
                        'BadPixelsMaskRecipe':[OverscanCorrector, TrimImage, BiasCorrector],
                        'BiasRecipe':[OverscanCorrector, TrimImage, BadPixelCorrector],
+                       'DarkRecipe':[OverscanCorrector, TrimImage, BiasCorrector],
                        'FiberFlatRecipe':[OverscanCorrector, TrimImage, BiasCorrector, BadPixelCorrector],
                        'TraceMapRecipe':[OverscanCorrector, TrimImage, BiasCorrector],
 
