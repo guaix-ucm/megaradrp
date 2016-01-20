@@ -19,8 +19,6 @@
 
 """Dark current calibration Recipe for Megara"""
 
-import logging
-
 from numina.core import Product
 
 from megaradrp.core.recipe import MegaraBaseRecipe
@@ -29,25 +27,27 @@ from megaradrp.products import MasterDark
 
 
 class DarkRecipe(MegaraBaseRecipe):
-
     '''Process DARK images and provide MASTER_DARK. '''
 
     master_bias = MasterBiasRequirement()
-
     darkframe = Product(MasterDark)
 
     def __init__(self):
-        super(DarkRecipe, self).__init__(
-            version="0.1.0"
-        )
-
+        super(DarkRecipe, self).__init__(version="0.1.0")
 
     def run(self, rinput):
-        logger = logging.getLogger('numina.megara.recipes'
-                                   )
-        logger.info('starting dark reduction')
 
-        logger.info('dark reduction ended')
+        with rinput.master_bias.open() as hdul:
+            mbias = hdul[0].data.copy()
 
-        result = self.create_result(darkframe=None)
+        hdu, data = self.hdu_creation(rinput.obresult, {'biasmap': mbias})
+
+        if 'EXPTIME' in hdu[0].header.keys():
+            hdu[0].data = hdu[0].data / hdu[0].header['EXPTIME']
+        elif 'EXPOSED' in hdu[0].header.keys():
+            hdu[0].data = hdu[0].data / hdu[0].header['EXPOSED']
+        else:
+            pass
+
+        result = self.create_result(darkframe=hdu)
         return result

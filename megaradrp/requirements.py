@@ -21,7 +21,7 @@
 
 from numina.core import Requirement
 
-from .products import MasterBias, MasterDark, MasterFiberFlat
+from .products import MasterBias, MasterDark, MasterFiberFlat, MasterBPM
 
 
 class MasterBiasRequirement(Requirement):
@@ -33,10 +33,21 @@ class MasterBiasRequirement(Requirement):
                              )
 
 
+class MasterBPMRequirement(Requirement):
+    def __init__(self, optional=True):
+        super(MasterBPMRequirement,
+              self).__init__(MasterBPM,
+                             'Master Bad Pixel Mask',
+                             optional=optional
+                             )
+
+
 class MasterDarkRequirement(Requirement):
-    def __init__(self):
+    def __init__(self, optional=True):
         super(MasterDarkRequirement,
-              self).__init__(MasterDark, 'Master DARK image')
+              self).__init__(MasterDark, 'Master DARK image',
+                             optional=optional
+                             )
 
 
 class MasterFiberFlatRequirement(Requirement):

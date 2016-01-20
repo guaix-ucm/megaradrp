@@ -18,38 +18,47 @@
 #
 
 """Tests for the bpm mode recipe module."""
-import shutil
-from tempfile import mkdtemp
 
+from numina.core import DataFrame, ObservationResult
 import astropy.io.fits as fits
 import numpy as np
-import pytest
-from numina.core import DataFrame, ObservationResult
-
-from megaradrp.tests.simulation import simulate_flat
-from megaradrp.tests.simulation import ReadParams, MegaraDetectorSat
-from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
-
-from megaradrp.recipes.calibration.tests.test_bpm_common import generate_bias
 
 
-# @pytest.mark.remote
-def test_bpm():
+def generate_bias(detector, number, temporary_path):
+    from megaradrp.tests.simulation import simulate_bias
+    from megaradrp.recipes.calibration.bias import BiasRecipe
+
+    fs = [simulate_bias(detector) for i in range(number)]
+    for aux in range(len(fs)):
+        fits.writeto('%s/bias_%s.fits' % (temporary_path, aux), fs[aux],
+                     clobber=True)
+
+    fs = ["%s/bias_%s.fits" % (temporary_path, i) for i in range(number)]
+
+    ob = ObservationResult()
+    ob.instrument = 'MEGARA'
+    ob.mode = 'bias_image'
+    ob.frames = [DataFrame(filename=f) for f in fs]
+
+    recipe = BiasRecipe()
+    ri = recipe.create_input(obresult=ob)
+    return recipe.run(ri)
+
+def crear_archivos(temporary_path):
+    from megaradrp.tests.simulation import simulate_flat
+    from megaradrp.tests.simulation import ReadParams, MegaraDetectorSat
+    from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
+
     number = 5
     PSCAN = 50
     DSHAPE = (2056 * 2, 2048 * 2)
     OSCAN = 50
-
     ron = 2.0
     gain = 1.0
     bias = 1000.0
 
     eq = 0.8 * np.ones(DSHAPE)
-    eq[5:6, 0:170] = 0.0
-
-    temporary_path = mkdtemp()
-
-    fits.writeto('%s/eq.fits' % temporary_path, eq, clobber=True)
+    eq[0:15, 0:170] = 0.0
 
     readpars1 = ReadParams(gain=gain, ron=ron, bias=bias)
     readpars2 = ReadParams(gain=gain, ron=ron, bias=bias)
@@ -63,14 +72,10 @@ def test_bpm():
 
     fs = [simulate_flat(detector, exposure=1.0, source=5000 * source2) for i in
           range(number)]
-    fs2 = [simulate_flat(detector, exposure=1.0, source=40000 * source2) for i
-           in range(number)]
 
     for aux in range(len(fs)):
         fits.writeto('%s/flat_%s.fits' % (temporary_path, aux), fs[aux],
                      clobber=True)
-        fits.writeto('%s/flat_%s.fits' % (temporary_path, aux + number),
-                     fs2[aux], clobber=True)
 
     master_bias = generate_bias(detector, number, temporary_path)
     master_bias_data = master_bias.biasframe.frame[0].data
@@ -83,7 +88,7 @@ def test_bpm():
     ob.mode = 'bias_image'
     names = []
 
-    for aux in range(number * 2):
+    for aux in range(number):
         names.append('%s/flat_%s.fits' % (temporary_path, aux))
     ob.frames = [DataFrame(filename=open(nombre).name) for nombre in names]
 
@@ -92,8 +97,6 @@ def test_bpm():
         filename=open(temporary_path + '/master_bias_data0.fits').name))
     aux = recipe.run(ri)
     fits.writeto('%s/master_bpm.fits' % temporary_path, aux.bpm_image.frame[0].data[1], clobber=True)
-    shutil.rmtree(temporary_path)
 
+    return names
 
-if __name__ == "__main__":
-    test_bpm()
