@@ -63,7 +63,8 @@ class MegaraBaseRecipe(BaseRecipe):
         ff = self.__flow[self.__class__.__name__]
         flow = copy.deepcopy(ff)
         try:
-            for cont in range(len(flow)):
+            cont = 0
+            while cont < len(flow):
                 if issubclass(BiasCorrector, flow[cont]):
                     flow[cont] = (flow[cont](params['biasmap']))
                 elif issubclass(BadPixelCorrector, flow[cont]):
@@ -71,14 +72,17 @@ class MegaraBaseRecipe(BaseRecipe):
                         flow[cont] = (flow[cont](params['bpm']))
                     else:
                         del (flow[cont])
+                        cont -=1
                 elif issubclass(DarkCorrector, flow[cont]):
                     if 'dark' in params.keys():
                         flow[cont] = (flow[cont](params['dark']))
                     else:
                         del (flow[cont])
+                        cont -=1
                 elif issubclass(TrimImage, flow[cont]) or issubclass(
                         OverscanCorrector, flow[cont]):
                     flow[cont] = (flow[cont]())
+                cont +=1
             basicflow = SerialFlow(flow)
 
         except Exception as e:
