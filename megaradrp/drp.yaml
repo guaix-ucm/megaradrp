@@ -89,6 +89,8 @@ modes:
   summary: Bad Pixel Mask
   uuid: xxxxxx
   tagger: null
+- key: focus_spectrograph
+  name: Focus Spectrograph
 pipelines:
   default:
     version: 1
@@ -101,6 +103,7 @@ pipelines:
       flux_calibration: megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipe
       trace_map: megaradrp.recipes.calibration.trace.TraceMapRecipe
       arc_calibration: megaradrp.recipes.calibration.arc.ArcCalibrationRecipe
+      focus_spectrograph: megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe
       fail: numina.core.utils.AlwaysFailRecipe
       success: numina.core.utils.AlwaysSuccessRecipe
 products:
