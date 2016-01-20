@@ -253,6 +253,10 @@ class MegaraImageFactory(object):
         vph_name = meta_vph.get('name', 'unknown')
         pheader['VPH'] = vph_name
 
+        # Focus
+        focus = meta.get('focus', 0.0)
+        pheader['FOCUS'] = focus
+
         hdu1 = fits.PrimaryHDU(data, header=pheader)
         hdul = fits.HDUList([hdu1])
         return hdul
