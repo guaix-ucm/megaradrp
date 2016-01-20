@@ -38,7 +38,7 @@ from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
 from megaradrp.processing.fiberflat import FiberFlatCorrector
 from megaradrp.processing.aperture import ApertureExtractor
-from megaradrp.requirements import MasterBiasRequirement
+from megaradrp.requirements import MasterBiasRequirement, MasterDarkRequirement
 from megaradrp.requirements import MasterFiberFlatRequirement
 from megaradrp.products import MasterFiberFlat
 from megaradrp.products import TraceMap, MasterSensitivity
@@ -49,6 +49,7 @@ class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
 
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
     master_fiber_flat = MasterFiberFlatRequirement()
     traces = Requirement(TraceMap, 'Trace information of the Apertures')
     reference_spectrum = Requirement(

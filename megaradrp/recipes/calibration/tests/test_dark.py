@@ -1,13 +1,14 @@
 from tempfile import mkdtemp
-import numpy as np
-import astropy.io.fits as fits
-import pytest
 import shutil
 
-from megaradrp.tests.simulation import simulate_dark, simulate_dark_fits
-from megaradrp.tests.simulation import ReadParams, MegaraDetectorSat, MegaraImageFactory
+import numpy as np
+import astropy.io.fits as fits
+
 from numina.core import DataFrame, ObservationResult
 
+from megaradrp.tests.simulation import simulate_dark_fits
+from megaradrp.tests.simulation import ReadParams, MegaraDetectorSat
+from megaradrp.tests.simulation import MegaraImageFactory
 from megaradrp.recipes.calibration.tests.test_bpm_common import generate_bias
 from megaradrp.recipes.calibration.dark import DarkRecipe
 
@@ -25,7 +26,7 @@ def test_dark():
     eq = 0.8 * np.ones(DSHAPE)
 
     temporary_path = mkdtemp()
-    print ('Path: %s' %temporary_path)
+    print ('Path: %s' % temporary_path)
     fits.writeto('%s/eq.fits' % temporary_path, eq, clobber=True)
 
     readpars1 = ReadParams(gain=gain, ron=ron, bias=bias)
@@ -39,10 +40,12 @@ def test_dark():
     number = 10
 
     factory = MegaraImageFactory()
-    fs = [simulate_dark_fits(factory, detector, exposure=3600) for i in range(number)]
+    fs = [simulate_dark_fits(factory, detector, exposure=3600) for i in
+          range(number)]
 
     for aux in range(len(fs)):
-        fs[aux].writeto('%s/dark_%s.fits' % (temporary_path, aux),clobber=True)
+        fs[aux].writeto('%s/dark_%s.fits' % (temporary_path, aux),
+                        clobber=True)
 
     master_bias = generate_bias(detector, number, temporary_path)
     master_bias_data = master_bias.biasframe.frame[0].data
@@ -64,10 +67,12 @@ def test_dark():
         filename=open(temporary_path + '/master_bias_data0.fits').name))
     aux = recipe.run(ri)
 
-    fits.writeto('%s/master_dark.fits' % temporary_path, aux.darkframe.frame[0].data, clobber=True)
+    fits.writeto('%s/master_dark.fits' % temporary_path,
+                 aux.darkframe.frame[0].data, clobber=True)
     truncate_data = np.around(aux.darkframe.frame[0].data, decimals=2)
     shutil.rmtree(temporary_path)
     assert np.all(truncate_data == np.zeros(truncate_data.shape))
+
 
 if __name__ == "__main__":
     test_dark()

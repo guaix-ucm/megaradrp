@@ -27,12 +27,13 @@ from numina.core.requirements import ObservationResultRequirement
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import MasterFiberFlat
-from megaradrp.requirements import MasterBiasRequirement
+from megaradrp.requirements import MasterBiasRequirement, MasterDarkRequirement
 
 
 class TwilightFiberFlatRecipe(MegaraBaseRecipe):
 
     master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
     obresult = ObservationResultRequirement()
 
     fiberflat_frame = Product(MasterFiberFlat)

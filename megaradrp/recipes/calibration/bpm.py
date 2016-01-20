@@ -15,7 +15,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
-#
 
 """Bad PIxel Mask (BPM) recipe"""
 
@@ -26,13 +25,14 @@ from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import  MasterBPM
-from megaradrp.requirements import MasterBiasRequirement
+from megaradrp.products import MasterBPM
+from megaradrp.requirements import MasterBiasRequirement, MasterDarkRequirement
 
 
 class BadPixelsMaskRecipe(MegaraBaseRecipe):
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
 
     bpm_image = Product(MasterBPM)
 
@@ -44,15 +44,15 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
 
         N = len(rinput.obresult.frames)
         obresult1 = copy.copy(rinput.obresult)
-        obresult1.frames = rinput.obresult.frames[:N//2]
+        obresult1.frames = rinput.obresult.frames[:N // 2]
         obresult2 = copy.copy(rinput.obresult)
-        obresult2.frames = rinput.obresult.frames[N//2:]
+        obresult2.frames = rinput.obresult.frames[N // 2:]
 
         with rinput.master_bias.open() as hdul:
             mbias = hdul[0].data.copy()
 
-        reduced1 = self.bias_process_common(obresult1, {'biasmap':mbias})
-        reduced2 = self.bias_process_common(obresult2, {'biasmap':mbias})
+        reduced1 = self.bias_process_common(obresult1, {'biasmap': mbias})
+        reduced2 = self.bias_process_common(obresult2, {'biasmap': mbias})
 
         mask = np.zeros(reduced1[0].data.shape, dtype='int')
 

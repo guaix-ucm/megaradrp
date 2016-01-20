@@ -27,27 +27,26 @@ from megaradrp.products import MasterDark
 
 
 class DarkRecipe(MegaraBaseRecipe):
-
     '''Process DARK images and provide MASTER_DARK. '''
 
     master_bias = MasterBiasRequirement()
-
     darkframe = Product(MasterDark)
 
     def __init__(self):
         super(DarkRecipe, self).__init__(version="0.1.0")
-
 
     def run(self, rinput):
 
         with rinput.master_bias.open() as hdul:
             mbias = hdul[0].data.copy()
 
-        hdu, data = self.hdu_creation(rinput.obresult, {'biasmap':mbias})
+        hdu, data = self.hdu_creation(rinput.obresult, {'biasmap': mbias})
 
-        try:
-            hdu[0].data = hdu[0].data/hdu[0].header['EXPTIME']
-        except:
+        if 'EXPTIME' in hdu[0].header.keys():
+            hdu[0].data = hdu[0].data / hdu[0].header['EXPTIME']
+        elif 'EXPOSED' in hdu[0].header.keys():
+            hdu[0].data = hdu[0].data / hdu[0].header['EXPOSED']
+        else:
             pass
 
         result = self.create_result(darkframe=hdu)
