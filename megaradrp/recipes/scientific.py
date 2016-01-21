@@ -21,6 +21,7 @@
 
 import logging
 
+import numpy
 from astropy.io import fits
 
 from numina.core import Product, Requirement
@@ -29,6 +30,7 @@ from numina.array.combine import median as c_median
 from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector
 from numina.core.products import ArrayType
+from numina.array.interpolation import SteffenInterpolator
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
@@ -217,8 +219,10 @@ class FiberMOSRecipe2(MegaraBaseRecipe):
             #for hdulist in s_data:
             #    hdulist.close()
 
-        final = resample_rss(hdu_t.data, rinput.wlcalib)
-
+        _logger.info('resampling spectra')
+        final = resample_rss_flux(hdu_t.data, rinput.wlcalib)
+        # This value was ~0.4% and now is 4e-6 %
+        # (abs(final.sum()-hdu_t.data.sum())/hdu_t.data.sum()*100)
         hdu_f = fits.PrimaryHDU(final)
 
         _logger.info('MOS reduction ended')
@@ -261,3 +265,57 @@ def resample_rss(rss_old, wcalib):
         rss_resampled[idx] = interpolator(new_wl)
 
     return rss_resampled
+
+
+def resample_rss_flux(rss_old, wcalib):
+    """Resample conserving the flux."""
+    import math
+    import numpy
+    from numpy.polynomial.polynomial import polyval
+
+    nfibers = rss_old.shape[0]
+    nsamples = rss_old.shape[1]
+    z = [0, nsamples-1]
+    res = polyval(z, wcalib.T)
+    all_delt = (res[:,1] - res[:,0]) / nsamples
+
+    delts = all_delt.min()
+
+    # first pixel is
+    wl_min = res[:,0].min()
+    # last pixel is
+    wl_max = res[:,1].max()
+
+    npix = int(math.ceil((wl_max - wl_min) / delts))
+    new_x = numpy.arange(npix)
+    new_wl = wl_min + delts * new_x
+
+    old_x_borders = numpy.arange(-0.5, nsamples)
+    old_wl_borders = polyval(old_x_borders, wcalib.T)
+
+    new_borders = map_borders(new_wl)
+
+    accum_flux = numpy.empty((nfibers, nsamples+1))
+    accum_flux[:, 1:] = numpy.cumsum(rss_old, axis=1)
+    accum_flux[:, 0] = 0.0
+    rss_resampled = numpy.zeros((nfibers, npix))
+    for idx in range(nfibers):
+        # We need a monotonic interpolator
+        # linear would work, we use a cubic interpolator
+        interpolator = SteffenInterpolator(old_wl_borders[idx], accum_flux[idx], extrapolate='border')
+        fl_borders = interpolator(new_borders)
+        rss_resampled[idx] = fl_borders[1:]- fl_borders[:-1]
+    return rss_resampled
+
+
+def map_borders(wls):
+    """Compute borders of pixels for interpolation.
+
+    The border of the pixel is assumed to be midway of the wls
+    """
+    midpt_wl = 0.5 * (wls[1:] + wls[:-1])
+    all_borders = numpy.zeros((wls.shape[0]+1,))
+    all_borders[1:-1] = midpt_wl
+    all_borders[0] = 2 * wls[0] - midpt_wl[0]
+    all_borders[-1] = 2 * wls[-1] - midpt_wl[-1]
+    return all_borders
