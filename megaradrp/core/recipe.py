@@ -20,10 +20,10 @@
 import logging
 
 from astropy.io import fits
+
 import numina.array.combine as combine
 from numina.flow import SerialFlow
-from numina.flow.processing import BiasCorrector, BadPixelCorrector, \
-    DarkCorrector
+from numina.flow.processing import BiasCorrector, BadPixelCorrector
 from numina.core import BaseRecipe
 from numina.core.dataholders import Product
 from numina.core.products import QualityControlProduct
@@ -32,28 +32,18 @@ from megaradrp.processing.trimover import OverscanCorrector, TrimImage
 
 _logger = logging.getLogger('numina.recipes.megara')
 
-
 class MegaraBaseRecipe(BaseRecipe):
     """Base clase for all MEGARA Recipes"""
 
     qc = Product(QualityControlProduct, dest='qc')
 
     def __init__(self, version):
-        self.__flow = {'ArcCalibrationRecipe': [OverscanCorrector, TrimImage,
-                                                BiasCorrector,
-                                                BadPixelCorrector,
-                                                DarkCorrector],
-                       'BadPixelsMaskRecipe': [OverscanCorrector, TrimImage,
-                                               BiasCorrector, DarkCorrector],
-                       'BiasRecipe': [OverscanCorrector, TrimImage,
-                                      BadPixelCorrector, DarkCorrector],
-                       'DarkRecipe': [OverscanCorrector, TrimImage,
-                                      BiasCorrector],
-                       'FiberFlatRecipe': [OverscanCorrector, TrimImage,
-                                           BiasCorrector, BadPixelCorrector,
-                                           DarkCorrector],
-                       'TraceMapRecipe': [OverscanCorrector, TrimImage,
-                                          BiasCorrector, DarkCorrector],
+        self.__flow = {'ArcCalibrationRecipe':[OverscanCorrector, TrimImage, BiasCorrector, BadPixelCorrector],
+                       'BadPixelsMaskRecipe':[OverscanCorrector, TrimImage, BiasCorrector],
+                       'BiasRecipe':[OverscanCorrector, TrimImage, BadPixelCorrector],
+                       'DarkRecipe':[OverscanCorrector, TrimImage, BiasCorrector],
+                       'FiberFlatRecipe':[OverscanCorrector, TrimImage, BiasCorrector, BadPixelCorrector],
+                       'TraceMapRecipe':[OverscanCorrector, TrimImage, BiasCorrector],
 
                        }
         super(MegaraBaseRecipe, self).__init__(version=version)
@@ -63,31 +53,21 @@ class MegaraBaseRecipe(BaseRecipe):
         ff = self.__flow[self.__class__.__name__]
         flow = copy.deepcopy(ff)
         try:
-            cont = 0
-            while cont < len(flow):
+            for cont in range(len(flow)):
                 if issubclass(BiasCorrector, flow[cont]):
                     flow[cont] = (flow[cont](params['biasmap']))
-                elif issubclass(BadPixelCorrector, flow[cont]):
+                elif issubclass(BadPixelCorrector,flow[cont]):
                     if 'bpm' in params.keys():
                         flow[cont] = (flow[cont](params['bpm']))
                     else:
                         del (flow[cont])
-                        cont -=1
-                elif issubclass(DarkCorrector, flow[cont]):
-                    if 'dark' in params.keys():
-                        flow[cont] = (flow[cont](params['dark']))
-                    else:
-                        del (flow[cont])
-                        cont -=1
-                elif issubclass(TrimImage, flow[cont]) or issubclass(
-                        OverscanCorrector, flow[cont]):
+                elif issubclass(TrimImage, flow[cont]) or issubclass(OverscanCorrector, flow[cont]):
                     flow[cont] = (flow[cont]())
-                cont +=1
             basicflow = SerialFlow(flow)
 
         except Exception as e:
             _logger.error(e)
-            raise (e)
+            raise(e)
         del flow
         return basicflow
 

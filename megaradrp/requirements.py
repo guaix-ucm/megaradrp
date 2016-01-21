@@ -43,11 +43,9 @@ class MasterBPMRequirement(Requirement):
 
 
 class MasterDarkRequirement(Requirement):
-    def __init__(self, optional=True):
+    def __init__(self):
         super(MasterDarkRequirement,
-              self).__init__(MasterDark, 'Master DARK image',
-                             optional=optional
-                             )
+              self).__init__(MasterDark, 'Master DARK image')
 
 
 class MasterFiberFlatRequirement(Requirement):

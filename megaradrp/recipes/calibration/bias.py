@@ -26,7 +26,7 @@ from numina.core.requirements import ObservationResultRequirement
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import MasterBias
-from megaradrp.requirements import MasterDarkRequirement
+from megaradrp.requirements import MasterBPMRequirement
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -34,7 +34,6 @@ _logger = logging.getLogger('numina.recipes.megara')
 class BiasRecipe(MegaraBaseRecipe):
     """Process BIAS images and create MASTER_BIAS."""
     obresult = ObservationResultRequirement()
-    master_dark = MasterDarkRequirement()
 
     biasframe = Product(MasterBias)
 

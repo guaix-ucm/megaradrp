@@ -27,8 +27,8 @@ from numina.flow.processing import BadPixelCorrector
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
-from megaradrp.recipes.calibration.tests.test_bpm_common import crear_archivos
 
+from megaradrp.recipes.calibration.tests.test_bpm_common import crear_archivos
 
 class TestRecipe(MegaraBaseRecipe):
     obresult = ObservationResultRequirement()
@@ -94,7 +94,6 @@ def test_bpm_corrector():
 
     recipe.run(ri)
     shutil.rmtree(directorio)
-
 
 if __name__ == "__main__":
     test_bpm_corrector()
