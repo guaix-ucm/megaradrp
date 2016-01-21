@@ -23,29 +23,50 @@ from tempfile import mkdtemp
 
 import astropy.io.fits as fits
 import numpy as np
-import pytest
+
 from numina.core import DataFrame, ObservationResult
 
-from megaradrp.tests.simulation import simulate_flat
+from megaradrp.tests.simulation import simulate_flat, simulate_bias
 from megaradrp.tests.simulation import ReadParams, MegaraDetectorSat
 from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
+from megaradrp.recipes.calibration.bias import BiasRecipe
 
-from megaradrp.recipes.calibration.tests.test_bpm_common import generate_bias
+
+def generate_bias(detector, number, temporary_path):
+    fs = [simulate_bias(detector) for i in range(number)]
+    for aux in range(len(fs)):
+        fits.writeto('%s/bias_%s.fits' % (temporary_path, aux), fs[aux],
+                     clobber=True)
+
+    fs = ["%s/bias_%s.fits" % (temporary_path, i) for i in range(number)]
+
+    ob = ObservationResult()
+    ob.instrument = 'MEGARA'
+    ob.mode = 'bias_image'
+    ob.frames = [DataFrame(filename=f) for f in fs]
+
+    recipe = BiasRecipe()
+    ri = recipe.create_input(obresult=ob)
+    return recipe.run(ri)
 
 
-# @pytest.mark.remote
 def test_bpm():
     number = 5
     PSCAN = 50
     DSHAPE = (2056 * 2, 2048 * 2)
     OSCAN = 50
 
+    BINR = 1
+    BINC = 1
+
+    SHAPE = DSHAPE[0] // BINR, DSHAPE[1] // BINC
+
     ron = 2.0
     gain = 1.0
     bias = 1000.0
 
     eq = 0.8 * np.ones(DSHAPE)
-    eq[5:6, 0:170] = 0.0
+    eq[0:15, 0:170] = 0.0
 
     temporary_path = mkdtemp()
 
@@ -90,8 +111,8 @@ def test_bpm():
     recipe = BadPixelsMaskRecipe()
     ri = recipe.create_input(obresult=ob, master_bias=DataFrame(
         filename=open(temporary_path + '/master_bias_data0.fits').name))
-    aux = recipe.run(ri)
-    fits.writeto('%s/master_bpm.fits' % temporary_path, aux.bpm_image.frame[0].data[1], clobber=True)
+    recipe.run(ri)
+
     shutil.rmtree(temporary_path)
 
 

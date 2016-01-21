@@ -22,11 +22,10 @@
 import astropy.io.fits as fits
 import numpy as np
 from numina.array.cosmetics import ccdmask
-from numina.core import Product
+from numina.core import Product, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import  MasterBPM
 from megaradrp.requirements import MasterBiasRequirement
 
 
@@ -34,7 +33,7 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
 
-    bpm_image = Product(MasterBPM)
+    bpm_image = Product(DataFrameType)
 
     def __init__(self):
         super(BadPixelsMaskRecipe, self).__init__(version="0.1.0")
@@ -48,11 +47,8 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
         obresult2 = copy.copy(rinput.obresult)
         obresult2.frames = rinput.obresult.frames[N//2:]
 
-        with rinput.master_bias.open() as hdul:
-            mbias = hdul[0].data.copy()
-
-        reduced1 = self.bias_process_common(obresult1, {'biasmap':mbias})
-        reduced2 = self.bias_process_common(obresult2, {'biasmap':mbias})
+        reduced1 = self.bias_process_common(obresult1, rinput.master_bias)
+        reduced2 = self.bias_process_common(obresult2, rinput.master_bias)
 
         mask = np.zeros(reduced1[0].data.shape, dtype='int')
 
