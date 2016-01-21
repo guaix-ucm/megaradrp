@@ -59,6 +59,8 @@ class MasterDark(MEGARAProductFrame):
 class MasterFiberFlat(MEGARAProductFrame):
     pass
 
+class MasterBPM(MEGARAProductFrame):
+    pass
 
 class MasterSensitivity(MEGARAProductFrame):
     pass
