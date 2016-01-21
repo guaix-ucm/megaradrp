@@ -26,14 +26,15 @@ from numina.core.requirements import ObservationResultRequirement
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import MasterBias
+from megaradrp.requirements import MasterBPMRequirement
 
 _logger = logging.getLogger('numina.recipes.megara')
 
 
 class BiasRecipe(MegaraBaseRecipe):
     """Process BIAS images and create MASTER_BIAS."""
-
     obresult = ObservationResultRequirement()
+
     biasframe = Product(MasterBias)
 
     def __init__(self):
@@ -48,7 +49,7 @@ class BiasRecipe(MegaraBaseRecipe):
 
         hdu, data = self.hdu_creation(rinput.obresult)
 
-        hdr = hdu.header
+        hdr = hdu[0].header
         hdr = self.set_base_headers(hdr)
         hdr['IMGTYP'] = ('BIAS', 'Image type')
         hdr['NUMTYP'] = ('MASTER_BIAS', 'Data product type')
@@ -56,7 +57,7 @@ class BiasRecipe(MegaraBaseRecipe):
 
         varhdu = fits.ImageHDU(data[1], name='VARIANCE')
         num = fits.ImageHDU(data[2], name='MAP')
-        hdulist = fits.HDUList([hdu, varhdu, num])
+        hdulist = fits.HDUList(hdu + [varhdu, num])
         _logger.info('bias reduction ended')
 
         result = self.create_result(biasframe=hdulist)

@@ -54,7 +54,10 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
     def run(self, rinput):
         # Basic processing
-        reduced = self.bias_process_common(rinput.obresult, rinput.master_bias)
+        with rinput.master_bias.open() as hdul:
+            mbias = hdul[0].data.copy()
+
+        reduced = self.bias_process_common(rinput.obresult, {'biasmap':mbias})
 
         _logger.info('extract fibers')
         rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
