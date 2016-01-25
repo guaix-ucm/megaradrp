@@ -45,6 +45,8 @@ from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import TraceMap
 from megaradrp.requirements import MasterBiasRequirement
 from megaradrp.core.processing import apextract_tracemap
+import astropy.io.fits as fits
+
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -60,9 +62,26 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
     polynomial_degree = Parameter(2, 'Polynomial degree of arc calibration')
     # Products
     focus_table = Product(ArrayType)
+    focus_image = Product(DataFrameType)
 
     def __init__(self):
         super(FocusSpectrographRecipe, self).__init__("0.1.0")
+
+    def generate_image(self, final):
+        from scipy.spatial import cKDTree
+
+        voronoi_points = numpy.array(final[:, [0, 1]])
+        x = numpy.arange(2048 * 2)
+        y = numpy.arange(2056 * 2)
+
+        test_points = numpy.transpose([numpy.tile(x, len(y)),numpy.repeat(y, len(x))])
+
+        voronoi_kdtree = cKDTree(voronoi_points)
+
+        test_point_dist, test_point_regions = voronoi_kdtree.query(test_points, k=1)
+        final_image = test_point_regions.reshape((4112,4096)).astype('float64')
+        final_image[:,:] = final[final_image[:,:].astype('int64'),2]
+        return (final_image)
 
     def run(self, rinput):
         # Basic processing
@@ -94,10 +113,23 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
 
         focus_median = numpy.median(final[:,2])
 
+        image = self.generate_image(final)
+        hdu = fits.PrimaryHDU(image)
+        hdulist = fits.HDUList([hdu])
+
         _logger.info('median focus value is %5.2f', focus_median)
 
         _logger.info('end focus spectrograph')
-        return self.create_result(focus_table=final)
+        return self.create_result(focus_table=final, focus_image=hdulist)
+
+    def get_focus(self, points, final):
+        a = final[:, [0, 1]]
+
+        b = points
+
+        index = numpy.where(numpy.all(a==b,axis=1))
+        return final[index[0],[2]]
+
 
     def create_flow(self, master_bias):
 
