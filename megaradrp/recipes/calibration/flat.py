@@ -31,7 +31,8 @@ from numina.core.requirements import ObservationResultRequirement
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import MasterFiberFlat
 from megaradrp.products import TraceMap
-from megaradrp.requirements import MasterBiasRequirement
+from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
+from megaradrp.requirements import MasterDarkRequirement
 from megaradrp.core.processing import apextract_tracemap
 
 _logger = logging.getLogger('numina.recipes.megara')
@@ -43,7 +44,8 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     # Requirements
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
-
+    master_dark = MasterDarkRequirement()
+    master_bpm = MasterBPMRequirement()
     tracemap = Requirement(TraceMap, 'Trace information of the Apertures')
     # Products
     fiberflat_frame = Product(MasterFiberFlat)
@@ -54,10 +56,9 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
     def run(self, rinput):
         # Basic processing
-        with rinput.master_bias.open() as hdul:
-            mbias = hdul[0].data.copy()
+        parameters = self.get_parameters(rinput)
 
-        reduced = self.bias_process_common(rinput.obresult, {'biasmap':mbias})
+        reduced = self.bias_process_common(rinput.obresult, parameters)
 
         _logger.info('extract fibers')
         rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
