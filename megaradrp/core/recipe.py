@@ -46,14 +46,15 @@ class MegaraBaseRecipe(BaseRecipe):
                        'BadPixelsMaskRecipe': [OverscanCorrector, TrimImage,
                                                BiasCorrector, DarkCorrector],
                        'BiasRecipe': [OverscanCorrector, TrimImage,
-                                      BadPixelCorrector, DarkCorrector],
+                                      BadPixelCorrector],
                        'DarkRecipe': [OverscanCorrector, TrimImage,
                                       BiasCorrector],
                        'FiberFlatRecipe': [OverscanCorrector, TrimImage,
                                            BiasCorrector, BadPixelCorrector,
                                            DarkCorrector],
                        'TraceMapRecipe': [OverscanCorrector, TrimImage,
-                                          BiasCorrector, DarkCorrector],
+                                          BiasCorrector, BadPixelCorrector,
+                                          DarkCorrector],
 
                        }
         super(MegaraBaseRecipe, self).__init__(version=version)
@@ -72,17 +73,17 @@ class MegaraBaseRecipe(BaseRecipe):
                         flow[cont] = (flow[cont](params['bpm']))
                     else:
                         del (flow[cont])
-                        cont -=1
+                        cont -= 1
                 elif issubclass(DarkCorrector, flow[cont]):
                     if 'dark' in params.keys():
                         flow[cont] = (flow[cont](params['dark']))
                     else:
                         del (flow[cont])
-                        cont -=1
+                        cont -= 1
                 elif issubclass(TrimImage, flow[cont]) or issubclass(
                         OverscanCorrector, flow[cont]):
                     flow[cont] = (flow[cont]())
-                cont +=1
+                cont += 1
             basicflow = SerialFlow(flow)
 
         except Exception as e:
@@ -135,3 +136,16 @@ class MegaraBaseRecipe(BaseRecipe):
                 hdulist.close()
 
         return fits.HDUList(lista), data
+
+    def get_parameters(self, rinput):
+
+        with rinput.master_bias.open() as hdul:
+            mbias = hdul[0].data.copy()
+
+        parameters = {'biasmap':mbias}
+        if rinput.master_bpm:
+            parameters['bpm'] = rinput.master_bpm
+        if rinput.master_dark:
+            parameters['dark'] = rinput.master_bpm
+
+        return parameters
