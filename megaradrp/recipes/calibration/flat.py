@@ -49,7 +49,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     tracemap = Requirement(TraceMap, 'Trace information of the Apertures')
     # Products
     fiberflat_frame = Product(MasterFiberFlat)
-    fiberflat_rss = Product(MasterFiberFlat)
+    master_fiberflat = Product(MasterFiberFlat)
 
     def __init__(self):
         super(FiberFlatRecipe, self).__init__(version="0.1.0")
@@ -71,5 +71,5 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         _logger.info('extraction completed')
         _logger.info('fiber flat reduction ended')
 
-        result = self.create_result(fiberflat_frame=reduced, fiberflat_rss=rss)
+        result = self.create_result(fiberflat_frame=reduced, master_fiberflat=rss)
         return result

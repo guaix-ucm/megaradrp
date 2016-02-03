@@ -63,7 +63,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     # Products
     arc_image = Product(DataFrameType)
     arc_rss = Product(DataFrameType)
-    wlcalib = Product(ArrayType)
+    master_wlcalib = Product(ArrayType)
 
     def __init__(self):
         super(ArcCalibrationRecipe, self).__init__("0.1.0")
@@ -87,7 +87,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         # WL calibration goes here
         return self.create_result(arc_image=reduced, arc_rss=rss,
-                                  wlcalib=coeff_table)
+                                  master_wlcalib=coeff_table)
 
     def calibrate_wl(self, rss, lines_catalog, poldeg, times_sigma=50.0):
         #

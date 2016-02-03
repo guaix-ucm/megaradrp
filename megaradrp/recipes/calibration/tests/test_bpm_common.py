@@ -78,7 +78,7 @@ def crear_archivos(temporary_path):
                      clobber=True)
 
     master_bias = generate_bias(detector, number, temporary_path)
-    master_bias_data = master_bias.biasframe.frame[0].data
+    master_bias_data = master_bias.master_bias.frame[0].data
 
     fits.writeto('%s/master_bias_data0.fits' % temporary_path,
                  master_bias_data, clobber=True)  # Master Bias
@@ -96,7 +96,7 @@ def crear_archivos(temporary_path):
     ri = recipe.create_input(obresult=ob, master_bias=DataFrame(
         filename=open(temporary_path + '/master_bias_data0.fits').name))
     aux = recipe.run(ri)
-    fits.writeto('%s/master_bpm.fits' % temporary_path, aux.bpm_image.frame[0].data[1], clobber=True)
+    fits.writeto('%s/master_bpm.fits' % temporary_path, aux.master_bpm.frame[0].data[1], clobber=True)
 
     return names
 

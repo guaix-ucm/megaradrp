@@ -45,7 +45,7 @@ def test_dark():
         fs[aux].writeto('%s/dark_%s.fits' % (temporary_path, aux),clobber=True)
 
     master_bias = generate_bias(detector, number, temporary_path)
-    master_bias_data = master_bias.biasframe.frame[0].data
+    master_bias_data = master_bias.master_bias.frame[0].data
 
     fits.writeto('%s/master_bias_data0.fits' % temporary_path,
                  master_bias_data, clobber=True)  # Master Bias
@@ -64,8 +64,8 @@ def test_dark():
         filename=open(temporary_path + '/master_bias_data0.fits').name))
     aux = recipe.run(ri)
 
-    fits.writeto('%s/master_dark.fits' % temporary_path, aux.darkframe.frame[0].data, clobber=True)
-    truncate_data = np.around(aux.darkframe.frame[0].data, decimals=2)
+    fits.writeto('%s/master_dark.fits' % temporary_path, aux.master_dark.frame[0].data, clobber=True)
+    truncate_data = np.around(aux.master_dark.frame[0].data, decimals=2)
     shutil.rmtree(temporary_path)
     assert np.all(truncate_data == np.zeros(truncate_data.shape))
 

@@ -257,6 +257,11 @@ class MegaraImageFactory(object):
         focus = meta.get('focus', 0.0)
         pheader['FOCUS'] = focus
 
+        # Focal plane
+        meta_fplane = meta.get('fplane', {})
+        cover = meta_fplane.get('cover', 'unknown')
+        pheader['COVER'] = cover
+
         hdu1 = fits.PrimaryHDU(data, header=pheader)
         hdul = fits.HDUList([hdu1])
         return hdul
