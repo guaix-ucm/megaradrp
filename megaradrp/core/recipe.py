@@ -143,9 +143,12 @@ class MegaraBaseRecipe(BaseRecipe):
             mbias = hdul[0].data.copy()
 
         parameters = {'biasmap':mbias}
+
         if rinput.master_bpm:
-            parameters['bpm'] = rinput.master_bpm
+            with rinput.master_bpm.open() as hdul:
+                parameters['bpm'] = hdul[0].data.copy()
         if rinput.master_dark:
-            parameters['dark'] = rinput.master_bpm
+            with rinput.master_dark.open() as hdul:
+                parameters['dark'] = hdul[0].data.copy()
 
         return parameters
