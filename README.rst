@@ -20,10 +20,10 @@ be able to be installed and work properly:
 
  - python 2.7 (http://www.python.org)
  - setuptools (http://peak.telecommunity.com/DevCenter/setuptools)
- - numpy (http://www.numpy.org/)
+ - numpy >= 1.7 (http://www.numpy.org/)
  - scipy (http://www.scipy.org)
  - astropy >= 1.0 (http://www.astropy.org/)
- - numina >= 0.13 (http://guaix.fis.ucm.es/projects/numina/)
+ - numina >= 0.14 (http://guaix.fis.ucm.es/projects/numina/)
 
 Webpage: https://guaix.fis.ucm.es/megara
 Maintainer: sergiopr@fis.ucm.es
