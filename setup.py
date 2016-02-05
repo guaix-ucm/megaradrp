@@ -5,7 +5,7 @@ import numpy
 
 
 setup(name='megaradrp',
-      version='0.5.dev0',
+      version='0.6.dev0',
       include_dirs = [numpy.get_include()],
       url='http://guaix.fis.ucm.es/hg/megaradrp',
       license='GPLv3',
@@ -16,7 +16,7 @@ setup(name='megaradrp',
          'numpy',
          'astropy >= 1.0',
          'scipy',
-         'numina >= 0.13.0',
+         'numina >= 0.14',
          ],
       zip_safe=False,
       entry_points = {

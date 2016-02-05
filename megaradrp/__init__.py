@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2014 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,12 +17,12 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''The MEGARA Data Reduction Pipeline.'''
+"""The MEGARA Data Reduction Pipeline."""
 
 import logging
 
 
-__version__ = '0.5.dev'
+__version__ = '0.6.dev0'
 
 
 # Top level NullHandler
