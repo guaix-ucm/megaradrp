@@ -5,7 +5,7 @@ import numpy
 
 
 setup(name='megaradrp',
-      version='0.5rc4',
+      version='0.5',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       include_dirs = [numpy.get_include()],
@@ -18,7 +18,7 @@ setup(name='megaradrp',
          'numpy',
          'astropy >= 1.0',
          'scipy',
-         'numina >= 0.14rc1',
+         'numina >= 0.14',
          ],
       zip_safe=False,
       entry_points = {
