@@ -134,3 +134,20 @@ def simulate_arc_fits(factory, instrument, wltable, photons_in, exposure, repeat
 
         fitsfile = factory.create('arc', meta=instrument.meta(), data=final)
         yield fitsfile
+
+
+def simulate_focus_fits(factory, instrument, wltable, photons_in, focii, exposure, repeat=1):
+    """Simulate a Focus sequence"""
+
+    for focus in focii:
+        instrument.set_focus(focus)
+
+        out = instrument.simulate_focal_plane(wltable, photons_in)
+
+        for i in range(repeat):
+            instrument.detector.expose(source=out, time=exposure)
+
+            final = instrument.detector.readout()
+
+            fitsfile = factory.create('focus', meta=instrument.meta(), data=final)
+            yield fitsfile
