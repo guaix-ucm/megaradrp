@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,12 +17,9 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Simple monocromatic simulation"""
-
 
 import numpy
 from numpy.lib.stride_tricks import as_strided as ast
-import astropy.io.fits as fits
 
 
 def binning(arr, br, bc):
@@ -64,6 +61,7 @@ class VirtualDetector(object):
 
         return final
 
+
 class ReadParams(object):
     """Readout parameters of each channel."""
     def __init__(self, gain=1.0, ron=2.0, bias=1000.0):
@@ -96,6 +94,8 @@ class MegaraDetector(object):
         readpars2 = readpars2 if not None else ReadParams()
 
         self.blocks = self._binning[bins]
+        self.dshape = shape
+        self.pixscale = 15.0e-3
 
         self.fshape, a0, geom1, geom2 = self.init_regions(shape, oscan, pscan, self.blocks)
 
@@ -228,43 +228,9 @@ class MegaraDetector(object):
     def metadata(self):
         return {'exposed': self._time_last}
 
-
-class MegaraImageFactory(object):
-    CARDS_P = [
-        ('OBSERVAT', 'ORM', 'Name of observatory'),
-        ('TELESCOP', 'GTC', 'Telescope id.'),
-        ('INSTRUME', 'MEGARA', 'Name of the Instrument'),
-        ('ORIGIN', 'Simulator', 'FITS file originator'),
-    ]
-
-    def create(self, mode, meta, data):
-        pheader = fits.Header(self.CARDS_P)
-
-        # Detector
-        meta_det = meta.get('detector', {})
-
-        exptime = meta_det.get('exposed', 0.0)
-        pheader['EXPTIME'] = exptime
-        pheader['EXPOSED'] = exptime
-
-        # VPH
-        meta_vph = meta.get('vph', {})
-
-        vph_name = meta_vph.get('name', 'unknown')
-        pheader['VPH'] = vph_name
-
-        # Focus
-        focus = meta.get('focus', 0.0)
-        pheader['FOCUS'] = focus
-
-        # Focal plane
-        meta_fplane = meta.get('fplane', {})
-        cover = meta_fplane.get('cover', 'unknown')
-        pheader['COVER'] = cover
-
-        hdu1 = fits.PrimaryHDU(data, header=pheader)
-        hdul = fits.HDUList([hdu1])
-        return hdul
+    def qe_wl(self, wl):
+        """QE per wavelenght."""
+        return numpy.ones_like(wl)
 
 
 class MegaraDetectorSat(MegaraDetector):
@@ -281,58 +247,3 @@ class MegaraDetectorSat(MegaraDetector):
         sat = 12000.0
         return sat * (1-sat / (sat + x))
 
-
-def simulate_bias(detector):
-    """Simulate a BIAS array."""
-    detector.expose(source=0.0, time=0.0)
-    final = detector.readout()
-    return final
-
-
-def simulate_dark(detector, exposure):
-    """Simulate a DARK array,"""
-    detector.expose(source=0.0, time=exposure)
-    final = detector.readout()
-    return final
-
-
-def simulate_flat(detector, exposure, source):
-    """Simulate a FLAT array,"""
-    detector.expose(source=source, time=exposure)
-    final = detector.readout()
-    return final
-
-
-def simulate_bias_fits(factory, detector):
-    """Simulate a FITS array."""
-    final = simulate_bias(detector)
-
-    meta = {'detector': detector.metadata()}
-    data = final
-
-    fitsfile = factory.create('bias', meta=meta, data=data)
-
-    return fitsfile
-
-
-def simulate_dark_fits(factory, detector, exposure):
-    """Simulate a DARK FITS."""
-    final = simulate_dark(detector, exposure)
-
-    meta = {'detector': detector.metadata()}
-    data = final
-
-    fitsfile = factory.create('dark', meta=meta, data=data)
-
-    return fitsfile
-
-
-def simulate_flat_fits(factory, detector, exposure, source):
-    """Simulate a FLAT FITS,"""
-    final = simulate_flat(detector, exposure, source)
-
-    meta = {'detector': detector.metadata()}
-    data = final
-
-    fitsfile = factory.create('flat', meta=meta, data=data)
-    return fitsfile
