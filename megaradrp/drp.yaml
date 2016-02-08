@@ -1,0 +1,115 @@
+name: MEGARA
+configurations:
+  default: {}
+modes:
+- date: 2013-11-12
+  description: A mode where the recipe successes, used for testing
+  key: success
+  name: Success
+  reference: numina
+  status: FINAL
+  summary: A mode where the recipe successes
+  tagger: null
+- date: 2013-11-12
+  description: A mode where the recipe fails, used for testing
+  key: fail
+  name: Fail
+  reference: numina
+  status: FINAL
+  summary: A mode where the recipe fails
+  tagger: null
+- date: 2012-05-21
+  description: Recipe to process bias images
+  key: bias_image
+  name: Bias Image
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Recipe to process bias images
+  tagger: null
+- date: 2012-05-21
+  description: Lines and mode lines
+  key: dark_image
+  name: Dark current Image
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Dark current Image
+  uuid: 5b15db30-7774-4823-9645-e8ca27a866af
+  tagger: null
+- date: 2014-04-23
+  description: Lines and mode lines
+  key: fiber_flat_image
+  name: Fiber Flat Image
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Fiber Flat Image
+  uuid: 8a20058f-8887-4b6d-9b65-c113258eccee
+  tagger: megaradrp.taggers.tagger_vph
+- date: 2014-04-25
+  description: Lines and mode lines
+  key: mos_image
+  name: Image with the fiber MOS
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Fiber MOS image
+  uuid: 6b2ea25b-e6e4-4e0c-b374-825c70387668
+  tagger: megaradrp.taggers.tagger_vph
+- date: 2014-04-28
+  description: Lines and mode lines
+  key: flux_calibration
+  name: Pseudo flux-calibration
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Fiber MOS image
+  uuid: 9114511f-15d8-40d2-a0b1-e4a6202a3e39
+  tagger: megaradrp.taggers.tagger_vph
+- date: 2014-12-10
+  description: Lines and mode lines
+  key: trace_map
+  name: Trace Map
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Fiber MOS image
+  uuid: 4e5a5d6f-3bee-4630-836e-0eabdf5e9f9b
+  tagger: megaradrp.taggers.tagger_vph
+- date: 2015-05-29
+  description: Process an Arc image
+  key: arc_calibration
+  name: Arc Calibration
+  reference: IPUREMI_323
+  status: DRAFT
+  summary: Summary of Arc Calibration
+  uuid: c1842e00-2005-48bb-9a0e-8a8161f97fdf
+  tagger: megaradrp.taggers.tagger_vph
+- date: 2012-05-21
+  description: Bad Pixels
+  key: bpm
+  name: Bad Pixel Mask
+  reference: xxx
+  status: DRAFT
+  summary: Bad Pixel Mask
+  uuid: xxxxxx
+  tagger: null
+- key: focus_spectrograph
+  name: Focus Spectrograph
+pipelines:
+  default:
+    version: 1
+    recipes:
+      bias_image: megaradrp.recipes.calibration.bias.BiasRecipe
+      bpm: megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe
+      dark_image: megaradrp.recipes.calibration.dark.DarkRecipe
+      fiber_flat_image: megaradrp.recipes.calibration.flat.FiberFlatRecipe
+      mos_image: megaradrp.recipes.scientific.FiberMOSRecipe2
+      flux_calibration: megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipe
+      trace_map: megaradrp.recipes.calibration.trace.TraceMapRecipe
+      arc_calibration: megaradrp.recipes.calibration.arc.ArcCalibrationRecipe
+      focus_spectrograph: megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe
+      fail: numina.core.utils.AlwaysFailRecipe
+      success: numina.core.utils.AlwaysSuccessRecipe
+products:
+- name: megaradrp.products.TraceMap
+  alias: TraceMap
+- name: megaradrp.products.MasterFiberFlat
+  alias: MasterFiberFlat
+- name: megaradrp.products.MasterSensitivity
+  alias: MasterSensitivity

@@ -1,31 +1,35 @@
 
-from setuptools import find_packages, setup
+from setuptools import find_packages
+from setuptools import setup
+import numpy
 
 
 setup(name='megaradrp',
-      version='0.4.1',
+      version='0.5',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
-      url='http://guaix.fis.ucm.es/hg/megaradrp',
+      include_dirs = [numpy.get_include()],
+      url='https://github.com/guaix-ucm/megaradrp',
       license='GPLv3',
       description='MEGARA Data Reduction Pipeline',
-      packages=find_packages(where='src'),
-      package_dir={'': 'src'},
+      packages=find_packages(),
       package_data={'megaradrp': ['drp.yaml', 'primary.txt']},
       install_requires=[
          'numpy',
-         'astropy >= 0.4, < 0.5',
+         'astropy >= 1.0',
          'scipy',
-         'numina >= 0.13.0',
+         'numina >= 0.14',
          ],
       zip_safe=False,
       entry_points = {
         'numina.pipeline.1': [
-            'megara = megaradrp.loader:megara_drp_load',
-            ]
+            'MEGARA = megaradrp.loader:load_drp',
+            ],
         },
       classifiers=[
                    "Programming Language :: Python :: 2.7",
+                   "Programming Language :: Python :: 3.3",
+                   "Programming Language :: Python :: 3.4",
                    'Development Status :: 3 - Alpha',
                    "Environment :: Other Environment",
                    "Intended Audience :: Science/Research",
@@ -33,5 +37,5 @@ setup(name='megaradrp',
                    "Operating System :: OS Independent",
                    "Topic :: Scientific/Engineering :: Astronomy",
                    ],
-    long_description=open('README.txt').read()
+    long_description=open('README.rst').read()
 )

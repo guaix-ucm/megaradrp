@@ -1,5 +1,7 @@
-include MANIFEST.in *.txt
-include src/megaradrp/*.txt
-include src/megaradrp/*.yaml
+include AUTHORS.rst
+include README.rst
+include LICENSE.txt
+include megaradrp/*.txt
+include megaradrp/*.yaml
 recursive-include doc *
 

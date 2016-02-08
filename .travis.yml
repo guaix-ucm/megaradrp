@@ -1,0 +1,53 @@
+language: python
+sudo: false
+
+matrix:
+  include:
+    - python: "2.7"
+      env: DEPS="numpy scipy astropy=1.0" COVERAGE=true
+    - python: "3.3"
+      env: DEPS="numpy scipy astropy=1.0"
+    - python: "3.4"
+      env: DEPS="numpy scipy astropy=1.0"
+
+cache:
+  apt: true
+  pip: true
+  directories:
+    - $HOME/.cache/pip
+    - $HOME/.local
+
+before_install:
+  - >
+    if [ ${TRAVIS_PYTHON_VERSION:0:1} == "2" ]; 
+    then wget https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh; 
+    else wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh -O miniconda.sh; 
+    fi
+  - chmod +x miniconda.sh
+  - ./miniconda.sh -b -p /home/travis/mc
+  - export PATH=/home/travis/mc/bin:$PATH
+
+install:
+  # See:
+  # https://groups.google.com/a/continuum.io/forum/#!topic/conda/RSFENqovnro
+  # - conda update --yes --no-deps conda
+  # OK, this used to *fix* the build, but now it *breaks* the build.
+  # If you're reading this, good luck out there. I'm not sure what to tell you.
+  - conda update --yes conda
+  - >
+    conda create -n testenv --yes python=$TRAVIS_PYTHON_VERSION
+    $DEPS pip pytest setuptools Cython six>=1.7
+    pyyaml
+  - source activate testenv
+  - pip install pytest-benchmark pytest-cov
+  - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
+  - pip install -e git+git://github.com/guaix-ucm/numina.git#egg=numina
+  # Build in place so we can run tests
+  - python setup.py build_ext --inplace
+
+script:
+  - py.test -s -v megaradrp
+  - if [[ $COVERAGE == true ]]; then py.test megaradrp --cov=megaradrp; fi
+
+after_success:
+  - if [[ $COVERAGE == true ]]; then coveralls; fi
