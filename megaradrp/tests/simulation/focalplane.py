@@ -17,6 +17,7 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import numpy
 
 class FocalPlane(object):
 
@@ -29,8 +30,7 @@ class FocalPlane(object):
         self._filter_s = lambda x: True
         self._cover_s = lambda x: 1.0
 
-        self.fibid = []
-        self.pos = []
+        self.bundle = {}
 
     def set_cover(self, mode):
         """Cover in the focal plane."""
@@ -55,13 +55,26 @@ class FocalPlane(object):
             self._filter_s = lambda pos: False
             self._cover_s = lambda pos: 0.0
 
-    def connect_fibers(self, fibid, pos):
-        self.fibid = fibid
-        self.pos = pos
+    def connect_fiber_bundle(self, bundle, fibid, pos):
+        self.bundle[bundle.name] = (fibid, pos)
 
-    def get_visible_fibers(self):
-        p1 = [(fid, self._cover_s(pos)) for fid, pos in zip(self.fibid, self.pos) if self._filter_s(pos)]
-        return p1
+    def get_visible_fibers(self, bundle):
+        fibid, allpos = self.bundle[bundle.name]
+        p1 = [(fid, pos[0], pos[1], self._cover_s(pos)) for fid, pos in zip(fibid, allpos) if self._filter_s(pos)]
+
+        return numpy.array(p1, dtype=[('fibid', 'i4'),('x', 'f4'), ('y', 'f4'), ('cover', 'f4')])
+
+    def get_all_fibers(self, bundle):
+
+        fibid, all_pos = self.bundle[bundle.name]
+
+        p2 = numpy.empty((len(fibid,)), dtype=[('fibid', 'i4'),('x', 'f4'), ('y', 'f4'), ('cover', 'f4')])
+        p2['fibid'] = fibid
+        p2['x'] = all_pos[:,0]
+        p2['y'] = all_pos[:,1]
+        p2['cover'] = 1.0
+
+        return p2
 
     def meta(self):
         return {'cover': self.CODES[self._cover_status]}

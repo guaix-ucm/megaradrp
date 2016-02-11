@@ -21,17 +21,16 @@ import numpy as np
 import scipy.interpolate as ii
 
 
-
 class MegaraVPH(object):
 
-    def __init__(self):
+    def __init__(self, name):
         self.SAMPLING = 9.0
         self.minwl = 3653.0
         self.maxwl = 4386.0
         self.wlmin_in = 0.3596
         self.wlmax_in = 0.4437
         self.res = 6028.0
-        self.name = 'VPH405_LR'
+        self.name = name
         rr = np.loadtxt('VPH405_LR2.dat')
         r1 = rr[:,0] # Position in the pseudoslit
         r2 = rr[:,1] # WL
@@ -58,7 +57,35 @@ class MegaraVPH(object):
         # This is as VPH405_LR_res
         return  self.res * np.ones_like(wl)
 
-    def metadata(self):
+    def meta(self):
+        return {'name': self.name}
+
+    def wltable_interp(self):
+        res_in = (self.wlmax_in / self.res) / self.SAMPLING
+        return np.arange(self.wlmin_in, self.wlmax_in, res_in)
+
+    def transmission(self, wl):
+        return np.ones_like(wl)
+        #return self.trans_interp(wl)
+
+
+class DummyVPH(object):
+
+    def __init__(self, name):
+        self.SAMPLING = 9.0
+        self.minwl = 3653.0
+        self.maxwl = 4386.0
+        self.wlmin_in = 0.3596
+        self.wlmax_in = 0.4437
+        self.res = 6028.0
+        self.name = name
+
+
+    def resolution(self, wl):
+        # This is as VPH405_LR_res
+        return  self.res * np.ones_like(wl)
+
+    def meta(self):
         return {'name': self.name}
 
     def wltable_interp(self):

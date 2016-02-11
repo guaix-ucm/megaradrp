@@ -225,7 +225,7 @@ class MegaraDetector(object):
 
         return (fshape, (base1, base2), geom1, geom2)
 
-    def metadata(self):
+    def meta(self):
         return {'exposed': self._time_last}
 
     def qe_wl(self, wl):

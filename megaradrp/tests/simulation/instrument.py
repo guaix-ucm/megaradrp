@@ -32,13 +32,18 @@ from .fiberbundle import FiberBundle
 
 
 class PseudoSlit(object):
-    def __init__(self):
+    def __init__(self, name):
 
         # Positions of the fibers in the PS slit
         self.y_pos = {}
+        self.name = name
 
     def connect_fibers(self, fibid, pos):
         self.y_pos = dict(zip(fibid, pos))
+
+    def meta(self):
+        return {'name': self.name}
+
 
 
 class InternalOptics(object):
@@ -56,47 +61,25 @@ class InternalOptics(object):
 
 
 class MegaraInstrument(object):
-    def __init__(self):
+    def __init__(self, focal_plane, fibers, pseudo_slit, vph, detector):
 
-        DSHAPE = (2056 * 2, 2048 * 2)
-        PSCAN = 50
-        OSCAN = 50
+        self._mode = 'lcb'
+        self.detector = detector
+        self._pseudo_slit = pseudo_slit
+        self.focal_plane = focal_plane
+        self._fibers = fibers
 
-        layouttable = np.loadtxt('LCB_spaxel_centers.dat')
 
-        fib_ids = layouttable[:,4].astype('int').tolist()
-        bun_ids = layouttable[:,3].astype('int').tolist()
+        self.pseudo_slit = self._pseudo_slit[self._mode]
+        self.fibers = self._fibers[self._mode]
 
-        self.fibers = FiberBundle(fib_ids, bun_ids)
-
-        self.pseudo_slit = PseudoSlit()
-        self.pseudo_slit.connect_fibers(fib_ids, layouttable[:,2])
-
-        self.focal_plane = FocalPlane()
-        self.focal_plane.connect_fibers(fib_ids, layouttable[:,0:2])
-
-        self.vph = MegaraVPH()
+        self.vph = vph
         self.internal_optics = InternalOptics()
 
         self._internal_focus_factor = 1.0
         self._ref_focus = 123.123
         self._internal_focus = self._ref_focus
 
-        eq = 1.0 * np.ones(DSHAPE)
-        #eq[50:55,50:70] = 0.0
-
-        dcurrent = 3.0 / 3600
-
-        # eq = np.random.normal(loc=0.80, scale=0.01, size=(4096,4096))
-        # eq = np.clip(eq, 0.0, 1.0)
-        # fits.writeto('eq.fits', eq, clobber=True)
-        # eq = fits.getdata('eq.fits')
-
-        readpars1 = ReadParams(gain=1.0, ron=2.0, bias=1000)
-        readpars2 = ReadParams(gain=1.0, ron=2.0, bias=1005)
-
-        self.detector = MegaraDetectorSat(DSHAPE, OSCAN, PSCAN, eq=eq, dark=dcurrent,
-                                        readpars1=readpars1, readpars2=readpars2, bins='11')
 
     def set_cover(self, status):
         """Cover in the focal plane."""
@@ -114,11 +97,16 @@ class MegaraInstrument(object):
         self._internal_focus_factor = 1.0 + (math.cosh((x-self._ref_focus) / 2.0) - 1.0 ) / 5.0
         self._internal_focus = x
 
+    def get_visible_fibers(self):
+        return self.focal_plane.get_visible_fibers(self.fibers)
+
     def meta(self):
-        _meta = {'detector': self.detector.metadata(),
-                 'vph': self.vph.metadata(),
+        _meta = {'detector': self.detector.meta(),
+                 'vph': self.vph.meta(),
                  'focus': self._internal_focus,
                  'fplane': self.focal_plane.meta(),
+                 'pslit': self.pseudo_slit.meta(),
+                 'fbundle': self.fibers.meta()
                  }
 
         return _meta
@@ -126,7 +114,8 @@ class MegaraInstrument(object):
     def project_rss(self, sigma, wl_in, spec_in):
 
         # This will compute only the illuminated fibers
-        visible_fib_ids = [fibid for fibid, _ in self.focal_plane.get_visible_fibers()]
+        tab = self.get_visible_fibers()
+        visible_fib_ids = tab['fibid']
         return project_rss(visible_fib_ids, self.pseudo_slit, self.vph, self.detector, sigma, wl_in, spec_in)
 
     def project_rss_w(self):
@@ -143,26 +132,24 @@ class MegaraInstrument(object):
         # Fiber flux is 0 by default
         base_coverage = np.zeros((self.fibers.N, 1))
 
-        for fibid, cover in self.focal_plane.get_visible_fibers():
-            # FIBID starts in 1
-            # Fill with covering factor
-            # 0-0.5-1
-            base_coverage[fibid-1] = cover
+        tab = self.get_visible_fibers()
+        fibid = tab['fibid']
 
-        allfiber_t = base_coverage * self.fibers.transmission(wltable_in)
+        base_coverage[fibid-1, 0] = tab['cover']
+        
+        # This should work with 1D and 2D
+        photon_cover = base_coverage * photons_in
 
-        photons_in = allfiber_t * photons_in
+        spec_in = photon_cover * self.fibers.transmission(wltable_in)
 
         # Spectrograph optics transmission
-        photons_in = photons_in * self.internal_optics.transmission(wltable_in)
+        spec_in *= self.internal_optics.transmission(wltable_in)
 
         # VPH transmission
-        photons_in = photons_in * self.vph.transmission(wltable_in)
+        spec_in *= self.vph.transmission(wltable_in)
 
         # QE of the detector
-        photons_in = photons_in * self.detector.qe_wl(wltable_in)
-
-        spec_in = photons_in
+        spec_in *= self.detector.qe_wl(wltable_in)
 
         return self.project_rss(self._internal_focus_factor* self.fibers.sigma, wltable_in, spec_in)
 

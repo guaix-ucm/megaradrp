@@ -26,8 +26,8 @@ import numpy as np
 import pytest
 from numina.core import DataFrame, ObservationResult
 
-from megaradrp.tests.simulation import simulate_flat
-from megaradrp.tests.simulation import ReadParams, MegaraDetectorSat
+from megaradrp.tests.simulation.simulation import simulate_flat
+from megaradrp.tests.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
 
 from megaradrp.recipes.calibration.tests.test_bpm_common import generate_bias

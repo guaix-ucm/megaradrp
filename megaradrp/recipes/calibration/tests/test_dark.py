@@ -4,8 +4,9 @@ import astropy.io.fits as fits
 import pytest
 import shutil
 
-from megaradrp.tests.simulation import simulate_dark, simulate_dark_fits
-from megaradrp.tests.simulation import ReadParams, MegaraDetectorSat, MegaraImageFactory
+from megaradrp.tests.simulation.simulation import simulate_dark, simulate_dark_fits
+from megaradrp.tests.simulation.detector import ReadParams, MegaraDetectorSat
+from megaradrp.tests.simulation.simulation import MegaraImageFactory
 from numina.core import DataFrame, ObservationResult
 
 from megaradrp.recipes.calibration.tests.test_bpm_common import generate_bias
@@ -39,10 +40,10 @@ def test_dark():
     number = 10
 
     factory = MegaraImageFactory()
-    fs = [simulate_dark_fits(factory, detector, exposure=3600) for i in range(number)]
+    fs = simulate_dark_fits(factory, detector, exposure=3600, repeat=number)
 
-    for aux in range(len(fs)):
-        fs[aux].writeto('%s/dark_%s.fits' % (temporary_path, aux),clobber=True)
+    for idx, aux in enumerate(fs):
+        aux.writeto('%s/dark_%s.fits' % (temporary_path, idx),clobber=True)
 
     master_bias = generate_bias(detector, number, temporary_path)
     master_bias_data = master_bias.master_bias.frame[0].data

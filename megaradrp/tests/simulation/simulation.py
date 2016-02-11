@@ -87,11 +87,21 @@ def simulate_flat(detector, exposure, source):
 def simulate_bias_fits(factory, instrument, repeat=1):
     """Simulate a BIAS FITS."""
 
-    for i in range(repeat):
-        instrument.detector.expose()
-        final = instrument.detector.readout()
+    # Use instrument and detector!
+    det = getattr(instrument, 'detector', None)
+    if det:
+        detector = det
+    else:
+        detector = instrument
 
-        fitsfile = factory.create('bias', meta=instrument.meta(), data=final)
+    for i in range(repeat):
+        detector.expose()
+        final = detector.readout()
+        if det:
+            meta = instrument.meta()
+        else:
+            meta = {'detector': detector.meta()}
+        fitsfile = factory.create('bias', meta=meta, data=final)
 
         yield fitsfile
 
@@ -99,17 +109,30 @@ def simulate_bias_fits(factory, instrument, repeat=1):
 def simulate_dark_fits(factory, instrument, exposure, repeat=1):
     """Simulate a DARK FITS."""
 
-    for i in range(repeat):
-        instrument.detector.expose(time=exposure)
-        final = instrument.detector.readout()
+    # Use instrument and detector!
+    det = getattr(instrument, 'detector', None)
+    if det:
+        detector = det
+    else:
+        detector = instrument
 
-        fitsfile = factory.create('dark', meta=instrument.meta(), data=final)
+    for i in range(repeat):
+        detector.expose(time=exposure)
+        final = detector.readout()
+        if det:
+            meta = instrument.meta()
+        else:
+            meta = {'detector': detector.meta()}
+        fitsfile = factory.create('dark', meta=meta, data=final)
 
         yield fitsfile
 
 
 def simulate_fiber_flat_fits(factory, instrument, wltable, photons_in, exposure, repeat=1):
     """Simulate a FIBER-FLAT"""
+
+    if repeat < 1:
+        return
 
     out = instrument.simulate_focal_plane(wltable, photons_in)
 
@@ -125,6 +148,9 @@ def simulate_fiber_flat_fits(factory, instrument, wltable, photons_in, exposure,
 def simulate_arc_fits(factory, instrument, wltable, photons_in, exposure, repeat=1):
     """Simulate a FLAT"""
 
+    if repeat < 1:
+        return
+
     out = instrument.simulate_focal_plane(wltable, photons_in)
 
     for i in range(repeat):
@@ -138,6 +164,9 @@ def simulate_arc_fits(factory, instrument, wltable, photons_in, exposure, repeat
 
 def simulate_focus_fits(factory, instrument, wltable, photons_in, focii, exposure, repeat=1):
     """Simulate a Focus sequence"""
+
+    if repeat < 1:
+        return
 
     for focus in focii:
         instrument.set_focus(focus)

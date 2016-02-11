@@ -25,7 +25,7 @@ import numpy as np
 
 
 def generate_bias(detector, number, temporary_path):
-    from megaradrp.tests.simulation import simulate_bias
+    from megaradrp.tests.simulation.simulation import simulate_bias
     from megaradrp.recipes.calibration.bias import BiasRecipe
 
     fs = [simulate_bias(detector) for i in range(number)]
@@ -45,8 +45,8 @@ def generate_bias(detector, number, temporary_path):
     return recipe.run(ri)
 
 def crear_archivos(temporary_path):
-    from megaradrp.tests.simulation import simulate_flat
-    from megaradrp.tests.simulation import ReadParams, MegaraDetectorSat
+    from megaradrp.tests.simulation.simulation import simulate_flat
+    from megaradrp.tests.simulation.detector import ReadParams, MegaraDetectorSat
     from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
 
     number = 5

@@ -19,8 +19,10 @@
 
 import numpy as np
 
+
 class FiberBundle(object):
-    def __init__(self, fid, bid):
+    def __init__(self, name, fid, bid):
+        self.name = name
         # Geometry of the fibers
         self.size = 0.31
         self.fwhm = 3.6
@@ -37,3 +39,6 @@ class FiberBundle(object):
     def transmission(self, wl):
         return np.ones_like(wl)
         #return self.tfiber_interp(wl)
+
+    def meta(self):
+        return {'name': self.name}
