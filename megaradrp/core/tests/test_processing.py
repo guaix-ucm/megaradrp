@@ -6,8 +6,9 @@ import numpy as np
 import pytest
 
 from megaradrp.core.processing import trim_and_o
-from megaradrp.tests.simulation.simulation import simulate_flat
-from megaradrp.tests.simulation.detector import ReadParams, MegaraDetectorSat
+from megaradrp.simulation import ReadParams, MegaraDetectorSat
+from megaradrp.simulation import simulate_flat
+
 
 def generate_bias_file():
     PSCAN = 50

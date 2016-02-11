@@ -1,16 +1,15 @@
-from tempfile import mkdtemp
-import numpy as np
-import astropy.io.fits as fits
-import pytest
 import shutil
+from tempfile import mkdtemp
 
-from megaradrp.tests.simulation.simulation import simulate_dark, simulate_dark_fits
-from megaradrp.tests.simulation.detector import ReadParams, MegaraDetectorSat
-from megaradrp.tests.simulation.simulation import MegaraImageFactory
+import astropy.io.fits as fits
+import numpy as np
 from numina.core import DataFrame, ObservationResult
 
-from megaradrp.recipes.calibration.tests.test_bpm_common import generate_bias
 from megaradrp.recipes.calibration.dark import DarkRecipe
+from megaradrp.recipes.calibration.tests.test_bpm_common import generate_bias
+from megaradrp.simulation import MegaraImageFactory
+from megaradrp.simulation import ReadParams, MegaraDetectorSat
+from megaradrp.simulation import simulate_dark_fits
 
 
 def test_dark():

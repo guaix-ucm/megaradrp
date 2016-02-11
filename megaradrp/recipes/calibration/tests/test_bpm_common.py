@@ -19,13 +19,13 @@
 
 """Tests for the bpm mode recipe module."""
 
-from numina.core import DataFrame, ObservationResult
 import astropy.io.fits as fits
 import numpy as np
+from numina.core import DataFrame, ObservationResult
 
 
 def generate_bias(detector, number, temporary_path):
-    from megaradrp.tests.simulation.simulation import simulate_bias
+    from megaradrp.simulation import simulate_bias
     from megaradrp.recipes.calibration.bias import BiasRecipe
 
     fs = [simulate_bias(detector) for i in range(number)]
@@ -45,8 +45,8 @@ def generate_bias(detector, number, temporary_path):
     return recipe.run(ri)
 
 def crear_archivos(temporary_path):
-    from megaradrp.tests.simulation.simulation import simulate_flat
-    from megaradrp.tests.simulation.detector import ReadParams, MegaraDetectorSat
+    from megaradrp.simulation import simulate_flat
+    from megaradrp.simulation import ReadParams, MegaraDetectorSat
     from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
 
     number = 5

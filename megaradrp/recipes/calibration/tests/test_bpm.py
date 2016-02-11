@@ -23,14 +23,12 @@ from tempfile import mkdtemp
 
 import astropy.io.fits as fits
 import numpy as np
-import pytest
 from numina.core import DataFrame, ObservationResult
 
-from megaradrp.tests.simulation.simulation import simulate_flat
-from megaradrp.tests.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
-
 from megaradrp.recipes.calibration.tests.test_bpm_common import generate_bias
+from megaradrp.simulation import ReadParams, MegaraDetectorSat
+from megaradrp.simulation import simulate_flat
 
 
 # @pytest.mark.remote
