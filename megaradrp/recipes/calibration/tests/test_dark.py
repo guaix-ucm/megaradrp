@@ -7,9 +7,9 @@ from numina.core import DataFrame, ObservationResult
 
 from megaradrp.recipes.calibration.dark import DarkRecipe
 from megaradrp.recipes.calibration.tests.test_bpm_common import generate_bias
-from megaradrp.simulation import MegaraImageFactory
-from megaradrp.simulation import ReadParams, MegaraDetectorSat
-from megaradrp.simulation import simulate_dark_fits
+from megaradrp.simulation.factory import MegaraImageFactory
+from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
+from megaradrp.simulation.actions import simulate_dark_fits
 
 
 def test_dark():
@@ -22,16 +22,15 @@ def test_dark():
     gain = 1.0
     bias = 1000.0
 
-    eq = 0.8 * np.ones(DSHAPE)
+    qe = 0.8 * np.ones(DSHAPE)
 
     temporary_path = mkdtemp()
-    print ('Path: %s' %temporary_path)
-    fits.writeto('%s/eq.fits' % temporary_path, eq, clobber=True)
+    fits.writeto('%s/eq.fits' % temporary_path, qe, clobber=True)
 
     readpars1 = ReadParams(gain=gain, ron=ron, bias=bias)
     readpars2 = ReadParams(gain=gain, ron=ron, bias=bias)
 
-    detector = MegaraDetectorSat(DSHAPE, OSCAN, PSCAN, eq=eq,
+    detector = MegaraDetectorSat(DSHAPE, OSCAN, PSCAN, qe=qe,
                                  dark=(3.0 / 3600.0),
                                  readpars1=readpars1, readpars2=readpars2,
                                  bins='11')

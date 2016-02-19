@@ -6,8 +6,8 @@ import numpy as np
 import pytest
 
 from megaradrp.core.processing import trim_and_o
-from megaradrp.simulation import ReadParams, MegaraDetectorSat
-from megaradrp.simulation import simulate_flat
+from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
+from megaradrp.simulation.actions import simulate_flat
 
 
 def generate_bias_file():
@@ -19,13 +19,13 @@ def generate_bias_file():
     gain = 1.0
     bias = 1000.0
 
-    eq = 0.8 * np.ones(DSHAPE)
-    eq[0:15, 0:170] = 0.0
+    qe = 0.8 * np.ones(DSHAPE)
+    qe[0:15, 0:170] = 0.0
 
     readpars1 = ReadParams(gain=gain, ron=ron, bias=bias)
     readpars2 = ReadParams(gain=gain, ron=ron, bias=bias)
 
-    detector = MegaraDetectorSat(DSHAPE, OSCAN, PSCAN, eq=eq,
+    detector = MegaraDetectorSat(DSHAPE, OSCAN, PSCAN, qe=qe,
                                  dark=(3.0 / 3600.0),
                                  readpars1=readpars1, readpars2=readpars2,
                                  bins='11')

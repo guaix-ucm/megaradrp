@@ -1,6 +1,6 @@
 import numpy as np
 
-from megaradrp.simulation import binning
+from megaradrp.simulation.detector import binning
 
 def test_binning():
     nr = 6

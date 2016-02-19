@@ -27,8 +27,8 @@ from numina.core import DataFrame, ObservationResult
 
 from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
 from megaradrp.recipes.calibration.tests.test_bpm_common import generate_bias
-from megaradrp.simulation import ReadParams, MegaraDetectorSat
-from megaradrp.simulation import simulate_flat
+from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
+from megaradrp.simulation.actions import simulate_flat
 
 
 # @pytest.mark.remote
@@ -42,17 +42,17 @@ def test_bpm():
     gain = 1.0
     bias = 1000.0
 
-    eq = 0.8 * np.ones(DSHAPE)
-    eq[5:6, 0:170] = 0.0
+    qe = 0.8 * np.ones(DSHAPE)
+    qe[5:6, 0:170] = 0.0
 
     temporary_path = mkdtemp()
 
-    fits.writeto('%s/eq.fits' % temporary_path, eq, clobber=True)
+    fits.writeto('%s/eq.fits' % temporary_path, qe, clobber=True)
 
     readpars1 = ReadParams(gain=gain, ron=ron, bias=bias)
     readpars2 = ReadParams(gain=gain, ron=ron, bias=bias)
 
-    detector = MegaraDetectorSat(DSHAPE, OSCAN, PSCAN, eq=eq,
+    detector = MegaraDetectorSat(DSHAPE, OSCAN, PSCAN, qe=qe,
                                  dark=(3.0 / 3600.0),
                                  readpars1=readpars1, readpars2=readpars2,
                                  bins='11')

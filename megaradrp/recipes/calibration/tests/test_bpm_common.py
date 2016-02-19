@@ -25,7 +25,7 @@ from numina.core import DataFrame, ObservationResult
 
 
 def generate_bias(detector, number, temporary_path):
-    from megaradrp.simulation import simulate_bias
+    from megaradrp.simulation.actions import simulate_bias
     from megaradrp.recipes.calibration.bias import BiasRecipe
 
     fs = [simulate_bias(detector) for i in range(number)]
@@ -45,8 +45,8 @@ def generate_bias(detector, number, temporary_path):
     return recipe.run(ri)
 
 def crear_archivos(temporary_path):
-    from megaradrp.simulation import simulate_flat
-    from megaradrp.simulation import ReadParams, MegaraDetectorSat
+    from megaradrp.simulation.actions import simulate_flat
+    from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
     from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
 
     number = 5
@@ -57,13 +57,13 @@ def crear_archivos(temporary_path):
     gain = 1.0
     bias = 1000.0
 
-    eq = 0.8 * np.ones(DSHAPE)
-    eq[0:15, 0:170] = 0.0
+    qe = 0.8 * np.ones(DSHAPE)
+    qe[0:15, 0:170] = 0.0
 
     readpars1 = ReadParams(gain=gain, ron=ron, bias=bias)
     readpars2 = ReadParams(gain=gain, ron=ron, bias=bias)
 
-    detector = MegaraDetectorSat(DSHAPE, OSCAN, PSCAN, eq=eq,
+    detector = MegaraDetectorSat(DSHAPE, OSCAN, PSCAN, qe=qe,
                                  dark=(3.0 / 3600.0),
                                  readpars1=readpars1, readpars2=readpars2,
                                  bins='11')
