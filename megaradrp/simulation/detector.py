@@ -20,7 +20,9 @@
 
 import numpy
 from numpy.lib.stride_tricks import as_strided as ast
+import scipy.interpolate as ii
 
+from .efficiency import Efficiency
 
 def binning(arr, br, bc):
     """Return a binned view if 'arr'"""
@@ -70,14 +72,86 @@ class ReadParams(object):
         self.bias = bias
 
 
-class MegaraDetector(object):
+class DetectorBase(object):
+    def __init__(self, shape, qe=1.0, qe_wl=None, dark=0.0):
+
+        self.dshape = shape
+        self.pixscale = 15.0e-3
+
+        self._det = numpy.zeros(shape, dtype='float64')
+
+        self.qe = qe
+
+        if qe_wl is None:
+            self._qe_wl = Efficiency()
+        else:
+            self._qe_wl = qe_wl
+
+        self.dark = dark
+        # Exposure time since last reset
+        self._time_last = 0.0
+
+    def qe_wl(self, wl):
+        """QE per wavelength."""
+        return self._qe_wl.response(wl)
+
+    def expose(self, source=0.0, time=0.0):
+        self._time_last = time
+        self._det += (source + self.dark) * time
+
+    def reset(self):
+        """Reset the detector."""
+        self._det[:] = 0.0
+
+    def saturate(self, x):
+        return x
+
+    def simulate_poisson_variate(self):
+        elec_mean = self.qe * self._det
+        elec = numpy.random.poisson(elec_mean)
+        return elec
+
+    def pre_readout(self, elec_pre):
+        return elec_pre
+
+    def base_readout(self, elec_f):
+        return elec_f
+
+    def post_readout(self, adu_r):
+        adu_p = numpy.clip(adu_r, 0, 2**16-1)
+        return adu_p.astype('uint16')
+
+    def clean_up(self):
+        self.reset()
+
+    def readout(self):
+        """Readout the detector."""
+
+        elec = self.simulate_poisson_variate()
+
+        elec_pre = self.saturate(elec)
+
+        elec_f = self.pre_readout(elec_pre)
+
+        adu_r = self.base_readout(elec_f)
+
+        adu_p = self.post_readout(adu_r)
+
+        self.clean_up()
+
+        return adu_p
+
+
+class MegaraDetector(DetectorBase):
     """Simple MEGARA detector."""
 
     _binning = {'11': [1, 1], '21': [1, 2], '12': [2, 1], '22': [2, 2]}
     _direc = ['normal', 'mirror']
 
-    def __init__(self, shape, oscan, pscan, eq=1.0, dark=0.0, readpars1=None, readpars2=None,
+    def __init__(self, shape, oscan, pscan, qe=1.0, qe_wl=None, dark=0.0, readpars1=None, readpars2=None,
                  bins='11', direction='normal'):
+
+        super(MegaraDetector, self).__init__(shape, qe, qe_wl, dark)
 
         if bins not in self._binning:
             raise ValueError("%s must be one if '11', '12', '21, '22'" % bins)
@@ -94,8 +168,6 @@ class MegaraDetector(object):
         readpars2 = readpars2 if not None else ReadParams()
 
         self.blocks = self._binning[bins]
-        self.dshape = shape
-        self.pixscale = 15.0e-3
 
         self.fshape, a0, geom1, geom2 = self.init_regions(shape, oscan, pscan, self.blocks)
 
@@ -105,41 +177,19 @@ class MegaraDetector(object):
 
         self.virt2 = VirtualDetector(base2, geom2, directfun, readpars2)
 
-        self._det = numpy.zeros(shape, dtype='float64')
-
-        self.eq = eq
-        self.dark = dark
-        # Exposure time since last reset
-        self._time_last = 0.0
-
-    def expose(self, source=0.0, time=0.0):
-        self._time_last = time
-        self._det += (source + self.dark) * time
-
-    def readout(self):
-        """Readout the detector."""
-
-        elec_mean = self.eq * self._det
-        elec = numpy.random.poisson(elec_mean)
-        elec_pre = self.saturate(elec)
+    def pre_readout(self, elec_pre):
         # Do binning in the array
         elec_v = binning(elec_pre, self.blocks[0], self.blocks[1])
         elec_p = elec_v.reshape(elec_v.shape[0], elec_v.shape[1], -1)
         elec_f = elec_p.sum(axis=-1)
+        return elec_f
 
+    def base_readout(self, elec_f):
         # Output image
         final = numpy.zeros(self.fshape)
-
         self.virt1.readout_in_buffer(elec_f, final)
         self.virt2.readout_in_buffer(elec_f, final)
-
-        final = numpy.clip(final, 0, 2**16-1)
-        self.reset()
-        return final.astype('uint16')
-
-    def reset(self):
-        """Reset the detector."""
-        self._det[:] = 0.0
+        return final
 
     def saturate(self, x):
         """Compute non-linearity and saturation."""
@@ -226,11 +276,8 @@ class MegaraDetector(object):
         return (fshape, (base1, base2), geom1, geom2)
 
     def meta(self):
-        return {'exposed': self._time_last}
-
-    def qe_wl(self, wl):
-        """QE per wavelenght."""
-        return numpy.ones_like(wl)
+        return {'exposed': self._time_last,
+                'name': 'MEGARA detector'}
 
 
 class MegaraDetectorSat(MegaraDetector):

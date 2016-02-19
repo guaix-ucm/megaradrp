@@ -17,11 +17,11 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import numpy as np
 
+from .efficiency import Efficiency
 
 class FiberBundle(object):
-    def __init__(self, name, fid, bid):
+    def __init__(self, name, fid, bid, transmission=None):
         self.name = name
         # Geometry of the fibers
         self.size = 0.31
@@ -33,12 +33,13 @@ class FiberBundle(object):
 
         self.N = len(self.fibs_id)
         # Include the transmission of the fibers (all fibers are equal)
-        #tfiberraw = np.loadtxt('tfiber_0.1aa_20m.dat')
-        #self.tfiber_interp = ii.interp1d(tfiberraw[:,0] / 1e4, tfiberraw[:,1], bounds_error=False, fill_value=0.0, copy=False)
+        if transmission is None:
+            self._transmission = Efficiency()
+        else:
+            self._transmission = transmission
 
     def transmission(self, wl):
-        return np.ones_like(wl)
-        #return self.tfiber_interp(wl)
+        return self._transmission.response(wl)
 
     def meta(self):
         return {'name': self.name}

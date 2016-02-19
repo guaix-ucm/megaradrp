@@ -20,49 +20,6 @@
 """Simple monocromatic simulation"""
 
 
-import numpy
-
-import astropy.io.fits as fits
-
-
-class MegaraImageFactory(object):
-    CARDS_P = [
-        ('OBSERVAT', 'ORM', 'Name of observatory'),
-        ('TELESCOP', 'GTC', 'Telescope id.'),
-        ('INSTRUME', 'MEGARA', 'Name of the Instrument'),
-        ('ORIGIN', 'Simulator', 'FITS file originator'),
-    ]
-
-    def create(self, mode, meta, data):
-        pheader = fits.Header(self.CARDS_P)
-
-        # Detector
-        meta_det = meta.get('detector', {})
-
-        exptime = meta_det.get('exposed', 0.0)
-        pheader['EXPTIME'] = exptime
-        pheader['EXPOSED'] = exptime
-
-        # VPH
-        meta_vph = meta.get('vph', {})
-
-        vph_name = meta_vph.get('name', 'unknown')
-        pheader['VPH'] = vph_name
-
-        # Focus
-        focus = meta.get('focus', 0.0)
-        pheader['FOCUS'] = focus
-
-        # Focal plane
-        meta_fplane = meta.get('fplane', {})
-        cover = meta_fplane.get('cover', 'unknown')
-        pheader['COVER'] = cover
-
-        hdu1 = fits.PrimaryHDU(data, header=pheader)
-        hdul = fits.HDUList([hdu1])
-        return hdul
-
-
 def simulate_bias(detector):
     """Simulate a BIAS array."""
     detector.expose(source=0.0, time=0.0)

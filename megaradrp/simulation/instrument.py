@@ -24,11 +24,7 @@ from scipy.stats import norm
 import scipy.interpolate as ii
 from scipy.ndimage.filters import convolve1d
 
-from .vph import MegaraVPH
-from .detector import MegaraDetectorSat
-from .detector import ReadParams
-from .focalplane import FocalPlane
-from .fiberbundle import FiberBundle
+from .efficiency import Efficiency
 
 
 class PseudoSlit(object):
@@ -47,21 +43,19 @@ class PseudoSlit(object):
 
 
 class InternalOptics(object):
-    def __init__(self):
+    def __init__(self, transmission=None):
 
-        # Include the transmission of the fibers (all fibers are equal)
-        #rawdata = np.loadtxt('tspect_0.1aa.dat')
-        #self.trans_interp = ii.interp1d(rawdata[:,0] / 1e4, rawdata[:,1],
-        #                                bounds_error=False, fill_value=0.0, copy=False)
-        pass
+        if transmission is None:
+            self._transmission = Efficiency()
+        else:
+            self._transmission = transmission
 
     def transmission(self, wl):
-        return np.ones_like(wl)
-        #return self.trans_interp(wl)
+        return self._transmission.response(wl)
 
 
 class MegaraInstrument(object):
-    def __init__(self, focal_plane, fibers, pseudo_slit, vph, detector):
+    def __init__(self, focal_plane, fibers, pseudo_slit, internal_optics, vph, detector):
 
         self._mode = 'lcb'
         self.detector = detector
@@ -69,17 +63,15 @@ class MegaraInstrument(object):
         self.focal_plane = focal_plane
         self._fibers = fibers
 
-
         self.pseudo_slit = self._pseudo_slit[self._mode]
         self.fibers = self._fibers[self._mode]
 
         self.vph = vph
-        self.internal_optics = InternalOptics()
+        self.internal_optics = internal_optics
 
         self._internal_focus_factor = 1.0
         self._ref_focus = 123.123
         self._internal_focus = self._ref_focus
-
 
     def set_cover(self, status):
         """Cover in the focal plane."""
@@ -168,7 +160,7 @@ def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, 
 
     spos = -PIXSCALE * (np.arange(0, DSHAPE[1]*scale) - scale * xcenter) / scale
 
-    wl_in_super = vph.ainv(y_ps_fibers, -spos, grid=True)
+    wl_in_super = vph.ps_x_wl(y_ps_fibers, -spos, grid=True)
     wl_in_super = wl_in_super[:,::-1]
 
     spec_in_super = np.zeros_like(wl_in_super)
@@ -191,7 +183,7 @@ def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, 
     ytrace = np.zeros_like(wl_in_detector)
 
     for idx, y_ps_fiber in enumerate(y_ps_fibers):
-        ytrace[idx] = ycenter + vph.b(y_ps_fiber, wl_in_detector[idx]) / PIXSCALE
+        ytrace[idx] = ycenter + vph.ps_wl_y(y_ps_fiber, wl_in_detector[idx]) / PIXSCALE
 
     nsig = 6 # At 6 sigma, the value of the profile * 60000 counts is
              # << 1
@@ -222,7 +214,7 @@ def project_rss_w(visible_fib_ids, pseudo_slit, vph, detector, sigma):
     y_ps_fibers = [pseudo_slit.y_pos[fid] for fid in visible_fib_ids]
 
     spos = -PIXSCALE * (np.arange(0, DSHAPE[1]) - xcenter)
-    wl_in_detector = vph.ainv(y_ps_fibers, -spos, grid=True)
+    wl_in_detector = vph.ps_x_wl(y_ps_fibers, -spos, grid=True)
     wl_in_detector = wl_in_detector[:,::-1]
 
     ytrace = np.zeros_like(wl_in_detector)
