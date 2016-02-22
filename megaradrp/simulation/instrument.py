@@ -59,19 +59,31 @@ class MegaraInstrument(object):
 
         self._mode = 'lcb'
         self.detector = detector
+
         self._pseudo_slit = pseudo_slit
         self.focal_plane = focal_plane
         self._fibers = fibers
 
+        # pseudo slit and fiber bundle for current mode
         self.pseudo_slit = self._pseudo_slit[self._mode]
         self.fibers = self._fibers[self._mode]
 
         self.vph = vph
         self.internal_optics = internal_optics
 
+        # Focus
         self._internal_focus_factor = 1.0
         self._ref_focus = 123.123
         self._internal_focus = self._ref_focus
+
+    def set_mode(self, mode):
+        """Set overall mode of the instrument."""
+        if mode not in ['mos', 'lcb']:
+            raise ValueError('mode %s not valid' % (mode, ))
+
+        self._mode = mode
+        self.pseudo_slit = self._pseudo_slit[self._mode]
+        self.fibers = self._fibers[self._mode]
 
     def set_cover(self, status):
         """Cover in the focal plane."""
