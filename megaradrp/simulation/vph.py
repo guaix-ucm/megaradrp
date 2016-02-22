@@ -24,9 +24,10 @@ from .efficiency import Efficiency
 
 class MegaraVPH(object):
 
-    def __init__(self, name, transmission=None):
+    def __init__(self, name, vphtable, transmission=None):
         self.SAMPLING = 9.0
 
+        # FIXME: hardcoded values table
         self.minwl = 3653.0
         self.maxwl = 4386.0
 
@@ -37,8 +38,7 @@ class MegaraVPH(object):
 
         self.name = name
 
-        # FIXME: hardcoded VPH table
-        rr = numpy.loadtxt('VPH405_LR2.dat')
+        rr = numpy.loadtxt(vphtable)
         r1 = rr[:,0] # Position in the pseudoslit
         r2 = rr[:,1] # WL
         r3 = rr[:,2] # X position
