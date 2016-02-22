@@ -25,13 +25,17 @@ from megaradrp.simulation.extended import create_th_ar_arc_spectrum
 
 
 class Lamp(object):
+    def __init__(self, illumination=None):
+        if illumination is None:
+            self._illum = lambda x, y: np.ones_like(x)
+        else:
+            self._illum = illumination
 
     def flux(self, wl):
         return np.ones_like(wl)
 
     def illumination(self, x, y):
-        r = np.hypot(x, y)
-        return np.where(r <= 50.0, 1.0, 0.5)
+        return self._illum(x, y)
 
     def illumination_in_focal_plane(self, instrument, photons):
 
@@ -51,9 +55,9 @@ class Lamp(object):
 
 class BlackBodyLamp(Lamp):
 
-    def __init__(self, temp):
+    def __init__(self, temp, illumination=None):
         self.temp = temp
-        super(BlackBodyLamp, self).__init__()
+        super(BlackBodyLamp, self).__init__(illumination=illumination)
 
     def flux(self, wl_in):
         photons_in_flat = wl_in * blackbody_lambda(wl_in * u.um, self.temp) / 100
