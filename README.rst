@@ -1,4 +1,10 @@
 
+==========
+MEGARA DRP
+==========
+
+|zenodo|
+
 .. image:: https://readthedocs.org/projects/megara-drp/badge/?version=latest
    :target: https://readthedocs.org/projects/megara-drp/?badge=latest
    :alt: Documentation Status
@@ -27,4 +33,7 @@ be able to be installed and work properly:
 
 Webpage: https://guaix.fis.ucm.es/megara
 Maintainer: sergiopr@fis.ucm.es
+
+.. |zenodo| image:: https://zenodo.org/badge/13088/guaix-ucm/megaradrp.svg
+   :target: https://zenodo.org/badge/latestdoi/13088/guaix-ucm/megaradrp
 
