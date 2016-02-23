@@ -65,10 +65,12 @@ class BlackBodyLamp(Lamp):
 
 
 class FlatLamp(Lamp):
+    def __init__(self, photons, illumination=None):
+        self.photons = photons
+        super(FlatLamp, self).__init__(illumination=illumination)
 
     def flux(self, wl_in):
-        photons_in_flat = 7598.34893859 * np.ones_like(wl_in)
-        return photons_in_flat
+        return self.photons * np.ones_like(wl_in)
 
 
 class ArcLamp(Lamp):
