@@ -68,8 +68,34 @@ def create_mos(focal_plane):
 
 
 def create_vph():
-    t = EfficiencyFile('v02/tvph_0.1aa.dat')
-    vph = MegaraVPH(name='VPH405_LR', vphtable='v02/VPH405_LR2-extra.dat', transmission=t)
+    # vph = create_vph_by_data('VPH405_LR',
+    #                          'v02/VPH405_LR2-extra.dat',
+    #                          'v02/VPH405_LR_res.dat',
+    #                          'v02/tvph_0.1aa.dat'
+    #                         )
+
+    # vph = create_vph_by_data('VPH926_MR',
+    #                          'v02/VPH926_MR.txt',
+    #                          'v02/VPH926_MR_res.dat',
+    #                          'v02/tvph_0.1aa.dat'
+    #                     )
+
+    vph = create_vph_by_data('VPH863_HR',
+                             'v02/VPH863_HR.txt',
+                             'v02/VPH863_HR_res.dat',
+                             'v02/tvph_0.1aa.dat'
+                        )
+
+    return vph
+
+
+def create_vph_by_data(name, distortion, resolution, transmission):
+    trans = EfficiencyFile(transmission)
+    res = EfficiencyFile(resolution)
+    vph = MegaraVPH(name=name, vphtable=distortion,
+                    resolution=res,
+                    transmission=trans)
+
     return vph
 
 
@@ -118,7 +144,7 @@ if __name__ == '__main__':
         r = np.hypot(x, y)
         return 1.0 / (1+np.exp((x-130.0)/ 10.0))
 
-    illum = illum1
+    illum = None
 
     # Simulated arc spectrum
     wl_in = instrument.vph.wltable_interp()
@@ -128,40 +154,30 @@ if __name__ == '__main__':
 
     lamp1 = lamps.BlackBodyLamp(5400 * u.K, illumination=illum)
     flat_illum1 = lamp1.illumination_in_focal_plane(instrument, lamp1.flux(wl_in))
-    lamp2 = lamps.FlatLamp(illumination=illum)
+    lamp2 = lamps.FlatLamp(photons=7598.34893859, illumination=illum)
     flat_illum2 = lamp2.illumination_in_focal_plane(instrument, lamp2.flux(wl_in))
     lamp3 = lamps.ArcLamp(illumination=illum)
     arc_illum1 = lamp3.illumination_in_focal_plane(instrument, lamp3.flux(wl_in))
 
-    instrument.set_cover('LEFT')
-
-    iterf = simulate_fiber_flat_fits(factory, instrument, wltable=wl_in,
-                                     photons_in=flat_illum1, exposure=20.0, repeat=0)
-    for idx, fitsfile in enumerate(iterf):
-        fitsfile.writeto('flat-l-%d.fits' % idx, clobber=True)
-        print('fla2t %d done' % idx)
-
-    instrument.set_cover('RIGHT')
-    iterf = simulate_fiber_flat_fits(factory, instrument, wltable=wl_in,
-                                     photons_in=flat_illum1, exposure=20.0, repeat=0)
-    for idx, fitsfile in enumerate(iterf):
-        fitsfile.writeto('flat-r-%d.fits' % idx, clobber=True)
-        print('fla2t %d done' % idx)
-
-    instrument.set_cover('UNSET')
+    # instrument.set_cover('LEFT')
+    #
+    # iterf = simulate_fiber_flat_fits(factory, instrument, wltable=wl_in,
+    #                                  photons_in=flat_illum1, exposure=20.0, repeat=0)
+    # for idx, fitsfile in enumerate(iterf):
+    #     fitsfile.writeto('flat-l-%d.fits' % idx, clobber=True)
+    #     print('fla2t %d done' % idx)
+    #
+    # instrument.set_cover('RIGHT')
+    # iterf = simulate_fiber_flat_fits(factory, instrument, wltable=wl_in,
+    #                                  photons_in=flat_illum1, exposure=20.0, repeat=0)
+    # for idx, fitsfile in enumerate(iterf):
+    #     fitsfile.writeto('flat-r-%d.fits' % idx, clobber=True)
+    #     print('fla2t %d done' % idx)
+    #
+    # instrument.set_cover('UNSET')
 
     iterf = simulate_fiber_flat_fits(factory, instrument, wltable=wl_in,
                                      photons_in=flat_illum1, exposure=20.0, repeat=1)
     for idx, fitsfile in enumerate(iterf):
         fitsfile.writeto('flat-u-%d.fits' % idx, clobber=True)
         print('fla2t %d done' % idx)
-
-    sys.exit()
-
-    focii = np.arange(119, 128, 0.5)
-
-    iterf = simulate_focus_fits(factory, instrument, wl_in, arc_illum1, focii, exposure=20, repeat=1)
-
-    for idx, fitsfile in enumerate(iterf):
-        fitsfile.writeto('focus-%d.fits' % idx, clobber=True)
-        print('focus %d done' % idx)
