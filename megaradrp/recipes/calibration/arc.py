@@ -39,6 +39,7 @@ from numina.array.wavecal.statsummary import sigmaG
 # FIXME: still using findpeaks1D functions
 from numina.array.peaks.findpeaks1D import findPeaks_spectrum
 from numina.array.peaks.findpeaks1D import refinePeaks_spectrum
+from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import TraceMap
@@ -89,6 +90,18 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         return self.create_result(arc_image=reduced, arc_rss=rss,
                                   master_wlcalib=coeff_table)
 
+    def pintar_todas(self, diferencia_final, figure):
+        import matplotlib.pyplot as plt
+
+        fig = plt.figure(figure)
+        ax = fig.add_subplot(111)
+
+        ejeX = numpy.arange(len(diferencia_final))
+        ax.plot(diferencia_final, ejeX)
+        # fig.savefig('/home/pica/Documents/guaix/megaradrp/reduction/%s'%figure, format='eps', dpi=1500,  bbox_inches='tight')
+        plt.draw()
+        # plt.show()
+
     def calibrate_wl(self, rss, lines_catalog, poldeg, times_sigma=50.0):
         #
         # read master table (TBM) and generate auxiliary parameters (valid for
@@ -105,11 +118,15 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             _logger.info('Starting row %d', idx)
             # find peaks (initial search providing integer numbers)
             threshold = numpy.median(row) + times_sigma * sigmaG(row)
-            ipeaks_int = findPeaks_spectrum(row, nwinwidth, threshold)
-            # refine peaks fitting an appropriate function (providing float
-            # numbers)
-            ipeaks_float = refinePeaks_spectrum(row, ipeaks_int, nwinwidth)
 
+            ipeaks_int = findPeaks_spectrum(row, nwinwidth, threshold)
+            ipeaks_float = refinePeaks_spectrum(row, ipeaks_int, nwinwidth, method=1)
+
+            # ipeaks_int = find_peaks_indexes(row, nwinwidth, threshold)
+            # ipeaks_float = refine_peaks(row, ipeaks_int, nwinwidth)[0]
+
+            # self.pintar_todas(ipeaks_float,'refinado_nico')
+            # self.pintar_todas(ipeaks_float2,'refinado_nuevo')
             # define interpolation function and interpolate the refined peak
             # location, passing from index number (within the row array)
             # to channel number (note that this step takes care of the fact
