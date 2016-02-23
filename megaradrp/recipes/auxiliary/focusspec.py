@@ -36,6 +36,7 @@ import numina.array.fwhm as fmod
 from numina.array.wavecal.statsummary import sigmaG
 # FIXME: still using findpeaks1D functions
 from numina.array.peaks.findpeaks1D import findPeaks_spectrum
+from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 from numina.array.peaks.findpeaks1D import refinePeaks_spectrum
 from numina.flow.processing import BiasCorrector
 from numina.flow import SerialFlow
@@ -161,8 +162,13 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
             threshold = numpy.median(row) + times_sigma * sigmaG(row)
 
             ipeaks_int = findPeaks_spectrum(row, nwinwidth, threshold)
-
+            ipeaks_int_aux = find_peaks_indexes(row, nwinwidth, threshold)
+            assert numpy.allclose(ipeaks_int, ipeaks_int_aux)
             ipeaks_float = refinePeaks_spectrum(row, ipeaks_int, nwinwidth)
+            ipeaks_float = refine_peaks(row, ipeaks_int, nwinwidth)[0]
+
+            # self.pintarGrafica(refine_peaks(row, ipeaks_int, nwinwidth)[0] - refinePeaks_spectrum(row, ipeaks_int, nwinwidth))
+
             fpeaks[idx] = []
             for peak, peak_f in zip(ipeaks_int, ipeaks_float):
                 qslit = row[peak-lwidth:peak+lwidth]
@@ -171,6 +177,23 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                 fpeaks[idx].append((peak_f, peak_on_trace, fwhm))
             _logger.debug('found %d peaks in fiber %d', len(fpeaks[idx]), idx)
         return fpeaks
+
+    def pintarGrafica(self, diferencia_final):
+        import matplotlib.pyplot as plt
+
+        fig = plt.figure(1)
+        ax = fig.add_subplot(111)
+
+        ejeX = numpy.arange(len(diferencia_final))
+        ax.plot(ejeX, diferencia_final, label="0")
+        # lgd = ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=4,
+        #                 mode="expand")
+        lgd = ax.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc='upper center', ncol=4, mode="expand", borderaxespad=0.)
+        handles, labels = ax.get_legend_handles_labels()
+
+        fig.savefig('diferencia.eps', format='eps', dpi=1500, bbox_extra_artists=(lgd,), bbox_inches='tight')
+        plt.draw()
+        plt.show()
 
     def filter_lines(self, data):
         """Match lines between different images """
