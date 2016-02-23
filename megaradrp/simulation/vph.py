@@ -24,19 +24,11 @@ from .efficiency import Efficiency
 
 class MegaraVPH(object):
 
-    def __init__(self, name, vphtable, transmission=None):
+    def __init__(self, name, vphtable, resolution, transmission=None):
         self.SAMPLING = 9.0
 
-        # FIXME: hardcoded values table
-        self.minwl = 3653.0
-        self.maxwl = 4386.0
-
-        self.wlmin_in = 0.3596
-        self.wlmax_in = 0.4437
-
-        self.res = 6028.0
-
         self.name = name
+        self._res = resolution
 
         rr = numpy.loadtxt(vphtable)
         r1 = rr[:,0] # Position in the pseudoslit
@@ -44,12 +36,20 @@ class MegaraVPH(object):
         r3 = rr[:,2] # X position
         r4 = rr[:,3] # Y position
 
+        self.wlmin = rr[:,1].min()
+        self.wlmax = rr[:,1].max()
+
         # Bivariate interpolations
         self.ps_wl_x = ii.SmoothBivariateSpline(r1, r2, r3)
         self.ps_wl_y = ii.SmoothBivariateSpline(r1, r2, r4)
 
         self.ps_x_wl = ii.SmoothBivariateSpline(r1, r3, r2)
         self.ps_y_wl = ii.SmoothBivariateSpline(r1, r4, r2)
+
+        # extreme values for interpolation
+
+        self.wlmin_in = 0.98 * self.wlmin
+        self.wlmax_in = 1.02 * self.wlmax
 
         if transmission is None:
             self._transmission = Efficiency()
@@ -60,14 +60,13 @@ class MegaraVPH(object):
         pass
 
     def resolution(self, wl):
-        # This is as VPH405_LR_res
-        return  self.res * numpy.ones_like(wl)
+        return  self._res.response(wl)
 
     def meta(self):
         return {'name': self.name}
 
     def wltable_interp(self):
-        res_in = (self.wlmax_in / self.res) / self.SAMPLING
+        res_in = (self.wlmax/ self.resolution(self.wlmax)) / self.SAMPLING
         return numpy.arange(self.wlmin_in, self.wlmax_in, res_in)
 
     def transmission(self, wl):
