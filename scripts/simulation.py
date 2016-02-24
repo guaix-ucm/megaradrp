@@ -11,6 +11,7 @@ from megaradrp.simulation.factory import MegaraImageFactory
 from megaradrp.simulation.actions import simulate_fiber_flat_fits, simulate_focus_fits
 from megaradrp.simulation.efficiency import EfficiencyFile
 from megaradrp.simulation.instrument import InternalOptics
+from megaradrp.simulation.wheel import VPHWheel
 from megaradrp.simulation import lamps
 
 from megaradrp.simulation.fiberbundle import FiberBundle
@@ -70,27 +71,29 @@ def create_mos(focal_plane):
     return focal_plane, fibers_mos, pseudo_slit_mos
 
 
-def create_vph():
+def create_wheel():
+    _logger.info('create wheel')
+    wheel = VPHWheel(capacity=3)
     _logger.info('create vphs')
-    # vph = create_vph_by_data('VPH405_LR',
-    #                          'v02/VPH405_LR2-extra.dat',
-    #                          'v02/VPH405_LR_res.dat',
-    #                          'v02/tvph_0.1aa.dat'
-    #                         )
-
+    vph = create_vph_by_data('VPH405_LR',
+                              'v02/VPH405_LR2-extra.dat',
+                              'v02/VPH405_LR_res.dat',
+                              'v02/tvph_0.1aa.dat'
+                             )
+    wheel.put_in_pos(vph, 0)
     vph = create_vph_by_data('VPH926_MR',
                               'v02/VPH926_MR.txt',
                               'v02/VPH926_MR_res.dat',
                               'v02/tvph_0.1aa.dat'
                          )
-
-    # vph = create_vph_by_data('VPH863_HR',
-    #                          'v02/VPH863_HR.txt',
-    #                          'v02/VPH863_HR_res.dat',
-    #                          'v02/tvph_0.1aa.dat'
-    #                     )
-
-    return vph
+    wheel.put_in_pos(vph, 1)
+    vph = create_vph_by_data('VPH863_HR',
+                             'v02/VPH863_HR.txt',
+                             'v02/VPH863_HR_res.dat',
+                              'v02/tvph_0.1aa.dat'
+                         )
+    wheel.put_in_pos(vph, 2)
+    return wheel
 
 
 def create_vph_by_data(name, distortion, resolution, transmission):
@@ -110,15 +113,28 @@ def create_optics():
     return i
 
 
+def illum1(x, y):
+    """Explicit illumination in the focal plane"""
+    r = np.hypot(x, y)
+    return np.where(r <= 50.0, 1.0, 0.5)
+
+
+def illum2(x, y):
+    """Explicit illumination in the focal plane"""
+    r = np.hypot(x, y)
+    return 1.0 / (1+np.exp((x-130.0)/ 10.0))
+
+
 if __name__ == '__main__':
 
     logging.basicConfig(level=logging.DEBUG)
-
 
     # eq = np.random.normal(loc=0.80, scale=0.01, size=(4096,4096))
     # eq = np.clip(eq, 0.0, 1.0)
     # fits.writeto('eq.fits', eq, clobber=True)
     # eq = fits.getdata('eq.fits')
+
+    # Assemble instrument
 
     detector = create_detector()
 
@@ -129,41 +145,34 @@ if __name__ == '__main__':
     pseudo_slit = dict(lcb=pseudo_slit_lcb, mos=pseudo_slit_mos)
     fibers = dict(lcb=fibers_lcb, mos=fibers_mos)
 
-    vph = create_vph()
+    wheel = create_wheel()
     internal = create_optics()
     _logger.info('create instrument')
     instrument = MegaraInstrument(focal_plane=focal_plane,
                                   fibers=fibers,
-                                  vph=vph,
+                                  wheel=wheel,
                                   pseudo_slit=pseudo_slit,
                                   internal_optics=internal,
                                   detector=detector)
 
     factory = MegaraImageFactory()
 
-    def illum1(x, y):
-        """Explicit illumination in the focal plane"""
-        r = np.hypot(x, y)
-        return np.where(r <= 50.0, 1.0, 0.5)
+    # This instruction fixes the number of fibers...
+    instrument.set_mode('mos')
+    # set VPH
+    instrument.wheel.select('VPH926_MR')
 
-    def illum2(x, y):
-        """Explicit illumination in the focal plane"""
-        r = np.hypot(x, y)
-        return 1.0 / (1+np.exp((x-130.0)/ 10.0))
 
     illum = None
+    lamp1 = lamps.BlackBodyLamp(5400 * u.K, illumination=illum)
+    lamp2 = lamps.FlatLamp(photons=7598.34893859, illumination=illum)
+    lamp3 = lamps.ArcLamp(illumination=illum)
+
 
     # Simulated arc spectrum
     wl_in = instrument.vph.wltable_interp()
-
-    # This instruction fixes the number of fibers...
-    instrument.set_mode('mos')
-
-    lamp1 = lamps.BlackBodyLamp(5400 * u.K, illumination=illum)
     flat_illum1 = lamp1.illumination_in_focal_plane(instrument, lamp1.flux(wl_in))
-    lamp2 = lamps.FlatLamp(photons=7598.34893859, illumination=illum)
     flat_illum2 = lamp2.illumination_in_focal_plane(instrument, lamp2.flux(wl_in))
-    lamp3 = lamps.ArcLamp(illumination=illum)
     arc_illum1 = lamp3.illumination_in_focal_plane(instrument, lamp3.flux(wl_in))
 
     # instrument.set_cover('LEFT')
@@ -187,5 +196,5 @@ if __name__ == '__main__':
     iterf = simulate_fiber_flat_fits(factory, instrument, wltable=wl_in,
                                      photons_in=flat_illum1, exposure=20.0, repeat=1)
     for idx, fitsfile in enumerate(iterf):
-        fitsfile.writeto('flat-u-%d.fits' % idx, clobber=True)
-        print('fla2t %d done' % idx)
+        fitsfile.writeto('image-%d.fits' % idx, clobber=True)
+        print('image %d done' % idx)

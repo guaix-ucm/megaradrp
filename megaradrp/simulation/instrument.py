@@ -55,7 +55,7 @@ class InternalOptics(object):
 
 
 class MegaraInstrument(object):
-    def __init__(self, focal_plane, fibers, pseudo_slit, internal_optics, vph, detector):
+    def __init__(self, focal_plane, fibers, pseudo_slit, internal_optics, wheel, detector):
 
         self._mode = 'lcb'
         self.detector = detector
@@ -68,13 +68,23 @@ class MegaraInstrument(object):
         self.pseudo_slit = self._pseudo_slit[self._mode]
         self.fibers = self._fibers[self._mode]
 
-        self.vph = vph
+        self.wheel = wheel
+        self.vph = self.wheel.current()
         self.internal_optics = internal_optics
 
         # Focus
         self._internal_focus_factor = 1.0
         self._ref_focus = 123.123
         self._internal_focus = self._ref_focus
+
+        # Callbacks get called on predefined events on the devices
+        # A callback to maintain self.vph updated
+        # whenever the wheel is moved
+
+        def update_current_vph(_):
+            self.vph = self.wheel.current()
+
+        self.wheel.changed.connect(update_current_vph)
 
     def set_mode(self, mode):
         """Set overall mode of the instrument."""
