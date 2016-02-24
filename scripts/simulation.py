@@ -2,6 +2,8 @@ from __future__ import print_function
 
 import sys
 
+import logging
+
 import numpy as np
 from astropy import units as u
 from megaradrp.simulation.instrument import MegaraInstrument
@@ -17,10 +19,11 @@ from megaradrp.simulation.focalplane import FocalPlane
 from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.vph import MegaraVPH
 
+_logger = logging.getLogger("simulation")
 
 # create detector from data
 def create_detector():
-
+    _logger.info('create detector')
     DSHAPE = (2056 * 2, 2048 * 2)
     PSCAN = 50
     OSCAN = 50
@@ -37,7 +40,7 @@ def create_detector():
     return detector
 
 def create_lcb(focal_plane):
-
+    _logger.info('create lcb')
     layouttable = np.loadtxt('v02/LCB_spaxel_centers.dat')
     fib_ids = layouttable[:,4].astype('int').tolist()
     bun_ids = layouttable[:,3].astype('int').tolist()
@@ -53,7 +56,7 @@ def create_lcb(focal_plane):
 
 
 def create_mos(focal_plane):
-
+    _logger.info('create mos')
     layouttable = np.loadtxt('v02/MOS_spaxel_centers.dat')
     fib_ids = layouttable[:,4].astype('int').tolist()
     bun_ids = layouttable[:,3].astype('int').tolist()
@@ -68,23 +71,24 @@ def create_mos(focal_plane):
 
 
 def create_vph():
+    _logger.info('create vphs')
     # vph = create_vph_by_data('VPH405_LR',
     #                          'v02/VPH405_LR2-extra.dat',
     #                          'v02/VPH405_LR_res.dat',
     #                          'v02/tvph_0.1aa.dat'
     #                         )
 
-    # vph = create_vph_by_data('VPH926_MR',
-    #                          'v02/VPH926_MR.txt',
-    #                          'v02/VPH926_MR_res.dat',
+    vph = create_vph_by_data('VPH926_MR',
+                              'v02/VPH926_MR.txt',
+                              'v02/VPH926_MR_res.dat',
+                              'v02/tvph_0.1aa.dat'
+                         )
+
+    # vph = create_vph_by_data('VPH863_HR',
+    #                          'v02/VPH863_HR.txt',
+    #                          'v02/VPH863_HR_res.dat',
     #                          'v02/tvph_0.1aa.dat'
     #                     )
-
-    vph = create_vph_by_data('VPH863_HR',
-                             'v02/VPH863_HR.txt',
-                             'v02/VPH863_HR_res.dat',
-                             'v02/tvph_0.1aa.dat'
-                        )
 
     return vph
 
@@ -100,13 +104,16 @@ def create_vph_by_data(name, distortion, resolution, transmission):
 
 
 def create_optics():
-
+    _logger.info('create internal optics')
     t = EfficiencyFile('v02/tspect_0.1aa.dat')
     i = InternalOptics(transmission=t)
     return i
 
 
 if __name__ == '__main__':
+
+    logging.basicConfig(level=logging.DEBUG)
+
 
     # eq = np.random.normal(loc=0.80, scale=0.01, size=(4096,4096))
     # eq = np.clip(eq, 0.0, 1.0)
@@ -124,7 +131,7 @@ if __name__ == '__main__':
 
     vph = create_vph()
     internal = create_optics()
-
+    _logger.info('create instrument')
     instrument = MegaraInstrument(focal_plane=focal_plane,
                                   fibers=fibers,
                                   vph=vph,
@@ -175,6 +182,7 @@ if __name__ == '__main__':
     #     print('fla2t %d done' % idx)
     #
     # instrument.set_cover('UNSET')
+    _logger.info('simulation')
 
     iterf = simulate_fiber_flat_fits(factory, instrument, wltable=wl_in,
                                      photons_in=flat_illum1, exposure=20.0, repeat=1)
