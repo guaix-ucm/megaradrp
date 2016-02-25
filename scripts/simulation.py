@@ -1,7 +1,5 @@
 from __future__ import print_function
 
-import sys
-
 import logging
 
 import numpy as np
@@ -125,11 +123,8 @@ def illum2(x, y):
     return 1.0 / (1+np.exp((x-130.0)/ 10.0))
 
 
-if __name__ == '__main__':
-
-    logging.basicConfig(level=logging.DEBUG)
-
-    # eq = np.random.normal(loc=0.80, scale=0.01, size=(4096,4096))
+def create_instrument():
+ # eq = np.random.normal(loc=0.80, scale=0.01, size=(4096,4096))
     # eq = np.clip(eq, 0.0, 1.0)
     # fits.writeto('eq.fits', eq, clobber=True)
     # eq = fits.getdata('eq.fits')
@@ -154,6 +149,14 @@ if __name__ == '__main__':
                                   pseudo_slit=pseudo_slit,
                                   internal_optics=internal,
                                   detector=detector)
+    return instrument
+
+
+if __name__ == '__main__':
+
+    logging.basicConfig(level=logging.DEBUG)
+
+    instrument = create_instrument()
 
     factory = MegaraImageFactory()
 
