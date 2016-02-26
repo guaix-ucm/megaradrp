@@ -220,10 +220,13 @@ class FiberMOSRecipe2(MegaraBaseRecipe):
             #    hdulist.close()
 
         _logger.info('resampling spectra')
-        final = resample_rss_flux(hdu_t.data, rinput.wlcalib)
+        final, wcsdata = resample_rss_flux(hdu_t.data, rinput.wlcalib)
         # This value was ~0.4% and now is 4e-6 %
         # (abs(final.sum()-hdu_t.data.sum())/hdu_t.data.sum()*100)
-        hdu_f = fits.PrimaryHDU(final)
+        hdu_f = fits.PrimaryHDU(final, header=template_header)
+
+        # Add WCS spectral keywords
+        add_wcs(hdu_f.header, wcsdata[0], wcsdata[2])
 
         _logger.info('MOS reduction ended')
 
@@ -305,7 +308,7 @@ def resample_rss_flux(rss_old, wcalib):
         interpolator = SteffenInterpolator(old_wl_borders[idx], accum_flux[idx], extrapolate='border')
         fl_borders = interpolator(new_borders)
         rss_resampled[idx] = fl_borders[1:]- fl_borders[:-1]
-    return rss_resampled
+    return rss_resampled, (wl_min, wl_max, delts)
 
 
 def map_borders(wls):
@@ -319,3 +322,15 @@ def map_borders(wls):
     all_borders[0] = 2 * wls[0] - midpt_wl[0]
     all_borders[-1] = 2 * wls[-1] - midpt_wl[-1]
     return all_borders
+
+
+def add_wcs(hdr, wlr0, delt):
+    hdr['CRPIX1'] = 1
+    hdr['CRVAL1'] = wlr0
+    hdr['CDELT1'] = delt
+    hdr['CTYPE1'] = 'WAVELENGTH'
+    hdr['CRPIX2'] = 1
+    hdr['CRVAL2'] = 1
+    hdr['CDELT2'] = 1
+    hdr['CTYPE2'] = 'PIXEL'
+    return hdr
