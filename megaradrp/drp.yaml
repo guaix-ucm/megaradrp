@@ -89,6 +89,15 @@ modes:
   summary: Bad Pixel Mask
   uuid: xxxxxx
   tagger: null
+- date: 2016-03-03
+  description: Slit Flat
+  key: slit_flat
+  name: Slit Flat
+  reference: xxx
+  status: DRAFT
+  summary: Slit Flat
+  uuid: xxxxxx
+  tagger: null
 - key: focus_spectrograph
   name: Focus Spectrograph
 pipelines:
@@ -99,6 +108,7 @@ pipelines:
       bpm: megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe
       dark_image: megaradrp.recipes.calibration.dark.DarkRecipe
       fiber_flat_image: megaradrp.recipes.calibration.flat.FiberFlatRecipe
+      slit_flat: megaradrp.recipes.calibration.slitflat.SlitFlatRecipe
       mos_image: megaradrp.recipes.scientific.FiberMOSRecipe2
       flux_calibration: megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipe
       trace_map: megaradrp.recipes.calibration.trace.TraceMapRecipe
@@ -111,5 +121,7 @@ products:
   alias: TraceMap
 - name: megaradrp.products.MasterFiberFlat
   alias: MasterFiberFlat
+- name: megaradrp.products.MasterSlitFlat
+  alias: MasterSlitFlat
 - name: megaradrp.products.MasterSensitivity
   alias: MasterSensitivity
