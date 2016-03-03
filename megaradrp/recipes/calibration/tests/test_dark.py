@@ -1,15 +1,15 @@
-from tempfile import mkdtemp
-import numpy as np
-import astropy.io.fits as fits
-import pytest
 import shutil
+from tempfile import mkdtemp
 
-from megaradrp.tests.simulation import simulate_dark, simulate_dark_fits
-from megaradrp.tests.simulation import ReadParams, MegaraDetectorSat, MegaraImageFactory
+import astropy.io.fits as fits
+import numpy as np
 from numina.core import DataFrame, ObservationResult
 
-from megaradrp.recipes.calibration.tests.test_bpm_common import generate_bias
 from megaradrp.recipes.calibration.dark import DarkRecipe
+from megaradrp.recipes.calibration.tests.test_bpm_common import generate_bias
+from megaradrp.simulation.factory import MegaraImageFactory
+from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
+from megaradrp.simulation.actions import simulate_dark_fits
 
 
 def test_dark():
@@ -22,16 +22,15 @@ def test_dark():
     gain = 1.0
     bias = 1000.0
 
-    eq = 0.8 * np.ones(DSHAPE)
+    qe = 0.8 * np.ones(DSHAPE)
 
     temporary_path = mkdtemp()
-    print ('Path: %s' %temporary_path)
-    fits.writeto('%s/eq.fits' % temporary_path, eq, clobber=True)
+    fits.writeto('%s/eq.fits' % temporary_path, qe, clobber=True)
 
     readpars1 = ReadParams(gain=gain, ron=ron, bias=bias)
     readpars2 = ReadParams(gain=gain, ron=ron, bias=bias)
 
-    detector = MegaraDetectorSat(DSHAPE, OSCAN, PSCAN, eq=eq,
+    detector = MegaraDetectorSat(DSHAPE, OSCAN, PSCAN, qe=qe,
                                  dark=(3.0 / 3600.0),
                                  readpars1=readpars1, readpars2=readpars2,
                                  bins='11')
@@ -39,13 +38,13 @@ def test_dark():
     number = 10
 
     factory = MegaraImageFactory()
-    fs = [simulate_dark_fits(factory, detector, exposure=3600) for i in range(number)]
+    fs = simulate_dark_fits(factory, detector, exposure=3600, repeat=number)
 
-    for aux in range(len(fs)):
-        fs[aux].writeto('%s/dark_%s.fits' % (temporary_path, aux),clobber=True)
+    for idx, aux in enumerate(fs):
+        aux.writeto('%s/dark_%s.fits' % (temporary_path, idx),clobber=True)
 
     master_bias = generate_bias(detector, number, temporary_path)
-    master_bias_data = master_bias.biasframe.frame[0].data
+    master_bias_data = master_bias.master_bias.frame[0].data
 
     fits.writeto('%s/master_bias_data0.fits' % temporary_path,
                  master_bias_data, clobber=True)  # Master Bias
@@ -64,8 +63,8 @@ def test_dark():
         filename=open(temporary_path + '/master_bias_data0.fits').name))
     aux = recipe.run(ri)
 
-    fits.writeto('%s/master_dark.fits' % temporary_path, aux.darkframe.frame[0].data, clobber=True)
-    truncate_data = np.around(aux.darkframe.frame[0].data, decimals=2)
+    fits.writeto('%s/master_dark.fits' % temporary_path, aux.master_dark.frame[0].data, clobber=True)
+    truncate_data = np.around(aux.master_dark.frame[0].data, decimals=2)
     shutil.rmtree(temporary_path)
     assert np.all(truncate_data == np.zeros(truncate_data.shape))
 

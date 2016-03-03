@@ -46,7 +46,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
     master_dark = MasterDarkRequirement()
     master_bpm = MasterBPMRequirement()
     fiberflat_frame = Product(MasterFiberFlat)
-    traces = Product(TraceMap)
+    master_traces = Product(TraceMap)
 
     def __init__(self):
         super(TraceMapRecipe, self).__init__(
@@ -93,4 +93,5 @@ class TraceMapRecipe(MegaraBaseRecipe):
                               'start':0, 'stop':4095,
                               'fitparms': pfit.tolist()})
 
-        return self.create_result(fiberflat_frame=reduced, traces=tracelist)
+        return self.create_result(fiberflat_frame=reduced,
+                                  master_traces=tracelist)

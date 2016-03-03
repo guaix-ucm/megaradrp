@@ -34,7 +34,7 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
 
-    bpm_image = Product(MasterBPM)
+    master_bpm = Product(MasterBPM)
 
     def __init__(self):
         super(BadPixelsMaskRecipe, self).__init__(version="0.1.0")
@@ -61,4 +61,4 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
 
         reduced = fits.HDUList([hdu])
 
-        return self.create_result(bpm_image=reduced)
+        return self.create_result(master_bpm=reduced)

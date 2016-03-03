@@ -60,11 +60,11 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     master_bpm = MasterBPMRequirement()
     tracemap = Requirement(TraceMap, 'Trace information of the Apertures')
     lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
-    polynomial_degree = Parameter(2, 'Polynomial degree of arc calibration')
+    polynomial_degree = Parameter(5, 'Polynomial degree of arc calibration')
     # Products
     arc_image = Product(DataFrameType)
     arc_rss = Product(DataFrameType)
-    wlcalib = Product(ArrayType)
+    master_wlcalib = Product(ArrayType)
 
     def __init__(self):
         super(ArcCalibrationRecipe, self).__init__("0.1.0")
@@ -88,7 +88,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         # WL calibration goes here
         return self.create_result(arc_image=reduced, arc_rss=rss,
-                                  wlcalib=coeff_table)
+                                  master_wlcalib=coeff_table)
 
     def pintar_todas(self, diferencia_final, figure):
         import matplotlib.pyplot as plt
@@ -156,7 +156,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                                  times_sigma_r=3.0,
                                                  frac_triplets_for_sum=0.50,
                                                  times_sigma_theil_sen=10.0,
-                                                 poly_degree_wfit=2,
+                                                 poly_degree_wfit=poldeg,
                                                  times_sigma_polfilt=10.0,
                                                  times_sigma_inclusion=5.0)
 
@@ -166,7 +166,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     fit_solution(wv_master,
                                  xpeaks_refined,
                                  solution,
-                                 poly_degree_wfit=2,
+                                 poly_degree_wfit=poldeg,
                                  weighted=False)
 
                 _logger.info('approximate crval1, cdelt1: %f %f',

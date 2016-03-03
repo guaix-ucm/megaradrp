@@ -35,7 +35,7 @@ class BiasRecipe(MegaraBaseRecipe):
     """Process BIAS images and create MASTER_BIAS."""
     obresult = ObservationResultRequirement()
 
-    biasframe = Product(MasterBias)
+    master_bias = Product(MasterBias)
 
     def __init__(self):
         super(BiasRecipe, self).__init__(version="0.1.0")
@@ -60,5 +60,5 @@ class BiasRecipe(MegaraBaseRecipe):
         hdulist = fits.HDUList(hdu + [varhdu, num])
         _logger.info('bias reduction ended')
 
-        result = self.create_result(biasframe=hdulist)
+        result = self.create_result(master_bias=hdulist)
         return result

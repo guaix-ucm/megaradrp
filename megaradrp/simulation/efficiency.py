@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,13 +17,23 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""The MEGARA Data Reduction Pipeline."""
 
-import logging
-
-
-__version__ = '0.6.dev0'
+import numpy as np
+import scipy.interpolate as ii
 
 
-# Top level NullHandler
-logging.getLogger("megaradrp").addHandler(logging.NullHandler())
+class Efficiency(object):
+
+    def response(self, wl):
+        return np.ones_like(wl)
+
+
+class EfficiencyFile(Efficiency):
+
+    def __init__(self, fname, fill_value=0.0):
+        rawdata = np.loadtxt(fname)
+        self._interp = ii.interp1d(rawdata[:,0] / 1e4, rawdata[:,1],
+                                   bounds_error=False, fill_value=fill_value)
+
+    def response(self, wl):
+        return self._interp(wl)

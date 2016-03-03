@@ -32,7 +32,7 @@ class DarkRecipe(MegaraBaseRecipe):
 
     master_bias = MasterBiasRequirement()
 
-    darkframe = Product(MasterDark)
+    master_dark = Product(MasterDark)
 
     def __init__(self):
         super(DarkRecipe, self).__init__(version="0.1.0")
@@ -50,5 +50,5 @@ class DarkRecipe(MegaraBaseRecipe):
         except:
             pass
 
-        result = self.create_result(darkframe=hdu)
+        result = self.create_result(master_dark=hdu)
         return result

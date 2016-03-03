@@ -19,13 +19,13 @@
 
 """Tests for the bpm mode recipe module."""
 
-from numina.core import DataFrame, ObservationResult
 import astropy.io.fits as fits
 import numpy as np
+from numina.core import DataFrame, ObservationResult
 
 
 def generate_bias(detector, number, temporary_path):
-    from megaradrp.tests.simulation import simulate_bias
+    from megaradrp.simulation.actions import simulate_bias
     from megaradrp.recipes.calibration.bias import BiasRecipe
 
     fs = [simulate_bias(detector) for i in range(number)]
@@ -45,8 +45,8 @@ def generate_bias(detector, number, temporary_path):
     return recipe.run(ri)
 
 def crear_archivos(temporary_path):
-    from megaradrp.tests.simulation import simulate_flat
-    from megaradrp.tests.simulation import ReadParams, MegaraDetectorSat
+    from megaradrp.simulation.actions import simulate_flat
+    from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
     from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
 
     number = 5
@@ -57,13 +57,13 @@ def crear_archivos(temporary_path):
     gain = 1.0
     bias = 1000.0
 
-    eq = 0.8 * np.ones(DSHAPE)
-    eq[0:15, 0:170] = 0.0
+    qe = 0.8 * np.ones(DSHAPE)
+    qe[0:15, 0:170] = 0.0
 
     readpars1 = ReadParams(gain=gain, ron=ron, bias=bias)
     readpars2 = ReadParams(gain=gain, ron=ron, bias=bias)
 
-    detector = MegaraDetectorSat(DSHAPE, OSCAN, PSCAN, eq=eq,
+    detector = MegaraDetectorSat(DSHAPE, OSCAN, PSCAN, qe=qe,
                                  dark=(3.0 / 3600.0),
                                  readpars1=readpars1, readpars2=readpars2,
                                  bins='11')
@@ -78,7 +78,7 @@ def crear_archivos(temporary_path):
                      clobber=True)
 
     master_bias = generate_bias(detector, number, temporary_path)
-    master_bias_data = master_bias.biasframe.frame[0].data
+    master_bias_data = master_bias.master_bias.frame[0].data
 
     fits.writeto('%s/master_bias_data0.fits' % temporary_path,
                  master_bias_data, clobber=True)  # Master Bias
@@ -96,7 +96,7 @@ def crear_archivos(temporary_path):
     ri = recipe.create_input(obresult=ob, master_bias=DataFrame(
         filename=open(temporary_path + '/master_bias_data0.fits').name))
     aux = recipe.run(ri)
-    fits.writeto('%s/master_bpm.fits' % temporary_path, aux.bpm_image.frame[0].data[1], clobber=True)
+    fits.writeto('%s/master_bpm.fits' % temporary_path, aux.master_bpm.frame[0].data[1], clobber=True)
 
     return names
 

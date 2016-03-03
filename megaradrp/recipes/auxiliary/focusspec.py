@@ -113,12 +113,12 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         final = self.reorder_and_fit(line_fibers, focci)
 
         focus_median = numpy.median(final[:,2])
+        _logger.info('median focus value is %5.2f', focus_median)
 
+        _logger.info('generate focus image')
         image = self.generate_image(final)
         hdu = fits.PrimaryHDU(image)
         hdulist = fits.HDUList([hdu])
-
-        _logger.info('median focus value is %5.2f', focus_median)
 
         _logger.info('end focus spectrograph')
         return self.create_result(focus_table=final, focus_image=hdulist)
