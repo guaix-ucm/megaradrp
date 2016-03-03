@@ -52,6 +52,8 @@ class MegaraBaseRecipe(BaseRecipe):
                        'FiberFlatRecipe': [OverscanCorrector, TrimImage,
                                            BiasCorrector, BadPixelCorrector,
                                            DarkCorrector],
+                       'SlitFlatRecipe': [BiasCorrector, BadPixelCorrector,
+                                          DarkCorrector],
                        'TraceMapRecipe': [OverscanCorrector, TrimImage,
                                           BiasCorrector, BadPixelCorrector,
                                           DarkCorrector],
@@ -144,11 +146,23 @@ class MegaraBaseRecipe(BaseRecipe):
 
         parameters = {'biasmap':mbias}
 
-        if rinput.master_bpm:
-            with rinput.master_bpm.open() as hdul:
-                parameters['bpm'] = hdul[0].data.copy()
-        if rinput.master_dark:
-            with rinput.master_dark.open() as hdul:
-                parameters['dark'] = hdul[0].data.copy()
+        try:
+            if rinput.master_bpm:
+                with rinput.master_bpm.open() as hdul:
+                    parameters['bpm'] = hdul[0].data.copy()
+        except:
+            pass
+        try:
+            if rinput.master_dark:
+                with rinput.master_dark.open() as hdul:
+                    parameters['dark'] = hdul[0].data.copy()
+        except:
+            pass
+        try:
+            if rinput.master_fiberflat:
+                with rinput.master_fiberflat.open() as hdul:
+                    parameters['slitflat'] = hdul[0].data.copy()
+        except:
+            pass
 
         return parameters
