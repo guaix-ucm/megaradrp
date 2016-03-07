@@ -59,7 +59,7 @@ class MasterFiberFlatRequirement(Requirement):
 
 class MasterSlitFlatRequirement(Requirement):
     def __init__(self, optional=True):
-        super(MasterFiberFlatRequirement,
+        super(MasterSlitFlatRequirement,
               self).__init__(MasterSlitFlat,
                              'Master slit flat calibration'
                              )
