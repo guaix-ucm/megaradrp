@@ -25,8 +25,9 @@ from astropy.io import fits
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import MasterSlitFlat
-from megaradrp.requirements import MasterFiberFlatRequirement
+from megaradrp.requirements import MasterFiberFlatRequirement, MasterBiasRequirement, MasterDarkRequirement
 from numina.core import Product, Parameter
+from numina.core.requirements import ObservationResultRequirement
 from scipy.ndimage.filters import median_filter
 from scipy.signal import savgol_filter
 
@@ -36,7 +37,10 @@ class SlitFlatRecipe(MegaraBaseRecipe):
     """Process SLIT_FLAT images and create MASTER_SLIT_FLAT."""
 
     # Requirements
-    master_fiberflat = MasterFiberFlatRequirement()
+    obresult = ObservationResultRequirement()
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+
     window_length_x = Parameter(301, 'Savitzky-Golay length of the filter window OX')
     window_length_y = Parameter(31, 'Savitzky-Golay length of the filter window OY')
     polyorder = Parameter(3, 'Savitzky-Golay order of the polynomial used to fit the samples')
@@ -51,23 +55,21 @@ class SlitFlatRecipe(MegaraBaseRecipe):
     def run(self, rinput):
         _logger.info('Slit Flat')
 
-        with rinput.master_fiberflat.open() as hdul:
-            master_fiberflat = hdul[0].data.copy()
+        parameters = self.get_parameters(rinput)
 
-        master_fiberflat[0:2055,:] = master_fiberflat[0:2055,:]-1000.0
-        master_fiberflat[2056:4111,:] = master_fiberflat[2056:4111,:]-1005.0
+        reduced = self.bias_process_common(rinput.obresult, parameters)
 
         if rinput.median_window_length:
-            archivo_mediana = median_filter(master_fiberflat, (1,rinput.median_window_length))
+            archivo_mediana = median_filter(reduced[0].data, (1,rinput.median_window_length))
         else:
-            archivo_mediana = master_fiberflat
+            archivo_mediana = reduced[0].data
 
         result = savgol_filter(archivo_mediana, rinput.window_length_x, rinput.polyorder, axis=1)
 
         if rinput.window_length_y:
             result = savgol_filter(result, rinput.window_length_y, rinput.polyorder, axis=0)
 
-        qe = master_fiberflat/result
+        qe = reduced[0].data/result
 
         qe[np.isinf(qe)] = 1.0
         qe[np.isnan(qe)] = 1.0

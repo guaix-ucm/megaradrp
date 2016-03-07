@@ -23,7 +23,7 @@ from astropy.io import fits
 import numina.array.combine as combine
 from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector, BadPixelCorrector, \
-    DarkCorrector
+    DarkCorrector, SlitFlatCorrector
 from numina.core import BaseRecipe
 from numina.core.dataholders import Product
 from numina.core.products import QualityControlProduct
@@ -52,6 +52,8 @@ class MegaraBaseRecipe(BaseRecipe):
                        'FiberFlatRecipe': [OverscanCorrector, TrimImage,
                                            BiasCorrector, BadPixelCorrector,
                                            DarkCorrector],
+                       'SlitFlatRecipe': [BiasCorrector, BadPixelCorrector,
+                                          DarkCorrector],
                        'TraceMapRecipe': [OverscanCorrector, TrimImage,
                                           BiasCorrector, BadPixelCorrector,
                                           DarkCorrector],
@@ -77,6 +79,12 @@ class MegaraBaseRecipe(BaseRecipe):
                 elif issubclass(DarkCorrector, flow[cont]):
                     if 'dark' in params.keys():
                         flow[cont] = (flow[cont](params['dark']))
+                    else:
+                        del (flow[cont])
+                        cont -= 1
+                elif issubclass(SlitFlatCorrector, flow[cont]):
+                    if 'slitflat' in params.keys():
+                        flow[cont] = (flow[cont](params['slitflat']))
                     else:
                         del (flow[cont])
                         cont -= 1
@@ -144,11 +152,23 @@ class MegaraBaseRecipe(BaseRecipe):
 
         parameters = {'biasmap':mbias}
 
-        if rinput.master_bpm:
-            with rinput.master_bpm.open() as hdul:
-                parameters['bpm'] = hdul[0].data.copy()
-        if rinput.master_dark:
-            with rinput.master_dark.open() as hdul:
-                parameters['dark'] = hdul[0].data.copy()
+        try:
+            if rinput.master_bpm:
+                with rinput.master_bpm.open() as hdul:
+                    parameters['bpm'] = hdul[0].data.copy()
+        except:
+            pass
+        try:
+            if rinput.master_dark:
+                with rinput.master_dark.open() as hdul:
+                    parameters['dark'] = hdul[0].data.copy()
+        except:
+            pass
+        try:
+            if rinput.master_fiberflat:
+                with rinput.master_fiberflat.open() as hdul:
+                    parameters['slitflat'] = hdul[0].data.copy()
+        except:
+            pass
 
         return parameters
