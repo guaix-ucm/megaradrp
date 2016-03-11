@@ -21,11 +21,13 @@ import numpy as np
 from astropy import units as u
 from astropy.analytic_functions import blackbody_lambda
 
+from .wheel import HWDevice
 from megaradrp.simulation.extended import create_th_ar_arc_spectrum
 
 
-class Lamp(object):
-    def __init__(self, illumination=None):
+class Lamp(HWDevice):
+    def __init__(self, name, illumination=None):
+        super(Lamp, self).__init__(name=name)
         if illumination is None:
             self._illum = lambda x, y: np.ones_like(x)
         else:
@@ -41,7 +43,7 @@ class Lamp(object):
 
         # Input spectra in each fiber, in photons
         # Fiber flux is 0 by default
-        base_coverage = np.zeros((instrument.fibers.N, 1))
+        base_coverage = np.zeros((instrument.fibers.nfibers, 1))
 
         tab = instrument.focal_plane.get_all_fibers(instrument.fibers)
 
@@ -53,11 +55,12 @@ class Lamp(object):
 
         return base_coverage * photons
 
+
 class BlackBodyLamp(Lamp):
 
-    def __init__(self, temp, illumination=None):
+    def __init__(self, name, temp, illumination=None):
         self.temp = temp
-        super(BlackBodyLamp, self).__init__(illumination=illumination)
+        super(BlackBodyLamp, self).__init__(name, illumination=illumination)
 
     def flux(self, wl_in):
         photons_in_flat = wl_in * blackbody_lambda(wl_in * u.um, self.temp) / 100
@@ -65,9 +68,9 @@ class BlackBodyLamp(Lamp):
 
 
 class FlatLamp(Lamp):
-    def __init__(self, photons, illumination=None):
+    def __init__(self, name, photons, illumination=None):
         self.photons = photons
-        super(FlatLamp, self).__init__(illumination=illumination)
+        super(FlatLamp, self).__init__(name, illumination=illumination)
 
     def flux(self, wl_in):
         return self.photons * np.ones_like(wl_in)

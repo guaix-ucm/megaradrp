@@ -28,17 +28,18 @@ from .efficiency import Efficiency
 
 
 class PseudoSlit(object):
-    def __init__(self, name):
+    def __init__(self, name, insmode):
 
         # Positions of the fibers in the PS slit
         self.y_pos = {}
         self.name = name
+        self.insmode = insmode
 
     def connect_fibers(self, fibid, pos):
         self.y_pos = dict(zip(fibid, pos))
 
     def meta(self):
-        return {'name': self.name}
+        return {'name': self.name, 'insmode': self.insmode}
 
 
 
@@ -88,10 +89,11 @@ class MegaraInstrument(object):
 
     def set_mode(self, mode):
         """Set overall mode of the instrument."""
-        if mode not in ['mos', 'lcb']:
-            raise ValueError('mode %s not valid' % (mode, ))
+        mode_l = mode.lower()
+        if mode_l not in ['mos', 'lcb']:
+            raise ValueError('mode "%s" not valid' % (mode, ))
 
-        self._mode = mode
+        self._mode = mode_l
         self.pseudo_slit = self._pseudo_slit[self._mode]
         self.fibers = self._fibers[self._mode]
 
@@ -144,7 +146,7 @@ class MegaraInstrument(object):
 
         # Input spectra in each fiber, in photons
         # Fiber flux is 0 by default
-        base_coverage = np.zeros((self.fibers.N, 1))
+        base_coverage = np.zeros((self.fibers.nfibers, 1))
 
         tab = self.get_visible_fibers()
         fibid = tab['fibid']
@@ -167,6 +169,22 @@ class MegaraInstrument(object):
 
         return self.project_rss(self._internal_focus_factor* self.fibers.sigma, wltable_in, spec_in)
 
+
+    def illumination_in_focal_plane(self, illumination, photons):
+
+        # Input spectra in each fiber, in photons
+        # Fiber flux is 0 by default
+        base_coverage = np.zeros((self.fibers.nfibers, 1))
+
+        tab = self.focal_plane.get_all_fibers(self.fibers)
+
+        fibid = tab['fibid']
+        pos_x = tab['x']
+        pos_y = tab['y']
+
+        base_coverage[fibid-1, 0] = illumination(pos_x, pos_y)
+
+        return base_coverage * photons
 
 def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, scale=8):
 

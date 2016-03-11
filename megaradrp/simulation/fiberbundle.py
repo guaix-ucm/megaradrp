@@ -21,7 +21,7 @@
 from .efficiency import Efficiency
 
 class FiberBundle(object):
-    def __init__(self, name, fid, bid, transmission=None):
+    def __init__(self, name, fid, bid, static=True, transmission=None, inactive=None):
         self.name = name
         # Geometry of the fibers
         self.size = 0.31
@@ -29,17 +29,28 @@ class FiberBundle(object):
         self.sigma = self.fwhm / 2.3548
 
         self.fibs_id = fid
-        self.bund_id = bid
-
-        self.N = len(self.fibs_id)
+        self.bunds_id = bid
+        self.static = static
+        self.nfibers = len(self.fibs_id)
         # Include the transmission of the fibers (all fibers are equal)
         if transmission is None:
             self._transmission = Efficiency()
         else:
             self._transmission = transmission
 
+        if inactive is None:
+            self.inactive = []
+        else:
+            self.inactive = inactive
+
     def transmission(self, wl):
         return self._transmission.response(wl)
 
     def meta(self):
-        return {'name': self.name}
+        return {'name': self.name,
+                'nfibers': self.nfibers,
+                'fibs_id': self.fibs_id,
+                'bunds_id': self.bunds_id,
+                'static': self.static,
+                'inactive_fibs_id': self.inactive
+                }

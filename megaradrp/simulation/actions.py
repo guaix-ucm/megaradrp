@@ -17,123 +17,130 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Simple monocromatic simulation"""
+"""Sequences for observing modes of MEGARA"""
 
 
-def simulate_bias(detector):
-    """Simulate a BIAS array."""
-    detector.expose(source=0.0, time=0.0)
-    final = detector.readout()
-    return final
+class Sequence(object):
+    def __init__(self, instrument, mode):
+        self.instrument = instrument
+        self.mode = mode
+
+    def run(self, **kwds):
+        raise NotImplemented
 
 
-def simulate_dark(detector, exposure):
-    """Simulate a DARK array,"""
-    detector.expose(source=0.0, time=exposure)
-    final = detector.readout()
-    return final
+class MegaraNullSequence(Sequence):
+    def __init__(self):
+        super(MegaraNullSequence, self).__init__('MEGARA', 'null')
+
+    def run(self, control, exposure, repeat):
+        pass
 
 
-def simulate_flat(detector, exposure, source):
-    """Simulate a FLAT array,"""
-    detector.expose(source=source, time=exposure)
-    final = detector.readout()
-    return final
+class MegaraBiasSequence(Sequence):
+    def __init__(self):
+        super(MegaraBiasSequence, self).__init__('MEGARA', 'bias')
+
+    def run(self, control, exposure, repeat):
+        instrument = control.get(self.instrument)
+        for i in range(repeat):
+            instrument.detector.expose()
+            final = instrument.detector.readout()
+            yield final
 
 
-def simulate_bias_fits(factory, instrument, repeat=1):
-    """Simulate a BIAS FITS."""
+class MegaraDarkSequence(Sequence):
+    def __init__(self):
+        super(MegaraDarkSequence, self).__init__('MEGARA', 'dark')
 
-    # Use instrument and detector!
-    det = getattr(instrument, 'detector', None)
-    if det:
-        detector = det
-    else:
-        detector = instrument
-
-    for i in range(repeat):
-        detector.expose()
-        final = detector.readout()
-        if det:
-            meta = instrument.meta()
-        else:
-            meta = {'detector': detector.meta()}
-        fitsfile = factory.create('bias', meta=meta, data=final)
-
-        yield fitsfile
-
-
-def simulate_dark_fits(factory, instrument, exposure, repeat=1):
-    """Simulate a DARK FITS."""
-
-    # Use instrument and detector!
-    det = getattr(instrument, 'detector', None)
-    if det:
-        detector = det
-    else:
-        detector = instrument
-
-    for i in range(repeat):
-        detector.expose(time=exposure)
-        final = detector.readout()
-        if det:
-            meta = instrument.meta()
-        else:
-            meta = {'detector': detector.meta()}
-        fitsfile = factory.create('dark', meta=meta, data=final)
-
-        yield fitsfile
-
-
-def simulate_fiber_flat_fits(factory, instrument, wltable, photons_in, exposure, repeat=1):
-    """Simulate a FIBER-FLAT"""
-
-    if repeat < 1:
-        return
-
-    out = instrument.simulate_focal_plane(wltable, photons_in)
-
-    for i in range(repeat):
-        instrument.detector.expose(source=out, time=exposure)
-
-        final = instrument.detector.readout()
-
-        fitsfile = factory.create('fiber-flat', meta=instrument.meta(), data=final)
-        yield fitsfile
-
-
-def simulate_arc_fits(factory, instrument, wltable, photons_in, exposure, repeat=1):
-    """Simulate a FLAT"""
-
-    if repeat < 1:
-        return
-
-    out = instrument.simulate_focal_plane(wltable, photons_in)
-
-    for i in range(repeat):
-        instrument.detector.expose(source=out, time=exposure)
-
-        final = instrument.detector.readout()
-
-        fitsfile = factory.create('arc', meta=instrument.meta(), data=final)
-        yield fitsfile
-
-
-def simulate_focus_fits(factory, instrument, wltable, photons_in, focii, exposure, repeat=1):
-    """Simulate a Focus sequence"""
-
-    if repeat < 1:
-        return
-
-    for focus in focii:
-        instrument.set_focus(focus)
-
-        out = instrument.simulate_focal_plane(wltable, photons_in)
+    def run(self, control, exposure, repeat):
+        instrument = control.get(self.instrument)
 
         for i in range(repeat):
-            instrument.detector.expose(source=out, time=exposure)
-
+            instrument.detector.expose(exposure)
             final = instrument.detector.readout()
+            yield final
 
-            fitsfile = factory.create('focus', meta=instrument.meta(), data=final)
-            yield fitsfile
+
+class MegaraLampSequence(Sequence):
+    def __init__(self, name):
+        super(MegaraLampSequence, self).__init__('MEGARA', name)
+
+    def run(self, control, exposure, repeat):
+        instrument = control.get(self.instrument)
+        cu = control.get('megcalib')
+
+        # Get active lamp
+        lamp = cu.current()
+        self.lamp_check(lamp)
+        # Simulated arc spectrum
+        wl_in = instrument.vph.wltable_interp()
+        lamp_illum = instrument.illumination_in_focal_plane(lamp.illumination, lamp.flux(wl_in))
+
+        out = instrument.simulate_focal_plane(wl_in, lamp_illum)
+        for i in range(repeat):
+            instrument.detector.expose(source=out, time=exposure)
+            final = instrument.detector.readout()
+            yield final
+
+    def lamp_check(self, lamp):
+        raise NotImplemented
+
+
+class MegaraFiberFlatSequence(MegaraLampSequence):
+    def __init__(self):
+        super(MegaraFiberFlatSequence, self).__init__('fiberflat')
+
+    def lamp_check(self, lamp):
+        # TODO: check that this is a cont lamp
+        return True
+
+
+class MegaraArcSequence(MegaraLampSequence):
+    def __init__(self):
+        super(MegaraArcSequence, self).__init__('arc')
+
+    def lamp_check(self, lamp):
+        # TODO: check that this is an arc lamp
+        return True
+
+
+class MegaraFocusSequence(Sequence):
+    def __init__(self):
+        super(MegaraFocusSequence, self).__init__('MEGARA', mode='focus')
+
+    def run(self, control, exposure, repeat):
+        instrument = control.get(self.instrument)
+        cu = control.get('megcalib')
+
+        # Get active lamp
+        lamp = cu.current()
+        self.lamp_check(lamp)
+        # Simulated arc spectrum
+        wl_in = instrument.vph.wltable_interp()
+        lamp_illum = lamp.illumination_in_focal_plane(instrument, lamp.flux(wl_in))
+        # FIXME, hardcoded
+        focii = range(100, 200)
+
+        for focus in focii:
+            instrument.set_focus(focus)
+            out = instrument.simulate_focal_plane(wl_in, lamp_illum)
+
+            for i in range(repeat):
+                instrument.detector.expose(source=out, time=exposure)
+                final = instrument.detector.readout()
+                yield final
+
+    def lamp_check(self, lamp):
+        return True
+
+
+def megara_sequences():
+    seqs = {}
+    seqs['null'] = MegaraNullSequence()
+    seqs['bias'] = MegaraBiasSequence()
+    seqs['dark'] = MegaraDarkSequence()
+    seqs['fiberflat'] = MegaraFiberFlatSequence()
+    seqs['arc'] = MegaraArcSequence()
+    seqs['focus'] = MegaraFocusSequence()
+    return seqs

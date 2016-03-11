@@ -23,6 +23,7 @@ class FocalPlane(object):
 
     NAMES = {'UNSET': 3, 'LEFT': 2, 'RIGHT': 1, 'SET': 0}
     CODES = {3: 'UNSET', 2: 'LEFT', 1: 'RIGHT', 0: 'SET'}
+
     def __init__(self):
 
         self._cover_status = 3
