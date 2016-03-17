@@ -1,15 +1,14 @@
 .. _contents:
 
-MEGARA DRP documentation
+MEGARA DFP documentation
 ========================
 
-Welcome. This is the Documentation for MEGARA DRP (version |version|).
+Welcome. This is the Documentation for MEGARA DFP (version |version|).
 
 MEGARA (Multi-Espectrógrafo en GTC de Alta Resolución para Astronomía) is 
 an optical Integral-Field Unit (IFU) and Multi-Object Spectrograph (MOS) 
 designed for the GTC 10.4m telescope in La Palma.
-
-MEGARA DRP is the official Data Reduction Pipeline for MEGARA.
+MEGARA DFP is the official Data Reduction Pipeline for MEGARA.
 
 
 User documentation
