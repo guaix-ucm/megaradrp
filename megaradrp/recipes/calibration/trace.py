@@ -30,7 +30,7 @@ from numina.array.trace.traces import trace
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
 
-from megaradrp.products import MasterFiberFlat, TraceMap
+from megaradrp.products import MasterFiberFlatFrame, TraceMap
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.requirements import MasterDarkRequirement
@@ -45,7 +45,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_bpm = MasterBPMRequirement()
-    fiberflat_frame = Product(MasterFiberFlat)
+
+    master_fiberflat_frame = Product(MasterFiberFlatFrame)
     master_traces = Product(TraceMap)
 
     def __init__(self):

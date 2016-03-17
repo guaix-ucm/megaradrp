@@ -2,10 +2,9 @@ from __future__ import print_function
 
 import sys
 
-import logging
-
 import numpy as np
 from astropy import units as u
+import astropy.io.fits as fits
 from megaradrp.simulation.instrument import MegaraInstrument
 from megaradrp.simulation.factory import MegaraImageFactory
 from megaradrp.simulation.actions import simulate_fiber_flat_fits, simulate_focus_fits
@@ -19,15 +18,20 @@ from megaradrp.simulation.focalplane import FocalPlane
 from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.vph import MegaraVPH
 
-_logger = logging.getLogger("simulation")
 
 # create detector from data
-def create_detector():
-    _logger.info('create detector')
+def create_detector(mu=1,sigma=0.1):
+
     DSHAPE = (2056 * 2, 2048 * 2)
     PSCAN = 50
     OSCAN = 50
-    qe = 1.0 * np.ones(DSHAPE)
+    if sigma:
+        qe = np.random.normal(mu, sigma, DSHAPE)
+    else:
+        qe = 1.0 * np.ones(DSHAPE)
+
+    fits.writeto('flats/qe.fits',qe, clobber=True)
+
     dcurrent = 3.0 / 3600
 
     readpars1 = ReadParams(gain=1.0, ron=2.0, bias=1000.0)
@@ -40,7 +44,7 @@ def create_detector():
     return detector
 
 def create_lcb(focal_plane):
-    _logger.info('create lcb')
+
     layouttable = np.loadtxt('v02/LCB_spaxel_centers.dat')
     fib_ids = layouttable[:,4].astype('int').tolist()
     bun_ids = layouttable[:,3].astype('int').tolist()
@@ -56,7 +60,7 @@ def create_lcb(focal_plane):
 
 
 def create_mos(focal_plane):
-    _logger.info('create mos')
+
     layouttable = np.loadtxt('v02/MOS_spaxel_centers.dat')
     fib_ids = layouttable[:,4].astype('int').tolist()
     bun_ids = layouttable[:,3].astype('int').tolist()
@@ -71,40 +75,13 @@ def create_mos(focal_plane):
 
 
 def create_vph():
-    _logger.info('create vphs')
-    # vph = create_vph_by_data('VPH405_LR',
-    #                          'v02/VPH405_LR2-extra.dat',
-    #                          'v02/VPH405_LR_res.dat',
-    #                          'v02/tvph_0.1aa.dat'
-    #                         )
-
-    vph = create_vph_by_data('VPH926_MR',
-                              'v02/VPH926_MR.txt',
-                              'v02/VPH926_MR_res.dat',
-                              'v02/tvph_0.1aa.dat'
-                         )
-
-    # vph = create_vph_by_data('VPH863_HR',
-    #                          'v02/VPH863_HR.txt',
-    #                          'v02/VPH863_HR_res.dat',
-    #                          'v02/tvph_0.1aa.dat'
-    #                     )
-
-    return vph
-
-
-def create_vph_by_data(name, distortion, resolution, transmission):
-    trans = EfficiencyFile(transmission)
-    res = EfficiencyFile(resolution)
-    vph = MegaraVPH(name=name, vphtable=distortion,
-                    resolution=res,
-                    transmission=trans)
-
+    t = EfficiencyFile('v02/tvph_0.1aa.dat')
+    vph = MegaraVPH(name='VPH405_LR', vphtable='v02/VPH405_LR2-extra.dat', transmission=t)
     return vph
 
 
 def create_optics():
-    _logger.info('create internal optics')
+
     t = EfficiencyFile('v02/tspect_0.1aa.dat')
     i = InternalOptics(transmission=t)
     return i
@@ -112,15 +89,12 @@ def create_optics():
 
 if __name__ == '__main__':
 
-    logging.basicConfig(level=logging.DEBUG)
-
-
     # eq = np.random.normal(loc=0.80, scale=0.01, size=(4096,4096))
     # eq = np.clip(eq, 0.0, 1.0)
     # fits.writeto('eq.fits', eq, clobber=True)
     # eq = fits.getdata('eq.fits')
 
-    detector = create_detector()
+    detector = create_detector(mu=1,sigma=0.1)
 
     focal_plane = FocalPlane()
     focal_plane, fibers_lcb, pseudo_slit_lcb = create_lcb(focal_plane)
@@ -131,7 +105,7 @@ if __name__ == '__main__':
 
     vph = create_vph()
     internal = create_optics()
-    _logger.info('create instrument')
+
     instrument = MegaraInstrument(focal_plane=focal_plane,
                                   fibers=fibers,
                                   vph=vph,
@@ -151,41 +125,52 @@ if __name__ == '__main__':
         r = np.hypot(x, y)
         return 1.0 / (1+np.exp((x-130.0)/ 10.0))
 
-    illum = None
+    illum = illum1
 
     # Simulated arc spectrum
     wl_in = instrument.vph.wltable_interp()
 
     # This instruction fixes the number of fibers...
-    instrument.set_mode('mos')
+    instrument.set_mode('lcb') #lcb|mos
+
+    instrument._internal_focus_factor = 6
 
     lamp1 = lamps.BlackBodyLamp(5400 * u.K, illumination=illum)
     flat_illum1 = lamp1.illumination_in_focal_plane(instrument, lamp1.flux(wl_in))
-    lamp2 = lamps.FlatLamp(photons=7598.34893859, illumination=illum)
+    lamp2 = lamps.FlatLamp(illumination=illum)
     flat_illum2 = lamp2.illumination_in_focal_plane(instrument, lamp2.flux(wl_in))
     lamp3 = lamps.ArcLamp(illumination=illum)
     arc_illum1 = lamp3.illumination_in_focal_plane(instrument, lamp3.flux(wl_in))
 
     # instrument.set_cover('LEFT')
-    #
+
     # iterf = simulate_fiber_flat_fits(factory, instrument, wltable=wl_in,
     #                                  photons_in=flat_illum1, exposure=20.0, repeat=0)
     # for idx, fitsfile in enumerate(iterf):
     #     fitsfile.writeto('flat-l-%d.fits' % idx, clobber=True)
     #     print('fla2t %d done' % idx)
-    #
+
     # instrument.set_cover('RIGHT')
     # iterf = simulate_fiber_flat_fits(factory, instrument, wltable=wl_in,
     #                                  photons_in=flat_illum1, exposure=20.0, repeat=0)
     # for idx, fitsfile in enumerate(iterf):
     #     fitsfile.writeto('flat-r-%d.fits' % idx, clobber=True)
     #     print('fla2t %d done' % idx)
-    #
-    # instrument.set_cover('UNSET')
-    _logger.info('simulation')
+
+    instrument.set_cover('UNSET')
 
     iterf = simulate_fiber_flat_fits(factory, instrument, wltable=wl_in,
-                                     photons_in=flat_illum1, exposure=20.0, repeat=1)
+                                     photons_in=flat_illum1, exposure=100.0, repeat=100)
     for idx, fitsfile in enumerate(iterf):
-        fitsfile.writeto('flat-u-%d.fits' % idx, clobber=True)
-        print('fla2t %d done' % idx)
+        fitsfile.writeto('flats/flat-l-%d.fits' % idx, clobber=True)
+        print('flats/fla2t %d done' % idx)
+
+    # sys.exit()
+    #
+    # focii = np.arange(119, 128, 0.5)
+    #
+    # iterf = simulate_focus_fits(factory, instrument, wl_in, arc_illum1, focii, exposure=20, repeat=1)
+    #
+    # for idx, fitsfile in enumerate(iterf):
+    #     fitsfile.writeto('focus-%d.fits' % idx, clobber=True)
+    #     print('focus %d done' % idx)

@@ -21,7 +21,7 @@
 
 from numina.core import Requirement
 
-from .products import MasterBias, MasterDark, MasterFiberFlat, MasterBPM, MasterSlitFlat
+from .products import MasterBias, MasterDark, MasterFiberFlat, MasterBPM, MasterSlitFlat, MasterFiberFlatFrame
 
 
 class MasterBiasRequirement(Requirement):
@@ -63,3 +63,8 @@ class MasterSlitFlatRequirement(Requirement):
               self).__init__(MasterSlitFlat,
                              'Master slit flat calibration'
                              )
+
+class MasterFiberFlatFrameRequirement(Requirement):
+    def __init__(self):
+        super(MasterFiberFlatFrameRequirement,
+              self).__init__(MasterFiberFlatFrame,'Master fiber flat frame')

@@ -29,6 +29,7 @@ from numina.core.dataholders import Product
 from numina.core.products import QualityControlProduct
 
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
+from megaradrp.processing.slitflat import SlitFlatCorrector
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -50,13 +51,15 @@ class MegaraBaseRecipe(BaseRecipe):
                        'DarkRecipe': [OverscanCorrector, TrimImage,
                                       BiasCorrector],
                        'FiberFlatRecipe': [OverscanCorrector, TrimImage,
-                                           BiasCorrector, BadPixelCorrector,
-                                           DarkCorrector],
-                       'SlitFlatRecipe': [BiasCorrector, BadPixelCorrector,
-                                          DarkCorrector],
+                                           BiasCorrector, DarkCorrector,
+                                           BadPixelCorrector],
+                       'SlitFlatRecipe': [OverscanCorrector, TrimImage,
+                                          BiasCorrector, DarkCorrector,
+                                          BadPixelCorrector],
                        'TraceMapRecipe': [OverscanCorrector, TrimImage,
-                                          BiasCorrector, BadPixelCorrector,
-                                          DarkCorrector],
+                                          BiasCorrector, DarkCorrector,
+                                          BadPixelCorrector],
+                       'WeightsRecipe': [DarkCorrector, SlitFlatCorrector],
 
                        }
         super(MegaraBaseRecipe, self).__init__(version=version)
@@ -79,6 +82,12 @@ class MegaraBaseRecipe(BaseRecipe):
                 elif issubclass(DarkCorrector, flow[cont]):
                     if 'dark' in params.keys():
                         flow[cont] = (flow[cont](params['dark']))
+                    else:
+                        del (flow[cont])
+                        cont -= 1
+                elif issubclass(SlitFlatCorrector, flow[cont]):
+                    if 'slitflat' in params.keys():
+                        flow[cont] = (flow[cont](params['slitflat']))
                     else:
                         del (flow[cont])
                         cont -= 1
@@ -141,10 +150,14 @@ class MegaraBaseRecipe(BaseRecipe):
 
     def get_parameters(self, rinput):
 
-        with rinput.master_bias.open() as hdul:
-            mbias = hdul[0].data.copy()
+        parameters = {}
 
-        parameters = {'biasmap':mbias}
+        try:
+            if rinput.master_bias:
+                with rinput.master_bias.open() as hdul:
+                    parameters['biasmap'] = hdul[0].data.copy()
+        except:
+            pass
 
         try:
             if rinput.master_bpm:
@@ -158,11 +171,19 @@ class MegaraBaseRecipe(BaseRecipe):
                     parameters['dark'] = hdul[0].data.copy()
         except:
             pass
+
         try:
-            if rinput.master_fiberflat:
-                with rinput.master_fiberflat.open() as hdul:
+            if rinput.master_slitflat:
+                with rinput.master_slitflat.open() as hdul:
                     parameters['slitflat'] = hdul[0].data.copy()
         except:
             pass
+
+        # try:
+        #     if rinput.master_fiberflat_frame:
+        #         with rinput.master_fiberflat_frame.open() as hdul:
+        #             parameters['fiberflat_frame'] = hdul[0].data.copy()
+        # except:
+        #     pass
 
         return parameters

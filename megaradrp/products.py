@@ -62,12 +62,14 @@ class MasterFiberFlat(MEGARAProductFrame):
 class MasterSlitFlat(MEGARAProductFrame):
     pass
 
+class MasterFiberFlatFrame(MEGARAProductFrame):
+    pass
+
 class MasterBPM(MEGARAProductFrame):
     pass
 
 class MasterSensitivity(MEGARAProductFrame):
     pass
-
 
 class TraceMap(DataProductType):
     def __init__(self, default=None):
@@ -93,3 +95,15 @@ class TraceMap(DataProductType):
 class WavelengthCalibration(ArrayType, DataProductTag):
     pass
 
+class MasterWeights(DataProductType):
+    def __init__(self, default=None):
+        super(MasterWeights, self).__init__(ptype=dict, default=default)
+
+    def _datatype_dump(self, obj, where):
+        import shutil
+
+        filename = where.destination + '.tar'
+
+        shutil.copy(obj, filename)
+        shutil.rmtree(obj.split(filename)[0])
+        return filename

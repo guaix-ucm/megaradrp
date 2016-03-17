@@ -98,6 +98,15 @@ modes:
   summary: Slit Flat
   uuid: xxxxxx
   tagger: null
+- date: 2016-03-10
+  description: Weights
+  key: weights
+  name: Weights
+  reference: xxx
+  status: DRAFT
+  summary: Weights
+  uuid: xxxxxx
+  tagger: null
 - key: focus_spectrograph
   name: Focus Spectrograph
 pipelines:
@@ -116,6 +125,7 @@ pipelines:
       focus_spectrograph: megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe
       fail: numina.core.utils.AlwaysFailRecipe
       success: numina.core.utils.AlwaysSuccessRecipe
+      weights: megaradrp.recipes.calibration.weights.WeightsRecipe
 products:
 - name: megaradrp.products.TraceMap
   alias: TraceMap
