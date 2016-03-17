@@ -18,48 +18,8 @@
 #
 
 
-import traceback
-
-
-class Signal(object):
-    """Signal used for callbacks."""
-    def __init__(self):
-        self.callbacks = []
-
-    def connect(self, callback):
-        self.callbacks.append(callback)
-        return len(self.callbacks) - 1
-
-    def delete(self, idx):
-        self.callbacks.pop(idx)
-
-    def emit(self, *args, **kwds):
-        for c in self.callbacks:
-            try:
-                res = c(*args, **kwds)
-                # we can use the result value
-                # to disable this callback...
-                # not yet implemented
-            except TypeError:
-                traceback.print_exc()
-
-
-class HWDevice(object):
-    def __init__(self, name=None):
-        self.name = name
-
-    def config_info(self):
-        return {'name': self.name}
-
-    def configure(self, meta):
-        pass
-
-    def set_parent(self, newparent):
-        if self.parent:
-            self.parent.children.remove(self)
-        self.parent = newparent
-        if self.parent:
-            self.parent.children.append(self)
+from .device import HWDevice
+from .device import Signal
 
 
 class Carrousel(HWDevice):

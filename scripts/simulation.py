@@ -14,6 +14,7 @@ from megaradrp.simulation.wheel import VPHWheel
 from megaradrp.simulation import lamps
 from megaradrp.simulation import calibrationunit
 
+from megaradrp.simulation.telescope import Telescope
 from megaradrp.simulation.fiberbundle import FiberBundle
 from megaradrp.simulation.instrument import PseudoSlit
 from megaradrp.simulation.focalplane import FocalPlane
@@ -170,6 +171,13 @@ def create_calibration_unit(illum=None):
     return cu
 
 
+def create_telescope():
+
+    tel = Telescope(name='GTC', diameter=100.0, transmission=EfficiencyFile('v02/ttel_0.1aa.dat'))
+
+    return tel
+
+
 class ControlSystem(object):
     """Top level"""
     def __init__(self):
@@ -218,6 +226,11 @@ class ControlSystem(object):
         self.imagecount.__exit__(exc_type, exc_val, exc_tb)
 
 
+class AtmosphereModel(object):
+
+    def twightlight_spectrum(self, wl_in):
+        return np.ones_like(wl_in)
+
 if __name__ == '__main__':
 
     logging.basicConfig(level=logging.DEBUG)
@@ -225,10 +238,14 @@ if __name__ == '__main__':
     illum = None
     cu = create_calibration_unit(illum=None)
     instrument = create_instrument()
+    telescope = create_telescope()
+    atm = AtmosphereModel()
+    telescope.connect(atm)
     factory = MegaraImageFactory()
 
     control = ControlSystem()
     control.register('MEGARA', instrument)
+    control.register('GTC', telescope)
     control.register('megcalib', cu)
     control.register('factory', factory)
 
@@ -236,11 +253,11 @@ if __name__ == '__main__':
     # This instruction fixes the number of fibers...
     instrument.set_mode('MOS')
     # set VPH
-    instrument.wheel.select('VPH926_MR')
-    cu.select('FLAT1')
+    instrument.wheel.select('VPH405_LR')
+    #cu.select('FLAT1')
 
     _logger.info('start simulation')
-    control.set_mode('bias')
+    control.set_mode('twilightflat')
 
     with control:
         control.run(exposure=20.0, repeat=1)

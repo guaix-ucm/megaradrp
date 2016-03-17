@@ -170,11 +170,11 @@ class MegaraInstrument(object):
         return self.project_rss(self._internal_focus_factor* self.fibers.sigma, wltable_in, spec_in)
 
 
-    def illumination_in_focal_plane(self, illumination, photons):
+    def illumination_in_focal_plane(self, photons, illumination=None):
 
         # Input spectra in each fiber, in photons
-        # Fiber flux is 0 by default
-        base_coverage = np.zeros((self.fibers.nfibers, 1))
+        # Fiber flux is 1 by default
+        base_coverage = np.ones((self.fibers.nfibers, 1))
 
         tab = self.focal_plane.get_all_fibers(self.fibers)
 
@@ -182,9 +182,10 @@ class MegaraInstrument(object):
         pos_x = tab['x']
         pos_y = tab['y']
 
-        base_coverage[fibid-1, 0] = illumination(pos_x, pos_y)
-
+        if illumination:
+            base_coverage[fibid-1, 0] = illumination(pos_x, pos_y)
         return base_coverage * photons
+
 
 def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, scale=8):
 
@@ -275,7 +276,7 @@ def project_rss_w(visible_fib_ids, pseudo_slit, vph, detector, sigma):
         minp = coor_to_pix(ytrace[idx].min() - nsig * sigma)
         maxp = coor_to_pix(ytrace[idx].max() + nsig * sigma)
         yp = np.arange(minp, maxp)
-        base = pixcont_int_pix(yp[:,np.newaxis], ytrace[idx, :], sigma)
+        base = pixcont_int_pix(yp[:, np.newaxis], ytrace[idx, :], sigma)
         sidx = np.nonzero(base >= fvalue)
         l1.extend(minp + sidx[0])
         l2.extend(sidx[1])

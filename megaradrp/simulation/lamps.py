@@ -39,22 +39,6 @@ class Lamp(HWDevice):
     def illumination(self, x, y):
         return self._illum(x, y)
 
-    def illumination_in_focal_plane(self, instrument, photons):
-
-        # Input spectra in each fiber, in photons
-        # Fiber flux is 0 by default
-        base_coverage = np.zeros((instrument.fibers.nfibers, 1))
-
-        tab = instrument.focal_plane.get_all_fibers(instrument.fibers)
-
-        fibid = tab['fibid']
-        pos_x = tab['x']
-        pos_y = tab['y']
-
-        base_coverage[fibid-1, 0] = self.illumination(pos_x, pos_y)
-
-        return base_coverage * photons
-
 
 class BlackBodyLamp(Lamp):
 

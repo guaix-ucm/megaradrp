@@ -75,7 +75,7 @@ class MegaraLampSequence(Sequence):
         self.lamp_check(lamp)
         # Simulated arc spectrum
         wl_in = instrument.vph.wltable_interp()
-        lamp_illum = instrument.illumination_in_focal_plane(lamp.illumination, lamp.flux(wl_in))
+        lamp_illum = instrument.illumination_in_focal_plane(lamp.flux(wl_in), lamp.illumination)
 
         out = instrument.simulate_focal_plane(wl_in, lamp_illum)
         for i in range(repeat):
@@ -105,6 +105,26 @@ class MegaraArcSequence(MegaraLampSequence):
         return True
 
 
+class MegaraTwilightFlatSequence(Sequence):
+    def __init__(self):
+        super(MegaraTwilightFlatSequence, self).__init__('MEGARA', 'twilightflat')
+
+    def run(self, control, exposure, repeat):
+        instrument = control.get(self.instrument)
+        telescope = control.get('GTC')
+        atm = telescope.inc # Atmosphere model
+        # Simulated tw spectrum
+        wl_in = instrument.vph.wltable_interp()
+        tw_spectrum = 1e4 * atm.twightlight_spectrum(wl_in)
+        tw_illum = instrument.illumination_in_focal_plane(tw_spectrum)
+
+        out = instrument.simulate_focal_plane(wl_in, tw_illum)
+        for i in range(repeat):
+            instrument.detector.expose(source=out, time=exposure)
+            final = instrument.detector.readout()
+            yield final
+
+
 class MegaraFocusSequence(Sequence):
     def __init__(self):
         super(MegaraFocusSequence, self).__init__('MEGARA', mode='focus')
@@ -118,7 +138,7 @@ class MegaraFocusSequence(Sequence):
         self.lamp_check(lamp)
         # Simulated arc spectrum
         wl_in = instrument.vph.wltable_interp()
-        lamp_illum = lamp.illumination_in_focal_plane(instrument, lamp.flux(wl_in))
+        lamp_illum = instrument.illumination_in_focal_plane(lamp.flux(wl_in), lamp.illumination)
         # FIXME, hardcoded
         focii = range(100, 200)
 
@@ -142,5 +162,6 @@ def megara_sequences():
     seqs['dark'] = MegaraDarkSequence()
     seqs['fiberflat'] = MegaraFiberFlatSequence()
     seqs['arc'] = MegaraArcSequence()
+    seqs['twilightflat'] = MegaraTwilightFlatSequence()
     seqs['focus'] = MegaraFocusSequence()
     return seqs
