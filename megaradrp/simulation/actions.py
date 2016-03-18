@@ -115,7 +115,7 @@ class MegaraTwilightFlatSequence(Sequence):
         atm = telescope.inc # Atmosphere model
         # Simulated tw spectrum
         wl_in = instrument.vph.wltable_interp()
-        tw_spectrum = 1e4 * atm.twightlight_spectrum(wl_in)
+        tw_spectrum = atm.twilight_spectrum(wl_in)
         tw_illum = instrument.illumination_in_focal_plane(tw_spectrum)
 
         out = instrument.simulate_focal_plane(wl_in, tw_illum)

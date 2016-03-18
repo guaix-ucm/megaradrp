@@ -22,6 +22,17 @@ import numpy as np
 import scipy.interpolate as ii
 
 
+class InterpolFile(object):
+
+    def __init__(self, fname, fill_value=0.0):
+        rawdata = np.loadtxt(fname)
+        self._interp = ii.interp1d(rawdata[:,0] / 1e4, rawdata[:,1],
+                                   bounds_error=False, fill_value=fill_value)
+
+    def __call__(self, wl):
+        return self._interp(wl)
+
+
 class Efficiency(object):
 
     def response(self, wl):
@@ -31,9 +42,7 @@ class Efficiency(object):
 class EfficiencyFile(Efficiency):
 
     def __init__(self, fname, fill_value=0.0):
-        rawdata = np.loadtxt(fname)
-        self._interp = ii.interp1d(rawdata[:,0] / 1e4, rawdata[:,1],
-                                   bounds_error=False, fill_value=fill_value)
+        self.interpf = InterpolFile(fname, fill_value=fill_value)
 
     def response(self, wl):
-        return self._interp(wl)
+        return self.interpf(wl)

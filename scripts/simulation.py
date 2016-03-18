@@ -8,7 +8,7 @@ from megaradrp.simulation.actions import megara_sequences
 from megaradrp.simulation.instrument import MegaraInstrument
 from megaradrp.simulation.factory import MegaraImageFactory
 
-from megaradrp.simulation.efficiency import EfficiencyFile
+from megaradrp.simulation.efficiency import EfficiencyFile, InterpolFile
 from megaradrp.simulation.instrument import InternalOptics
 from megaradrp.simulation.wheel import VPHWheel
 from megaradrp.simulation import lamps
@@ -40,6 +40,7 @@ def create_detector():
     detector = MegaraDetectorSat(DSHAPE, OSCAN, PSCAN, qe=qe, qe_wl=qe_wl, dark=dcurrent,
                                    readpars1=readpars1, readpars2=readpars2, bins='11')
     return detector
+
 
 def create_lcb(focal_plane):
     _logger.info('create lcb')
@@ -123,7 +124,7 @@ def illum1(x, y):
 def illum2(x, y):
     """Explicit illumination in the focal plane"""
     r = np.hypot(x, y)
-    return 1.0 / (1+np.exp((x-130.0)/ 10.0))
+    return 1.0 / (1 + np.exp((r - 130.0) / 10.0))
 
 
 def create_instrument():
@@ -228,8 +229,13 @@ class ControlSystem(object):
 
 class AtmosphereModel(object):
 
-    def twightlight_spectrum(self, wl_in):
-        return np.ones_like(wl_in)
+    def __init__(self, twfile):
+        self.tw_interp = InterpolFile(twfile)
+
+    def twilight_spectrum(self, wl_in):
+        """Twilight spectrum"""
+        return 5e4 * self.tw_interp(wl_in)
+
 
 if __name__ == '__main__':
 
@@ -239,7 +245,7 @@ if __name__ == '__main__':
     cu = create_calibration_unit(illum=None)
     instrument = create_instrument()
     telescope = create_telescope()
-    atm = AtmosphereModel()
+    atm = AtmosphereModel(twfile='v02/tw-spec.txt')
     telescope.connect(atm)
     factory = MegaraImageFactory()
 
@@ -251,7 +257,7 @@ if __name__ == '__main__':
 
     # Obervation setup
     # This instruction fixes the number of fibers...
-    instrument.set_mode('MOS')
+    instrument.set_mode('LCB')
     # set VPH
     instrument.wheel.select('VPH405_LR')
     #cu.select('FLAT1')
