@@ -17,32 +17,8 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from .wheel import Wheel
 
-import numpy as np
-import scipy.interpolate as ii
+class MegaraCalibrationUnit(Wheel):
+    pass
 
-
-class InterpolFile(object):
-
-    def __init__(self, fname, fill_value=0.0):
-        rawdata = np.loadtxt(fname)
-        self._interp = ii.interp1d(rawdata[:,0] / 1e4, rawdata[:,1],
-                                   bounds_error=False, fill_value=fill_value)
-
-    def __call__(self, wl):
-        return self._interp(wl)
-
-
-class Efficiency(object):
-
-    def response(self, wl):
-        return np.ones_like(wl)
-
-
-class EfficiencyFile(Efficiency):
-
-    def __init__(self, fname, fill_value=0.0):
-        self.interpf = InterpolFile(fname, fill_value=fill_value)
-
-    def response(self, wl):
-        return self.interpf(wl)

@@ -1,37 +1,35 @@
 from __future__ import print_function
 
-import sys
+import logging
 
 import numpy as np
 from astropy import units as u
-import astropy.io.fits as fits
+from megaradrp.simulation.actions import megara_sequences
 from megaradrp.simulation.instrument import MegaraInstrument
 from megaradrp.simulation.factory import MegaraImageFactory
-from megaradrp.simulation.actions import simulate_fiber_flat_fits, simulate_focus_fits
-from megaradrp.simulation.efficiency import EfficiencyFile
-from megaradrp.simulation.instrument import InternalOptics
-from megaradrp.simulation import lamps
 
+from megaradrp.simulation.efficiency import EfficiencyFile, InterpolFile
+from megaradrp.simulation.instrument import InternalOptics
+from megaradrp.simulation.wheel import VPHWheel
+from megaradrp.simulation import lamps
+from megaradrp.simulation import calibrationunit
+
+from megaradrp.simulation.telescope import Telescope
 from megaradrp.simulation.fiberbundle import FiberBundle
 from megaradrp.simulation.instrument import PseudoSlit
 from megaradrp.simulation.focalplane import FocalPlane
 from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.vph import MegaraVPH
 
+_logger = logging.getLogger("simulation")
 
 # create detector from data
-def create_detector(mu=1,sigma=0.1):
-
+def create_detector():
+    _logger.info('create detector')
     DSHAPE = (2056 * 2, 2048 * 2)
     PSCAN = 50
     OSCAN = 50
-    if sigma:
-        qe = np.random.normal(mu, sigma, DSHAPE)
-    else:
-        qe = 1.0 * np.ones(DSHAPE)
-
-    fits.writeto('flats/qe.fits',qe, clobber=True)
-
+    qe = 1.0 * np.ones(DSHAPE)
     dcurrent = 3.0 / 3600
 
     readpars1 = ReadParams(gain=1.0, ron=2.0, bias=1000.0)
@@ -43,16 +41,17 @@ def create_detector(mu=1,sigma=0.1):
                                    readpars1=readpars1, readpars2=readpars2, bins='11')
     return detector
 
-def create_lcb(focal_plane):
 
+def create_lcb(focal_plane):
+    _logger.info('create lcb')
     layouttable = np.loadtxt('v02/LCB_spaxel_centers.dat')
     fib_ids = layouttable[:,4].astype('int').tolist()
     bun_ids = layouttable[:,3].astype('int').tolist()
 
     trans = EfficiencyFile('v02/tfiber_0.1aa_20m.dat')
-    fibers_lcb = FiberBundle("BUNDLE.LCB", fib_ids, bun_ids, transmission=trans)
+    fibers_lcb = FiberBundle("BUNDLE.LCB", fib_ids, bun_ids, static=True, transmission=trans, inactive=[1, 3])
 
-    pseudo_slit_lcb = PseudoSlit(name="PSLT.LCB")
+    pseudo_slit_lcb = PseudoSlit(name="PSLT.LCB", insmode='LCB')
     pseudo_slit_lcb.connect_fibers(fib_ids, layouttable[:,2])
 
     focal_plane.connect_fiber_bundle(fibers_lcb, fib_ids, layouttable[:,0:2])
@@ -60,41 +59,83 @@ def create_lcb(focal_plane):
 
 
 def create_mos(focal_plane):
-
+    _logger.info('create mos')
     layouttable = np.loadtxt('v02/MOS_spaxel_centers.dat')
     fib_ids = layouttable[:,4].astype('int').tolist()
     bun_ids = layouttable[:,3].astype('int').tolist()
     trans = EfficiencyFile('v02/tfiber_0.1aa_20m.dat')
-    fibers_mos = FiberBundle("BUNDLE.MOS", fib_ids, bun_ids, transmission=trans)
+    fibers_mos = FiberBundle("BUNDLE.MOS", fib_ids, bun_ids, static=False, transmission=trans, inactive=[1, 3])
 
-    pseudo_slit_mos = PseudoSlit(name="PSLT.MOS")
+    pseudo_slit_mos = PseudoSlit(name="PSLT.MOS", insmode='MOS')
     pseudo_slit_mos.connect_fibers(fib_ids, layouttable[:,2])
 
     focal_plane.connect_fiber_bundle(fibers_mos, fib_ids, layouttable[:,0:2])
     return focal_plane, fibers_mos, pseudo_slit_mos
 
 
-def create_vph():
-    t = EfficiencyFile('v02/tvph_0.1aa.dat')
-    vph = MegaraVPH(name='VPH405_LR', vphtable='v02/VPH405_LR2-extra.dat', transmission=t)
+def create_wheel():
+    _logger.info('create wheel')
+    wheel = VPHWheel(capacity=3)
+    _logger.info('create vphs')
+    vph = create_vph_by_data('VPH405_LR',
+                              'v02/VPH405_LR2-extra.dat',
+                              'v02/VPH405_LR_res.dat',
+                              'v02/tvph_0.1aa.dat'
+                             )
+    wheel.put_in_pos(vph, 0)
+    vph = create_vph_by_data('VPH926_MR',
+                              'v02/VPH926_MR.txt',
+                              'v02/VPH926_MR_res.dat',
+                              'v02/tvph_0.1aa.dat'
+                         )
+    wheel.put_in_pos(vph, 1)
+    vph = create_vph_by_data('VPH863_HR',
+                             'v02/VPH863_HR.txt',
+                             'v02/VPH863_HR_res.dat',
+                              'v02/tvph_0.1aa.dat'
+                         )
+    wheel.put_in_pos(vph, 2)
+    return wheel
+
+
+def create_vph_by_data(name, distortion, resolution, transmission):
+    trans = EfficiencyFile(transmission)
+    res = EfficiencyFile(resolution)
+    vph = MegaraVPH(name=name, vphtable=distortion,
+                    resolution=res,
+                    transmission=trans)
+
     return vph
 
 
 def create_optics():
-
+    _logger.info('create internal optics')
     t = EfficiencyFile('v02/tspect_0.1aa.dat')
     i = InternalOptics(transmission=t)
     return i
 
 
-if __name__ == '__main__':
+def illum1(x, y):
+    """Explicit illumination in the focal plane"""
+    r = np.hypot(x, y)
+    return np.where(r <= 50.0, 1.0, 0.5)
 
-    # eq = np.random.normal(loc=0.80, scale=0.01, size=(4096,4096))
+
+def illum2(x, y):
+    """Explicit illumination in the focal plane"""
+    r = np.hypot(x, y)
+    return 1.0 / (1 + np.exp((r - 130.0) / 10.0))
+
+
+def create_instrument():
+ # eq = np.random.normal(loc=0.80, scale=0.01, size=(4096,4096))
     # eq = np.clip(eq, 0.0, 1.0)
     # fits.writeto('eq.fits', eq, clobber=True)
     # eq = fits.getdata('eq.fits')
 
-    detector = create_detector(mu=1,sigma=0.1)
+    # Assemble instrument
+
+    detector = create_detector()
 
     focal_plane = FocalPlane()
     focal_plane, fibers_lcb, pseudo_slit_lcb = create_lcb(focal_plane)
@@ -103,74 +144,126 @@ if __name__ == '__main__':
     pseudo_slit = dict(lcb=pseudo_slit_lcb, mos=pseudo_slit_mos)
     fibers = dict(lcb=fibers_lcb, mos=fibers_mos)
 
-    vph = create_vph()
+    wheel = create_wheel()
     internal = create_optics()
-
+    _logger.info('create instrument')
     instrument = MegaraInstrument(focal_plane=focal_plane,
                                   fibers=fibers,
-                                  vph=vph,
+                                  wheel=wheel,
                                   pseudo_slit=pseudo_slit,
                                   internal_optics=internal,
                                   detector=detector)
+    return instrument
 
+
+def create_calibration_unit(illum=None):
+
+    cu = calibrationunit.MegaraCalibrationUnit(capacity=4, name='megcalib')
+
+    lamp1 = lamps.BlackBodyLamp('FLAT1', 5400 * u.K, illumination=illum)
+    lamp2 = lamps.FlatLamp('FLAT2', photons=7598.34893859, illumination=illum)
+    lamp3 = lamps.ArcLamp('ARC', illumination=illum)
+
+    cu.put_in_pos('EMPTY', 0)
+    cu.put_in_pos(lamp1, 1)
+    cu.put_in_pos(lamp2, 2)
+    cu.put_in_pos(lamp3, 3)
+
+    return cu
+
+
+def create_telescope():
+
+    tel = Telescope(name='GTC', diameter=100.0, transmission=EfficiencyFile('v02/ttel_0.1aa.dat'))
+
+    return tel
+
+
+class ControlSystem(object):
+    """Top level"""
+    def __init__(self):
+        self._elements = {}
+        from megaradrp.simulation.factory import PersistentRunCounter
+        self.imagecount = PersistentRunCounter('r00%04d.fits')
+        self.mode = 'null'
+        self.ins = 'MEGARA'
+        self.seqs = megara_sequences()
+
+    def register(self, name, element):
+        self._elements[name] = element
+
+    def get(self, name):
+        return self._elements[name]
+
+    def set_mode(self, mode):
+        self.mode = mode
+
+    def run(self, exposure, repeat=1):
+
+        if repeat < 1:
+            return
+
+        _logger.info('mode is %s', self.mode)
+        try:
+            thiss = self.seqs[self.mode]
+        except KeyError:
+            _logger.error('No sequence for mode %s', self.mode)
+            raise
+
+        iterf = thiss.run(self, exposure, repeat)
+        count = 1
+        for final in iterf:
+            _logger.info('image %d of %d', count, repeat)
+            name = self.imagecount.runstring()
+            fitsfile = factory.create(final, name, self)
+            _logger.info('save image %s', name)
+            fitsfile.writeto(name, clobber=True)
+            count += 1
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.imagecount.__exit__(exc_type, exc_val, exc_tb)
+
+
+class AtmosphereModel(object):
+
+    def __init__(self, twfile):
+        self.tw_interp = InterpolFile(twfile)
+
+    def twilight_spectrum(self, wl_in):
+        """Twilight spectrum"""
+        return 5e4 * self.tw_interp(wl_in)
+
+
+if __name__ == '__main__':
+
+    logging.basicConfig(level=logging.DEBUG)
+
+    illum = None
+    cu = create_calibration_unit(illum=None)
+    instrument = create_instrument()
+    telescope = create_telescope()
+    atm = AtmosphereModel(twfile='v02/tw-spec.txt')
+    telescope.connect(atm)
     factory = MegaraImageFactory()
 
-    def illum1(x, y):
-        """Explicit illumination in the focal plane"""
-        r = np.hypot(x, y)
-        return np.where(r <= 50.0, 1.0, 0.5)
+    control = ControlSystem()
+    control.register('MEGARA', instrument)
+    control.register('GTC', telescope)
+    control.register('megcalib', cu)
+    control.register('factory', factory)
 
-    def illum2(x, y):
-        """Explicit illumination in the focal plane"""
-        r = np.hypot(x, y)
-        return 1.0 / (1+np.exp((x-130.0)/ 10.0))
-
-    illum = illum1
-
-    # Simulated arc spectrum
-    wl_in = instrument.vph.wltable_interp()
-
+    # Obervation setup
     # This instruction fixes the number of fibers...
-    instrument.set_mode('lcb') #lcb|mos
+    instrument.set_mode('LCB')
+    # set VPH
+    instrument.wheel.select('VPH405_LR')
+    #cu.select('FLAT1')
 
-    instrument._internal_focus_factor = 6
+    _logger.info('start simulation')
+    control.set_mode('twilightflat')
 
-    lamp1 = lamps.BlackBodyLamp(5400 * u.K, illumination=illum)
-    flat_illum1 = lamp1.illumination_in_focal_plane(instrument, lamp1.flux(wl_in))
-    lamp2 = lamps.FlatLamp(illumination=illum)
-    flat_illum2 = lamp2.illumination_in_focal_plane(instrument, lamp2.flux(wl_in))
-    lamp3 = lamps.ArcLamp(illumination=illum)
-    arc_illum1 = lamp3.illumination_in_focal_plane(instrument, lamp3.flux(wl_in))
-
-    # instrument.set_cover('LEFT')
-
-    # iterf = simulate_fiber_flat_fits(factory, instrument, wltable=wl_in,
-    #                                  photons_in=flat_illum1, exposure=20.0, repeat=0)
-    # for idx, fitsfile in enumerate(iterf):
-    #     fitsfile.writeto('flat-l-%d.fits' % idx, clobber=True)
-    #     print('fla2t %d done' % idx)
-
-    # instrument.set_cover('RIGHT')
-    # iterf = simulate_fiber_flat_fits(factory, instrument, wltable=wl_in,
-    #                                  photons_in=flat_illum1, exposure=20.0, repeat=0)
-    # for idx, fitsfile in enumerate(iterf):
-    #     fitsfile.writeto('flat-r-%d.fits' % idx, clobber=True)
-    #     print('fla2t %d done' % idx)
-
-    instrument.set_cover('UNSET')
-
-    iterf = simulate_fiber_flat_fits(factory, instrument, wltable=wl_in,
-                                     photons_in=flat_illum1, exposure=100.0, repeat=100)
-    for idx, fitsfile in enumerate(iterf):
-        fitsfile.writeto('flats/flat-l-%d.fits' % idx, clobber=True)
-        print('flats/fla2t %d done' % idx)
-
-    # sys.exit()
-    #
-    # focii = np.arange(119, 128, 0.5)
-    #
-    # iterf = simulate_focus_fits(factory, instrument, wl_in, arc_illum1, focii, exposure=20, repeat=1)
-    #
-    # for idx, fitsfile in enumerate(iterf):
-    #     fitsfile.writeto('focus-%d.fits' % idx, clobber=True)
-    #     print('focus %d done' % idx)
+    with control:
+        control.run(exposure=20.0, repeat=1)

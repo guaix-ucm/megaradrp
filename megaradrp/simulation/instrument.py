@@ -28,17 +28,18 @@ from .efficiency import Efficiency
 
 
 class PseudoSlit(object):
-    def __init__(self, name):
+    def __init__(self, name, insmode):
 
         # Positions of the fibers in the PS slit
         self.y_pos = {}
         self.name = name
+        self.insmode = insmode
 
     def connect_fibers(self, fibid, pos):
         self.y_pos = dict(zip(fibid, pos))
 
     def meta(self):
-        return {'name': self.name}
+        return {'name': self.name, 'insmode': self.insmode}
 
 
 
@@ -55,7 +56,7 @@ class InternalOptics(object):
 
 
 class MegaraInstrument(object):
-    def __init__(self, focal_plane, fibers, pseudo_slit, internal_optics, vph, detector):
+    def __init__(self, focal_plane, fibers, pseudo_slit, internal_optics, wheel, detector):
 
         self._mode = 'lcb'
         self.detector = detector
@@ -68,7 +69,8 @@ class MegaraInstrument(object):
         self.pseudo_slit = self._pseudo_slit[self._mode]
         self.fibers = self._fibers[self._mode]
 
-        self.vph = vph
+        self.wheel = wheel
+        self.vph = self.wheel.current()
         self.internal_optics = internal_optics
 
         # Focus
@@ -76,12 +78,22 @@ class MegaraInstrument(object):
         self._ref_focus = 123.123
         self._internal_focus = self._ref_focus
 
+        # Callbacks get called on predefined events on the devices
+        # A callback to maintain self.vph updated
+        # whenever the wheel is moved
+
+        def update_current_vph(_):
+            self.vph = self.wheel.current()
+
+        self.wheel.changed.connect(update_current_vph)
+
     def set_mode(self, mode):
         """Set overall mode of the instrument."""
-        if mode not in ['mos', 'lcb']:
-            raise ValueError('mode %s not valid' % (mode, ))
+        mode_l = mode.lower()
+        if mode_l not in ['mos', 'lcb']:
+            raise ValueError('mode "%s" not valid' % (mode, ))
 
-        self._mode = mode
+        self._mode = mode_l
         self.pseudo_slit = self._pseudo_slit[self._mode]
         self.fibers = self._fibers[self._mode]
 
@@ -134,7 +146,7 @@ class MegaraInstrument(object):
 
         # Input spectra in each fiber, in photons
         # Fiber flux is 0 by default
-        base_coverage = np.zeros((self.fibers.N, 1))
+        base_coverage = np.zeros((self.fibers.nfibers, 1))
 
         tab = self.get_visible_fibers()
         fibid = tab['fibid']
@@ -156,6 +168,23 @@ class MegaraInstrument(object):
         spec_in *= self.detector.qe_wl(wltable_in)
 
         return self.project_rss(self._internal_focus_factor* self.fibers.sigma, wltable_in, spec_in)
+
+
+    def illumination_in_focal_plane(self, photons, illumination=None):
+
+        # Input spectra in each fiber, in photons
+        # Fiber flux is 1 by default
+        base_coverage = np.ones((self.fibers.nfibers, 1))
+
+        tab = self.focal_plane.get_all_fibers(self.fibers)
+
+        fibid = tab['fibid']
+        pos_x = tab['x']
+        pos_y = tab['y']
+
+        if illumination:
+            base_coverage[fibid-1, 0] = illumination(pos_x, pos_y)
+        return base_coverage * photons
 
 
 def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, scale=8):
@@ -247,7 +276,7 @@ def project_rss_w(visible_fib_ids, pseudo_slit, vph, detector, sigma):
         minp = coor_to_pix(ytrace[idx].min() - nsig * sigma)
         maxp = coor_to_pix(ytrace[idx].max() + nsig * sigma)
         yp = np.arange(minp, maxp)
-        base = pixcont_int_pix(yp[:,np.newaxis], ytrace[idx, :], sigma)
+        base = pixcont_int_pix(yp[:, np.newaxis], ytrace[idx, :], sigma)
         sidx = np.nonzero(base >= fvalue)
         l1.extend(minp + sidx[0])
         l2.extend(sidx[1])
