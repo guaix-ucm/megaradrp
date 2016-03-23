@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import logging
+import datetime
 
 import numpy as np
 from astropy import units as u
@@ -178,6 +179,7 @@ def create_telescope():
 
     return tel
 
+import sqlite3
 
 class ControlSystem(object):
     """Top level"""
@@ -188,6 +190,8 @@ class ControlSystem(object):
         self.mode = 'null'
         self.ins = 'MEGARA'
         self.seqs = megara_sequences()
+        self.dbname = 'testing.db'
+        self.conn = None
 
     def register(self, name, element):
         self._elements[name] = element
@@ -203,6 +207,12 @@ class ControlSystem(object):
         if repeat < 1:
             return
 
+        cur = self.conn.cursor()
+        #cur.execute("PRAGMA foreign_keys = ON")
+        now = datetime.datetime.now()
+        cur.execute("insert into ob(instrument, mode, tstart) values (?, ?, ?)", (self.ins, self.mode, now))
+        obid = cur.lastrowid
+        self.conn.commit()
         _logger.info('mode is %s', self.mode)
         try:
             thiss = self.seqs[self.mode]
@@ -218,14 +228,41 @@ class ControlSystem(object):
             fitsfile = factory.create(final, name, self)
             _logger.info('save image %s', name)
             fitsfile.writeto(name, clobber=True)
+            # Insert into DB
+            cur.execute("insert into frame(name, obid) values (?, ?)", (name, obid))
+            # fid = cur.lastrowid
+            self.conn.commit()
             count += 1
+        # Update tend of the OB when its finished
+        now = datetime.datetime.now()
+        cur.execute("UPDATE ob SET tend=? WHERE id=?", (now, obid))
+        self.conn.commit()
 
     def __enter__(self):
+
+        # self.initdb()
+
+        self.conn = sqlite3.connect(self.dbname, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
+
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        self.conn.close()
         self.imagecount.__exit__(exc_type, exc_val, exc_tb)
 
+    def initdb(self):
+
+        conn = sqlite3.connect(self.dbname, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
+        with conn:
+            cur = conn.cursor()
+
+            cur.execute('DROP TABLE IF EXISTS ob')
+            cur.execute("CREATE TABLE ob(id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                        "instrument TEXT, mode TEXT, tstart timestamp NOT NULL, tend timesetmp)")
+            cur.execute('DROP TABLE IF EXISTS frame')
+            cur.execute("CREATE TABLE frame(name TEXT, obid INTEGER, FOREIGN KEY(obid) REFERENCES ob(id))")
+            #cur.execute("PRAGMA foreign_keys = ON")
+            conn.commit()
 
 class AtmosphereModel(object):
 
@@ -266,4 +303,4 @@ if __name__ == '__main__':
     control.set_mode('twilightflat')
 
     with control:
-        control.run(exposure=20.0, repeat=1)
+        control.run(exposure=20.0, repeat=2)
