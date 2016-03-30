@@ -17,6 +17,7 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+from six import string_types
 
 from .device import HWDevice
 from .device import Signal
@@ -63,7 +64,7 @@ class Carrousel(HWDevice):
         # find pos of object with name
         for idx, item in enumerate(self._container):
             if item:
-                if isinstance(item, basestring):
+                if isinstance(item, string_types):
                     if item == name:
                         return self.move_to(idx)
                 elif item.name == name:
@@ -75,7 +76,7 @@ class Carrousel(HWDevice):
 
     def config_info(self):
         if self._current:
-            if isinstance(self._current, basestring):
+            if isinstance(self._current, string_types):
                 label = self._current
             else:
                 label = self._current.name

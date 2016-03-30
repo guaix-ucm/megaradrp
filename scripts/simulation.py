@@ -5,16 +5,15 @@ import datetime
 
 import numpy as np
 from astropy import units as u
-from megaradrp.simulation.actions import megara_sequences
-from megaradrp.simulation.instrument import MegaraInstrument
-from megaradrp.simulation.factory import MegaraImageFactory
 
-from megaradrp.simulation.efficiency import EfficiencyFile, InterpolFile
+from megaradrp.simulation.instrument import MegaraInstrument
+from megaradrp.simulation.efficiency import EfficiencyFile
+from megaradrp.simulation.efficiency import InterpolFile
 from megaradrp.simulation.instrument import InternalOptics
 from megaradrp.simulation.wheel import VPHWheel
 from megaradrp.simulation import lamps
 from megaradrp.simulation import calibrationunit
-
+from megaradrp.simulation.actions import megara_sequences
 from megaradrp.simulation.telescope import Telescope
 from megaradrp.simulation.fiberbundle import FiberBundle
 from megaradrp.simulation.instrument import PseudoSlit
@@ -76,7 +75,7 @@ def create_mos(focal_plane):
 
 def create_wheel():
     _logger.info('create wheel')
-    wheel = VPHWheel(capacity=3)
+    wheel = VPHWheel(capacity=3, name='wheel')
     _logger.info('create vphs')
     vph = create_vph_by_data('VPH405_LR',
                               'v02/VPH405_LR2-extra.dat',
@@ -274,7 +273,11 @@ class AtmosphereModel(object):
         return 5e4 * self.tw_interp(wl_in)
 
 
+
 if __name__ == '__main__':
+    from megaradrp.simulation.factory import MegaraImageFactory
+    from megaradrp.simulation.control import ControlSystem
+    from megaradrp.simulation.atmosphere import AtmosphereModel
 
     logging.basicConfig(level=logging.DEBUG)
 
@@ -292,15 +295,23 @@ if __name__ == '__main__':
     control.register('megcalib', cu)
     control.register('factory', factory)
 
-    # Obervation setup
+    # Observation setup
     # This instruction fixes the number of fibers...
-    instrument.set_mode('LCB')
-    # set VPH
-    instrument.wheel.select('VPH405_LR')
-    #cu.select('FLAT1')
+
+    profile = {}
+    profile['description'] = 'Profile1'
+    profile['vph'] = 'VPH405_LR'
+    profile['mode'] = 'LCB'
+    profile['cover'] = 'RIGHT'
+
+    _logger.debug('Configure MEGARA with profile %s', profile['description'])
+    instrument.configure(profile)
+
+    cu.select('FLAT1')
 
     _logger.info('start simulation')
-    control.set_mode('twilightflat')
+    # control.set_mode('twilightflat')
+    control.set_mode('arc')
 
     with control:
         control.run(exposure=20.0, repeat=2)

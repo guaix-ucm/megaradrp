@@ -62,7 +62,7 @@ class MegaraVPH(object):
     def resolution(self, wl):
         return  self._res.response(wl)
 
-    def meta(self):
+    def config_info(self):
         return {'name': self.name}
 
     def wltable_interp(self):
@@ -89,7 +89,7 @@ class DummyVPH(object):
         # This is as VPH405_LR_res
         return  self.res * numpy.ones_like(wl)
 
-    def meta(self):
+    def config_info(self):
         return {'name': self.name}
 
     def wltable_interp(self):

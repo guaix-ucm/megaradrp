@@ -98,11 +98,11 @@ class MegaraImageFactory(object):
         return hdul
 
     def create(self, data, name, control):
-        meta = control.get('MEGARA').meta()
 
-        meta_megcalib = control.get('megcalib').config_info()
-
-
+        instrument = control.get('MEGARA')
+        meta = instrument.config_info()
+        calibration_unit = control.get('megcalib')
+        meta_megcalib = calibration_unit.config_info()
 
         mode = control.mode
         pheader = fits.Header(self.CARDS_P)
@@ -142,12 +142,10 @@ class MegaraImageFactory(object):
         insmode = meta_pslit.get('insmode', 'unknown')
         pheader['INSMODE'] = insmode
 
-
         #self.bun_fib(mode, meta, data, pheader)
 
         if mode in ['arc', 'fiberflat', 'focus']:
             # LAMP keywords
-
             pheader['LAMP'] = meta_megcalib['label']
 
         hdu1 = fits.PrimaryHDU(data, header=pheader)

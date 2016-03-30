@@ -20,7 +20,7 @@
 
 import numpy
 from numpy.lib.stride_tricks import as_strided as ast
-import scipy.interpolate as ii
+
 
 from .efficiency import Efficiency
 
@@ -275,7 +275,7 @@ class MegaraDetector(DetectorBase):
 
         return (fshape, (base1, base2), geom1, geom2)
 
-    def meta(self):
+    def config_info(self):
         return {'exposed': self._time_last,
                 'name': 'MEGARA detector'}
 

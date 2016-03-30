@@ -25,22 +25,23 @@ import scipy.interpolate as ii
 from scipy.ndimage.filters import convolve1d
 
 from .efficiency import Efficiency
+from .device import HWDevice
 
 
-class PseudoSlit(object):
+class PseudoSlit(HWDevice):
     def __init__(self, name, insmode):
+
+        super(PseudoSlit, self).__init__(name)
 
         # Positions of the fibers in the PS slit
         self.y_pos = {}
-        self.name = name
         self.insmode = insmode
 
     def connect_fibers(self, fibid, pos):
         self.y_pos = dict(zip(fibid, pos))
 
-    def meta(self):
+    def config_info(self):
         return {'name': self.name, 'insmode': self.insmode}
-
 
 
 class InternalOptics(object):
@@ -55,13 +56,18 @@ class InternalOptics(object):
         return self._transmission.response(wl)
 
 
-class MegaraInstrument(object):
+class MegaraInstrument(HWDevice):
     def __init__(self, focal_plane, fibers, pseudo_slit, internal_optics, wheel, detector):
+
+        super(MegaraInstrument, self).__init__('MEGARA')
 
         self._mode = 'lcb'
         self.detector = detector
 
         self._pseudo_slit = pseudo_slit
+        for s in self._pseudo_slit:
+            self._pseudo_slit[s].set_parent(self)
+
         self.focal_plane = focal_plane
         self._fibers = fibers
 
@@ -70,6 +76,7 @@ class MegaraInstrument(object):
         self.fibers = self._fibers[self._mode]
 
         self.wheel = wheel
+        self.wheel.set_parent(self)
         self.vph = self.wheel.current()
         self.internal_optics = internal_optics
 
@@ -97,6 +104,10 @@ class MegaraInstrument(object):
         self.pseudo_slit = self._pseudo_slit[self._mode]
         self.fibers = self._fibers[self._mode]
 
+    def set_vph(self, vphname):
+        """Set VPH of the instrument."""
+        self.wheel.select(vphname)
+
     def set_cover(self, status):
         """Cover in the focal plane."""
 
@@ -116,16 +127,34 @@ class MegaraInstrument(object):
     def get_visible_fibers(self):
         return self.focal_plane.get_visible_fibers(self.fibers)
 
-    def meta(self):
-        _meta = {'detector': self.detector.meta(),
-                 'vph': self.vph.meta(),
-                 'focus': self._internal_focus,
-                 'fplane': self.focal_plane.meta(),
-                 'pslit': self.pseudo_slit.meta(),
-                 'fbundle': self.fibers.meta()
-                 }
+    def config_info(self):
 
-        return _meta
+        result = {'detector': self.detector.config_info(),
+                 'vph': self.vph.config_info(),
+                 'fplane': self.focal_plane.config_info(),
+                 'pslit': self.pseudo_slit.config_info(),
+                 'fbundle': self.fibers.config_info()
+                 }
+        #for i in self.children:
+        #    result[i.name] = i.config_info()
+
+        result['focus'] = self._internal_focus
+
+        return result
+
+    def configure(self, profile):
+        """Configure MEGARA"""
+
+        # _logger.debug('Configure MEGARA with profile %s', profile['description'])
+
+        # self.shutter.configure(profile['shutter'])
+
+        self.set_cover(profile['cover'])
+
+        self.set_mode(profile['mode'])
+
+        self.set_vph(profile['vph'])
+
 
     def project_rss(self, sigma, wl_in, spec_in):
 

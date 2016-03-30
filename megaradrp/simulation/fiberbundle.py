@@ -46,7 +46,7 @@ class FiberBundle(object):
     def transmission(self, wl):
         return self._transmission.response(wl)
 
-    def meta(self):
+    def config_info(self):
         return {'name': self.name,
                 'nfibers': self.nfibers,
                 'fibs_id': self.fibs_id,

@@ -37,7 +37,7 @@ class FocalPlane(object):
         """Cover in the focal plane."""
 
         if mode.upper() not in self.NAMES:
-            raise ValueError('"%s" mode is not recognized')
+            raise ValueError('"%s" mode is not recognized' % mode)
 
         self._cover_status = self.NAMES[mode.upper()]
 
@@ -77,5 +77,5 @@ class FocalPlane(object):
 
         return p2
 
-    def meta(self):
+    def config_info(self):
         return {'cover': self.CODES[self._cover_status]}

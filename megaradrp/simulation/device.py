@@ -45,8 +45,11 @@ class Signal(object):
 
 
 class HWDevice(object):
-    def __init__(self, name=None):
+    def __init__(self, name=None, parent=None):
         self.name = name
+        self.parent = None
+        self.children = []
+        self.set_parent(parent)
 
     def config_info(self):
         return {'name': self.name}
