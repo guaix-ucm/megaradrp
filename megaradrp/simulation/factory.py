@@ -80,6 +80,23 @@ class MegaraImageFactory(object):
             hdr[key] = b
         return hdr
 
+    def create_from_instrument(self, data, name, instrument, mode=''):
+        meta = instrument.meta()
+
+        pheader = fits.Header(self.CARDS_P)
+
+        pheader['FILENAME'] = name
+        # OBS mode
+        pheader['OBSMODE'] = mode
+
+        exptime = meta.get('exposed', 0.0)
+        pheader['EXPTIME'] = exptime
+        pheader['EXPOSED'] = exptime
+
+        hdu1 = fits.PrimaryHDU(data, header=pheader)
+        hdul = fits.HDUList([hdu1])
+        return hdul
+
     def create(self, data, name, control):
         meta = control.get('MEGARA').meta()
 
@@ -204,8 +221,8 @@ if __name__ == '__main__':
 
     with PersistentRunCounter('r00%04d') as p:
         for i in range(10):
-            print p.runstring()
+            print (p.runstring())
 
     with PersistentRunCounter('r00%04d') as p:
         for i in range(10):
-            print p.runstring()
+            print (p.runstring())
