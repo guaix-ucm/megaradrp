@@ -209,7 +209,7 @@ class ControlSystem(object):
         cur = self.conn.cursor()
         #cur.execute("PRAGMA foreign_keys = ON")
         now = datetime.datetime.now()
-        cur.execute("insert into ob(instrument, mode, tstart) values (?, ?, ?)", (self.ins, self.mode, now))
+        cur.execute("insert into obs(instrument, mode, start_time) values (?, ?, ?)", (self.ins, self.mode, now))
         obid = cur.lastrowid
         self.conn.commit()
         _logger.info('mode is %s', self.mode)
@@ -228,13 +228,13 @@ class ControlSystem(object):
             _logger.info('save image %s', name)
             fitsfile.writeto(name, clobber=True)
             # Insert into DB
-            cur.execute("insert into frame(name, obid) values (?, ?)", (name, obid))
+            cur.execute("insert into frames(name, ob_id) values (?, ?)", (name, obid))
             # fid = cur.lastrowid
             self.conn.commit()
             count += 1
         # Update tend of the OB when its finished
         now = datetime.datetime.now()
-        cur.execute("UPDATE ob SET tend=? WHERE id=?", (now, obid))
+        cur.execute("UPDATE obs SET completion_time=? WHERE id=?", (now, obid))
         self.conn.commit()
 
     def __enter__(self):
@@ -255,11 +255,11 @@ class ControlSystem(object):
         with conn:
             cur = conn.cursor()
 
-            cur.execute('DROP TABLE IF EXISTS ob')
-            cur.execute("CREATE TABLE ob(id INTEGER PRIMARY KEY AUTOINCREMENT, "
+            cur.execute('DROP TABLE IF EXISTS obs')
+            cur.execute("CREATE TABLE obs(id INTEGER PRIMARY KEY AUTOINCREMENT, "
                         "instrument TEXT, mode TEXT, tstart timestamp NOT NULL, tend timesetmp)")
-            cur.execute('DROP TABLE IF EXISTS frame')
-            cur.execute("CREATE TABLE frame(name TEXT, obid INTEGER, FOREIGN KEY(obid) REFERENCES ob(id))")
+            cur.execute('DROP TABLE IF EXISTS frames')
+            cur.execute("CREATE TABLE frames(name TEXT, ob_id INTEGER, FOREIGN KEY(ob_id) REFERENCES ob(id))")
             #cur.execute("PRAGMA foreign_keys = ON")
             conn.commit()
 
