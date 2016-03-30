@@ -1,5 +1,6 @@
 import logging
 from numina.flow.processing import TagOptionalCorrector, TagFits
+import numpy as np
 
 _logger = logging.getLogger('numina.processing')
 
@@ -21,6 +22,11 @@ class SlitFlatCorrector(TagOptionalCorrector):
 
         _logger.debug('correcting slit flat in %s', imgid)
 
+        # Avoid nan values when divide
+        my_mask = self.slitflat == 0.0
+        self.slitflat[my_mask] = 1.0
+
         img[0].data /= self.slitflat
+
 
         return img

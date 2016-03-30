@@ -54,7 +54,11 @@ class FiberFlatCorrector(TagOptionalCorrector):
         imgid = self.get_imgid(img)
         _logger.debug('correct from fiber flat in image %s', imgid)
 
-        img[0].data = img[0].data / self.corr
+        # Avoid nan values when divide
+        my_mask = self.corr == 0.0
+        self.corr[my_mask] = 1.0
+
+        img[0].data /= self.corr
 
         return img
 
