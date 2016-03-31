@@ -195,11 +195,12 @@ class MegaraFocusSequence(Sequence):
 
 def megara_sequences():
     seqs = {}
+    # Keys must correspod to MEGARA ObsMode.key
     seqs['null'] = MegaraNullSequence()
-    seqs['bias'] = MegaraBiasSequence()
-    seqs['dark'] = MegaraDarkSequence()
-    seqs['fiberflat'] = MegaraFiberFlatSequence()
-    seqs['arc'] = MegaraArcSequence()
-    seqs['twilightflat'] = MegaraTwilightFlatSequence()
-    seqs['focus'] = MegaraFocusSequence()
+    seqs['bias_image'] = MegaraBiasSequence()
+    seqs['dark_image'] = MegaraDarkSequence()
+    seqs['fiber_flat_image'] = MegaraFiberFlatSequence()
+    seqs['arc_calibration'] = MegaraArcSequence()
+    seqs['twilight_flat_image'] = MegaraTwilightFlatSequence()
+    seqs['focus_spectrograph'] = MegaraFocusSequence()
     return seqs
