@@ -127,12 +127,12 @@ The result is stored in directory ``resultsdir``.
 The default values are for each directory are``_data``, ``_work`` and ``_results``.
 All these directories can be defined in the command line using flags::
 
-  $ numina run --workdir /tmp/test1 --datadir /scrat/obs/run12222 obs.yaml -r requires.raml
+  $ numina run --workdir /tmp/test1 --datadir /scrat/obs/run12222 obs.yaml -r requires.yaml
 
 See :ref:`numina:cli` for a full description of the command line interface.
 
 Following the example, we create a directory ``_data`` in our current directory and copy
-there the raw frames from ``r0121.fits`` to ``r0132.fits``and the master bias ``master_bias-1.fits``.
+there the raw frames from ``r0121.fits`` to ``r0132.fits`` and the master bias ``master_bias-1.fits``.
 
 The we run::
 
