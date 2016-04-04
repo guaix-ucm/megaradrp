@@ -195,7 +195,7 @@ class ControlSystem(object):
         self.mode = 'null'
         self.ins = 'MEGARA'
         self.seqs = megara_sequences()
-        self.dbname = 'testing.db'
+        self.dbname = 'processing.db'
         self.conn = None
 
     def register(self, name, element):
@@ -211,7 +211,6 @@ class ControlSystem(object):
 
         if repeat < 1:
             return
-
 
         _logger.info('mode is %s', self.mode)
         try:
@@ -295,7 +294,6 @@ if __name__ == '__main__':
     import argparse
 
     from megaradrp.simulation.factory import MegaraImageFactory
-    from megaradrp.simulation.control import ControlSystem
     from megaradrp.simulation.atmosphere import AtmosphereModel
 
     logging.basicConfig(level=logging.DEBUG)
