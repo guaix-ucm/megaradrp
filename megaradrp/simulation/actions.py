@@ -19,6 +19,41 @@
 
 """Sequences for observing modes of MEGARA"""
 
+def simulate_bias(detector):
+    """Simulate a BIAS array."""
+    detector.expose(source=0.0, time=0.0)
+    final = detector.readout()
+    return final
+
+def simulate_dark(detector, exposure):
+    """Simulate a DARK array,"""
+    detector.expose(source=0.0, time=exposure)
+    final = detector.readout()
+    return final
+
+def simulate_flat(detector, exposure, source):
+    """Simulate a FLAT array,"""
+    detector.expose(source=source, time=exposure)
+    final = detector.readout()
+    return final
+
+
+def simulate_dark_fits(factory, instrument, exposure, repeat=1):
+    """Simulate a DARK FITS."""
+    # Use instrument and detector!
+    det = getattr(instrument, 'detector', None)
+    if det:
+        detector = det
+    else:
+        detector = instrument
+
+    for i in range(repeat):
+        detector.expose(time=exposure)
+        final = detector.readout()
+        fitsfile = factory.create_from_instrument(mode='dark', instrument=detector, data=final, name='dark_%s.fits'%i)
+
+        yield fitsfile
+
 
 class Sequence(object):
     def __init__(self, instrument, mode):
