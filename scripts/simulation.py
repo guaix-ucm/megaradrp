@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import os
 import logging
 import datetime
 
@@ -197,6 +198,7 @@ class ControlSystem(object):
         self.seqs = megara_sequences()
         self.dbname = 'processing.db'
         self.conn = None
+        self.datadir = 'data'
 
     def register(self, name, element):
         self._elements[name] = element
@@ -233,7 +235,7 @@ class ControlSystem(object):
             name = self.imagecount.runstring()
             fitsfile = factory.create(final, name, self)
             _logger.info('save image %s', name)
-            fitsfile.writeto(name, clobber=True)
+            fitsfile.writeto(os.path.join(self.datadir, name), clobber=True)
             # Insert into DB
             cur.execute("insert into frames(name, ob_id) values (?, ?)", (name, obid))
             # fid = cur.lastrowid
