@@ -92,7 +92,7 @@ class MegaraDarkSequence(Sequence):
         instrument = control.get(self.instrument)
 
         for i in range(repeat):
-            instrument.detector.expose(exposure)
+            instrument.detector.expose(source=0.0, time=exposure)
             final = instrument.detector.readout()
             yield final
 
