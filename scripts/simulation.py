@@ -22,6 +22,11 @@ from megaradrp.simulation.focalplane import FocalPlane
 from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.vph import MegaraVPH
 
+from numinadb.dal import Session
+from numinadb.model import MyOb, Frame, Base, ObFact
+
+from sqlalchemy import create_engine
+
 _logger = logging.getLogger("simulation")
 
 # create detector from data
@@ -185,7 +190,6 @@ def create_telescope():
 
     return tel
 
-import sqlite3
 
 class ControlSystem(object):
     """Top level"""
@@ -197,8 +201,11 @@ class ControlSystem(object):
         self.ins = 'MEGARA'
         self.seqs = megara_sequences()
         self.dbname = 'processing.db'
+        uri = 'sqlite:///%s' % self.dbname
+        engine = create_engine(uri, echo=False)
         self.conn = None
         self.datadir = 'data'
+        Session.configure(bind=engine)
 
     def register(self, name, element):
         self._elements[name] = element
@@ -210,7 +217,7 @@ class ControlSystem(object):
         self.mode = mode
 
     def run(self, exposure, repeat=1):
-
+        # self.initdb()
         if repeat < 1:
             return
 
@@ -221,12 +228,10 @@ class ControlSystem(object):
             _logger.error('No sequence for mode %s', self.mode)
             raise
 
-        cur = self.conn.cursor()
-        # cur.execute("PRAGMA foreign_keys = ON")
+        session = Session()
         now = datetime.datetime.now()
-        cur.execute("insert into obs(instrument, mode, start_time) values (?, ?, ?)", (self.ins, self.mode, now))
-        obid = cur.lastrowid
-        self.conn.commit()
+        ob = MyOb(instrument=self.ins, mode=self.mode, start_time=now)
+        session.add(ob)
 
         iterf = thiss.run(self, exposure, repeat)
         count = 1
@@ -237,41 +242,51 @@ class ControlSystem(object):
             _logger.info('save image %s', name)
             fitsfile.writeto(os.path.join(self.datadir, name), clobber=True)
             # Insert into DB
-            cur.execute("insert into frames(name, ob_id) values (?, ?)", (name, obid))
-            # fid = cur.lastrowid
-            self.conn.commit()
+            newframe = Frame()
+            newframe.name = name
+            ob.frames.append(newframe)
             count += 1
 
-        # Update tend of the OB when its finished
-        now = datetime.datetime.now()
-        cur.execute("UPDATE obs SET completion_time=? WHERE id=?", (now, obid))
-        self.conn.commit()
+
+        # Update completion time of the OB when its finished
+        ob.completion_time = datetime.datetime.now()
+        # Facts
+
+        from numina.core.pipeline import DrpSystem
+
+        drps = DrpSystem()
+
+        this_drp = drps.query_by_name('MEGARA')
+
+        for mode in this_drp.modes:
+            if mode.key == self.mode:
+                tagger = mode.tagger
+                break
+
+        if tagger:
+            current = os.getcwd()
+            os.chdir(self.datadir)
+            master_tags = tagger(ob)
+            os.chdir(current)
+            for k in master_tags:
+                ob.facts[k] = ObFact(key=k, val=master_tags[k])
+
+        session.commit()
 
     def __enter__(self):
-
-        # self.initdb()
-
-        self.conn = sqlite3.connect(self.dbname, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
-
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.conn.close()
         self.imagecount.__exit__(exc_type, exc_val, exc_tb)
 
     def initdb(self):
 
-        conn = sqlite3.connect(self.dbname, detect_types=sqlite3.PARSE_DECLTYPES|sqlite3.PARSE_COLNAMES)
-        with conn:
-            cur = conn.cursor()
 
-            cur.execute('DROP TABLE IF EXISTS obs')
-            cur.execute("CREATE TABLE obs(id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                        "instrument TEXT, mode TEXT, tstart timestamp NOT NULL, tend timesetmp)")
-            cur.execute('DROP TABLE IF EXISTS frames')
-            cur.execute("CREATE TABLE frames(name TEXT, ob_id INTEGER, FOREIGN KEY(ob_id) REFERENCES ob(id))")
-            #cur.execute("PRAGMA foreign_keys = ON")
-            conn.commit()
+        uri = 'sqlite:///%s' % self.dbname
+        engine = create_engine(uri, echo=False)
+
+        Base.metadata.create_all(engine)
+
 
 class AtmosphereModel(object):
 
