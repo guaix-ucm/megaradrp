@@ -58,6 +58,10 @@ class ControlSystem(object):
             raise
 
         iterf = thiss.run(self, exposure, repeat)
+
+        if iterf is None:
+            return
+
         count = 1
         for final in iterf:
             _logger.info('image %d of %d', count, repeat)
