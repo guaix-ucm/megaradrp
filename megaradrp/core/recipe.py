@@ -27,6 +27,7 @@ from numina.flow.processing import BiasCorrector, BadPixelCorrector, \
 from numina.core import BaseRecipe
 from numina.core.dataholders import Product
 from numina.core.products import QualityControlProduct
+from numina.core.requirements import ObservationResultRequirement
 
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
 from megaradrp.processing.slitflat import SlitFlatCorrector
@@ -37,6 +38,7 @@ _logger = logging.getLogger('numina.recipes.megara')
 class MegaraBaseRecipe(BaseRecipe):
     """Base clase for all MEGARA Recipes"""
 
+    obresult = ObservationResultRequirement()
     qc = Product(QualityControlProduct, dest='qc')
 
     def __init__(self, version):
