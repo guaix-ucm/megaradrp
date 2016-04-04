@@ -24,8 +24,6 @@ from __future__ import division, print_function
 import logging
 import numpy
 
-from astropy.io import fits
-
 from numina.array.trace.traces import trace
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
@@ -35,6 +33,7 @@ from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.requirements import MasterDarkRequirement
 from megaradrp.trace.traces import init_traces
+
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -46,7 +45,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
     master_dark = MasterDarkRequirement()
     master_bpm = MasterBPMRequirement()
 
-    master_fiberflat_frame = Product(MasterFiberFlatFrame)
+    fiberflat_frame = Product(MasterFiberFlatFrame)
     master_traces = Product(TraceMap)
 
     def __init__(self):
@@ -58,6 +57,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         parameters = self.get_parameters(rinput)
         reduced = self.bias_process_common(rinput.obresult, parameters)
+        hdr = reduced[0].header
+        del hdr['FILENAME']
 
         data = reduced[0].data
         cstart = 2000

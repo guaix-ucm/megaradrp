@@ -42,7 +42,7 @@ from numina.array.peaks.findpeaks1D import refinePeaks_spectrum
 from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import TraceMap
+from megaradrp.products import TraceMap, WavelengthCalibration
 from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.requirements import MasterDarkRequirement
 from megaradrp.core.processing import apextract_tracemap
@@ -64,7 +64,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     # Products
     arc_image = Product(DataFrameType)
     arc_rss = Product(DataFrameType)
-    master_wlcalib = Product(ArrayType)
+    master_wlcalib = Product(WavelengthCalibration)
 
     def __init__(self):
         super(ArcCalibrationRecipe, self).__init__("0.1.0")
@@ -74,11 +74,17 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         parameters = self.get_parameters(rinput)
         reduced = self.bias_process_common(rinput.obresult, parameters)
 
+        hdr = reduced[0].header
+        del hdr['FILENAME']
+
         _logger.info('extract fibers')
         _logger.info('extract fibers, %i', len(rinput.tracemap))
         rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
         rsshdu = fits.PrimaryHDU(rssdata, header=reduced[0].header)
         rss = fits.HDUList([rsshdu])
+
+        hdr = rss[0].header
+        del hdr['FILENAME']
 
         _logger.info('extracted %i fibers', rssdata.shape[0])
 

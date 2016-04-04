@@ -48,7 +48,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     master_bpm = MasterBPMRequirement()
     tracemap = Requirement(TraceMap, 'Trace information of the Apertures')
     # Products
-    master_fiberflat_frame = Product(MasterFiberFlatFrame)
+    fiberflat_frame = Product(MasterFiberFlatFrame)
     master_fiberflat = Product(MasterFiberFlat)
 
     def __init__(self):

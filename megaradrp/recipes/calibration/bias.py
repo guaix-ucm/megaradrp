@@ -22,7 +22,7 @@ import logging
 from astropy.io import fits
 
 from numina.core import Product, RecipeError
-from numina.core.requirements import ObservationResultRequirement
+
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import MasterBias
@@ -33,7 +33,6 @@ _logger = logging.getLogger('numina.recipes.megara')
 
 class BiasRecipe(MegaraBaseRecipe):
     """Process BIAS images and create MASTER_BIAS."""
-    obresult = ObservationResultRequirement()
 
     master_bias = Product(MasterBias)
 
@@ -54,6 +53,8 @@ class BiasRecipe(MegaraBaseRecipe):
         hdr['IMGTYP'] = ('BIAS', 'Image type')
         hdr['NUMTYP'] = ('MASTER_BIAS', 'Data product type')
         hdr['CCDMEAN'] = data[0].mean()
+        # delete FILENAME
+        del hdr['FILENAME']
 
         varhdu = fits.ImageHDU(data[1], name='VARIANCE')
         num = fits.ImageHDU(data[2], name='MAP')

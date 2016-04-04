@@ -113,9 +113,6 @@ class MegaraBaseRecipe(BaseRecipe):
         hdu, data = self.hdu_creation(obresult, img)
 
         hdr = hdu[0].header
-        # FIXME: this is incorrect in general
-        hdr['IMGTYP'] = ('FIBER_FLAT', 'Image type')
-        hdr['NUMTYP'] = ('MASTER_FIBER_FLAT', 'Data product type')
         hdr = self.set_base_headers(hdr)
         hdr['CCDMEAN'] = data[0].mean()
 
