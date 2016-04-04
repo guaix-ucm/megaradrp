@@ -166,7 +166,7 @@ def create_calibration_unit(illum=None):
     lamp3 = lamps.ArcLamp('ARC', illumination=illum)
     lamp4 = lamps.BlackBodyLamp('HALO1', 5400 * u.K, illumination=illum)
     lamp5 = lamps.FlatLamp('HALO2', photons=7598.34893859, illumination=illum)
-    lamp6 = lamps.ArcLamp('ARC', illumination=illum)
+    lamp6 = lamps.ArcLamp('ARC1', illumination=illum)
 
     cu.put_in_pos('EMPTY', 0)
     cu.put_in_pos(lamp1, 1)
