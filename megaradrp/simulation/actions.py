@@ -108,8 +108,8 @@ class MegaraLampSequence(Sequence):
         # Get active lamp
         lamp = cu.current()
         if lamp == 'EMPTY':
-            print('LAMP is ', lamp)
-            return
+            raise ValueError('LAMP is %s, exiting' %  lamp)
+
         self.lamp_check(lamp)
         # Simulated arc spectrum
         wl_in = instrument.vph.wltable_interp()
