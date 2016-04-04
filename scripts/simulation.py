@@ -158,16 +158,22 @@ def create_instrument():
 
 def create_calibration_unit(illum=None):
 
-    cu = calibrationunit.MegaraCalibrationUnit(capacity=4, name='megcalib')
+    cu = calibrationunit.MegaraCalibrationUnit(capacity=7, name='megcalib')
 
     lamp1 = lamps.BlackBodyLamp('FLAT1', 5400 * u.K, illumination=illum)
     lamp2 = lamps.FlatLamp('FLAT2', photons=7598.34893859, illumination=illum)
     lamp3 = lamps.ArcLamp('ARC', illumination=illum)
+    lamp4 = lamps.BlackBodyLamp('HALO1', 5400 * u.K, illumination=illum)
+    lamp5 = lamps.FlatLamp('HALO2', photons=7598.34893859, illumination=illum)
+    lamp6 = lamps.ArcLamp('ARC', illumination=illum)
 
     cu.put_in_pos('EMPTY', 0)
     cu.put_in_pos(lamp1, 1)
     cu.put_in_pos(lamp2, 2)
     cu.put_in_pos(lamp3, 3)
+    cu.put_in_pos(lamp4, 4)
+    cu.put_in_pos(lamp5, 5)
+    cu.put_in_pos(lamp6, 6)
 
     return cu
 
@@ -206,18 +212,20 @@ class ControlSystem(object):
         if repeat < 1:
             return
 
-        cur = self.conn.cursor()
-        #cur.execute("PRAGMA foreign_keys = ON")
-        now = datetime.datetime.now()
-        cur.execute("insert into obs(instrument, mode, start_time) values (?, ?, ?)", (self.ins, self.mode, now))
-        obid = cur.lastrowid
-        self.conn.commit()
+
         _logger.info('mode is %s', self.mode)
         try:
             thiss = self.seqs[self.mode]
         except KeyError:
             _logger.error('No sequence for mode %s', self.mode)
             raise
+
+        cur = self.conn.cursor()
+        # cur.execute("PRAGMA foreign_keys = ON")
+        now = datetime.datetime.now()
+        cur.execute("insert into obs(instrument, mode, start_time) values (?, ?, ?)", (self.ins, self.mode, now))
+        obid = cur.lastrowid
+        self.conn.commit()
 
         iterf = thiss.run(self, exposure, repeat)
         count = 1
@@ -232,6 +240,7 @@ class ControlSystem(object):
             # fid = cur.lastrowid
             self.conn.commit()
             count += 1
+
         # Update tend of the OB when its finished
         now = datetime.datetime.now()
         cur.execute("UPDATE obs SET completion_time=? WHERE id=?", (now, obid))
@@ -273,8 +282,18 @@ class AtmosphereModel(object):
         return 5e4 * self.tw_interp(wl_in)
 
 
+def restricted_float(x):
+    x = float(x)
+    if x < 0.0 or x > 36000.0:
+        raise argparse.ArgumentTypeError("%r not in range [0.0, 36000.0]"%(x,))
+    return x
+
 
 if __name__ == '__main__':
+
+    import yaml
+    import argparse
+
     from megaradrp.simulation.factory import MegaraImageFactory
     from megaradrp.simulation.control import ControlSystem
     from megaradrp.simulation.atmosphere import AtmosphereModel
@@ -298,20 +317,36 @@ if __name__ == '__main__':
     # Observation setup
     # This instruction fixes the number of fibers...
 
-    profile = {}
-    profile['description'] = 'Profile1'
-    profile['vph'] = 'VPH405_LR'
-    profile['mode'] = 'LCB'
-    profile['cover'] = 'RIGHT'
+    parser = argparse.ArgumentParser(prog='megara_sim_b')
 
-    _logger.debug('Configure MEGARA with profile %s', profile['description'])
-    instrument.configure(profile)
+    parser.add_argument('-p', '--parameters', metavar="FILE",
+                        help="FILE with observing parameters")
 
-    cu.select('FLAT1')
+    parser.add_argument('-e', '--exposure', type=restricted_float, default=0.0,
+                        help="Exposure time per image (in seconds) [0,36000]")
+    parser.add_argument('-n', '--nimages', metavar="INT", type=int, default=1,
+                        help="Number of images to generate")
+
+    parser.add_argument('omode', choices=megara_sequences().keys(),
+                        help="Observing mode of the intrument")
+
+    args = parser.parse_args()
+
+    if args.parameters:
+        oparam = yaml.load(open(args.parameters))
+
+        _logger.debug('Configure MEGARA with profile %s', oparam['description'])
+        instrument.configure(oparam)
+
+        cu.select(oparam['lamp'])
 
     _logger.info('start simulation')
-    # control.set_mode('twilightflat')
-    control.set_mode('arc')
+    control.set_mode(args.omode)
 
+    etime = args.exposure
+    repeat = args.nimages
+
+    _logger.debug('Exposure time is %f', etime)
+    _logger.debug('Number of images is %d', repeat)
     with control:
-        control.run(exposure=20.0, repeat=2)
+        control.run(exposure=etime, repeat=repeat)
