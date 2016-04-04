@@ -151,7 +151,7 @@ class MegaraInstrument(HWDevice):
 
         self.set_cover(profile['cover'])
 
-        self.set_mode(profile['mode'])
+        self.set_mode(profile['bundle'])
 
         self.set_vph(profile['vph'])
 
