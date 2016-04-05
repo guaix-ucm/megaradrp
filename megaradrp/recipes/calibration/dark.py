@@ -28,7 +28,7 @@ from megaradrp.products import MasterDark
 
 class DarkRecipe(MegaraBaseRecipe):
 
-    '''Process DARK images and provide MASTER_DARK. '''
+    """Process DARK images and provide MASTER_DARK."""
 
     master_bias = MasterBiasRequirement()
 
@@ -46,9 +46,12 @@ class DarkRecipe(MegaraBaseRecipe):
         hdu, data = self.hdu_creation(rinput.obresult, {'biasmap':mbias})
 
         try:
-            hdu[0].data = hdu[0].data/hdu[0].header['EXPTIME']
+            hdu[0].data = hdu[0].data / hdu[0].header['EXPTIME']
         except:
             pass
+
+        hdr = hdu[0].header
+        del hdr['FILENAME']
 
         result = self.create_result(master_dark=hdu)
         return result

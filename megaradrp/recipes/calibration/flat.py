@@ -29,7 +29,7 @@ from numina.core import Product, Requirement
 from numina.core.requirements import ObservationResultRequirement
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import MasterFiberFlat, MasterFiberFlatFrame
+from megaradrp.products import MasterFiberFlat, MEGARAProcessedFrame
 from megaradrp.products import TraceMap
 from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.requirements import MasterDarkRequirement
@@ -48,7 +48,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     master_bpm = MasterBPMRequirement()
     tracemap = Requirement(TraceMap, 'Trace information of the Apertures')
     # Products
-    fiberflat_frame = Product(MasterFiberFlatFrame)
+    fiberflat_frame = Product(MEGARAProcessedFrame)
     master_fiberflat = Product(MasterFiberFlat)
 
     def __init__(self):
@@ -60,6 +60,9 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
         reduced = self.bias_process_common(rinput.obresult, parameters)
 
+        hdr = reduced[0].header
+        del hdr['FILENAME']
+
         _logger.info('extract fibers')
         rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
         # FIXME: we are ignoring here all the possible bad pixels
@@ -67,6 +70,9 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         # rssdata /= rssdata.mean() #Originally uncomment
         rsshdu = fits.PrimaryHDU(rssdata, header=reduced[0].header)
         rss = fits.HDUList([rsshdu])
+
+        hdr = rss[0].header
+        del hdr['FILENAME']
 
         _logger.info('extraction completed')
         _logger.info('fiber flat reduction ended')
