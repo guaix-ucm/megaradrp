@@ -26,13 +26,14 @@ _logger = logging.getLogger("simulation")
 
 class ControlSystem(object):
     """Top level"""
-    def __init__(self):
+    def __init__(self, factory):
         self._elements = {}
 
         self.imagecount = PersistentRunCounter('r00%04d.fits')
         self.mode = 'null'
         self.ins = 'MEGARA'
         self.seqs = megara_sequences()
+        self.factory = factory
 
     def register(self, name, element):
         self._elements[name] = element
@@ -44,8 +45,6 @@ class ControlSystem(object):
         self.mode = mode
 
     def run(self, exposure, repeat=1):
-
-        factory = self.get('factory')
 
         if repeat < 1:
             return
@@ -66,7 +65,7 @@ class ControlSystem(object):
         for final in iterf:
             _logger.info('image %d of %d', count, repeat)
             name = self.imagecount.runstring()
-            fitsfile = factory.create(final, name, self)
+            fitsfile = self.factory.create(final, name, self)
             _logger.info('save image %s', name)
             fitsfile.writeto(name, clobber=True)
             count += 1
