@@ -25,4 +25,4 @@ def tagger_empty(obsres):
 
 
 def tagger_vph(obsres):
-    return get_tags_from_full_ob(obsres, reqtags=['vph'])
+    return get_tags_from_full_ob(obsres, reqtags=['vph', 'insmode'])
