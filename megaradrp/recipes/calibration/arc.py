@@ -74,17 +74,11 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         parameters = self.get_parameters(rinput)
         reduced = self.bias_process_common(rinput.obresult, parameters)
 
-        hdr = reduced[0].header
-        del hdr['FILENAME']
-
         _logger.info('extract fibers')
         _logger.info('extract fibers, %i', len(rinput.tracemap))
         rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
         rsshdu = fits.PrimaryHDU(rssdata, header=reduced[0].header)
         rss = fits.HDUList([rsshdu])
-
-        hdr = rss[0].header
-        del hdr['FILENAME']
 
         _logger.info('extracted %i fibers', rssdata.shape[0])
 

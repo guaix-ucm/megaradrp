@@ -57,8 +57,6 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         parameters = self.get_parameters(rinput)
         reduced = self.bias_process_common(rinput.obresult, parameters)
-        hdr = reduced[0].header
-        del hdr['FILENAME']
 
         data = reduced[0].data
         cstart = 2000

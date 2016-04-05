@@ -60,9 +60,6 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
         reduced = self.bias_process_common(rinput.obresult, parameters)
 
-        hdr = reduced[0].header
-        del hdr['FILENAME']
-
         _logger.info('extract fibers')
         rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
         # FIXME: we are ignoring here all the possible bad pixels
@@ -70,9 +67,6 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         # rssdata /= rssdata.mean() #Originally uncomment
         rsshdu = fits.PrimaryHDU(rssdata, header=reduced[0].header)
         rss = fits.HDUList([rsshdu])
-
-        hdr = rss[0].header
-        del hdr['FILENAME']
 
         _logger.info('extraction completed')
         _logger.info('fiber flat reduction ended')
