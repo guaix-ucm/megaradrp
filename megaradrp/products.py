@@ -48,6 +48,11 @@ class MEGARAProductFrame(DataFrameType, DataProductTag):
     pass
 
 
+class MEGARAProcessedFrame(DataFrameType):
+    """A processed image not to be stored"""
+    pass
+
+
 class MasterBias(MEGARAProductFrame):
     pass
 
@@ -59,17 +64,22 @@ class MasterDark(MEGARAProductFrame):
 class MasterFiberFlat(MEGARAProductFrame):
     pass
 
+
 class MasterSlitFlat(MEGARAProductFrame):
     pass
+
 
 class MasterFiberFlatFrame(MEGARAProductFrame):
     pass
 
+
 class MasterBPM(MEGARAProductFrame):
     pass
 
+
 class MasterSensitivity(MEGARAProductFrame):
     pass
+
 
 class TraceMap(DataProductType):
     def __init__(self, default=None):
@@ -94,6 +104,7 @@ class TraceMap(DataProductType):
 
 class WavelengthCalibration(ArrayType, DataProductTag):
     pass
+
 
 class MasterWeights(DataProductType):
     def __init__(self, default=None):
