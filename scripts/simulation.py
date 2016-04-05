@@ -258,6 +258,7 @@ class ControlSystem(object):
 
         this_drp = drps.query_by_name('MEGARA')
 
+        tagger = None
         for mode in this_drp.modes:
             if mode.key == self.mode:
                 tagger = mode.tagger
@@ -269,7 +270,8 @@ class ControlSystem(object):
             master_tags = tagger(ob)
             os.chdir(current)
             for k in master_tags:
-                ob.facts[k] = ObFact(key=k, val=master_tags[k])
+                fact = ObFact(key=k, value=master_tags[k])
+                ob.facts.append(fact)
 
         session.commit()
 
@@ -280,7 +282,6 @@ class ControlSystem(object):
         self.imagecount.__exit__(exc_type, exc_val, exc_tb)
 
     def initdb(self):
-
 
         uri = 'sqlite:///%s' % self.dbname
         engine = create_engine(uri, echo=False)
