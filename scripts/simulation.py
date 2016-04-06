@@ -6,6 +6,7 @@ import datetime
 
 import numpy as np
 from astropy import units as u
+from astropy.io import fits
 
 from megaradrp.simulation.instrument import MegaraInstrument
 from megaradrp.simulation.efficiency import EfficiencyFile
@@ -23,10 +24,8 @@ from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.vph import MegaraVPH
 
 
-
-
-
 _logger = logging.getLogger("simulation")
+
 
 # create detector from data
 def create_detector():
@@ -34,7 +33,8 @@ def create_detector():
     DSHAPE = (2056 * 2, 2048 * 2)
     PSCAN = 50
     OSCAN = 50
-    qe = 1.0 * np.ones(DSHAPE)
+    #qe = 1.0 * np.ones(DSHAPE)
+    qe = fits.getdata('v02/base_qe.fits')
     dcurrent = 3.0 / 3600
 
     readpars1 = ReadParams(gain=1.0, ron=2.0, bias=1000.0)
@@ -133,7 +133,7 @@ def illum2(x, y):
 
 
 def create_instrument():
- # eq = np.random.normal(loc=0.80, scale=0.01, size=(4096,4096))
+    # eq = np.random.normal(loc=0.80, scale=0.01, size=(4096,4096))
     # eq = np.clip(eq, 0.0, 1.0)
     # fits.writeto('eq.fits', eq, clobber=True)
     # eq = fits.getdata('eq.fits')
@@ -190,9 +190,6 @@ def create_telescope():
     return tel
 
 
-
-
-
 class AtmosphereModel(object):
 
     def __init__(self, twfile):
@@ -206,7 +203,7 @@ class AtmosphereModel(object):
 def restricted_float(x):
     x = float(x)
     if x < 0.0 or x > 36000.0:
-        raise argparse.ArgumentTypeError("%r not in range [0.0, 36000.0]"%(x,))
+        raise argparse.ArgumentTypeError("%r not in range [0.0, 36000.0]" % (x,))
     return x
 
 
@@ -225,6 +222,21 @@ if __name__ == '__main__':
 
     logging.basicConfig(level=logging.DEBUG)
 
+    parser = argparse.ArgumentParser(prog='megara_sim_b')
+
+    parser.add_argument('-p', '--parameters', metavar="FILE",
+                        help="FILE with observing parameters")
+
+    parser.add_argument('-e', '--exposure', type=restricted_float, default=0.0,
+                        help="Exposure time per image (in seconds) [0,36000]")
+    parser.add_argument('-n', '--nimages', metavar="INT", type=int, default=1,
+                        help="Number of images to generate")
+
+    parser.add_argument('omode', choices=megara_sequences().keys(),
+                        help="Observing mode of the intrument")
+
+    args = parser.parse_args()
+
     illum = None
     cu = create_calibration_unit(illum=None)
     instrument = create_instrument()
@@ -241,21 +253,6 @@ if __name__ == '__main__':
 
     # Observation setup
     # This instruction fixes the number of fibers...
-
-    parser = argparse.ArgumentParser(prog='megara_sim_b')
-
-    parser.add_argument('-p', '--parameters', metavar="FILE",
-                        help="FILE with observing parameters")
-
-    parser.add_argument('-e', '--exposure', type=restricted_float, default=0.0,
-                        help="Exposure time per image (in seconds) [0,36000]")
-    parser.add_argument('-n', '--nimages', metavar="INT", type=int, default=1,
-                        help="Number of images to generate")
-
-    parser.add_argument('omode', choices=megara_sequences().keys(),
-                        help="Observing mode of the intrument")
-
-    args = parser.parse_args()
 
     if args.parameters:
         oparam = yaml.load(open(args.parameters))
