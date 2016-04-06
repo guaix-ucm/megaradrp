@@ -25,9 +25,8 @@ from astropy.io import fits
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import MasterSlitFlat
-from megaradrp.requirements import MasterFiberFlatRequirement, MasterBiasRequirement, MasterDarkRequirement
+from megaradrp.requirements import MasterFiberFlatFrameRequirement, MasterBiasRequirement, MasterDarkRequirement
 from numina.core import Product, Parameter
-from numina.core.requirements import ObservationResultRequirement
 from scipy.ndimage.filters import median_filter
 from scipy.signal import savgol_filter
 
@@ -37,9 +36,9 @@ class SlitFlatRecipe(MegaraBaseRecipe):
     """Process SLIT_FLAT images and create MASTER_SLIT_FLAT."""
 
     # Requirements
-    obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
+    fiberflat_frame = MasterFiberFlatFrameRequirement()
 
     window_length_x = Parameter(301, 'Savitzky-Golay length of the filter window OX')
     window_length_y = Parameter(31, 'Savitzky-Golay length of the filter window OY')
@@ -55,21 +54,19 @@ class SlitFlatRecipe(MegaraBaseRecipe):
     def run(self, rinput):
         _logger.info('Slit Flat')
 
-        parameters = self.get_parameters(rinput)
-
-        reduced = self.bias_process_common(rinput.obresult, parameters)
+        fiberflat_frame = rinput.fiberflat_frame.open()[0].data
 
         if rinput.median_window_length:
-            archivo_mediana = median_filter(reduced[0].data, (1,rinput.median_window_length))
+            archivo_mediana = median_filter(fiberflat_frame, (1,rinput.median_window_length))
         else:
-            archivo_mediana = reduced[0].data
+            archivo_mediana = fiberflat_frame
 
         result = savgol_filter(archivo_mediana, rinput.window_length_x, rinput.polyorder, axis=1)
 
         if rinput.window_length_y:
             result = savgol_filter(result, rinput.window_length_y, rinput.polyorder, axis=0)
 
-        qe = reduced[0].data/result
+        qe = fiberflat_frame/result
 
         qe[np.isinf(qe)] = 1.0
         qe[np.isnan(qe)] = 1.0
