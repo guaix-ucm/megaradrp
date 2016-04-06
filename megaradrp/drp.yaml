@@ -43,7 +43,7 @@ modes:
   status: DRAFT
   summary: Summary of Fiber Flat Image
   uuid: 8a20058f-8887-4b6d-9b65-c113258eccee
-  tagger: megaradrp.taggers.tagger_vph
+  tagger: megaradrp.taggers.tagger_base_image
 - date: 2014-04-25
   description: Lines and mode lines
   key: mos_image
@@ -52,7 +52,7 @@ modes:
   status: DRAFT
   summary: Summary of Fiber MOS image
   uuid: 6b2ea25b-e6e4-4e0c-b374-825c70387668
-  tagger: megaradrp.taggers.tagger_vph
+  tagger: megaradrp.taggers.tagger_base_image
 - date: 2014-04-28
   description: Lines and mode lines
   key: flux_calibration
@@ -61,7 +61,7 @@ modes:
   status: DRAFT
   summary: Summary of Fiber MOS image
   uuid: 9114511f-15d8-40d2-a0b1-e4a6202a3e39
-  tagger: megaradrp.taggers.tagger_vph
+  tagger: megaradrp.taggers.tagger_base_image
 - date: 2014-12-10
   description: Lines and mode lines
   key: trace_map
@@ -70,7 +70,7 @@ modes:
   status: DRAFT
   summary: Summary of Fiber MOS image
   uuid: 4e5a5d6f-3bee-4630-836e-0eabdf5e9f9b
-  tagger: megaradrp.taggers.tagger_vph
+  tagger: megaradrp.taggers.tagger_base_image
 - date: 2015-05-29
   description: Process an Arc image
   key: arc_calibration
@@ -79,7 +79,7 @@ modes:
   status: DRAFT
   summary: Summary of Arc Calibration
   uuid: c1842e00-2005-48bb-9a0e-8a8161f97fdf
-  tagger: megaradrp.taggers.tagger_vph
+  tagger: megaradrp.taggers.tagger_base_image
 - date: 2012-05-21
   description: Bad Pixels
   key: bpm
