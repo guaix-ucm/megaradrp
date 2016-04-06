@@ -81,7 +81,7 @@ class MegaraImageFactory(object):
         return hdr
 
     def create_from_instrument(self, data, name, instrument, mode=''):
-        meta = instrument.meta()
+        meta = instrument.config_info()
 
         pheader = fits.Header(self.CARDS_P)
 
