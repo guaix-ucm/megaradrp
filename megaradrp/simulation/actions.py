@@ -69,7 +69,9 @@ class MegaraNullSequence(Sequence):
         super(MegaraNullSequence, self).__init__('MEGARA', 'null')
 
     def run(self, control, exposure, repeat):
-        pass
+        # This is an empty generator
+        return iter(())
+
 
 
 class MegaraBiasSequence(Sequence):
@@ -152,6 +154,15 @@ class MegaraArcSequence(MegaraLampSequence):
         return True
 
 
+class MegaraSlitFlatSequence(Sequence):
+    def __init__(self):
+        super(MegaraSlitFlatSequence, self).__init__('MEGARA', 'slit_flat')
+
+    def run(self, control, exposure, repeat):
+        # This is an empty generator
+        return iter(())
+
+
 class MegaraTwilightFlatSequence(Sequence):
     def __init__(self):
         super(MegaraTwilightFlatSequence, self).__init__('MEGARA', 'twilight_flat_image')
@@ -209,6 +220,7 @@ def megara_sequences():
     seqs['bias_image'] = MegaraBiasSequence()
     seqs['dark_image'] = MegaraDarkSequence()
     seqs['fiber_flat_image'] = MegaraFiberFlatSequence()
+    seqs['slit_flat'] = MegaraSlitFlatSequence()
     seqs['trace_map'] = MegaraTraceMapSequence()
     seqs['arc_calibration'] = MegaraArcSequence()
     seqs['twilight_flat_image'] = MegaraTwilightFlatSequence()
