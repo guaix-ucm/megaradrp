@@ -103,7 +103,7 @@ class MegaraImageFactory(object):
         meta = instrument.config_info()
         calibration_unit = control.get('megcalib')
         meta_megcalib = calibration_unit.config_info()
-
+        metacontrol = control.config_info()
         mode = control.mode
         pheader = fits.Header(self.CARDS_P)
 
@@ -116,6 +116,18 @@ class MegaraImageFactory(object):
         exptime = meta_det.get('exposed', 0.0)
         pheader['EXPTIME'] = exptime
         pheader['EXPOSED'] = exptime
+
+        # Seqs
+        try:
+            ob_data = metacontrol['ob_data']
+            obsid = ob_data.get('obsid', 0)
+            nrep = ob_data.get('repeat', 0)
+            nsec = ob_data.get('count', 0)
+            pheader['OBSID'] = obsid
+            pheader['NNREP'] = nrep
+            pheader['NNSEC'] = nsec
+        except KeyError:
+            pass
 
         # VPH
         meta_vph = meta.get('vph', {})

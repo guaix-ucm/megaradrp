@@ -24,6 +24,7 @@ from megaradrp.simulation.factory import PersistentRunCounter
 
 _logger = logging.getLogger("simulation")
 
+
 class ControlSystem(object):
     """Top level"""
     def __init__(self, factory):
@@ -34,6 +35,7 @@ class ControlSystem(object):
         self.ins = 'MEGARA'
         self.seqs = megara_sequences()
         self.factory = factory
+        self.ob_data = dict(count=0, repeat=0, name=None, obsid=1)
 
     def register(self, name, element):
         self._elements[name] = element
@@ -58,17 +60,18 @@ class ControlSystem(object):
 
         iterf = thiss.run(self, exposure, repeat)
 
-        if iterf is None:
-            return
-
-        count = 1
-        for final in iterf:
+        self.ob_data['repeat'] = repeat
+        self.ob_data['name'] = None
+        for count, final in enumerate(iterf, 1):
             _logger.info('image %d of %d', count, repeat)
-            name = self.imagecount.runstring()
-            fitsfile = self.factory.create(final, name, self)
-            _logger.info('save image %s', name)
-            fitsfile.writeto(name, clobber=True)
-            count += 1
+            self.ob_data['name'] = self.imagecount.runstring()
+            self.ob_data['count'] = count
+            fitsfile = self.factory.create(final, self.ob_data['name'], self)
+            _logger.info('save image %s', self.ob_data['name'])
+            fitsfile.writeto(self.ob_data['name'], clobber=True)
+
+    def config_info(self):
+        return {'ob_data': self.ob_data}
 
     def __enter__(self):
         return self
