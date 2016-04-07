@@ -22,9 +22,9 @@ from megaradrp.simulation.instrument import PseudoSlit
 from megaradrp.simulation.focalplane import FocalPlane
 from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.vph import MegaraVPH
+from megaradrp.simulation.shutter import MegaraShutter
 
-
-_logger = logging.getLogger("simulation")
+_logger = logging.getLogger("megaradrp.simulation")
 
 
 # create detector from data
@@ -157,7 +157,9 @@ def create_instrument():
                                   wheel=wheel,
                                   pseudo_slit=pseudo_slit,
                                   internal_optics=internal,
-                                  detector=detector)
+                                  detector=detector,
+                                  shutter=MegaraShutter()
+    )
     return instrument
 
 

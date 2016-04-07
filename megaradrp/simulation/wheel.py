@@ -24,8 +24,8 @@ from .device import Signal
 
 
 class Carrousel(HWDevice):
-    def __init__(self, capacity, name=None):
-        super(Carrousel, self).__init__(name=name)
+    def __init__(self, capacity, name=None, parent=None):
+        super(Carrousel, self).__init__(name=name, parent=parent)
         # Container is empty
         self._container = [None] * capacity
         self._capacity = capacity
@@ -87,8 +87,8 @@ class Carrousel(HWDevice):
 
 
 class Wheel(Carrousel):
-    def __init__(self, capacity, name=None):
-        super(Wheel, self).__init__(capacity, name=name)
+    def __init__(self, capacity, name=None, parent=None):
+        super(Wheel, self).__init__(capacity, name=name, parent=parent)
 
     def turn(self):
         self._pos = (self._pos + 1) %  self._capacity

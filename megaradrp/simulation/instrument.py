@@ -57,7 +57,7 @@ class InternalOptics(object):
 
 
 class MegaraInstrument(HWDevice):
-    def __init__(self, focal_plane, fibers, pseudo_slit, internal_optics, wheel, detector):
+    def __init__(self, focal_plane, fibers, pseudo_slit, internal_optics, wheel, detector, shutter):
 
         super(MegaraInstrument, self).__init__('MEGARA')
 
@@ -79,6 +79,9 @@ class MegaraInstrument(HWDevice):
         self.wheel.set_parent(self)
         self.vph = self.wheel.current()
         self.internal_optics = internal_optics
+
+        self.shutter = shutter
+        self.shutter.set_parent(self)
 
         # Focus
         self._internal_focus_factor = 1.0
@@ -129,12 +132,13 @@ class MegaraInstrument(HWDevice):
 
     def config_info(self):
 
-        result = {'detector': self.detector.config_info(),
-                 'vph': self.vph.config_info(),
-                 'fplane': self.focal_plane.config_info(),
-                 'pslit': self.pseudo_slit.config_info(),
-                 'fbundle': self.fibers.config_info()
-                 }
+        result = {
+            'detector': self.detector.config_info(),
+            'vph': self.vph.config_info(),
+            'fplane': self.focal_plane.config_info(),
+            'pslit': self.pseudo_slit.config_info(),
+            'fbundle': self.fibers.config_info()
+        }
         #for i in self.children:
         #    result[i.name] = i.config_info()
 
@@ -145,9 +149,7 @@ class MegaraInstrument(HWDevice):
     def configure(self, profile):
         """Configure MEGARA"""
 
-        # _logger.debug('Configure MEGARA with profile %s', profile['description'])
-
-        # self.shutter.configure(profile['shutter'])
+        self.shutter.configure(profile['shutter'])
 
         self.set_cover(profile['cover'])
 
@@ -313,7 +315,7 @@ def project_rss_w(visible_fib_ids, pseudo_slit, vph, detector, sigma):
         l4.extend([idx]*len(sidx[0]))
 
     return l1, l2, l3, l4
-            # row, col, val, fib
+    #      row, col, val, fib
 
 def coor_to_pix(x):
     return np.ceil(x -0.5).astype('int')
