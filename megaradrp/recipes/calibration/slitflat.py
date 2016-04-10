@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -25,7 +25,7 @@ from astropy.io import fits
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import MasterSlitFlat
-from megaradrp.requirements import MasterFiberFlatFrameRequirement, MasterBiasRequirement, MasterDarkRequirement
+from megaradrp.requirements import MasterBiasRequirement, MasterDarkRequirement
 from numina.core import Product, Parameter
 from scipy.ndimage.filters import median_filter
 from scipy.signal import savgol_filter
@@ -38,7 +38,6 @@ class SlitFlatRecipe(MegaraBaseRecipe):
     # Requirements
     master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
-    fiberflat_frame = MasterFiberFlatFrameRequirement()
 
     window_length_x = Parameter(301, 'Savitzky-Golay length of the filter window OX')
     window_length_y = Parameter(31, 'Savitzky-Golay length of the filter window OY')
@@ -54,24 +53,30 @@ class SlitFlatRecipe(MegaraBaseRecipe):
     def run(self, rinput):
         _logger.info('Slit Flat')
 
-        fiberflat_frame = rinput.fiberflat_frame.open()[0].data
+        parameters = self.get_parameters(rinput)
+        reduced = self.bias_process_common(rinput.obresult, parameters)
 
+        _logger.debug("Compute median")
         if rinput.median_window_length:
-            archivo_mediana = median_filter(fiberflat_frame, (1,rinput.median_window_length))
+            archivo_mediana = median_filter(reduced[0].data, (1, rinput.median_window_length))
         else:
-            archivo_mediana = fiberflat_frame
+            archivo_mediana = reduced[0].data
 
+        _logger.debug("Compute Savitzky-Golay X filter (%d, %d)", rinput.window_length_x, rinput.polyorder)
         result = savgol_filter(archivo_mediana, rinput.window_length_x, rinput.polyorder, axis=1)
 
         if rinput.window_length_y:
+            _logger.debug("Compute Savitzky-Golay Y filter (%d, %d)", rinput.window_length_y, rinput.polyorder)
             result = savgol_filter(result, rinput.window_length_y, rinput.polyorder, axis=0)
 
-        qe = fiberflat_frame/result
+        qe = reduced[0].data / result
 
+        _logger.debug('Filtering INF/NAN in result')
         qe[np.isinf(qe)] = 1.0
         qe[np.isnan(qe)] = 1.0
 
         hdu = fits.PrimaryHDU(qe)
         reduced = fits.HDUList([hdu])
 
+        _logger.info('End slit flat')
         return self.create_result(master_slitflat=reduced)
