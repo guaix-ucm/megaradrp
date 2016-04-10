@@ -159,8 +159,27 @@ class MegaraSlitFlatSequence(Sequence):
         super(MegaraSlitFlatSequence, self).__init__('MEGARA', 'slit_flat')
 
     def run(self, control, exposure, repeat):
-        # This is an empty generator
-        return iter(())
+        instrument = control.get(self.instrument)
+        cu = control.get('megcalib')
+
+        # Get active lamp
+        lamp = cu.current()
+        if lamp == 'EMPTY':
+            raise ValueError('LAMP is %s, exiting' % lamp)
+
+        # Internal focus
+        instrument.set_focus(126.5)
+        # FIXME: seting internal value directly
+        instrument._internal_focus = 1.1
+        # Simulated arc spectrum
+        wl_in = instrument.vph.wltable_interp()
+        lamp_illum = instrument.illumination_in_focal_plane(lamp.flux(wl_in), lamp.illumination)
+
+        out = instrument.simulate_focal_plane(wl_in, lamp_illum)
+        for i in range(repeat):
+            instrument.detector.expose(source=out, time=exposure)
+            final = instrument.detector.readout()
+            yield final
 
 
 class MegaraTwilightFlatSequence(Sequence):
