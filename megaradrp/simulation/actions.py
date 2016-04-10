@@ -198,7 +198,7 @@ class MegaraFocusSequence(Sequence):
         wl_in = instrument.vph.wltable_interp()
         lamp_illum = instrument.illumination_in_focal_plane(lamp.flux(wl_in), lamp.illumination)
         # FIXME, hardcoded
-        focii = range(100, 200)
+        focii = range(119, 128)
 
         for focus in focii:
             instrument.set_focus(focus)
