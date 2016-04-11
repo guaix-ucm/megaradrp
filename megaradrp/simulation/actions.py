@@ -170,7 +170,7 @@ class MegaraSlitFlatSequence(Sequence):
         # Internal focus
         instrument.set_focus(126.5)
         # FIXME: seting internal value directly
-        instrument._internal_focus = 1.1
+        instrument._internal_focus_factor = 8
         # Simulated arc spectrum
         wl_in = instrument.vph.wltable_interp()
         lamp_illum = instrument.illumination_in_focal_plane(lamp.flux(wl_in), lamp.illumination)
