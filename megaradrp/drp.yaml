@@ -93,20 +93,14 @@ modes:
   description: Slit Flat
   key: slit_flat
   name: Slit Flat
-  reference: xxx
-  status: DRAFT
   summary: Slit Flat
-  uuid: xxxxxx
-  tagger: null
+  tagger: megaradrp.taggers.tagger_base_image
 - date: 2016-03-10
   description: Weights
   key: weights
   name: Weights
-  reference: xxx
-  status: DRAFT
   summary: Weights
-  uuid: xxxxxx
-  tagger: null
+  tagger: megaradrp.taggers.tagger_base_image
 - key: focus_spectrograph
   name: Focus Spectrograph
 pipelines:
