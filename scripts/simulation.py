@@ -42,8 +42,10 @@ def create_detector():
 
     qe_wl = EfficiencyFile('v02/tccdbroad_0.1aa.dat')
 
-    detector = MegaraDetectorSat(DSHAPE, OSCAN, PSCAN, qe=qe, qe_wl=qe_wl, dark=dcurrent,
-                                   readpars1=readpars1, readpars2=readpars2, bins='11')
+    detector = MegaraDetectorSat('megaradetector',
+                                 DSHAPE, OSCAN, PSCAN, qe=qe, qe_wl=qe_wl, dark=dcurrent,
+                                 readpars1=readpars1, readpars2=readpars2, bins='11'
+                                 )
     return detector
 
 
@@ -257,6 +259,7 @@ if __name__ == '__main__':
     # This instruction fixes the number of fibers...
 
     if args.parameters:
+
         oparam = yaml.load(open(args.parameters))
 
         _logger.debug('Configure MEGARA with profile %s', oparam['description'])

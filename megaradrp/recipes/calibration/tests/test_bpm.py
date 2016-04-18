@@ -52,7 +52,7 @@ def test_bpm():
     readpars1 = ReadParams(gain=gain, ron=ron, bias=bias)
     readpars2 = ReadParams(gain=gain, ron=ron, bias=bias)
 
-    detector = MegaraDetectorSat(DSHAPE, OSCAN, PSCAN, qe=qe,
+    detector = MegaraDetectorSat('megara_test_detector', DSHAPE, OSCAN, PSCAN, qe=qe,
                                  dark=(3.0 / 3600.0),
                                  readpars1=readpars1, readpars2=readpars2,
                                  bins='11')

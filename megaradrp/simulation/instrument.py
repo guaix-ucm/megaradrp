@@ -157,6 +157,7 @@ class MegaraInstrument(HWDevice):
 
         self.set_vph(profile['vph'])
 
+        self.detector.configure(profile)
 
     def project_rss(self, sigma, wl_in, spec_in):
 

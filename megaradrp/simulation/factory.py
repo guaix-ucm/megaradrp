@@ -116,6 +116,16 @@ class MegaraImageFactory(object):
         exptime = meta_det.get('exposed', 0.0)
         pheader['EXPTIME'] = exptime
         pheader['EXPOSED'] = exptime
+        pheader['VBIN'] = meta_det.get('vbin', 1)
+        pheader['HBIN'] = meta_det.get('hbin', 1)
+        # not yet implemented
+        # pheader['AMPLAYOU'] = "NORMAL"
+        # pheader['AMPUP'] = "G"
+        # pheader['AMPLOW'] = "E"
+        # pheader['GAINUP'] = meta_det.get('gainup', 1.0)
+        # pheader['GAINLOW'] = meta_det.get('gainlow', 1.0)
+        # pheader['RONUP'] = meta_det.get('ronup', 1.0)
+        # pheader['RONLOW'] = meta_det.get('ronlow', 1.0)
 
         # Seqs
         try:

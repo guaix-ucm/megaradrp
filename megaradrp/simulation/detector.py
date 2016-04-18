@@ -21,8 +21,9 @@
 import numpy
 from numpy.lib.stride_tricks import as_strided as ast
 
-
+from .device import HWDevice
 from .efficiency import Efficiency
+
 
 def binning(arr, br, bc):
     """Return a binned view if 'arr'"""
@@ -72,8 +73,10 @@ class ReadParams(object):
         self.bias = bias
 
 
-class DetectorBase(object):
-    def __init__(self, shape, qe=1.0, qe_wl=None, dark=0.0):
+class DetectorBase(HWDevice):
+    def __init__(self, name, shape, qe=1.0, qe_wl=None, dark=0.0):
+
+        super(DetectorBase, self).__init__(name)
 
         self.dshape = shape
         self.pixscale = 15.0e-3
@@ -148,13 +151,41 @@ class MegaraDetector(DetectorBase):
     _binning = {'11': [1, 1], '21': [1, 2], '12': [2, 1], '22': [2, 2]}
     _direc = ['normal', 'mirror']
 
-    def __init__(self, shape, oscan, pscan, qe=1.0, qe_wl=None, dark=0.0, readpars1=None, readpars2=None,
+    def __init__(self, name, shape, oscan, pscan,
+                 qe=1.0, qe_wl=None, dark=0.0,
+                 readpars1=None, readpars2=None,
                  bins='11', direction='normal'):
 
-        super(MegaraDetector, self).__init__(shape, qe, qe_wl, dark)
+        super(MegaraDetector, self).__init__(name, shape, qe, qe_wl, dark)
+
+        self.oscan = oscan
+        self.pscan = pscan
+
+        self.readpars1 = readpars1 if not None else ReadParams()
+        self.readpars2 = readpars2 if not None else ReadParams()
+
+        self.bins = self._set_direction(direction)
+        self._set_binning(bins)
+        self.set_geometry()
+
+    def configure(self, profile):
+        if 'bins' in profile:
+            self.set_binning(profile['bins'])
+
+    def _set_binning(self, bins):
 
         if bins not in self._binning:
             raise ValueError("%s must be one if '11', '12', '21, '22'" % bins)
+
+        self.bins = bins
+        self.blocks = self._binning[self.bins]
+
+    def set_binning(self, bins):
+
+        self._set_binning(bins)
+        self.set_geometry()
+
+    def _set_direction(self, direction):
 
         if direction not in self._direc:
             raise ValueError("%s must be either 'normal' or 'mirror'" % direction)
@@ -164,18 +195,21 @@ class MegaraDetector(DetectorBase):
         else:
             directfun = numpy.fliplr
 
-        readpars1 = readpars1 if not None else ReadParams()
-        readpars2 = readpars2 if not None else ReadParams()
+        self.directfun = directfun
 
-        self.blocks = self._binning[bins]
+    def set_direction(self, direction):
 
-        self.fshape, a0, geom1, geom2 = self.init_regions(shape, oscan, pscan, self.blocks)
+        self._set_direction(direction)
+        self.set_geometry()
 
-        base1, base2 = a0
+    def set_geometry(self):
+        self.fshape, (base1, base2), geom1, geom2 = self.init_regions(self.dshape,
+                                                                      self.oscan, self.pscan,
+                                                                      self.blocks)
 
-        self.virt1 = VirtualDetector(base1, geom1, directfun, readpars1)
+        self.virt1 = VirtualDetector(base1, geom1, self.directfun, self.readpars1)
+        self.virt2 = VirtualDetector(base2, geom2, self.directfun, self.readpars2)
 
-        self.virt2 = VirtualDetector(base2, geom2, directfun, readpars2)
 
     def pre_readout(self, elec_pre):
         # Do binning in the array
@@ -277,7 +311,10 @@ class MegaraDetector(DetectorBase):
 
     def config_info(self):
         return {'exposed': self._time_last,
-                'name': 'MEGARA detector'}
+                'name': 'MEGARA detector',
+                'vbin': int(self.bins[-1]),
+                'hbin': int(self.bins[0])
+                }
 
 
 class MegaraDetectorSat(MegaraDetector):
