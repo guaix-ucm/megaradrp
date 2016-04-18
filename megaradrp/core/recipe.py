@@ -54,14 +54,16 @@ class MegaraBaseRecipe(BaseRecipe):
                                       BiasCorrector],
                        'FiberFlatRecipe': [OverscanCorrector, TrimImage,
                                            BiasCorrector, DarkCorrector,
-                                           BadPixelCorrector],
+                                           BadPixelCorrector, SlitFlatCorrector],
                        'SlitFlatRecipe': [OverscanCorrector, TrimImage,
                                           BiasCorrector, DarkCorrector,
                                           BadPixelCorrector],
                        'TraceMapRecipe': [OverscanCorrector, TrimImage,
                                           BiasCorrector, DarkCorrector,
                                           BadPixelCorrector],
-                       'WeightsRecipe': [DarkCorrector, SlitFlatCorrector],
+                       'WeightsRecipe': [OverscanCorrector, TrimImage,
+                                          BiasCorrector, DarkCorrector,
+                                         SlitFlatCorrector],
 
                        }
         super(MegaraBaseRecipe, self).__init__(version=version)

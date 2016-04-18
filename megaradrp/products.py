@@ -118,3 +118,10 @@ class MasterWeights(DataProductType):
         shutil.copy(obj, filename)
         shutil.rmtree(obj.split(filename)[0])
         return filename
+
+    def _datatype_load(self, obj):
+        try:
+            import tarfile
+            return tarfile.open(obj, 'r')
+        except IOError as e:
+            raise e
