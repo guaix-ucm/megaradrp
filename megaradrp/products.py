@@ -69,6 +69,10 @@ class MasterSlitFlat(MEGARAProductFrame):
     pass
 
 
+class MasterTwilightFlat(MEGARAProductFrame):
+    pass
+
+
 class MasterFiberFlatFrame(MEGARAProductFrame):
     pass
 
