@@ -127,3 +127,65 @@ def apextract_tracemap(data, tracemap):
     rss = extract_simple_rss(data, borders)
 
     return rss
+
+
+
+
+
+def apextract_weights(data, weights, size=4096):
+    """Extract apertures using a tracemap."""
+
+    import multiprocessing as mp
+
+    def decompress(tar_file):
+        '''
+        :param tar_name: <str> name of the tar file
+        :return: None
+        '''
+
+        name = tar_file.fileobj.name.split('.tar')[0]
+        aux = tar_file.extractall(name+'/')
+        return name
+
+
+    processes = mp.cpu_count()-2
+
+    path = decompress(weights)
+
+    pool = mp.Pool(processes=processes)
+    results = [pool.apply_async(load_files_paralell,
+                                args=(ite, path)) for ite in range(size)]
+    results = [p.get() for p in results]
+
+    pool2 = mp.Pool(processes=processes)
+    extracted_w = [pool2.apply_async(extract_w_paralell,
+                                args=(data[:,ite], results[ite])) for ite in range(size)]
+    extracted_w = [p.get() for p in extracted_w]
+
+    return np.array(extracted_w)
+
+
+def load_files_paralell(col, path):
+    '''
+    :param col: <str,int> name of the fits file. It is a counter
+    :param path: <str> path where *.npz are
+    :return: csr_matrix
+    '''
+    from scipy.sparse import csr_matrix
+
+    filename = '%s/%s.npz' % (path, col)
+    loader = np.load(filename)
+    return csr_matrix(
+        (loader['data'], loader['indices'], loader['indptr']),
+        shape=loader['shape'])
+
+from scipy.sparse.linalg import lsqr
+
+def extract_w_paralell(img, mlist):
+    '''
+    :param img: <fits>
+    :param mlist: <list> one element of the csr_matrix
+    :return: <ndarray> result of lsqr
+    '''
+    x = lsqr(mlist, img)
+    return x[0]

@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from megaradrp.core.processing import trim_and_o
+from megaradrp.core.processing import apextract_weights
 from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.actions import simulate_flat
 
@@ -69,10 +70,23 @@ def test_trim_and_o_fail2():
     assert excinfo.value.args[0] == "%s must be one if '11', '12', '21, '22'" % bins
 
 
+@pytest.mark.skip(reason="no way of currently testing this without tar file")
+def test_apextract_weights():
+    import tarfile
+
+    file_name='master_weights_LCB_10img_1exp.tar'
+
+    data = fits.getdata('fiberflat_frame.fits')
+    rss = apextract_weights(data, tarfile.open(file_name, 'r'))
+    hdu_rss = fits.PrimaryHDU(rss)
+    final = fits.HDUList([hdu_rss])
+    final.writeto('rss.fits', clobber=True)
+    assert True
 
 
 
 if __name__ == "__main__":
     # test_trim_and_o()
-    test_trim_and_o_fail()
-    test_trim_and_o_fail2()
+    # test_trim_and_o_fail()
+    # test_trim_and_o_fail2()
+    test_apextract_weights()
