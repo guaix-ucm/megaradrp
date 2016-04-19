@@ -29,12 +29,11 @@ from astropy.io import fits
 from numina.core import Product, Requirement
 from numina.core.products import DataFrameType
 
-from megaradrp.core.processing import apextract_tracemap
+from megaradrp.core.processing import apextract_weights, apextract_tracemap
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement
-from megaradrp.products import WavelengthCalibration
+from megaradrp.products import WavelengthCalibration, MasterWeights
 from megaradrp.products import TraceMap, MasterTwilightFlat
-
 from megaradrp.recipes.scientific import resample_rss_flux
 
 
@@ -42,6 +41,74 @@ _logger = logging.getLogger('numina.recipes.megara')
 
 
 class TwilightFiberFlatRecipe(MegaraBaseRecipe):
+
+    master_bias = MasterBiasRequirement()
+    master_weights = Requirement(MasterWeights, 'Set of files with extraction weights')
+    wlcalib = Requirement(WavelengthCalibration, 'Wavelength calibration table')
+    # Products
+
+    reduced_frame = Product(DataFrameType)
+    reduced_rss = Product(DataFrameType)
+    master_twilight_flat = Product(MasterTwilightFlat)
+
+    def __init__(self):
+        super(TwilightFiberFlatRecipe, self).__init__(
+            version="0.1.0"
+        )
+
+    def run(self, rinput):
+        # Basic processing
+
+        parameters = self.get_parameters(rinput)
+
+        return self.run_args(rinput.obresult,
+                             rinput.master_weights,
+                             rinput.wlcalib,
+                             parameters
+                            )
+
+    def run_args(self, obresult, weights, wlcalib, parameters):
+        # Basic processing
+
+        self.logger.info('twilight fiber flat reduction started')
+
+        reduced = self.bias_process_common(obresult, parameters)
+
+        _logger.info('extract fibers')
+        rssdata = apextract_weights(reduced[0].data, weights)
+
+        # FIXME: we are ignoring here all the possible bad pixels
+        # and WL distortion when doing the normalization
+        # rssdata /= rssdata.mean() #Originally uncomment
+        template_header = reduced[0].header
+        rsshdu = fits.PrimaryHDU(rssdata, header=template_header)
+        rss = fits.HDUList([rsshdu])
+
+        self.logger.info('extraction completed')
+
+        _logger.info('resampling spectra')
+        final, wcsdata = resample_rss_flux(rsshdu.data, wlcalib)
+        # This value was ~0.4% and now is 4e-6 %
+        # (abs(final.sum()-hdu_t.data.sum())/hdu_t.data.sum()*100)
+
+        # Measure values in final
+        start = 200
+        end = 2100
+        _logger.info('doing mean between columns %d-%d', start, end)
+        colapse = final[:, start:end].mean(axis=1)
+
+        normalized = numpy.tile(colapse[:, numpy.newaxis], 4096)
+
+        master_t_hdu = fits.PrimaryHDU(normalized, header=template_header)
+        master_t = fits.HDUList([master_t_hdu])
+
+        _logger.info('twilight fiber flat reduction ended')
+        result = self.create_result(reduced_frame=reduced, reduced_rss=rss,
+                                    master_twilight_flat=master_t)
+        return result
+
+
+class TwilightFiberFlatRecipeALT(MegaraBaseRecipe):
 
     master_bias = MasterBiasRequirement()
     tracemap = Requirement(TraceMap, 'Trace information of the Apertures')
@@ -53,7 +120,7 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
     master_twilight_flat = Product(MasterTwilightFlat)
 
     def __init__(self):
-        super(TwilightFiberFlatRecipe, self).__init__(
+        super(TwilightFiberFlatRecipeALT, self).__init__(
             version="0.1.0"
         )
 

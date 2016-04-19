@@ -66,7 +66,7 @@ class MegaraBaseRecipe(BaseRecipe):
                                          SlitFlatCorrector],
                        'TwilightFiberFlatRecipe': [OverscanCorrector, TrimImage,
                                           BiasCorrector, DarkCorrector,
-                                          BadPixelCorrector],
+                                          BadPixelCorrector, SlitFlatCorrector],
                        }
         super(MegaraBaseRecipe, self).__init__(version=version)
 
