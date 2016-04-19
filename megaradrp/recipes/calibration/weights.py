@@ -7,7 +7,8 @@ import multiprocessing as mp
 import time
 import timeit
 import shutil
-import ujson
+import json as ujson
+
 from tempfile import mkdtemp
 
 import copy_reg
@@ -28,6 +29,10 @@ from astropy.modeling.models import custom_model_1d
 from scipy.stats import norm
 from astropy.modeling.models import custom_model
 
+import logging
+
+_logger = logging.getLogger('numina.recipes.megara')
+
 ##############################################################################
 
 def make_instancemethod(inst, methodname):
@@ -47,8 +52,7 @@ M_SQRT_2_PI = math.sqrt(2 * math.pi)
 
 class WeightsRecipe(MegaraBaseRecipe):
     # Requirements
-    # master_bias = MasterBiasRequirement()
-    obresult = ObservationResultRequirement()
+    master_bias = MasterBiasRequirement()
     master_dark = MasterDarkRequirement()
     master_slitflat = MasterSlitFlatRequirement()
     master_fiberflat_frame = MasterFiberFlatFrameRequirement()
@@ -117,7 +121,7 @@ class WeightsRecipe(MegaraBaseRecipe):
         except:
             return ''
 
-    def extract_w(self, img=fits.getdata('fiberflat_frame.fits'), mlist=[]):
+    def extract_w(self, img, mlist=[]):
         '''
         :param img: <fits> original fiber flat fits file
         :param mlist: <list> list of csr_matrix
@@ -295,7 +299,6 @@ class WeightsRecipe(MegaraBaseRecipe):
 
     def run(self, rinput):
         temporary_path = mkdtemp()
-        print temporary_path
 
         parameters = self.get_parameters(rinput)
         data2 = self.bias_process_common(rinput.obresult, parameters)
