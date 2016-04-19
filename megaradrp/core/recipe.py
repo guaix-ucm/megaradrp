@@ -64,7 +64,9 @@ class MegaraBaseRecipe(BaseRecipe):
                        'WeightsRecipe': [OverscanCorrector, TrimImage,
                                           BiasCorrector, DarkCorrector,
                                          SlitFlatCorrector],
-
+                       'TwilightFiberFlatRecipe': [OverscanCorrector, TrimImage,
+                                          BiasCorrector, DarkCorrector,
+                                          BadPixelCorrector, SlitFlatCorrector],
                        }
         super(MegaraBaseRecipe, self).__init__(version=version)
 

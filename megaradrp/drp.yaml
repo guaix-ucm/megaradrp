@@ -103,6 +103,12 @@ modes:
   tagger: megaradrp.taggers.tagger_base_image
 - key: focus_spectrograph
   name: Focus Spectrograph
+- date: 2016-04-12
+  description: Twillight fiber flat spectrum
+  key: twilight_flat_image
+  name: Twillight fiber flat
+  summary: Twillight fiber flat spectrum
+  tagger: megaradrp.taggers.tagger_base_image
 pipelines:
   default:
     version: 1
@@ -120,6 +126,7 @@ pipelines:
       fail: numina.core.utils.AlwaysFailRecipe
       success: numina.core.utils.AlwaysSuccessRecipe
       weights: megaradrp.recipes.calibration.weights.WeightsRecipe
+      twilight_flat_image: megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe
 products:
 - name: megaradrp.products.TraceMap
   alias: TraceMap
