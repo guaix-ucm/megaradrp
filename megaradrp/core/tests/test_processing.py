@@ -1,5 +1,6 @@
 import shutil
 from tempfile import mkdtemp
+import os
 
 import astropy.io.fits as fits
 import numpy as np
@@ -70,11 +71,12 @@ def test_trim_and_o_fail2():
     assert excinfo.value.args[0] == "%s must be one if '11', '12', '21, '22'" % bins
 
 
-@pytest.mark.skip(reason="no way of currently testing this without tar file")
+@pytest.mark.skipif(not os.path.exists('master_weights_LCB_10img_1exp.tar'),
+                    reason="no way of currently testing this without tar file")
 def test_apextract_weights():
     import tarfile
 
-    file_name='master_weights_LCB_10img_1exp.tar'
+    file_name = 'master_weights_LCB_10img_1exp.tar'
 
     data = fits.getdata('fiberflat_frame.fits')
     rss = apextract_weights(data, tarfile.open(file_name, 'r'))
