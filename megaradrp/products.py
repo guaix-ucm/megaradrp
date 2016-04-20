@@ -69,10 +69,6 @@ class MasterSlitFlat(MEGARAProductFrame):
     pass
 
 
-class MasterTwilightFlat(MEGARAProductFrame):
-    pass
-
-
 class MasterFiberFlatFrame(MEGARAProductFrame):
     pass
 
@@ -129,3 +125,26 @@ class MasterWeights(DataProductType):
             return tarfile.open(obj, 'r')
         except IOError as e:
             raise e
+
+
+class JSONstorage(DataProductType):
+    def __init__(self, default=None):
+        super(JSONstorage, self).__init__(ptype=dict, default=default)
+
+    def _datatype_dump(self, obj, where):
+        import json
+        filename = where.destination + '.json'
+
+        with open(filename, 'w') as fd:
+            fd.write(json.dumps(obj))
+
+        return filename
+
+    def _datatype_load(self, obj):
+        import json
+        try:
+            with open(obj, 'r') as fd:
+                data = json.load(fd)
+        except IOError as e:
+            raise e
+        return data
