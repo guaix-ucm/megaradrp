@@ -325,7 +325,7 @@ scientific exploitation.
 +------------------------------+-----------------------------------------------+
 | Name                         | Type                                          |
 +==============================+===============================================+
-| ``'master_dark'``          | :class:`~megaradrp.dataproducts.MasterDark`     |
+| ``'master_dark'``            | :class:`~megaradrp.dataproducts.MasterDark`   |
 +------------------------------+-----------------------------------------------+
 
 A bidimensional dark image, QA flag, a text log file of the processing and a
@@ -382,8 +382,13 @@ being this series the fiber-flat image set.
 +---------------------------+---------------+------------+-------------------------------+
 | ``'master_bpm'``          | Product       | NA         |      Master BPM frame         |
 +---------------------------+---------------+------------+-------------------------------+
-| ``'tracemap'``            | Product       | NA         |      TraceMap                 |
+| ``'master_slitflat'``     | Product       | NA         |      Master SlitFlat          |
 +---------------------------+---------------+------------+-------------------------------+
+| ``'wlcalib'``             | Product       | NA         |      WavelengthCalibration    |
++---------------------------+---------------+------------+-------------------------------+
+| ``'master_weights'``      | Product       | NA         |      MasterWeights            |
++---------------------------+---------------+------------+-------------------------------+
+
 
 Procedure
 +++++++++
@@ -398,16 +403,19 @@ Fiber-flat image sets are to be obtained both as part of the activities related
 to the verification of the instrument status and for processing data for
 scientific exploitation.
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-| ``'master_fiberflat_frame'`` | :class:`~megaradrp.dataproducts.MasterFiberFlatFrame` |
-+------------------------------+-------------------------------------------------------+
-| ``'master_fiberflat'``       | :class:`~megaradrp.dataproducts.MasterFiberFlat`      |
-+------------------------------+-------------------------------------------------------+
++------------------------------+--------------------------------------------------+
+| Name                         | Type                                             |
++==============================+==================================================+
+| ``'fiberflat_frame'``        | :class:`~megaradrp.dataproducts.DataFrameType`   |
++------------------------------+--------------------------------------------------+
+| ``'master_fiberflat'``       | :class:`~megaradrp.dataproducts.DataFrameType`   |
++------------------------------+--------------------------------------------------+
+| ``'rss_fiberflat'``          | :class:`~megaradrp.dataproducts.MasterFiberFlat` |
++------------------------------+--------------------------------------------------+
 
-A RSS master flat field, a QA flag, a text log file of the processing and a structured text file
-containing information about the processing.
+
+A RSS master flat field; a QA flag; a text log file of the processing; a structured text file
+containing information about the processing; a reduced image and a master flat field image.
 
 
 Slit-flat

@@ -148,18 +148,25 @@ along the pseudo-slit the best focus compromise. The best focus obtained for
 the VPH of choice should then be stored and used to determine the best foci for
 all spectral configurations (and instrument modes; TBC).
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
++--------------------------+---------------+------------+-------------------------------+
+| Name                     | Type          | Default    | Meaning                       |
++==========================+===============+============+===============================+
+| ``'obresult'``           | Product       | NA         |      Observation Result       |
++--------------------------+---------------+------------+-------------------------------+
+| ``'master_bias'``        | Product       | NA         |      Master Bias frame        |
++--------------------------+---------------+------------+-------------------------------+
+| ``'tracemap'``           | Product       | NA         |      TraceMap                 |
++--------------------------+---------------+------------+-------------------------------+
+| ``'lines_catalog'``      | Product       | NA         |      Lines Catalog            |
++--------------------------+---------------+------------+-------------------------------+
+| ``'polynomial_degree'``  | Product       | NA         |      Polynomial Degree        |
++--------------------------+---------------+------------+-------------------------------+
+| ``'wlcalib'``            | Product       | NA         |      WavelengthCalibration    |
++--------------------------+---------------+------------+-------------------------------+
 
 
 Procedure
 +++++++++
-
-Products
-++++++++
-
 Spectrograph focus image sets through; at least, one of the MEGARA VPHs should
 be obtained at the beginning of every observing night by either the observer or
 the staff of the observatory (TBD). Once a VPH is checked, the rest of the
@@ -176,11 +183,23 @@ offset focus (due to temperature) and this value will be the same for all VPHs.
 The Control System will be prepared to update the look-up table with this
 offset focus value due to temperature.
 
+Products
+++++++++
+
+The best focus, the goodness of the fit of the best focus, a table with the
+FWHM of the spectral line corresponding to each focus, position along the slit
+and wavelength, the collapsed PSFs, QA flag, a text log file of the processing
+and a structured text file containing information about the processing.
+
 +------------------------------+-------------------------------------------------------+
 | Name                         | Type                                                  |
 +==============================+=======================================================+
+| ``'focus_table'``            | :class:`~megaradrp.dataproducts.ArrayType`            |
++------------------------------+----------+------------+-------------------------------+
+| ``'focus_image'``            | :class:`~megaradrp.dataproducts.DataFrameType`        |
++------------------------------+----------+------------+-------------------------------+
+| ``'focus_wavelength'``       | :class:`~megaradrp.dataproducts.JSONstorage`          |
 +------------------------------+-------------------------------------------------------+
-
 
 
 
