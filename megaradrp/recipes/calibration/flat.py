@@ -187,7 +187,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
         pool2 = mp.Pool(processes=self.processes)
         extracted_w = [pool2.apply_async(extract_w_paralell,
-                                    args=(ite, img[:,ite], results[ite])) for ite in range(self.SIZE)]
+                                    args=(img[:,ite], results[ite])) for ite in range(self.SIZE)]
         extracted_w = [p.get() for p in extracted_w]
 
         _logger.info('extracted')
@@ -214,7 +214,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         result = self.create_result(fiberflat_frame=reduced, master_fiberflat=rss)
         return result
 
-def extract_w_paralell(col, img, mlist):
+def extract_w_paralell(img, mlist):
 
     '''
     :param img: <fits>
