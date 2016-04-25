@@ -19,6 +19,7 @@
 
 import logging
 
+import numpy as np
 from astropy.io import fits
 import numina.array.combine as combine
 from numina.flow import SerialFlow
@@ -191,3 +192,8 @@ class MegaraBaseRecipe(BaseRecipe):
         #     pass
 
         return parameters
+
+    def get_wlcalib(self, data):
+
+        wlcalib = [elem['aperture']['function']['coecifients'] for elem in data]
+        return np.array(wlcalib)

@@ -73,7 +73,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         rss = numpy.array(self.load_files_from_directory(rinput.master_weights, img=reduced[0].data))
 
         _logger.info('Starting: resample_rss_flux')
-        final, wcsdata = self.resample_rss_flux(rss.T, rinput.wlcalib)
+        final, wcsdata = self.resample_rss_flux(rss.T, self.get_wlcalib(rinput.wlcalib))
 
         _logger.info('Compute mean and resampling again')
 

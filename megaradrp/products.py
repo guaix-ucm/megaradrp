@@ -102,10 +102,6 @@ class TraceMap(DataProductType):
         return traces
 
 
-class WavelengthCalibration(ArrayType, DataProductTag):
-    pass
-
-
 class MasterWeights(DataProductType):
     def __init__(self, default=None):
         super(MasterWeights, self).__init__(ptype=dict, default=default)
@@ -148,3 +144,6 @@ class JSONstorage(DataProductType):
         except IOError as e:
             raise e
         return data
+
+class WavelengthCalibration(JSONstorage):
+    pass

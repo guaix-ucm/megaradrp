@@ -63,7 +63,7 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
 
         return self.run_args(rinput.obresult,
                              rinput.master_weights,
-                             rinput.wlcalib,
+                             self.get_wlcalib(rinput.wlcalib),
                              parameters
                             )
 
@@ -145,7 +145,7 @@ class TwilightFiberFlatRecipeALT(MegaraBaseRecipe):
         self.logger.info('extraction completed')
 
         _logger.info('resampling spectra')
-        final, wcsdata = resample_rss_flux(rsshdu.data, rinput.wlcalib)
+        final, wcsdata = resample_rss_flux(rsshdu.data, self.get_wlcalib(rinput.wlcalib))
         # This value was ~0.4% and now is 4e-6 %
         # (abs(final.sum()-hdu_t.data.sum())/hdu_t.data.sum()*100)
 

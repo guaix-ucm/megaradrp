@@ -26,10 +26,8 @@ import logging
 import numpy
 from astropy.io import fits
 from scipy.interpolate import interp1d
-
 from numina.core import Requirement, Product, Parameter
 from numina.core import DataFrameType
-from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import LinesCatalog
 from numina.array.wavecal.arccalibration import arccalibration_direct
@@ -37,12 +35,10 @@ from numina.array.wavecal.arccalibration import fit_solution
 from numina.array.wavecal.arccalibration import gen_triplets_master
 from numina.array.wavecal.statsummary import sigmaG
 # FIXME: still using findpeaks1D functions
-from numina.array.peaks.findpeaks1D import findPeaks_spectrum
-from numina.array.peaks.findpeaks1D import refinePeaks_spectrum
 from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import TraceMap, WavelengthCalibration
+from megaradrp.products import TraceMap, WavelengthCalibration, JSONstorage
 from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.requirements import MasterDarkRequirement
 from megaradrp.core.processing import apextract_tracemap
@@ -65,6 +61,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     arc_image = Product(DataFrameType)
     arc_rss = Product(DataFrameType)
     master_wlcalib = Product(WavelengthCalibration)
+    data_wlcalib = Product(JSONstorage)
 
     def __init__(self):
         super(ArcCalibrationRecipe, self).__init__("0.1.0")
@@ -83,12 +80,12 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         _logger.info('extracted %i fibers', rssdata.shape[0])
 
         # Skip any other inputs for the moment
-        coeff_table = self.calibrate_wl(rssdata, rinput.lines_catalog,
+        coeff_table, data_wlcalib = self.calibrate_wl(rssdata, rinput.lines_catalog,
                                         rinput.polynomial_degree)
 
         # WL calibration goes here
         return self.create_result(arc_image=reduced, arc_rss=rss,
-                                  master_wlcalib=coeff_table)
+                                  master_wlcalib=coeff_table, data_wlcalib = data_wlcalib)
 
     def pintar_todas(self, diferencia_final, figure):
         import matplotlib.pyplot as plt
@@ -106,6 +103,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         #
         # read master table (TBM) and generate auxiliary parameters (valid for
         # all the slits) for the wavelength calibration
+        lista_solution = []
+        lista_xpeaks_refined = []
+
         wv_master = lines_catalog[:, 0]
         ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
             gen_triplets_master(wv_master)
@@ -119,11 +119,11 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             # find peaks (initial search providing integer numbers)
             threshold = numpy.median(row) + times_sigma * sigmaG(row)
 
-            ipeaks_int = findPeaks_spectrum(row, nwinwidth, threshold)
-            ipeaks_float = refinePeaks_spectrum(row, ipeaks_int, nwinwidth, method=1)
+            # ipeaks_int = findPeaks_spectrum(row, nwinwidth, threshold)
+            # ipeaks_float = refinePeaks_spectrum(row, ipeaks_int, nwinwidth, method=1)
 
-            # ipeaks_int = find_peaks_indexes(row, nwinwidth, threshold)
-            # ipeaks_float = refine_peaks(row, ipeaks_int, nwinwidth)[0]
+            ipeaks_int = find_peaks_indexes(row, nwinwidth, threshold)
+            ipeaks_float = refine_peaks(row, ipeaks_int, nwinwidth)[0]
 
             # self.pintar_todas(ipeaks_float,'refinado_nico')
             # self.pintar_todas(ipeaks_float2,'refinado_nuevo')
@@ -142,7 +142,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             finterp_channel = interp1d(range(xchannel.size), xchannel,
                                        kind='linear')
             xpeaks_refined = finterp_channel(ipeaks_float)
-
+            lista_xpeaks_refined.append(xpeaks_refined)
             try:
                 solution = arccalibration_direct(wv_master,
                                                  ntriplets_master,
@@ -174,10 +174,67 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                              cdelt1_approx)
 
                 _logger.info('fitted coefficients %s', numpy_array_with_coeff)
-
+                lista_solution.append(solution)
                 coeff_table[idx] = numpy_array_with_coeff
 
             except TypeError as error:
                 _logger.error("%s", error)
 
-        return coeff_table
+        data_wlcalib = self.generateJSON(coeff_table, lista_solution,
+                          lista_xpeaks_refined, poldeg, lines_catalog)
+
+        _logger.info('Fin')
+
+        return coeff_table, data_wlcalib
+
+    def generateJSON(self, coeff_table, lista_solution,
+                     lista_xpeaks_refined, poldeg, lines_catalog):
+        '''
+            Final format of the features field is:{
+                  "features": [[<x_position>,
+                                calculated_wavelength,
+                                <original_lambda>,
+                                <original_flux>
+                                ]]
+        '''
+
+        from numpy.polynomial.polynomial import polyval
+        _logger.info('start JSON generation')
+
+        result = []
+        counter = 0
+        for ind, xpeaks in enumerate(lista_xpeaks_refined):
+            res = polyval(xpeaks, coeff_table[ind])
+            _logger.info('indice: %s', ind)
+            record = {}
+
+            features = []
+            feature = {'xpos':None,
+                       'wavelength':None,
+                       'reference':None,
+                       'flux':None,
+                       'category':None
+              }
+            for aux, elem in enumerate(xpeaks):
+                feature['xpos'] = xpeaks[aux]
+                feature['wavelength'] = res[aux]
+                feature['reference'] = lines_catalog[aux][0]
+                feature['flux'] = lines_catalog[aux][1]
+                feature['category'] = lista_solution[ind][aux]['type']
+                features.append(feature)
+
+            function = {
+                'method':'least squares',
+                'order':poldeg,
+                'coecifients': coeff_table[ind].tolist()
+            }
+
+            record['aperture'] = {'id': ind + 1,
+                                  'features': features,
+                                  'function': function}
+            result.append(record)
+            counter += 1
+
+        _logger.info('end JSON generation')
+
+        return result

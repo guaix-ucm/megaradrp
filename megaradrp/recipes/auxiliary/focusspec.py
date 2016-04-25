@@ -110,7 +110,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         _logger.info('pair lines in images')
         line_fibers = self.filter_lines(ever)
 
-        focus_wavelength = self.generateJSON(ever, rinput.wlcalib,
+        focus_wavelength = self.generateJSON(ever, self.get_wlcalib(rinput.wlcalib),
                                              rinput.obresult.images)
 
         _logger.info('fit FWHM of lines')
