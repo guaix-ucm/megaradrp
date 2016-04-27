@@ -173,7 +173,6 @@ class MegaraInstrument(HWDevice):
         return project_rss_w(visible_fib_ids, self.pseudo_slit, self.vph, sigma)
 
     def simulate_focal_plane(self, wltable_in, photons_in):
-
         """Simulate the image in the focal plane,"""
 
         # Input spectra in each fiber, in photons
@@ -201,7 +200,6 @@ class MegaraInstrument(HWDevice):
 
         return self.project_rss(self._internal_focus_factor* self.fibers.sigma, wltable_in, spec_in)
 
-
     def illumination_in_focal_plane(self, photons, illumination=None):
 
         # Input spectra in each fiber, in photons
@@ -217,6 +215,80 @@ class MegaraInstrument(HWDevice):
         if illumination:
             base_coverage[fibid-1, 0] = illumination(pos_x, pos_y)
         return base_coverage * photons
+
+    def targets_in_focal_plane(self, targets, wl, photons):
+        # simulate_seeing_profile
+        from .convolution import rect_c, hex_c, setup_grid, FWHM_G, gauss_profile2_base
+        from scipy.interpolate import RectBivariateSpline
+        from scipy import signal
+
+
+        # print('enter targets in focal plane')
+
+        seeing = 0.9
+        layout_size = 0.31
+        tab = self.focal_plane.get_all_fibers(self.fibers)
+        pos_x = tab['x']
+        pos_y = tab['y']
+
+        final = np.zeros((self.fibers.nfibers, wl.shape[0]))
+
+        # Simulation size
+        # FIXME: hardcoded
+        xsize = 12.5 # FOR LCB
+        ysize = 12.5
+        # Pixel size for simulation
+        Dx = 0.005
+        Dy = 0.005
+
+        xx, yy, xs, ys, xl, yl = setup_grid(xsize, ysize, Dx, Dy)
+        # print('generate hex kernel')
+        hex_kernel = hex_c(xx, yy, rad=layout_size)
+
+        # For gaussian, symetric profile
+        # print('generate seeing profile')
+        sigma = seeing / FWHM_G
+        sc = gauss_profile2_base(xx, yy, sigma)
+
+        # print('convolve hex kernel with seeing profile')
+        # Convolve model gaussian with hex kernel
+        convolved = signal.fftconvolve(hex_kernel, sc, mode='same')
+
+        # print('setup 2D interpolator for point-like object')
+        # Interpolate
+        rbs = RectBivariateSpline(xs, ys, convolved)
+
+        # Centers of profiles
+
+        for target in targets:
+            # print('object is', target.name)
+            center = target.relposition
+            # print('relposition', target.relposition)
+            # fraction of flux in each fiber
+            scales = np.zeros((self.fibers.nfibers,))
+            # Offset fiber positions
+            offpos0 = pos_x - center[0]
+            offpos1 = pos_y - center[1]
+            # Check those that are inside the convolved image
+            # print('filter fibers out of field')
+            validfibs = rect_c(offpos0, offpos1, 2 * xl, 2 * yl)
+            # Sample convolved image
+            # print('sampling convolved image')
+            values = rbs.ev(offpos0[validfibs], offpos1[validfibs]) * Dx * Dy
+            scales[validfibs] = values
+
+            # print('insert SED')
+            xx = target.spectrum['sed'](wl)
+            final[validfibs] += scales[validfibs, np.newaxis] * xx[np.newaxis, :] * target.profile.factor
+
+            # print('check, near 1', scales.sum(), final.sum())
+
+        # Extended objects
+        ext_coverage = np.ones((self.fibers.nfibers, 1)) * photons / 10.0
+        final += ext_coverage
+
+        # print('end targets in focal plane')
+        return final
 
 
 def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, scale=8):
