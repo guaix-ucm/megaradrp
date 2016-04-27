@@ -1,6 +1,6 @@
 
 :mod:`megaradrp.dataproducts` --- Data products of the MEGARA pipeline
-========================================================================
+======================================================================
 
 .. module:: megaradrp.dataproducts
    :synopsis:  Data products of the MEGARA pipeline
@@ -12,6 +12,10 @@
 .. class:: MasterBias
 
    Master bias MEGARA frame
+
+.. class:: MasterBPM
+
+   Master dark pixel mask MEGARA frame
 
 .. class:: MasterDark
 
