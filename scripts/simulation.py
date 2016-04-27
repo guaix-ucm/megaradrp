@@ -194,16 +194,6 @@ def create_telescope():
     return tel
 
 
-class AtmosphereModel(object):
-
-    def __init__(self, twfile):
-        self.tw_interp = InterpolFile(twfile)
-
-    def twilight_spectrum(self, wl_in):
-        """Twilight spectrum"""
-        return 5e4 * self.tw_interp(wl_in)
-
-
 def restricted_float(x):
     x = float(x)
     if x < 0.0 or x > 36000.0:
@@ -230,7 +220,8 @@ if __name__ == '__main__':
 
     parser.add_argument('-p', '--parameters', metavar="FILE",
                         help="FILE with observing parameters")
-
+    parser.add_argument('-t', '--targets', metavar="FILE",
+                        help="FILE with target configuration")
     parser.add_argument('-e', '--exposure', type=restricted_float, default=0.0,
                         help="Exposure time per image (in seconds) [0,36000]")
     parser.add_argument('-n', '--nimages', metavar="INT", type=int, default=1,
@@ -245,7 +236,9 @@ if __name__ == '__main__':
     cu = create_calibration_unit(illum=None)
     instrument = create_instrument()
     telescope = create_telescope()
-    atm = AtmosphereModel(twfile='v02/tw-spec.txt')
+    atm = AtmosphereModel(twilight=InterpolFile('v02/sky/tw-spec.txt'),
+                          nightsky=InterpolFile('v02/sky/uves_sky_phot.txt')
+                          )
     telescope.connect(atm)
     factory = MegaraImageFactory()
 
@@ -256,7 +249,6 @@ if __name__ == '__main__':
     control.register('factory', factory)
 
     # Observation setup
-    # This instruction fixes the number of fibers...
 
     if args.parameters:
 
@@ -266,6 +258,15 @@ if __name__ == '__main__':
         instrument.configure(oparam)
 
         cu.select(oparam['lamp'])
+
+    if args.targets:
+        _logger.debug('load targets file %s', args.targets)
+        targets = yaml.load(open(args.targets))
+    else:
+        # empty target list
+        targets = dict(central=[0.0, 0.0], targets=dict())
+
+    control.set_targets(targets)
 
     _logger.info('start simulation')
     control.set_mode(args.omode)
