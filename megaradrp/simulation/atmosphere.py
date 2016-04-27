@@ -21,9 +21,14 @@ from megaradrp.simulation.efficiency import InterpolFile
 
 class AtmosphereModel(object):
 
-    def __init__(self, twfile):
-        self.tw_interp = InterpolFile(twfile)
+    def __init__(self, twilight, nightsky):
+        self.tw_interp = twilight
+        self.ng_interp = nightsky
 
     def twilight_spectrum(self, wl_in):
         """Twilight spectrum"""
         return 5e4 * self.tw_interp(wl_in)
+
+    def night_spectrum(self, wl_in):
+        """Night spectrum"""
+        return 5e3 * self.ng_interp(wl_in)
