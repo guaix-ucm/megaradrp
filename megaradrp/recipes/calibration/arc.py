@@ -38,7 +38,7 @@ from numina.array.wavecal.statsummary import sigmaG
 from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import TraceMap, WavelengthCalibration, JSONstorage
+from megaradrp.products import TraceMap, WavelengthCalibration
 from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.requirements import MasterDarkRequirement
 from megaradrp.core.processing import apextract_tracemap
@@ -61,7 +61,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     arc_image = Product(DataFrameType)
     arc_rss = Product(DataFrameType)
     master_wlcalib = Product(WavelengthCalibration)
-    data_wlcalib = Product(JSONstorage)
 
     def __init__(self):
         super(ArcCalibrationRecipe, self).__init__("0.1.0")
@@ -80,12 +79,12 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         _logger.info('extracted %i fibers', rssdata.shape[0])
 
         # Skip any other inputs for the moment
-        coeff_table, data_wlcalib = self.calibrate_wl(rssdata, rinput.lines_catalog,
+        data_wlcalib = self.calibrate_wl(rssdata, rinput.lines_catalog,
                                         rinput.polynomial_degree)
 
         # WL calibration goes here
         return self.create_result(arc_image=reduced, arc_rss=rss,
-                                  master_wlcalib=coeff_table, data_wlcalib = data_wlcalib)
+                                  master_wlcalib=data_wlcalib)
 
     def pintar_todas(self, diferencia_final, figure):
         import matplotlib.pyplot as plt
@@ -185,7 +184,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         _logger.info('Fin')
 
-        return coeff_table, data_wlcalib
+        return data_wlcalib
 
     def generateJSON(self, coeff_table, lista_solution,
                      lista_xpeaks_refined, poldeg, lines_catalog):
