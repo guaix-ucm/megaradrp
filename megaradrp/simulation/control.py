@@ -21,8 +21,31 @@ import logging
 
 from megaradrp.simulation.actions import megara_sequences
 from megaradrp.simulation.factory import PersistentRunCounter
+from megaradrp.simulation.efficiency import InterpolFile
 
 _logger = logging.getLogger("simulation")
+
+
+class PointLike(object):
+    def __init__(self, factor=1.0, **kwds):
+        self.factor = factor
+
+
+class Target(object):
+    def __init__(self, name, relposition, profile, spectrum):
+        self.name = name
+        self.relposition = relposition
+        self.profile = profile
+        self.spectrum = spectrum
+
+
+def profile_builder(profile_entry):
+    profile_type = profile_entry['type']
+    profile_args = profile_entry['args']
+    if profile_type == 'point-like':
+        return PointLike(**profile_args)
+    else:
+        raise ValueError("'{0}' not registered", profile_type)
 
 
 class ControlSystem(object):
@@ -36,6 +59,7 @@ class ControlSystem(object):
         self.seqs = megara_sequences()
         self.factory = factory
         self.ob_data = dict(count=0, repeat=0, name=None, obsid=1)
+        self.targets = None
 
     def register(self, name, element):
         self._elements[name] = element
@@ -45,6 +69,27 @@ class ControlSystem(object):
 
     def set_mode(self, mode):
         self.mode = mode
+
+    def set_targets(self, targets_description):
+        # Process targets here
+
+        targets = targets_description['targets']
+
+        tlist = []
+
+        for m in targets:
+            entry = targets[m]
+            profile_entry = entry['profile']
+            profile = profile_builder(profile_entry)
+            spectrum_entry = entry['spectrum']
+            filename = spectrum_entry['sed']
+            spectrum_entry['sed'] = InterpolFile(filename)
+            spectrum = spectrum_entry
+            relposition = entry['relposition']
+            tar = Target(m, relposition, profile=profile, spectrum=spectrum)
+            tlist.append(tar)
+
+        self.targets = tlist
 
     def run(self, exposure, repeat=1):
 
