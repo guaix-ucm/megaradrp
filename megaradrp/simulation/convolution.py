@@ -2,20 +2,36 @@
 import numpy as np
 import math
 
-
-FWHM_G = 2*math.sqrt(2*math.log(2))
-
-
-def gauss_profile2(x, y, I, c, s):
-    rr2 = (x - c[0])**2 + (y-c[1])**2
-    intens = I*np.exp(-0.5 * rr2 / s**2)
-    return intens
+from astropy.modeling.functional_models import Fittable2DModel, Parameter
 
 
-def gauss_profile2_base(x, y, s):
-    rr2 = x**2 + y**2
-    intens = np.exp(-0.5 * rr2 / s**2) / (2*math.pi*s**2)
-    return intens
+FWHM_G = 2 * math.sqrt(2 * math.log(2))
+_HEX_SCALE = 0.25 * math.sqrt(3.0)
+
+class HexagonA(Fittable2DModel):
+
+    amplitude = Parameter(default=1)
+    x_0 = Parameter(default=0)
+    y_0 = Parameter(default=0)
+    radius = Parameter(default=1)
+
+    @staticmethod
+    def evaluate(x, y, amplitude, x_0, y_0, radius):
+        d = radius * 2
+        dx = np.abs(x - x_0) / d
+        dy = np.abs(y - y_0) / d
+        a = 0.25 * math.sqrt(3.0)
+        sel1 = (dy <= a)
+        sel2 = (a * dx + 0.25 * dy <= 0.5 * a)
+        return np.select([np.logical_and(sel1, sel2)],
+                         [amplitude], 0)
+
+    @property
+    def bounding_box(self):
+        a = 0.25 * math.sqrt(3.0)
+        d = 2 * self.radius
+        return ((self.y_0 - a * d, self.y_0 + a * d),
+                (self.x_0 - self.radius, self.x_0 + self.radius))
 
 
 # Returns True in inside hexagon, rectangle and square

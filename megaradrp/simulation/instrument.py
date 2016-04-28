@@ -24,6 +24,7 @@ from scipy.stats import norm
 import scipy.interpolate as ii
 from scipy.ndimage.filters import convolve1d
 
+from astropy.modeling.functional_models import Gaussian2D
 from .efficiency import Efficiency
 from .device import HWDevice
 
@@ -218,7 +219,7 @@ class MegaraInstrument(HWDevice):
 
     def targets_in_focal_plane(self, targets, wl, photons):
         # simulate_seeing_profile
-        from .convolution import rect_c, hex_c, setup_grid, FWHM_G, gauss_profile2_base
+        from .convolution import rect_c, hex_c, setup_grid, FWHM_G
         from scipy.interpolate import RectBivariateSpline
         from scipy import signal
 
@@ -226,7 +227,7 @@ class MegaraInstrument(HWDevice):
         # print('enter targets in focal plane')
 
         seeing = 0.9
-        layout_size = 0.31
+
         tab = self.focal_plane.get_all_fibers(self.fibers)
         pos_x = tab['x']
         pos_y = tab['y']
@@ -243,12 +244,18 @@ class MegaraInstrument(HWDevice):
 
         xx, yy, xs, ys, xl, yl = setup_grid(xsize, ysize, Dx, Dy)
         # print('generate hex kernel')
-        hex_kernel = hex_c(xx, yy, rad=layout_size)
+        hex_kernel = hex_c(xx, yy, rad=self.fibers.size)
 
         # For gaussian, symetric profile
         # print('generate seeing profile')
         sigma = seeing / FWHM_G
-        sc = gauss_profile2_base(xx, yy, sigma)
+        amplitude = 1.0 / (2 * math.pi * sigma * sigma)
+        seeing_model = Gaussian2D(amplitude=amplitude,
+                                  x_mean=0.0,
+                                  y_mean=0.0,
+                                  x_stddev=sigma,
+                                  y_stddev=sigma)
+        sc = seeing_model(xx, yy)
 
         # print('convolve hex kernel with seeing profile')
         # Convolve model gaussian with hex kernel
