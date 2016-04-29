@@ -189,7 +189,7 @@ def create_calibration_unit(illum=None):
 
 def create_telescope():
 
-    tel = Telescope(name='GTC', diameter=100.0, transmission=EfficiencyFile('v02/ttel_0.1aa.dat'))
+    tel = Telescope(name='GTC', diameter=104.0, transmission=EfficiencyFile('v02/ttel_0.1aa.dat'))
 
     return tel
 
@@ -207,7 +207,7 @@ if __name__ == '__main__':
     import argparse
 
     from megaradrp.simulation.factory import MegaraImageFactory
-    from megaradrp.simulation.atmosphere import AtmosphereModel
+    from megaradrp.simulation.atmosphere import AtmosphereModel, generate_gaussian_profile
 
     try:
         from numinadb.controldb import ControlSystem
@@ -236,8 +236,10 @@ if __name__ == '__main__':
     cu = create_calibration_unit(illum=None)
     instrument = create_instrument()
     telescope = create_telescope()
+
     atm = AtmosphereModel(twilight=InterpolFile('v02/sky/tw-spec.txt'),
-                          nightsky=InterpolFile('v02/sky/uves_sky_phot.txt')
+                          nightsky=InterpolFile('v02/sky/uves_sky_phot.txt'),
+                          seeing=generate_gaussian_profile(seeing_fwhm=0.9)
                           )
     telescope.connect(atm)
     factory = MegaraImageFactory()

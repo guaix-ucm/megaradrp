@@ -17,13 +17,16 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from megaradrp.simulation.efficiency import InterpolFile
+import math
+from astropy.modeling.functional_models import Gaussian2D, Moffat2D
+
 
 class AtmosphereModel(object):
 
-    def __init__(self, twilight, nightsky):
+    def __init__(self, twilight, nightsky, seeing):
         self.tw_interp = twilight
         self.ng_interp = nightsky
+        self.seeing = seeing
 
     def twilight_spectrum(self, wl_in):
         """Twilight spectrum"""
@@ -31,4 +34,37 @@ class AtmosphereModel(object):
 
     def night_spectrum(self, wl_in):
         """Night spectrum"""
-        return 5e3 * self.ng_interp(wl_in)
+        return self.ng_interp(wl_in)
+
+
+def generate_gaussian_profile(seeing_fwhm):
+    """Generate a normalized Gaussian profile from its FWHM"""
+    FWHM_G = 2 * math.sqrt(2 * math.log(2))
+    sigma = seeing_fwhm / FWHM_G
+    amplitude = 1.0 / (2 * math.pi * sigma * sigma)
+    seeing_model = Gaussian2D(amplitude=amplitude,
+                              x_mean=0.0,
+                              y_mean=0.0,
+                              x_stddev=sigma,
+                              y_stddev=sigma)
+    return seeing_model
+
+
+def generate_moffat_profile(seeing_fwhm, alpha):
+    """Generate a normalized Moffat profile from its FWHM and alpha"""
+
+    scale = 2 * math.sqrt(2**(1.0 / alpha) - 1)
+    gamma = seeing_fwhm / scale
+    amplitude = 1.0 / math.pi * (alpha - 1) / gamma**2
+    seeing_model = Moffat2D(amplitude=amplitude,
+                            x_mean=0.0,
+                            y_mean=0.0,
+                            gamma=gamma,
+                            alpha=alpha)
+    return seeing_model
+
+
+def generate_lorentz_profile(seeing_fwhm):
+    """Generate a normalized Lorent profile from its FWHM"""
+
+    return generate_moffat_profile(seeing_fwhm, alpha=1.5)

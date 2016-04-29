@@ -17,6 +17,8 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import math
+
 from .device import HWDevice
 from .efficiency import Efficiency
 
@@ -26,6 +28,7 @@ class Telescope(HWDevice):
         super(Telescope, self).__init__(name)
 
         self.diameter = diameter
+        self.area = 0.25 * math.pi * diameter**2
         self.inc = None
 
         if transmission is None:
