@@ -124,7 +124,7 @@ pipelines:
       dark_image: megaradrp.recipes.calibration.dark.DarkRecipe
       fiber_flat_image: megaradrp.recipes.calibration.flat.FiberFlatRecipe
       slit_flat: megaradrp.recipes.calibration.slitflat.SlitFlatRecipe
-      lcb_image: megaradrp.recipes.scientific.mos.FiberMOSRecipe2
+      lcb_image: megaradrp.recipes.scientific.lcb.FiberMOSRecipe2
       mos_image: megaradrp.recipes.scientific.mos.FiberMOSRecipe2
       flux_calibration: megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipe
       trace_map: megaradrp.recipes.calibration.trace.TraceMapRecipe
