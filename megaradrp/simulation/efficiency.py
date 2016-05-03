@@ -26,13 +26,14 @@ import astropy.wcs
 
 class InterpolFile(object):
 
-    def __init__(self, fname, fill_value=0.0):
+    def __init__(self, fname, fill_value=0.0, factor=1.0):
         rawdata = numpy.loadtxt(fname)
         self._interp = ii.interp1d(rawdata[:,0] / 1e4, rawdata[:,1],
                                    bounds_error=False, fill_value=fill_value)
+        self.factor = factor
 
     def __call__(self, wl):
-        return self._interp(wl)
+        return self.factor * self._interp(wl)
 
 
 class InterpolFitsUVES(object):
@@ -58,13 +59,13 @@ class InterpolFitsUVES(object):
 class Efficiency(object):
 
     def response(self, wl):
-        return np.ones_like(wl)
+        return numpy.ones_like(wl)
 
 
 class EfficiencyFile(Efficiency):
 
-    def __init__(self, fname, fill_value=0.0):
-        self.interpf = InterpolFile(fname, fill_value=fill_value)
+    def __init__(self, fname, fill_value=0.0, factor=1.0):
+        self.interpf = InterpolFile(fname, fill_value=fill_value, factor=factor)
 
     def response(self, wl):
         return self.interpf(wl)
