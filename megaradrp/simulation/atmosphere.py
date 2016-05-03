@@ -31,7 +31,7 @@ class AtmosphereModel(object):
 
     def twilight_spectrum(self, wl_in):
         """Twilight spectrum"""
-        return 5e4 * self.tw_interp(wl_in)
+        return self.tw_interp(wl_in)
 
     def night_spectrum(self, wl_in):
         """Night spectrum"""

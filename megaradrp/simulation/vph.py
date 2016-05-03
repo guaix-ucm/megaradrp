@@ -19,6 +19,7 @@
 
 import numpy
 import scipy.interpolate as ii
+from astropy import units as u
 
 from .efficiency import Efficiency
 
@@ -67,7 +68,7 @@ class MegaraVPH(object):
 
     def wltable_interp(self):
         res_in = (self.wlmax/ self.resolution(self.wlmax)) / self.SAMPLING
-        return numpy.arange(self.wlmin_in, self.wlmax_in, res_in)
+        return numpy.arange(self.wlmin_in, self.wlmax_in, res_in) * u.micron
 
     def transmission(self, wl):
         return self._transmission.response(wl)

@@ -24,7 +24,6 @@ from scipy.stats import norm
 import scipy.interpolate as ii
 from scipy.ndimage.filters import convolve1d
 
-from astropy.modeling.functional_models import Gaussian2D
 from .efficiency import Efficiency
 from .device import HWDevice
 
@@ -160,12 +159,15 @@ class MegaraInstrument(HWDevice):
 
         self.detector.configure(profile)
 
-    def project_rss(self, sigma, wl_in, spec_in):
+    def project_rss_intl(self, sigma, wl_in, spec_in):
 
         # This will compute only the illuminated fibers
         tab = self.get_visible_fibers()
         visible_fib_ids = tab['fibid']
         return project_rss(visible_fib_ids, self.pseudo_slit, self.vph, self.detector, sigma, wl_in, spec_in)
+
+    def project_rss(self, wl_in, spec_in):
+        return self.project_rss_intl(self._internal_focus_factor * self.fibers.sigma, wl_in, spec_in)
 
     def project_rss_w(self):
         # This will compute only the illuminated fibers
@@ -187,7 +189,23 @@ class MegaraInstrument(HWDevice):
         # QE of the detector
         spec_in *= self.detector.qe_wl(wltable_in)
 
-        return self.project_rss(self._internal_focus_factor * self.fibers.sigma, wltable_in, spec_in)
+        return self.project_rss(wltable_in, spec_in)
+
+    def apply_transmissions_only(self, wltable_in, photons_in):
+        """Simulate the image in the focal plane,"""
+
+        spec_in = photons_in * self.fibers.transmission(wltable_in)
+
+        # Spectrograph optics transmission
+        spec_in *= self.internal_optics.transmission(wltable_in)
+
+        # VPH transmission
+        spec_in *= self.vph.transmission(wltable_in)
+
+        # QE of the detector
+        spec_in *= self.detector.qe_wl(wltable_in)
+
+        return spec_in
 
     def simulate_focal_plane(self, wltable_in, photons_in):
         """Simulate the image in the focal plane,"""
@@ -237,7 +255,7 @@ class MegaraInstrument(HWDevice):
 def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, scale=8):
 
     # Scale for super sampling
-    # scale
+    # scale 8 by default
 
     y_ps_fibers = [pseudo_slit.y_pos[fid] for fid in vis_fibs_id]
     DSHAPE = detector.dshape
@@ -246,17 +264,18 @@ def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, 
     xcenter = detector.dshape[1] // 2
     ycenter = detector.dshape[0] // 2
 
-    spos = -PIXSCALE * (np.arange(0, DSHAPE[1]*scale) - scale * xcenter) / scale
+    spos = -PIXSCALE * (np.arange(0, DSHAPE[1] * scale) - scale * xcenter) / scale
 
     wl_in_super = vph.ps_x_wl(y_ps_fibers, -spos, grid=True)
+    # revert
     wl_in_super = wl_in_super[:,::-1]
-
+    # print('wl in super?', wl_in_super.shape)
     spec_in_super = np.zeros_like(wl_in_super)
 
     # Resample to higher spatial resolution
     for i, fib_id in enumerate(vis_fibs_id):
         idx = fib_id - 1
-        interpolator = ii.interp1d(wl_in, spec_in[idx])
+        interpolator = ii.interp1d(wl_in, spec_in[idx]) # This is not conserving flux?
         spec_in_super[i] = interpolator(wl_in_super[i])
 
     # kernel is constant in pixels
@@ -264,12 +283,14 @@ def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, 
     kernel = compute_kernel(scale*sigma, truncate=5.0, d=0.5 * scale)
     out = convolve1d(spec_in_super, kernel, axis=1)
 
-    # Downsample
+    # Downsample after convolution
     spec_in_detector = out[:,::scale]
     wl_in_detector = wl_in_super[:,::scale]
 
+    # fits.writeto('downsampled.fits', spec_in_detector, clobber=True)
     ytrace = np.zeros_like(wl_in_detector)
 
+    # Y-positions of the traces
     for idx, y_ps_fiber in enumerate(y_ps_fibers):
         ytrace[idx] = ycenter + vph.ps_wl_y(y_ps_fiber, wl_in_detector[idx]) / PIXSCALE
 
@@ -280,13 +301,12 @@ def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, 
     for idx, _ in enumerate(y_ps_fibers):
         minp = coor_to_pix(ytrace[idx].min() - nsig * sigma)
         maxp = coor_to_pix(ytrace[idx].max() + nsig * sigma)
-
         yp = np.arange(minp, maxp)
-
+        # Scale of the trace of width sigma
         base = pixcont_int_pix(yp[:,np.newaxis], ytrace[idx, :], sigma)
-
-        #yspec = base * 7.5e3#spec_in_detector[idx]
+        #print base.sum(axis=0).max()
         yspec = base * spec_in_detector[idx]
+        #print yspec.sum(axis=0).max(), spec_in_detector[idx].max()
         final[minp:maxp,:] += yspec
 
     return final
@@ -303,6 +323,7 @@ def project_rss_w(visible_fib_ids, pseudo_slit, vph, detector, sigma):
 
     spos = -PIXSCALE * (np.arange(0, DSHAPE[1]) - xcenter)
     wl_in_detector = vph.ps_x_wl(y_ps_fibers, -spos, grid=True)
+    # revert
     wl_in_detector = wl_in_detector[:,::-1]
 
     ytrace = np.zeros_like(wl_in_detector)

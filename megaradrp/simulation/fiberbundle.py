@@ -17,6 +17,9 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import math
+
+from astropy import units as u
 
 from .efficiency import Efficiency
 
@@ -24,7 +27,8 @@ class FiberBundle(object):
     def __init__(self, name, fid, bid, static=True, transmission=None, inactive=None):
         self.name = name
         # Geometry of the fibers
-        self.size = 0.31
+        self.size = 0.31 * u.arcsec
+        self.area = math.sqrt(3) * self.size ** 2 / 2.0
         self.fwhm = 3.6
         self.sigma = self.fwhm / 2.3548
 
