@@ -50,7 +50,7 @@ class BlackBodyLamp(Lamp):
                                             illumination=illumination)
 
     def flux(self, wl_in):
-        energy_in_flat = blackbody_lambda(wl_in * u.um, self.temp)
+        energy_in_flat = blackbody_lambda(wl_in, self.temp)
         return self.factor * energy_in_flat
 
 
