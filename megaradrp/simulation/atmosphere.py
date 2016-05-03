@@ -23,9 +23,10 @@ from astropy.modeling.functional_models import Gaussian2D, Moffat2D
 
 class AtmosphereModel(object):
 
-    def __init__(self, twilight, nightsky, seeing):
+    def __init__(self, twilight, nightsky, seeing, extinction):
         self.tw_interp = twilight
         self.ng_interp = nightsky
+        self.ext_interp = extinction
         self.seeing = seeing
 
     def twilight_spectrum(self, wl_in):
@@ -35,6 +36,10 @@ class AtmosphereModel(object):
     def night_spectrum(self, wl_in):
         """Night spectrum"""
         return self.ng_interp(wl_in)
+
+    def extinction(self, wl_in):
+        """Night extinction"""
+        return self.ext_interp(wl_in)
 
 
 def generate_gaussian_profile(seeing_fwhm):
