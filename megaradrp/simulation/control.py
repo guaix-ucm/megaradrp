@@ -41,7 +41,7 @@ class Target(object):
 
 def profile_builder(profile_entry):
     profile_type = profile_entry['type']
-    profile_args = profile_entry['args']
+    profile_args = profile_entry.get('args', {})
     if profile_type == 'point-like':
         return PointLike(**profile_args)
     else:
@@ -83,7 +83,8 @@ class ControlSystem(object):
             profile = profile_builder(profile_entry)
             spectrum_entry = entry['spectrum']
             filename = spectrum_entry['sed']
-            spectrum_entry['sed'] = InterpolFile(filename)
+            factor = spectrum_entry.get('factor', 1.0)
+            spectrum_entry['sed'] = InterpolFile(filename, factor=factor)
             spectrum = spectrum_entry
             relposition = entry['relposition']
             tar = Target(m, relposition, profile=profile, spectrum=spectrum)
