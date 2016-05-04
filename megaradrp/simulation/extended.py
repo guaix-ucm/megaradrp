@@ -56,13 +56,10 @@ def create_th_ar_arc_spectrum(wl_in):
              ]
 
     s = 8e-6
-    #wl_in = vph.wltable_interp()
-    photons_in = 0.0 * wl_in
+    flux_out = np.zeros_like(wl_in)
 
     for cwl, flux in lines:
         c = cwl / 1e4
-        photons_in +=  flux * 1.5e4 * np.exp(-0.5*((wl_in-c) / s)**2)
+        flux_out +=  flux * np.exp(-0.5*((wl_in-c) / s)**2)
 
-    #photons_in += 1.0e2
-
-    return photons_in
+    return flux_out

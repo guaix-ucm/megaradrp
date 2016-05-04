@@ -84,33 +84,46 @@ def create_wheel():
     _logger.info('create wheel')
     wheel = VPHWheel(capacity=3, name='wheel')
     _logger.info('create vphs')
+    vph_conf = {'wl_range': [3653.0, 4051.0, 4386.0]}
     vph = create_vph_by_data('VPH405_LR',
-                              'v02/VPH405_LR2-extra.dat',
-                              'v02/VPH405_LR_res.dat',
-                              'v02/tvph_0.1aa.dat'
+                             'LR_U',
+                             'v02/VPH405_LR2-extra.dat',
+                             'v02/VPH405_LR_res.dat',
+                             'v02/tvph_0.1aa.dat',
+                             conf=vph_conf
                              )
     wheel.put_in_pos(vph, 0)
+
+    vph_conf = {'wl_range': [8800.0, 9262.0, 9686.0]}
     vph = create_vph_by_data('VPH926_MR',
-                              'v02/VPH926_MR.txt',
-                              'v02/VPH926_MR_res.dat',
-                              'v02/tvph_0.1aa.dat'
-                         )
+                             'MR_Z',
+                             'v02/VPH926_MR.txt',
+                             'v02/VPH926_MR_res.dat',
+                             'v02/tvph_0.1aa.dat',
+                             conf=vph_conf
+                             )
     wheel.put_in_pos(vph, 1)
+
+    vph_conf = {'wl_range': [8372.0, 8634.0, 8882.0]}
     vph = create_vph_by_data('VPH863_HR',
+                             'HR_I',
                              'v02/VPH863_HR.txt',
                              'v02/VPH863_HR_res.dat',
-                              'v02/tvph_0.1aa.dat'
-                         )
+                             'v02/tvph_0.1aa.dat',
+                             conf=vph_conf
+                             )
     wheel.put_in_pos(vph, 2)
     return wheel
 
 
-def create_vph_by_data(name, distortion, resolution, transmission):
+def create_vph_by_data(name, setup, distortion, resolution, transmission, conf):
     trans = EfficiencyFile(transmission)
     res = EfficiencyFile(resolution)
-    vph = MegaraVPH(name=name, vphtable=distortion,
+    vph = MegaraVPH(name=name, setup=setup,
+                    vphtable=distortion,
                     resolution=res,
-                    transmission=trans)
+                    transmission=trans,
+                    conf=conf)
 
     return vph
 
@@ -169,11 +182,11 @@ def create_calibration_unit(illum=None):
 
     cu = calibrationunit.MegaraCalibrationUnit(capacity=7, name='megcalib')
 
-    lamp1 = lamps.BlackBodyLamp('FLAT1', 5400 * u.K, illumination=illum)
-    lamp2 = lamps.FlatLamp('FLAT2', photons=7598.34893859, illumination=illum)
+    lamp1 = lamps.BlackBodyLamp('FLAT1', 5400 * u.K, illumination=illum, factor=1e-5)
+    lamp2 = lamps.FlatLamp('FLAT2', illumination=illum, factor=5.0)
     lamp3 = lamps.ArcLamp('ARC', illumination=illum)
-    lamp4 = lamps.BlackBodyLamp('HALO1', 5400 * u.K, illumination=illum)
-    lamp5 = lamps.FlatLamp('HALO2', photons=7598.34893859, illumination=illum)
+    lamp4 = lamps.BlackBodyLamp('HALO1', 5400 * u.K, illumination=illum, factor=1e-5)
+    lamp5 = lamps.FlatLamp('HALO2', illumination=illum, factor=5.0)
     lamp6 = lamps.ArcLamp('ARC1', illumination=illum)
 
     cu.put_in_pos('EMPTY', 0)
@@ -189,7 +202,7 @@ def create_calibration_unit(illum=None):
 
 def create_telescope():
 
-    tel = Telescope(name='GTC', diameter=100.0, transmission=EfficiencyFile('v02/ttel_0.1aa.dat'))
+    tel = Telescope(name='GTC', diameter=1040 * u.cm, transmission=EfficiencyFile('v02/ttel_0.1aa.dat'))
 
     return tel
 
@@ -207,7 +220,7 @@ if __name__ == '__main__':
     import argparse
 
     from megaradrp.simulation.factory import MegaraImageFactory
-    from megaradrp.simulation.atmosphere import AtmosphereModel
+    from megaradrp.simulation.atmosphere import AtmosphereModel, generate_gaussian_profile
 
     try:
         from numinadb.controldb import ControlSystem
@@ -236,8 +249,17 @@ if __name__ == '__main__':
     cu = create_calibration_unit(illum=None)
     instrument = create_instrument()
     telescope = create_telescope()
-    atm = AtmosphereModel(twilight=InterpolFile('v02/sky/tw-spec.txt'),
-                          nightsky=InterpolFile('v02/sky/uves_sky_phot.txt')
+
+    # For twilight spectrum
+    factor_tws = 1e-15
+
+    # For night spectrum
+    # 4.97490903177e-17 for magnitude 21.9 with  filters/v_johnsonbessel.dat
+    factor_ns = 4.97490903177e-17
+    atm = AtmosphereModel(twilight=InterpolFile('v02/sky/tw-spec.txt', factor=factor_tws),
+                          nightsky=InterpolFile('v02/sky/uves_sky.txt', factor=factor_ns),
+                          seeing=generate_gaussian_profile(seeing_fwhm=0.9),
+                          extinction=InterpolFile('v02/sky/lapalma_sky_extinction.dat')
                           )
     telescope.connect(atm)
     factory = MegaraImageFactory()

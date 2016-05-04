@@ -35,7 +35,8 @@ class Lamp(HWDevice):
             self._illum = illumination
 
     def flux(self, wl):
-        return self.factor * np.ones_like(wl)
+        units = u.erg * u.s**-1 * u.cm ** -2 * u.AA**-1 * u.sr**-1
+        return self.factor * np.ones_like(wl).value * units
 
     def illumination(self, x, y):
         return self._illum(x, y)
@@ -49,18 +50,19 @@ class BlackBodyLamp(Lamp):
                                             illumination=illumination)
 
     def flux(self, wl_in):
-        photons_in_flat = wl_in * blackbody_lambda(wl_in * u.um, self.temp) / 10.0
-        return self.factor * photons_in_flat
+        energy_in_flat = blackbody_lambda(wl_in, self.temp)
+        return self.factor * energy_in_flat
 
 
 class FlatLamp(Lamp):
-    def __init__(self, name, photons, illumination=None):
-        self.photons = photons
-        super(FlatLamp, self).__init__(name, factor=photons,
+    def __init__(self, name, factor=1.0, illumination=None):
+        super(FlatLamp, self).__init__(name, factor=factor,
                                        illumination=illumination)
 
 
 class ArcLamp(Lamp):
 
     def flux(self, wl_in):
-        return self.factor * create_th_ar_arc_spectrum(wl_in)
+        val = create_th_ar_arc_spectrum(wl_in)
+        val_u = val * u.erg * u.s**-1 * u.cm ** -2 * u.AA**-1 * u.sr**-1
+        return self.factor * val_u

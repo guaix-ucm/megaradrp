@@ -5,7 +5,6 @@ import math
 from astropy.modeling.functional_models import Fittable2DModel, Parameter
 
 
-FWHM_G = 2 * math.sqrt(2 * math.log(2))
 _HEX_SCALE = 0.25 * math.sqrt(3.0)
 
 class HexagonA(Fittable2DModel):

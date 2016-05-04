@@ -142,14 +142,15 @@ class MegaraImageFactory(object):
         # VPH
         meta_vph = meta.get('vph', {})
 
-        vph_name = meta_vph.get('name', 'unknown')
+        vph_name = meta_vph.get('setup', 'unknown')
+        vph_wlrange = meta_vph.get('wl_range', [0.0, 0.0, 0.0])
         pheader['VPH'] = vph_name
         pheader['VPHFWHM1'] = 0.0
         pheader['VPHFWHMC'] = 0.0
         pheader['VPHFWHM2'] = 0.0
-        pheader['VPHWL1'] = 0.0
-        pheader['VPHWLC'] = 0.0
-        pheader['VPHWL2'] = 0.0
+        pheader['VPHWL1'] = vph_wlrange[0]
+        pheader['VPHWLC'] = vph_wlrange[1]
+        pheader['VPHWL2'] = vph_wlrange[2]
         # Focus
         focus = meta.get('focus', 0.0)
         pheader['FOCUS'] = focus
@@ -158,6 +159,10 @@ class MegaraImageFactory(object):
         meta_fplane = meta.get('fplane', {})
         cover = meta_fplane.get('cover', 'unknown')
         pheader['COVER'] = cover
+        cover1 = meta_fplane.get('cover1', 'unknown')
+        pheader['COVER1'] = cover1
+        cover2 = meta_fplane.get('cover2', 'unknown')
+        pheader['COVER2'] = cover2
 
         # Instrument mode
         meta_pslit = meta.get('pslit')

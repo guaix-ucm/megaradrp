@@ -23,6 +23,7 @@ class FocalPlane(object):
 
     NAMES = {'UNSET': 3, 'LEFT': 2, 'RIGHT': 1, 'SET': 0}
     CODES = {3: 'UNSET', 2: 'LEFT', 1: 'RIGHT', 0: 'SET'}
+    HCODES = {1: 'PARKED', 0: 'INPLACE'}
 
     def __init__(self):
 
@@ -78,4 +79,6 @@ class FocalPlane(object):
         return p2
 
     def config_info(self):
-        return {'cover': self.CODES[self._cover_status]}
+        return {'cover': self.CODES[self._cover_status],
+                'cover1': self.HCODES[self._cover_status & 1],
+                'cover2': self.HCODES[(self._cover_status & 2) >> 1]}
