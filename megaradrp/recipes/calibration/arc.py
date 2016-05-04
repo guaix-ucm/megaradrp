@@ -34,7 +34,6 @@ from numina.array.wavecal.arccalibration import arccalibration_direct
 from numina.array.wavecal.arccalibration import fit_solution
 from numina.array.wavecal.arccalibration import gen_triplets_master
 from numina.array.wavecal.statsummary import sigmaG
-# FIXME: still using findpeaks1D functions
 from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 
 from megaradrp.core.recipe import MegaraBaseRecipe
@@ -78,6 +77,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         _logger.info('extracted %i fibers', rssdata.shape[0])
 
+        fits.writeto('rss.fits', rssdata, clobber=True )
+
         # Skip any other inputs for the moment
         data_wlcalib = self.calibrate_wl(rssdata, rinput.lines_catalog,
                                         rinput.polynomial_degree)
@@ -118,14 +119,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             # find peaks (initial search providing integer numbers)
             threshold = numpy.median(row) + times_sigma * sigmaG(row)
 
-            # ipeaks_int = findPeaks_spectrum(row, nwinwidth, threshold)
-            # ipeaks_float = refinePeaks_spectrum(row, ipeaks_int, nwinwidth, method=1)
-
             ipeaks_int = find_peaks_indexes(row, nwinwidth, threshold)
             ipeaks_float = refine_peaks(row, ipeaks_int, nwinwidth)[0]
 
-            # self.pintar_todas(ipeaks_float,'refinado_nico')
-            # self.pintar_todas(ipeaks_float2,'refinado_nuevo')
             # define interpolation function and interpolate the refined peak
             # location, passing from index number (within the row array)
             # to channel number (note that this step takes care of the fact
@@ -142,6 +138,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                        kind='linear')
             xpeaks_refined = finterp_channel(ipeaks_float)
             lista_xpeaks_refined.append(xpeaks_refined)
+            wv_ini_search = int(lines_catalog[0][0]-200) # initially: 3500
+            wv_end_search = int(lines_catalog[-1][0]+1200) #initially: 4500
+
             try:
                 solution = arccalibration_direct(wv_master,
                                                  ntriplets_master,
@@ -149,9 +148,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                                  triplets_master_sorted_list,
                                                  xpeaks_refined,
                                                  naxis1,
-                                                 wv_ini_search=3500,
-                                                 wv_end_search=4500,
-                                                 error_xpos_arc=2.0,
+                                                 wv_ini_search=wv_ini_search,
+                                                 wv_end_search=wv_end_search,
+                                                 error_xpos_arc=0.3, #initially: 2.0
                                                  times_sigma_r=3.0,
                                                  frac_triplets_for_sum=0.50,
                                                  times_sigma_theil_sen=10.0,
