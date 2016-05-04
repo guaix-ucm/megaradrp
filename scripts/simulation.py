@@ -84,33 +84,46 @@ def create_wheel():
     _logger.info('create wheel')
     wheel = VPHWheel(capacity=3, name='wheel')
     _logger.info('create vphs')
+    vph_conf = {'wl_range': [3653.0, 4051.0, 4386.0]}
     vph = create_vph_by_data('VPH405_LR',
-                              'v02/VPH405_LR2-extra.dat',
-                              'v02/VPH405_LR_res.dat',
-                              'v02/tvph_0.1aa.dat'
+                             'LR_U',
+                             'v02/VPH405_LR2-extra.dat',
+                             'v02/VPH405_LR_res.dat',
+                             'v02/tvph_0.1aa.dat',
+                             conf=vph_conf
                              )
     wheel.put_in_pos(vph, 0)
+
+    vph_conf = {'wl_range': [8800.0, 9262.0, 9686.0]}
     vph = create_vph_by_data('VPH926_MR',
-                              'v02/VPH926_MR.txt',
-                              'v02/VPH926_MR_res.dat',
-                              'v02/tvph_0.1aa.dat'
-                         )
+                             'MR_Z',
+                             'v02/VPH926_MR.txt',
+                             'v02/VPH926_MR_res.dat',
+                             'v02/tvph_0.1aa.dat',
+                             conf=vph_conf
+                             )
     wheel.put_in_pos(vph, 1)
+
+    vph_conf = {'wl_range': [8372.0, 8634.0, 8882.0]}
     vph = create_vph_by_data('VPH863_HR',
+                             'HR_I',
                              'v02/VPH863_HR.txt',
                              'v02/VPH863_HR_res.dat',
-                              'v02/tvph_0.1aa.dat'
-                         )
+                             'v02/tvph_0.1aa.dat',
+                             conf=vph_conf
+                             )
     wheel.put_in_pos(vph, 2)
     return wheel
 
 
-def create_vph_by_data(name, distortion, resolution, transmission):
+def create_vph_by_data(name, setup, distortion, resolution, transmission, conf):
     trans = EfficiencyFile(transmission)
     res = EfficiencyFile(resolution)
-    vph = MegaraVPH(name=name, vphtable=distortion,
+    vph = MegaraVPH(name=name, setup=setup,
+                    vphtable=distortion,
                     resolution=res,
-                    transmission=trans)
+                    transmission=trans,
+                    conf=conf)
 
     return vph
 

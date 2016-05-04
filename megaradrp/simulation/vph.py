@@ -25,10 +25,11 @@ from .efficiency import Efficiency
 
 class MegaraVPH(object):
 
-    def __init__(self, name, vphtable, resolution, transmission=None):
+    def __init__(self, name, setup, vphtable, resolution, transmission=None, conf=None):
         self.SAMPLING = 9.0
 
         self.name = name
+        self.setup = setup
         self._res = resolution
 
         rr = numpy.loadtxt(vphtable)
@@ -57,6 +58,11 @@ class MegaraVPH(object):
         else:
             self._transmission = transmission
 
+        if conf is None:
+            conf = {}
+
+        self.wl_range = conf.get('wl_range', [0.0, 0.0, 0.0])
+
     def distortion(self):
         pass
 
@@ -64,7 +70,7 @@ class MegaraVPH(object):
         return  self._res.response(wl)
 
     def config_info(self):
-        return {'name': self.name}
+        return {'name': self.name, 'setup': self.setup, 'wl_range': self.wl_range}
 
     def wltable_interp(self):
         res_in = (self.wlmax/ self.resolution(self.wlmax)) / self.SAMPLING
