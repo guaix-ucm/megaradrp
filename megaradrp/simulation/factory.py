@@ -38,19 +38,25 @@ class MegaraImageFactory(object):
 
     def bun_fib(self, meta, hdr, id, pos):
 
+        # This bundles are sky by default in LCB
+        sky_bundles_in_lcb = [93, 94, 95, 96, 97, 98, 99, 100]
+
         meta_bundle = meta.get('fbundle')
 
         fibs_id = meta_bundle['fibs_id']
         bunds_id = meta_bundle['bunds_id']
         broken_fibs = meta_bundle['inactive_fibs_id']
-
+        static = meta_bundle['static']
         for i in bunds_id:
             key = "BUN%03d_P" % i
             hdr[key] = 0 # priority
             key = "BUN%03d_I" % i
             hdr[key] = "unknown"
             key = "BUN%03d_T" % i
-            hdr[key] = "UNASSIGNED"
+            if static and i in sky_bundles_in_lcb:
+                hdr[key] = "SKY"
+            else:
+                hdr[key] = "UNASSIGNED"
 
         # This should be in config_info
         for f, p in zip(id, pos):
