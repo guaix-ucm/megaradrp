@@ -159,6 +159,10 @@ class MegaraImageFactory(object):
         meta_fplane = meta.get('fplane', {})
         cover = meta_fplane.get('cover', 'unknown')
         pheader['COVER'] = cover
+        cover1 = meta_fplane.get('cover1', 'unknown')
+        pheader['COVER1'] = cover1
+        cover2 = meta_fplane.get('cover2', 'unknown')
+        pheader['COVER2'] = cover2
 
         # Instrument mode
         meta_pslit = meta.get('pslit')
