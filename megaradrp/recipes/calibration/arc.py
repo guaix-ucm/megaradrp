@@ -138,8 +138,11 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                        kind='linear')
             xpeaks_refined = finterp_channel(ipeaks_float)
             lista_xpeaks_refined.append(xpeaks_refined)
-            wv_ini_search = int(lines_catalog[0][0]-200) # initially: 3500
-            wv_end_search = int(lines_catalog[-1][0]+1200) #initially: 4500
+            wv_ini_search = int(lines_catalog[0][0]-1000) # initially: 3500
+            wv_end_search = int(lines_catalog[-1][0]+1000) #initially: 4500
+
+            _logger.info('wv_ini_search %s', wv_ini_search)
+            _logger.info('wv_end_search %s', wv_end_search)
 
             try:
                 solution = arccalibration_direct(wv_master,

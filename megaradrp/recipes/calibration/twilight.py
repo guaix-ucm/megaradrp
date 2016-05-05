@@ -34,7 +34,6 @@ from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement
 from megaradrp.products import WavelengthCalibration, MasterWeights
 from megaradrp.products import TraceMap, MasterTwilightFlat
-from megaradrp.recipes.scientific import resample_rss_flux
 
 
 _logger = logging.getLogger('numina.recipes.megara')
@@ -87,7 +86,7 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
         self.logger.info('extraction completed')
 
         _logger.info('resampling spectra')
-        final, wcsdata = resample_rss_flux(rsshdu.data, wlcalib)
+        final, wcsdata = self.resample_rss_flux(rsshdu.data, wlcalib)
         # This value was ~0.4% and now is 4e-6 %
         # (abs(final.sum()-hdu_t.data.sum())/hdu_t.data.sum()*100)
 
@@ -145,7 +144,7 @@ class TwilightFiberFlatRecipeALT(MegaraBaseRecipe):
         self.logger.info('extraction completed')
 
         _logger.info('resampling spectra')
-        final, wcsdata = resample_rss_flux(rsshdu.data, self.get_wlcalib(rinput.wlcalib))
+        final, wcsdata = self.resample_rss_flux(rsshdu.data, self.get_wlcalib(rinput.wlcalib))
         # This value was ~0.4% and now is 4e-6 %
         # (abs(final.sum()-hdu_t.data.sum())/hdu_t.data.sum()*100)
 

@@ -115,6 +115,12 @@ modes:
   name: Image with the LCB
   summary: Image with the LCB
   tagger: megaradrp.taggers.tagger_base_image
+- date: 2016-05-05
+  description: Image with the MOS
+  key: mos_image
+  name: Image with the MOS
+  summary: Image with the MOS
+  tagger: megaradrp.taggers.tagger_base_image
 pipelines:
   default:
     version: 1
@@ -124,8 +130,8 @@ pipelines:
       dark_image: megaradrp.recipes.calibration.dark.DarkRecipe
       fiber_flat_image: megaradrp.recipes.calibration.flat.FiberFlatRecipe
       slit_flat: megaradrp.recipes.calibration.slitflat.SlitFlatRecipe
-      lcb_image: megaradrp.recipes.scientific.lcb.FiberMOSRecipe2
-      mos_image: megaradrp.recipes.scientific.mos.FiberMOSRecipe2
+      lcb_image: megaradrp.recipes.scientific.lcb.LCBImageRecipe
+      mos_image: megaradrp.recipes.scientific.mos.MOSImageRecipe
       flux_calibration: megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipe
       trace_map: megaradrp.recipes.calibration.trace.TraceMapRecipe
       arc_calibration: megaradrp.recipes.calibration.arc.ArcCalibrationRecipe

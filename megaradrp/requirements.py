@@ -68,3 +68,9 @@ class MasterFiberFlatFrameRequirement(Requirement):
     def __init__(self):
         super(MasterFiberFlatFrameRequirement,
               self).__init__(MasterFiberFlatFrame,'Master fiber flat frame')
+
+
+class MasterTwilightRequirement(Requirement):
+    def __init__(self, optional=True):
+        super(MasterTwilightRequirement,
+              self).__init__(MasterSlitFlat,'Master slit flat calibration')
