@@ -121,25 +121,60 @@ modes:
   name: Image with the MOS
   summary: Image with the MOS
   tagger: megaradrp.taggers.tagger_base_image
+- date: 2016-05-06
+  description: Extinction Star Recipe
+  key: extinction_star
+  name: Extinction Star Recipe
+  summary: Extinction Star Recipe
+  tagger: megaradrp.taggers.tagger_base_image
+- date: 2016-05-06
+  description: LCB Standard Recipe
+  key: lcb_std_star
+  name: LCB Standard Recipe
+  summary: LCB Standard Recipe
+  tagger: megaradrp.taggers.tagger_base_image
+- date: 2016-05-06
+  description: MOS Standard Recipe
+  key: mos_std_star
+  name: MOS Standard Recipe
+  summary: MOS Standard Recipe
+  tagger: megaradrp.taggers.tagger_base_image
+- date: 2016-05-06
+  description: Sensivity Star Recipe
+  key: sensivity_star
+  name: Sensivity Star Recipe
+  summary: Sensivity Star Recipe
+  tagger: megaradrp.taggers.tagger_base_image
+- date: 2016-05-06
+  description: LCB Fast Mapping Recipe
+  key: lcb_fast_mapping
+  name: LCB Fast Mapping Recipe
+  summary: LCB Fast Mapping Recipe
+  tagger: megaradrp.taggers.tagger_base_image
 pipelines:
   default:
     version: 1
     recipes:
+      arc_calibration: megaradrp.recipes.calibration.arc.ArcCalibrationRecipe
       bias_image: megaradrp.recipes.calibration.bias.BiasRecipe
       bpm: megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe
       dark_image: megaradrp.recipes.calibration.dark.DarkRecipe
-      fiber_flat_image: megaradrp.recipes.calibration.flat.FiberFlatRecipe
-      slit_flat: megaradrp.recipes.calibration.slitflat.SlitFlatRecipe
-      lcb_image: megaradrp.recipes.scientific.lcb.LCBImageRecipe
-      mos_image: megaradrp.recipes.scientific.mos.MOSImageRecipe
-      flux_calibration: megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipe
-      trace_map: megaradrp.recipes.calibration.trace.TraceMapRecipe
-      arc_calibration: megaradrp.recipes.calibration.arc.ArcCalibrationRecipe
-      focus_spectrograph: megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe
+      extinction_star: megaradrp.recipes.scientific.extinctionstar.ExtinctionStarRecipe
       fail: numina.core.utils.AlwaysFailRecipe
+      fiber_flat_image: megaradrp.recipes.calibration.flat.FiberFlatRecipe
+      flux_calibration: megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipe
+      focus_spectrograph: megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe
+      lcb_fast_mapping: megaradrp.recipes.scientific.lcbfastmapping.LCBFastMappingRecipe
+      lcb_image: megaradrp.recipes.scientific.lcb.LCBImageRecipe
+      lcb_std_star: megaradrp.recipes.scientific.lcbstdstar.LCBStandardRecipe
+      mos_image: megaradrp.recipes.scientific.mos.MOSImageRecipe
+      mos_std_star: megaradrp.recipes.scientific.mosstdstar.MOSStandardRecipe
+      sensivity_star: megaradrp.recipes.scientific.sensivitystar.SensivityStarRecipe
+      slit_flat: megaradrp.recipes.calibration.slitflat.SlitFlatRecipe
       success: numina.core.utils.AlwaysSuccessRecipe
-      weights: megaradrp.recipes.calibration.weights.WeightsRecipe
+      trace_map: megaradrp.recipes.calibration.trace.TraceMapRecipe
       twilight_flat_image: megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe
+      weights: megaradrp.recipes.calibration.weights.WeightsRecipe
 products:
 - name: megaradrp.products.TraceMap
   alias: TraceMap
