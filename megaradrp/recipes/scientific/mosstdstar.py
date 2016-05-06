@@ -24,16 +24,16 @@ import logging
 _logger = logging.getLogger('numina.recipes.megara')
 
 
-class LCBImageRecipe(ImageRecipe):
-    """Process LCB images."""
+class MOSStandardRecipe(ImageRecipe):
+    """Process MOS Standard Recipe."""
 
     def __init__(self):
-        super(LCBImageRecipe, self).__init__()
+        super(MOSStandardRecipe, self).__init__()
 
     def run(self, rinput):
 
-        _logger.info('starting LCB reduction')
+        _logger.info('starting MOSStandardRecipe reduction')
 
-        result = super(LCBImageRecipe,self).run(rinput)
+        result = super(MOSStandardRecipe,self).run(rinput)
 
         return self.create_result(final=result[0], target=result[1], sky=result[2])

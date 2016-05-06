@@ -28,31 +28,31 @@ from numina.flow.processing import TagOptionalCorrector, TagFits
 _logger = logging.getLogger('numina.processing')
 
 
-class FiberFlatCorrector(TagOptionalCorrector):
+class TwilightCorrector(TagOptionalCorrector):
 
-    '''A Node that corrects from fiber flat.'''
+    '''A Node that corrects from twilight.'''
 
-    def __init__(self, fiberflat, datamodel=None, mark=True,
+    def __init__(self, twilight, datamodel=None, mark=True,
                  tagger=None, dtype='float32'):
 
         if tagger is None:
-            tagger = TagFits('NUM-MFF', 'MEGARA Fiber flat correction')
+            tagger = TagFits('NUM-MFF', 'MEGARA twilight correction')
 
-        super(FiberFlatCorrector, self).__init__(datamodel=datamodel,
+        super(TwilightCorrector, self).__init__(datamodel=datamodel,
                                                  tagger=tagger,
                                                  mark=mark,
                                                  dtype=dtype)
 
-        if isinstance(fiberflat, fits.HDUList):
-            self.corr = fiberflat[0].data
-        elif isinstance(fiberflat, np.ndarray):
-            self.corr = fiberflat
+        if isinstance(twilight, fits.HDUList):
+            self.corr = twilight[0].data
+        elif isinstance(twilight, np.ndarray):
+            self.corr = twilight
         self.corrmean = self.corr.mean()
         # self.corrid = self.get_imgid(fiberflat)
 
     def _run(self, img):
         imgid = self.get_imgid(img)
-        _logger.debug('correct from fiber flat in image %s', imgid)
+        _logger.debug('correct from twilight in image %s', imgid)
 
         # Avoid nan values when divide
         my_mask = self.corr == 0.0
