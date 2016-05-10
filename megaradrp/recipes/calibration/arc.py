@@ -73,7 +73,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         _logger.info('extract fibers, %i', len(rinput.tracemap))
         rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
         rsshdu = fits.PrimaryHDU(rssdata, header=reduced[0].header)
-        rss = fits.HDUList([rsshdu])
+        header_list = self.getHeaderList([reduced, rinput.obresult.images[0].open()])
+        rss = fits.HDUList([rsshdu]+header_list)
 
         _logger.info('extracted %i fibers', rssdata.shape[0])
 

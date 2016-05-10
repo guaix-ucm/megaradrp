@@ -75,8 +75,9 @@ class SlitFlatRecipe(MegaraBaseRecipe):
         qe[np.isinf(qe)] = 1.0
         qe[np.isnan(qe)] = 1.0
 
-        hdu = fits.PrimaryHDU(qe)
-        reduced = fits.HDUList([hdu])
+        hdu = fits.PrimaryHDU(qe, header=reduced[0].header)
+        header_list = self.getHeaderList([reduced, rinput.obresult.images[0].open()])
+        master_slitflat = fits.HDUList([hdu]+header_list)
 
         _logger.info('End slit flat')
-        return self.create_result(master_slitflat=reduced)
+        return self.create_result(master_slitflat=master_slitflat)

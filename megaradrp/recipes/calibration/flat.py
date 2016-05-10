@@ -72,7 +72,6 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         flow = WeightsCorrector(parameters['weights'])
         flow = SerialFlow([flow])
         hdulist = flow(reduced)
-        hdulist.writeto('reducedWeights.fits',clobber=True)
 
         _logger.info('Starting: resample_rss_flux')
         final, wcsdata = self.resample_rss_flux(hdulist[0].data, self.get_wlcalib(rinput.wlcalib))
@@ -84,9 +83,10 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
         # Add WCS spectral keywords
         hdu_f = fits.PrimaryHDU(aux, header=reduced[0].header)
-        master_fiberflat = fits.HDUList([hdu_f])
 
-        # fiberflat_frame = fits.PrimaryHDU(reduced, header=reduced[0].header)
+        header_list = self.getHeaderList([reduced, rinput.obresult.images[0].open()])
+        master_fiberflat = fits.HDUList([hdu_f]+header_list)
+
         rss_fiberflat = fits.PrimaryHDU(final, header=reduced[0].header)
 
         result = self.create_result(master_fiberflat=master_fiberflat, fiberflat_frame=reduced, rss_fiberflat=rss_fiberflat)

@@ -157,7 +157,9 @@ class TwilightFiberFlatRecipeALT(MegaraBaseRecipe):
         normalized = numpy.tile(colapse[:, numpy.newaxis], 4096)
 
         master_t_hdu = fits.PrimaryHDU(normalized, header=template_header)
-        master_t = fits.HDUList([master_t_hdu])
+        header_list = self.getHeaderList([reduced, rinput.obresult.images[0].open()])
+        master_t = fits.HDUList([master_t_hdu]+header_list)
+
 
         _logger.info('twilight fiber flat reduction ended')
         result = self.create_result(reduced_frame=reduced, reduced_rss=rss,

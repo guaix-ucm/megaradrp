@@ -279,3 +279,11 @@ class MegaraBaseRecipe(BaseRecipe):
         hdr['CDELT2'] = 1
         hdr['CTYPE2'] = 'PIXEL'
         return hdr
+
+    def getHeaderList(self, image_list):
+        final_list = []
+        for image in image_list:
+            for elem in image:
+                if issubclass(fits.ImageHDU, type(elem)):
+                    final_list.append(elem)
+        return final_list
