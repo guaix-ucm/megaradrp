@@ -21,19 +21,26 @@ import logging
 
 from numina.flow.processing import TagOptionalCorrector, TagFits
 
-from ..core.processing import trim_and_o_hdu
+from megaradrp.core.processing import trimOut
 
 _logger = logging.getLogger('megara.processing')
 
 
 class OverscanCorrector(TagOptionalCorrector):
-
     '''A Node that corrects a frame from overscan.'''
 
-    def __init__(self, datamodel=None, mark=True,
-                 tagger=None, dtype='float32'):
-
+    def __init__(self, datamodel=None, mark=True, tagger=None,
+                 dtype='float32'):
         # FIXME: these should come from the header
+
+        # get_conf_param('megara','engineering', 'trim') ## trim1, trim2
+        # get_conf_param('megara','engineering', 'bining') ## bng
+        # get_conf_param('megara','engineering', 'overscan') ## ocol
+        # get_conf_param('megara','engineering', 'prescan') ## pcol
+        # Check solapar orow con ocol y pcol
+
+        # if bng<>[1,1] haces calculos, else devolver valores
+
         bng = [1, 1]
         nr = 2056 / bng[0]
         nc = 2048 / bng[1]
@@ -103,24 +110,19 @@ class OverscanCorrector(TagOptionalCorrector):
 
 
 class TrimImage(TagOptionalCorrector):
-
     '''A Node that trims images.'''
 
     def __init__(self, datamodel=None, mark=True,
                  tagger=None, dtype='float32'):
-
         if tagger is None:
             tagger = TagFits('NUM-TRIM', 'Trimming')
 
-        super(TrimImage, self).__init__(datamodel=datamodel,
-                                        tagger=tagger,
-                                        mark=mark,
-                                        dtype=dtype)
+        super(TrimImage, self).__init__(datamodel=datamodel, tagger=tagger,
+                                        mark=mark, dtype=dtype)
 
     def _run(self, img):
         _logger.debug('trimming image %s', img)
 
-        img[0] = trim_and_o_hdu(img[0])
+        img[0] = trimOut(img[0])
 
         return img
-

@@ -6,7 +6,7 @@ import astropy.io.fits as fits
 import numpy as np
 import pytest
 
-from megaradrp.core.processing import trim_and_o
+from megaradrp.core.processing import trimOut
 from megaradrp.core.processing import apextract_weights
 from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.actions import simulate_flat
@@ -39,7 +39,7 @@ def test_trim_and_o(direction):
     temporary_path = mkdtemp()
     fs = generate_bias_file()
     fits.writeto('%s/flat.fits' % (temporary_path), fs, clobber=True)
-    trim_and_o('%s/flat.fits' % (temporary_path), out='%s/result.fits' % (temporary_path), direction=direction)
+    trimOut('%s/flat.fits' % (temporary_path), out='%s/result.fits' % (temporary_path), direction=direction, bins='12')
     with fits.open('%s/result.fits' % (temporary_path)) as hdul:
         assert hdul[0].shape[0] + 100 == fs.shape[0]
         assert hdul[0].shape[1] + 100 == fs.shape[1]
@@ -54,7 +54,7 @@ def test_trim_and_o_fail():
     direction = 'fails'
 
     with pytest.raises(ValueError) as excinfo:
-        trim_and_o('%s/flat.fits' % (temporary_path), out='%s/result.fits' % (temporary_path), direction=direction)
+        trimOut('%s/flat.fits' % (temporary_path), out='%s/result.fits' % (temporary_path), direction=direction)
     shutil.rmtree(temporary_path)
     assert excinfo.value.args[0] == "%s must be either 'normal' or 'mirror'" % direction
 
@@ -66,7 +66,7 @@ def test_trim_and_o_fail2():
     bins = 'fail'
 
     with pytest.raises(ValueError) as excinfo:
-        trim_and_o('%s/flat.fits' % (temporary_path), out='%s/result.fits' % (temporary_path), bins=bins)
+        trimOut('%s/flat.fits' % (temporary_path), out='%s/result.fits' % (temporary_path), bins=bins)
     shutil.rmtree(temporary_path)
     assert excinfo.value.args[0] == "%s must be one if '11', '12', '21, '22'" % bins
 
@@ -88,7 +88,7 @@ def test_apextract_weights():
 
 
 if __name__ == "__main__":
-    # test_trim_and_o()
+    test_trim_and_o('normal')
     # test_trim_and_o_fail()
     # test_trim_and_o_fail2()
-    test_apextract_weights()
+    # test_apextract_weights()
