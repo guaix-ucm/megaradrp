@@ -29,6 +29,7 @@ from numina.core import BaseRecipe
 from numina.core.dataholders import Product
 from numina.core.products import QualityControlProduct
 from numina.core.requirements import ObservationResultRequirement
+from numina.core.requirements import InstrumentConfigurationRequirement
 
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
 from megaradrp.processing.slitflat import SlitFlatCorrector
@@ -43,6 +44,7 @@ class MegaraBaseRecipe(BaseRecipe):
 
     obresult = ObservationResultRequirement()
     qc = Product(QualityControlProduct, dest='qc')
+    # configuration = InstrumentConfigurationRequirement()
 
     def __init__(self, version):
         self.__flow = {'ArcCalibrationRecipe': [OverscanCorrector, TrimImage,
@@ -76,7 +78,7 @@ class MegaraBaseRecipe(BaseRecipe):
                        }
         super(MegaraBaseRecipe, self).__init__(version=version)
 
-    def __generate_flow(self, params):
+    def __generate_flow(self, params, confFile):
         import copy
         ff = self.__flow[self.__class__.__name__]
         flow = copy.deepcopy(ff)
@@ -103,8 +105,9 @@ class MegaraBaseRecipe(BaseRecipe):
                     else:
                         del (flow[cont])
                         cont -= 1
-                elif issubclass(TrimImage, flow[cont]) or issubclass(
-                        OverscanCorrector, flow[cont]):
+                elif issubclass(OverscanCorrector, flow[cont]):
+                    flow[cont] = (flow[cont](confFile=confFile))
+                elif issubclass(TrimImage, flow[cont]):
                     flow[cont] = (flow[cont]())
                 cont += 1
             basicflow = SerialFlow(flow)
@@ -134,7 +137,7 @@ class MegaraBaseRecipe(BaseRecipe):
 
     def hdu_creation(self, obresult, params={}):
 
-        basicflow = self.__generate_flow(params)
+        basicflow = self.__generate_flow(params, obresult.configuration.values)
         lista = []
         cdata = []
         try:

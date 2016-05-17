@@ -1,6 +1,25 @@
 name: MEGARA
 configurations:
-  default: {}
+  default:
+    trim1: [[0,2056],[50,4146]]
+    trim2: [[2156,4212],[50,4146]]
+    bng: [1,1]
+    overscan1: [[0,2056],[4146,4196]]
+    overscan2: [[2156,4212],[0,50]]
+    prescan1: [[0,2056],[0,50]]
+    prescan2: [[2156,4212],[4146,4196]]
+    middle1: [[2056,2106],[50,4146]]
+    middle2: [[2106,2156],[50,4146]]
+  ing:
+    trim1: [[0,2056],[70,4166]]
+    trim2: [[2156,4212],[50,4146]]
+    bng: [1,1]
+    overscan1: [[0,2056],[4166,4196]]
+    overscan2: [[2156,4212],[0,50]]
+    prescan1: [[0,2056],[0,70]]
+    prescan2: [[2156,4212],[4146,4196]]
+    middle1: [[2056,2106],[50,4146]]
+    middle2: [[2106,2156],[50,4146]]
 modes:
 - date: 2013-11-12
   description: A mode where the recipe successes, used for testing

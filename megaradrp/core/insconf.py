@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2015 Universidad Complutense de Madrid
+# Copyright 2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,14 +17,11 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Load MEGARA DRP"""
 
-from numina.core import drp_load
+from numina.core.pipeline import InstrumentConfiguration
 
-import megaradrp.core.insconf as insconf
 
-def load_drp():
-    """Entry point to load MEGARA DRP."""
-    return drp_load('megaradrp', 'drp.yaml',
-                    confclass=insconf.MegaraInstrumentConfiguration)
-
+class MegaraInstrumentConfiguration(InstrumentConfiguration):
+    """The instrument configuration of MEGARA"""
+    def __init__(self, name, values):
+        super(MegaraInstrumentConfiguration, self).__init__(name, values)
