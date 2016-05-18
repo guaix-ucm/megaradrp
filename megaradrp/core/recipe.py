@@ -18,22 +18,19 @@
 #
 
 import logging
-
-import numpy as np
-from astropy.io import fits
 import numina.array.combine as combine
+import numpy as np
+
+from astropy.io import fits
+from megaradrp.processing.trimover import OverscanCorrector, TrimImage
+from megaradrp.processing.slitflat import SlitFlatCorrector
 from numina.flow import SerialFlow
-from numina.flow.processing import BiasCorrector, BadPixelCorrector, \
-    DarkCorrector
+from numina.flow.processing import BiasCorrector, BadPixelCorrector
+from numina.flow.processing import DarkCorrector
 from numina.core import BaseRecipe
 from numina.core.dataholders import Product
 from numina.core.products import QualityControlProduct
 from numina.core.requirements import ObservationResultRequirement
-
-from megaradrp.processing.trimover import OverscanCorrector, TrimImage
-from megaradrp.processing.slitflat import SlitFlatCorrector
-from megaradrp.processing.fiberflat import FiberFlatCorrector
-from megaradrp.processing.weights import WeightsCorrector
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -43,6 +40,7 @@ class MegaraBaseRecipe(BaseRecipe):
 
     obresult = ObservationResultRequirement()
     qc = Product(QualityControlProduct, dest='qc')
+    # configuration = InstrumentConfigurationRequirement()
 
     def __init__(self, version):
         self.__flow = {'ArcCalibrationRecipe': [OverscanCorrector, TrimImage,
@@ -76,7 +74,7 @@ class MegaraBaseRecipe(BaseRecipe):
                        }
         super(MegaraBaseRecipe, self).__init__(version=version)
 
-    def __generate_flow(self, params):
+    def __generate_flow(self, params, confFile):
         import copy
         ff = self.__flow[self.__class__.__name__]
         flow = copy.deepcopy(ff)
@@ -105,7 +103,7 @@ class MegaraBaseRecipe(BaseRecipe):
                         cont -= 1
                 elif issubclass(TrimImage, flow[cont]) or issubclass(
                         OverscanCorrector, flow[cont]):
-                    flow[cont] = (flow[cont]())
+                    flow[cont] = (flow[cont](confFile=confFile))
                 cont += 1
             basicflow = SerialFlow(flow)
 
@@ -116,9 +114,6 @@ class MegaraBaseRecipe(BaseRecipe):
         return basicflow
 
     def bias_process_common(self, obresult, img):
-
-        # with master_bias.open() as hdul:
-        #     mbias = hdul[0].data.copy()
 
         hdu, data = self.hdu_creation(obresult, img)
 
@@ -134,7 +129,7 @@ class MegaraBaseRecipe(BaseRecipe):
 
     def hdu_creation(self, obresult, params={}):
 
-        basicflow = self.__generate_flow(params)
+        basicflow = self.__generate_flow(params, obresult.configuration.values)
         lista = []
         cdata = []
         try:
@@ -149,9 +144,6 @@ class MegaraBaseRecipe(BaseRecipe):
             template_header = cdata[0][0].header
             hdu = fits.PrimaryHDU(data[0], header=template_header)
             lista.append(hdu)
-            # if has_mask:
-            #     hdumask = fits.ImageHDU(themask)
-            #     lista.append(hdumask)
         finally:
             for hdulist in cdata:
                 hdulist.close()

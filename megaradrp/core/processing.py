@@ -18,36 +18,38 @@
 #
 
 from __future__ import print_function
-
-from astropy.io import fits
 import numpy as np
 
+from astropy.io import fits
 from numina.array.trace.extract import extract_simple_rss
-from numina.array.utils import wc_to_pix_1d as wcs_to_pix_1d
 
-# row / column
-_binning = {'11': [1, 1], '21': [1, 2], '12': [2, 1], '22': [2, 2]}
 _direc = ['normal', 'mirror']
 
+def trimOut(data, direction='normal', out='trimmed.fits', confFile={}):
+    '''
 
-def trim_and_o(image, out='trimmed.fits', direction='normal', bins='11'):
-    """Trim a MEGARA image with overscan."""
+    :param data: original data to be trimmed. Can be either a string <path>, an ImageHDU or a numpy array
+    :param direction: Can be either 'normal' or 'mirror'
+    :param out: When the original data is a path, the returned value is a file too
+    :param bins: is the index of the _binning dictionary
+    :return:
+    '''
 
-    with fits.open(image) as hdul:
-        hdu = trim_and_o_hdu(hdul[0], direction, bins)
-        hdu.writeto(out, clobber=True)
+    if issubclass(str,type(data)):
+        with fits.open(data) as hdul:
+            hdu = trim_and_o_array(hdul[0].data, direction=direction, confFile=confFile)
+            fits.writeto(out, hdu, clobber=True)
+
+    elif isinstance(data,fits.PrimaryHDU):
+        finaldata = trim_and_o_array(data.data, direction=direction, confFile=confFile)
+        data.data = finaldata
+        return data
+
+    elif isinstance(data,np.ndarray):
+        return trim_and_o_array(data, direction=direction, confFile=confFile)
 
 
-def trim_and_o_hdu(hdu, direction='normal', bins = '11'):
-    """Trim a MEGARA HDU with overscan."""
-
-    finaldata = trim_and_o_array(hdu.data, direction=direction, bins=bins)
-
-    hdu.data = finaldata
-    return hdu
-
-
-def trim_and_o_array(array, direction='normal', bins='11'):
+def trim_and_o_array(array, direction='normal', confFile={}):
     """Trim a MEGARA array with overscan."""
 
     if direction not in _direc:
@@ -58,29 +60,42 @@ def trim_and_o_array(array, direction='normal', bins='11'):
     else:
         direcfun = np.fliplr
 
-    if bins not in _binning:
-        raise ValueError("%s must be one if '11', '12', '21, '22'" % bins)
+    trim1 = get_conf_value(confFile, 'trim1')
+    trim2 = get_conf_value(confFile, 'trim2')
+    bng = get_conf_value(confFile, 'bng')
 
-    OSCANW = 100
-    PSCANW = 50
-    H_X_DIM = 2048
-    H_Y_DIM = 2056
+    nr2 = ((trim1[0][1] - trim1[0][0]) + (trim2[0][1]-trim2[0][0]))/bng[0]
+    nc2 = (trim1[1][1] - trim1[1][0]) / bng[1]
+    nr = (trim1[0][1] - trim1[0][0])/bng[0]
 
-    bng = _binning[bins]
+    trim1[0][0] /= bng[0]
+    trim1[0][1] /= bng[0]
+    trim2[0][0] /= bng[0]
+    trim2[0][1] /= bng[0]
 
-    nr2 = H_Y_DIM * 2 / bng[0]
-    nc2 = H_X_DIM * 2 / bng[1]
-
-    nr = H_Y_DIM / bng[0]
-
-    oscan2 = OSCANW / bng[0]
-    psc1 = PSCANW / bng[0]
+    trim1[1][0] /= bng[1]
+    trim1[1][1] /= bng[1]
+    trim2[1][0] /= bng[1]
+    trim2[1][1] /= bng[1]
 
     finaldata = np.empty((nr2, nc2), dtype='float32')
-    finaldata[:nr, :] = direcfun(array[:nr, psc1:nc2 + psc1])
-    finaldata[nr:, :] = direcfun(array[nr + oscan2:, psc1:nc2 + psc1])
+
+    finY = trim1[0][1] + trim2[0][0]
+    finaldata[:nr, :] = direcfun(array[:trim1[0][1], trim1[1][0]:trim1[1][1]])
+    finaldata[nr:, :] = direcfun(array[trim2[0][0]:finY, trim2[1][0]:trim2[1][1]])
+
     return finaldata
 
+def get_conf_value(confFile, key=''):
+    if confFile:
+        if key in confFile.keys():
+            if confFile[key]:
+                return confFile[key]
+            else:
+                raise ValueError('Value not defined')
+        else:
+            raise ValueError('Key is not in configuration file')
+    raise ValueError('Instrument configuration is not in the system')
 
 def apextract(data, trace):
     """Extract apertures."""

@@ -64,7 +64,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     def run(self, rinput):
         # Basic processing
         parameters = self.get_parameters(rinput)
-
+        #rinput.obresult.configuration
         _logger.info('process common')
         reduced = self.bias_process_common(rinput.obresult, parameters)
 

@@ -15,59 +15,56 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
-#
 
 import logging
 
-from numina.flow.processing import TagOptionalCorrector, TagFits
+import numpy as np
 
-from ..core.processing import trim_and_o_hdu
+from megaradrp.core.processing import trimOut, get_conf_value
+from numina.flow.processing import TagOptionalCorrector, TagFits
 
 _logger = logging.getLogger('megara.processing')
 
 
 class OverscanCorrector(TagOptionalCorrector):
-
     '''A Node that corrects a frame from overscan.'''
 
-    def __init__(self, datamodel=None, mark=True,
-                 tagger=None, dtype='float32'):
+    def __init__(self, datamodel=None, mark=True, tagger=None,
+                 dtype='float32', confFile={}):
 
-        # FIXME: these should come from the header
-        bng = [1, 1]
-        nr = 2056 / bng[0]
-        nc = 2048 / bng[1]
-        nr2 = 2 * nr
-        nc2 = 2 * nc
-        oscan1 = 50 / bng[0]
-        oscan2 = oscan1 * 2
-        psc1 = 50 / bng[0]
-        psc2 = 2 * psc1
-        fshape = (nr2 + oscan2, nc2 + psc2)
-        # Row block 1
-        rb1 = slice(0, nr)
-        rb1m = slice(nr, nr + oscan1)
-        # Row block 2
-        rb2 = slice(nr + oscan2, nr2 + oscan2)
-        rb2m = slice(nr + oscan1, nr + oscan2)
-        # Col block
-        cb = slice(psc1, nc2 + psc1)
+        trim1 = get_conf_value(confFile, 'trim1')
+        trim2 = get_conf_value(confFile, 'trim2')
+        bng = get_conf_value(confFile, 'bng')
+        overscan1 = get_conf_value(confFile, 'overscan1')
+        overscan2 = get_conf_value(confFile, 'overscan2')
+        prescan1 = get_conf_value(confFile, 'prescan1')
+        prescan2 = get_conf_value(confFile, 'prescan2')
+        middle1 = get_conf_value(confFile, 'middle1')
+        middle2 = get_conf_value(confFile, 'middle2')
 
-        # Col block left
-        cbl = slice(0, psc1)
-        # Col block right
-        cbr = slice(nc2 + psc1, nc2 + psc2)
+        auxX, auxY, auxZ, auxT = self.data_binning(trim1, bng)
+        middleX, middleY, middleZ, middleT = self.data_binning(middle1, bng)
+        prescanX, prescanY, prescanZ, prescanT = self.data_binning(prescan1,
+                                                                   bng)
+        overscanX, overscanY, overscanZ, overscanT = self.data_binning(
+            overscan1, bng)
+        self.trim1 = (slice(auxX, auxY), slice(auxZ, auxT))
+        self.orow1 = (slice(middleX, middleY), slice(middleZ, middleT))
+        self.pcol1 = (slice(prescanX, prescanY), slice(prescanZ, prescanT))
+        self.ocol1 = (slice(overscanX, overscanY), slice(overscanZ, overscanT))
 
-        # Mode normal
-        self.trim1 = (rb1, cb)
-        self.pcol1 = (rb1, cbl)
-        self.ocol1 = (rb1, cbr)
-        self.orow1 = (rb1m, cb)
+        auxX, auxY, auxZ, auxT = self.data_binning(trim2, bng)
+        middleX, middleY, middleZ, middleT = self.data_binning(middle2, bng)
+        prescanX, prescanY, prescanZ, prescanT = self.data_binning(prescan2,
+                                                                   bng)
+        overscanX, overscanY, overscanZ, overscanT = self.data_binning(
+            overscan2, bng)
+        self.trim2 = (slice(auxX, auxY), slice(auxZ, auxT))
+        self.orow2 = (slice(middleX, middleY), slice(middleZ, middleT))
+        self.pcol2 = (slice(prescanX, prescanY), slice(prescanZ, prescanT))
+        self.ocol2 = (slice(overscanX, overscanY), slice(overscanZ, overscanT))
 
-        self.trim2 = (rb2, cb)
-        self.pcol2 = (rb2, cbr)
-        self.ocol2 = (rb2, cbl)
-        self.orow2 = (rb2m, cb)
+        self.test_image()
 
         if tagger is None:
             tagger = TagFits('NUM-OVPE', 'Over scan/prescan')
@@ -77,50 +74,86 @@ class OverscanCorrector(TagOptionalCorrector):
                                                 mark=mark,
                                                 dtype=dtype)
 
+    def _get_conf_value(self, confFile, key=''):
+        if confFile:
+            if key in confFile.keys():
+                return confFile[key]
+            else:
+                raise ValueError('Key is not in configuration file')
+        raise ValueError('Instrument is not in the system')
+
+    def data_binning(self, data, binning):
+        '''
+         Axis:x --> factorX
+         Axis:y --> factorY
+        '''
+        factorX = 1.0 / binning[1]
+        factorY = 1.0 / binning[0]
+        x = int(factorY * data[0][0])
+        y = int(factorY * data[0][1])
+        z = int(factorX * data[1][0])
+        t = int(factorX * data[1][1])
+
+        return x, y, z, t
+
+    def test_image(self):
+        import astropy.io.fits as fits
+
+        data = np.empty((4212, 4196), dtype='float32')
+        data[self.pcol1] += 1
+        data[self.orow1] += 10
+        data[self.ocol1] += 100
+        data[self.trim1] += 1000
+
+        data[self.pcol2] += 5
+        data[self.orow2] += 50
+        data[self.ocol2] += 500
+        data[self.trim2] += 5000
+
+        fits.writeto('eq_estimado.fits', data, clobber=True)
+
     def _run(self, img):
         data = img[0].data
 
         p1 = data[self.pcol1].mean()
         _logger.debug('prescan1 is %f', p1)
-        or1 = data[self.orow1].mean()
-        _logger.debug('row overscan1 is %f', or1)
+        # or1 = data[self.orow1].mean()
+        # _logger.debug('row overscan1 is %f', or1)
         oc1 = data[self.ocol1].mean()
         _logger.debug('col overscan1 is %f', oc1)
-        avg = (p1 + or1 + oc1) / 3.0
+        # avg = (p1 + or1 + oc1) / 3.0
+        avg = (p1 + oc1) / 2.0
         _logger.debug('average scan1 is %f', avg)
         data[self.trim1] -= avg
 
         p2 = data[self.pcol2].mean()
         _logger.debug('prescan2 is %f', p2)
-        or2 = data[self.orow2].mean()
-        _logger.debug('row overscan2 is %f', or2)
+        # or2 = data[self.orow2].mean()
+        # _logger.debug('row overscan2 is %f', or2)
         oc2 = data[self.ocol2].mean()
         _logger.debug('col overscan2 is %f', oc2)
-        avg = (p2 + or2 + oc2) / 3.0
+        # avg = (p2 + or2 + oc2) / 3.0
+        avg = (p2 + oc2) / 2.0
         _logger.debug('average scan2 is %f', avg)
         data[self.trim2] -= avg
         return img
 
 
 class TrimImage(TagOptionalCorrector):
-
     '''A Node that trims images.'''
 
     def __init__(self, datamodel=None, mark=True,
-                 tagger=None, dtype='float32'):
-
+                 tagger=None, dtype='float32', confFile={}):
+        self.confFile = confFile
         if tagger is None:
             tagger = TagFits('NUM-TRIM', 'Trimming')
 
-        super(TrimImage, self).__init__(datamodel=datamodel,
-                                        tagger=tagger,
-                                        mark=mark,
-                                        dtype=dtype)
+        super(TrimImage, self).__init__(datamodel=datamodel, tagger=tagger,
+                                        mark=mark, dtype=dtype)
 
     def _run(self, img):
         _logger.debug('trimming image %s', img)
 
-        img[0] = trim_and_o_hdu(img[0])
+        img[0] = trimOut(img[0], confFile=self.confFile)
 
         return img
-
