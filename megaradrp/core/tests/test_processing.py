@@ -39,7 +39,10 @@ def test_trim_and_o(direction):
     temporary_path = mkdtemp()
     fs = generate_bias_file()
     fits.writeto('%s/flat.fits' % (temporary_path), fs, clobber=True)
-    trimOut('%s/flat.fits' % (temporary_path), out='%s/result.fits' % (temporary_path), direction=direction, bins='12')
+    confFile = {'trim1': [[0,2056],[50,4146]],
+                'trim2': [[2156,4212],[50,4146]],
+                'bng': [2,2]}
+    trimOut('%s/flat.fits' % (temporary_path), out='%s/result.fits' % (temporary_path), direction=direction, confFile=confFile)
     with fits.open('%s/result.fits' % (temporary_path)) as hdul:
         assert hdul[0].shape[0] + 100 == fs.shape[0]
         assert hdul[0].shape[1] + 100 == fs.shape[1]
