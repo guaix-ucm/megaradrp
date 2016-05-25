@@ -26,8 +26,7 @@ import logging
 import numpy
 from astropy.io import fits
 from scipy.interpolate import interp1d
-from numina.core import Requirement, Product, Parameter
-from numina.core import DataFrameType
+from numina.core import Requirement, Product, Parameter, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import LinesCatalog
 from numina.array.wavecal.arccalibration import arccalibration_direct
@@ -37,7 +36,7 @@ from numina.array.wavecal.statsummary import sigmaG
 from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import TraceMap, WavelengthCalibration
+from megaradrp.products import TraceMap, WavelengthCalibration, JSONstorage
 from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.requirements import MasterDarkRequirement
 from megaradrp.core.processing import apextract_tracemap
@@ -60,6 +59,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     arc_image = Product(DataFrameType)
     arc_rss = Product(DataFrameType)
     master_wlcalib = Product(WavelengthCalibration)
+    fwhm_image = Product(DataFrameType)
 
     def __init__(self):
         super(ArcCalibrationRecipe, self).__init__("0.1.0")
@@ -73,20 +73,55 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         _logger.info('extract fibers, %i', len(rinput.tracemap))
         rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
         rsshdu = fits.PrimaryHDU(rssdata, header=reduced[0].header)
-        header_list = self.getHeaderList([reduced, rinput.obresult.images[0].open()])
-        rss = fits.HDUList([rsshdu]+header_list)
+        header_list = self.getHeaderList(
+            [reduced, rinput.obresult.images[0].open()])
+        rss = fits.HDUList([rsshdu] + header_list)
 
         _logger.info('extracted %i fibers', rssdata.shape[0])
 
-        fits.writeto('rss.fits', rssdata, clobber=True )
+        fits.writeto('rss.fits', rssdata, clobber=True)
 
         # Skip any other inputs for the moment
-        data_wlcalib = self.calibrate_wl(rssdata, rinput.lines_catalog,
-                                        rinput.polynomial_degree)
+        data_wlcalib, fwhm_image = self.calibrate_wl(rssdata, rinput.lines_catalog,
+                                         rinput.polynomial_degree, rinput.tracemap)
 
-        # WL calibration goes here
+
         return self.create_result(arc_image=reduced, arc_rss=rss,
-                                  master_wlcalib=data_wlcalib)
+                                  master_wlcalib=data_wlcalib, fwhm_image=fwhm_image)
+
+    def run_on_image(self, rssdata, tracemap):
+            '''
+            Extract spectra, find peaks and compute FWHM.
+            '''
+            import numina.array.fwhm as fmod
+            # Extract the polynomials
+            # FIXME: a little hackish
+            pols = [numpy.poly1d(t['fitparms']) for t in tracemap]
+
+            nwinwidth = 5
+            times_sigma = 50.0
+            lwidth = 20
+            fpeaks = {}
+            for idx in range(0, len(rssdata)):
+                # sampling every 10 fibers...
+                row = rssdata[idx, :]
+                # FIXME: this doesnt work if there are missing fibers
+                # FIXME: cover is set, etc...
+                the_pol = pols[idx]
+                # find peaks
+                threshold = numpy.median(row) + times_sigma * sigmaG(row)
+
+                ipeaks_int = find_peaks_indexes(row, nwinwidth, threshold)
+                ipeaks_float = refine_peaks(row, ipeaks_int, nwinwidth)[0]
+
+                fpeaks[idx] = []
+                for peak, peak_f in zip(ipeaks_int, ipeaks_float):
+                    qslit = row[peak - lwidth:peak + lwidth]
+                    peak_val, fwhm = fmod.compute_fwhm_1d_simple(qslit, lwidth)
+                    peak_on_trace = the_pol(peak)
+                    fpeaks[idx].append((peak_f, peak_on_trace, fwhm))
+                # _logger.debug('found %d peaks in fiber %d', len(fpeaks[idx]),idx)
+            return fpeaks
 
     def pintar_todas(self, diferencia_final, figure):
         import matplotlib.pyplot as plt
@@ -100,7 +135,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         plt.draw()
         # plt.show()
 
-    def calibrate_wl(self, rss, lines_catalog, poldeg, times_sigma=50.0):
+    def calibrate_wl(self, rss, lines_catalog, poldeg, tracemap, times_sigma=50.0):
         #
         # read master table (TBM) and generate auxiliary parameters (valid for
         # all the slits) for the wavelength calibration
@@ -139,8 +174,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                        kind='linear')
             xpeaks_refined = finterp_channel(ipeaks_float)
             lista_xpeaks_refined.append(xpeaks_refined)
-            wv_ini_search = int(lines_catalog[0][0]-1000) # initially: 3500
-            wv_end_search = int(lines_catalog[-1][0]+1000) #initially: 4500
+            wv_ini_search = int(lines_catalog[0][0] - 1000)  # initially: 3500
+            wv_end_search = int(lines_catalog[-1][0] + 1000)  # initially: 4500
 
             _logger.info('wv_ini_search %s', wv_ini_search)
             _logger.info('wv_end_search %s', wv_end_search)
@@ -154,7 +189,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                                  naxis1,
                                                  wv_ini_search=wv_ini_search,
                                                  wv_end_search=wv_end_search,
-                                                 error_xpos_arc=0.3, #initially: 2.0
+                                                 error_xpos_arc=0.3,
+                                                 # initially: 2.0
                                                  times_sigma_r=3.0,
                                                  frac_triplets_for_sum=0.50,
                                                  times_sigma_theil_sen=10.0,
@@ -182,15 +218,22 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             except TypeError as error:
                 _logger.error("%s", error)
 
+        lines_rss_fwhm = self.run_on_image(rss, tracemap)
         data_wlcalib = self.generateJSON(coeff_table, lista_solution,
-                          lista_xpeaks_refined, poldeg, lines_catalog)
+                                         lista_xpeaks_refined, poldeg,
+                                         lines_catalog, lines_rss_fwhm)
+
+        _logger.info('Generating fwhm_image...')
+        image = self.generate_image(lines_rss_fwhm)
+        fwhm_image = fits.PrimaryHDU(image)
+        fwhm_image = fits.HDUList([fwhm_image])
 
         _logger.info('Fin')
 
-        return data_wlcalib
+        return data_wlcalib, fwhm_image
 
     def generateJSON(self, coeff_table, lista_solution,
-                     lista_xpeaks_refined, poldeg, lines_catalog):
+                     lista_xpeaks_refined, poldeg, lines_catalog, lines_rss_fwhm):
         '''
             Final format of the features field is:{
                   "features": [[<x_position>,
@@ -208,29 +251,26 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         for ind, xpeaks in enumerate(lista_xpeaks_refined):
             res = polyval(xpeaks, coeff_table[ind])
             _logger.info('indice: %s', ind)
-            record = {}
 
             features = []
-            feature = {'xpos':None,
-                       'wavelength':None,
-                       'reference':None,
-                       'flux':None,
-                       'category':None
-              }
             for aux, elem in enumerate(xpeaks):
+                feature = {}
                 feature['xpos'] = xpeaks[aux]
                 feature['wavelength'] = res[aux]
                 feature['reference'] = lines_catalog[aux][0]
                 feature['flux'] = lines_catalog[aux][1]
                 feature['category'] = lista_solution[ind][aux]['type']
+                feature['fwhm'] = lines_rss_fwhm[ind][aux][2]
+                feature['ypos'] = lines_rss_fwhm[ind][aux][1] + 1## Fits coordinate.
                 features.append(feature)
 
             function = {
-                'method':'least squares',
-                'order':poldeg,
-                'coecifients': coeff_table[ind].tolist()
+                'method': 'least squares',
+                'order': poldeg,
+                'coefficients': coeff_table[ind].tolist()
             }
 
+            record = {}
             record['aperture'] = {'id': ind + 1,
                                   'features': features,
                                   'function': function}
@@ -240,3 +280,39 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         _logger.info('end JSON generation')
 
         return result
+
+
+    def generate_image(self, lines_rss_fwhm):
+        from scipy.spatial import cKDTree
+
+        # Each 10 fibers. Comment this to iterate over all fibers instead.
+        ##################################################################
+        aux = {}
+        for key, value in lines_rss_fwhm.items():
+            if int(key) % 10 == 0:
+                aux[key] = value
+
+        lines_rss_fwhm = aux
+        ##################################################################
+
+        l = sum(len(value) for key, value in lines_rss_fwhm.items())
+
+        final = numpy.zeros((l, 3))
+        l = 0
+        for key, value in lines_rss_fwhm.items():
+            for j in range(len(lines_rss_fwhm[key])):
+                final[l, :] = lines_rss_fwhm[key][j]
+                l += 1
+
+        voronoi_points = numpy.array(final[:, [0, 1]])
+        x = numpy.arange(2048 * 2)
+        y = numpy.arange(2056 * 2)
+
+        test_points = numpy.transpose([numpy.tile(x, len(y)), numpy.repeat(y, len(x))])
+
+        voronoi_kdtree = cKDTree(voronoi_points)
+
+        test_point_dist, test_point_regions = voronoi_kdtree.query(test_points,k=1)
+        final_image = test_point_regions.reshape((4112, 4096)).astype('float64')
+        final_image[:, :] = final[final_image[:, :].astype('int64'), 2]
+        return (final_image)
