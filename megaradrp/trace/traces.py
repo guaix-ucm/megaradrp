@@ -39,16 +39,33 @@ class FiberTraceInfo(object):
 
 def init_traces(image, center, hs, background, maxdis=9.0):
 
-    ixmin= 0
+    ixmin = 0
     ixmax = image.shape[0]
-    
+
+    box_borders = [123, 262, 400, 536, 713, 887, 1103, 1360, 1823, 2287, 2750, 3007, 3223, 3397, 3574, 3710, 3848, 3985]
+    box_borders2 = [150, 294, 429, 557, 733, 906, 1120, 1373, 1823, 2287, 2737, 2992, 3205, 3377, 3553, 3684, 3815, 3962]
+    vborders2 = [676, 818, 1966, 1222, 3502, 5415, 2110, 2850, 2133, 2800, 3004, 4134, 6046, 4886, 1458, 2614, 900, 721]
+
+    for x1, x2 in zip(box_borders, box_borders2):
+        print (x1, x1-x2)
+
     xx = np.arange(image.shape[0])
 
     cut_region = slice(center-hs, center+hs)
     cut = image[:,cut_region]
     colcut = cut.mean(axis=1)
-    maxt = peak_detection_mean_window(colcut, x=xx, k=3, xmin=ixmin, xmax=ixmax, background=background)
 
+    import matplotlib.pyplot as plt
+
+    print('background', background)
+    maxt = peak_detection_mean_window(colcut, x=xx, k=3, xmin=ixmin, xmax=ixmax, background=background)
+    print('maxt', maxt)
+    #plt.ylim([-600, 600])
+    plt.plot(colcut)
+    #plt.plot(maxt[:,0], maxt[:,2], 'r*')
+    plt.plot(box_borders, [5000 for i in box_borders], 'g*')
+    plt.plot(box_borders2, vborders2, 'r*')
+    plt.show()
     peakdist = np.diff(maxt[:,1])
     npeaks = maxt.shape[0]
 
@@ -76,5 +93,233 @@ def init_traces(image, center, hs, background, maxdis=9.0):
                                      colcut[pixmax-fw: pixmax+fw+1])
 
         trace.start = (center, tx, py)
+
+    return fiber_traces
+
+
+boxes = [
+    {'nfibers': 21,
+     'id': 1},
+    {'nfibers': 21,
+     'id': 2},
+    {'nfibers': 21,
+     'id': 3},
+    {'nfibers': 28,
+     'id': 4},
+    {'nfibers': 28,
+     'id': 5},
+    {'nfibers': 35,
+     'id': 6},
+    {'nfibers': 42,
+     'id': 7},
+    {'nfibers': 77,
+     'id': 8},
+    {'nfibers': 77,
+     'id': 9},
+    {'nfibers': 77,
+     'id': 10},
+    {'nfibers': 42,
+     'id': 11},
+    {'nfibers': 35,
+     'id': 12},
+    {'nfibers': 28,
+     'id': 13},
+    {'nfibers': 28,
+     'id': 14},
+    {'nfibers': 21,
+     'id': 15},
+    {'nfibers': 21,
+     'id': 16},
+    {'nfibers': 21,
+     'id': 17}
+]
+
+def ncl_gen_triplets_master(positions):
+    import itertools
+
+    nlines_master = len(positions)
+    iter_comb_triplets = itertools.combinations(range(nlines_master), 3)
+    triplets_master_list = list(iter_comb_triplets)
+    # print(iter_comb_triplets) This is iterator
+    # For each triplet, compute the relative position of the central line.
+
+    ntriplets_master = len(triplets_master_list)
+
+    ratios_master = np.zeros(ntriplets_master)
+    for i_tupla in range(ntriplets_master):
+        i1, i2, i3 = triplets_master_list[i_tupla]
+        delta1 = positions[i2] - positions[i1]
+        delta2 = positions[i3] - positions[i1]
+        ratios_master[i_tupla] = delta1 / delta2
+
+    # Compute the array of indices that index the above ratios in sorted order.
+    isort_ratios_master = np.argsort(ratios_master)
+
+    # Simultaneous sort of position ratios and triplets.
+    ratios_master_sorted = ratios_master[isort_ratios_master]
+    triplets_master_sorted_list = [triplets_master_list[i] for i in isort_ratios_master]
+
+    return ntriplets_master, ratios_master_sorted, triplets_master_sorted_list
+
+
+def init_traces_ex(image, center, hs, background, box_borders, tol=1.5):
+    # Window to fix the center of the trace
+    fw = 2
+    # Tolerance to match fibers to peaks
+
+    ixmin = 0
+    ixmax = image.shape[0]
+
+    xx = np.arange(image.shape[0])
+
+    cut_region = slice(center-hs, center+hs)
+    cut = image[:,cut_region]
+    colcut = cut.mean(axis=1)
+
+    maxt1 = peak_detection_mean_window(colcut, x=xx, k=3, xmin=ixmin, xmax=ixmax, background=background)
+    print('initial peaks found:', len(maxt1))
+
+    peaks_y = []
+    print('refine peaks and filter')
+    for peaks  in maxt1:
+        peakp = int(peaks[1])
+        tx, py, _pos = delicate_centre(xx[peakp - fw: peakp + fw + 1],
+                                       colcut[peakp - fw: peakp + fw + 1])
+        if abs(peakp - tx) < 1:
+            # If the distance is greater than 1, then the max
+            # should be in that pixel
+            #print(peakp, tx, peaks[2], py)
+            peaks_y.append((peaks[1], tx, py))
+        else:
+            pass
+            # peaks_y.append((peaks[1], tx, py))
+
+    peaks_y = np.array(peaks_y)
+    print('filtered peaks:', len(maxt1))
+    # Interval where the peak is
+    box_match = np.digitize(peaks_y[:, 0], box_borders)
+
+    counted_fibers = 0
+    fiber_traces = {}
+
+    # print('pairing fibers')
+    for box in boxes:
+        nfibers = box['nfibers']
+        boxid = box['id'] - 1
+        dist_b_fibs = (box_borders[boxid + 1] - box_borders[boxid]) / (nfibers + 2.0)
+        mask_fibers = (box_match == (boxid + 1))
+        # Peaks in this box
+        thispeaks = peaks_y[mask_fibers]
+        npeaks = len(thispeaks)
+        plt_expected_pos = box_borders[boxid] + dist_b_fibs* np.arange(0, nfibers + 3)
+
+        print('box:', box['id'])
+        # Start by matching the first peak
+        # with the first fiber
+        fid = 0
+        current_peak = 0
+        pairs_1 = [(fid, current_peak)]
+        fid += 1
+
+        scale = 1
+        while (current_peak < npeaks - 1) and (fid < nfibers):
+            # Expected distance to next fiber
+            expected_distance = scale * dist_b_fibs
+            print('expected ', expected_distance)
+            print('current peak', current_peak)
+            for idx in range(current_peak + 1, npeaks):
+                distance = abs(thispeaks[idx, 1] - thispeaks[current_peak, 1])
+                if abs(distance - expected_distance) <= tol:
+                    # We have a match
+                    # We could update
+                    # dist_b_fibs = distance / scale
+                    # But is not clear this is better
+
+                    # Store this match
+                    pairs_1.append((fid, idx))
+                    current_peak = idx
+                    # Next
+                    scale = 1
+                    break
+            else:
+                # This fiber has no match
+                pairs_1.append((fid, None))
+                # Try a fiber further away
+                scale += 1
+            # Match next fiber
+            fid += 1
+        print(pairs_1)
+        print('matched', len(pairs_1), 'missing', nfibers-len(pairs_1))
+        remainig = nfibers - len(pairs_1)
+        if remainig > 0:
+            print('We have to pair', remainig)
+            # Position of first match fiber
+
+            # Position of last match fiber
+            for fid, peakid in reversed(pairs_1):
+                if peakid is not None:
+                    last_matched_peak = peakid
+                    last_matched_fiber = fid
+                    break
+            else:
+                raise ValueError('None matched')
+            print('peaks', thispeaks[0, 1], thispeaks[last_matched_peak, 1])
+            print('borders', box_borders[boxid], box_borders[boxid+1])
+            ldist = thispeaks[0, 1] - box_borders[boxid]
+            rdist = box_borders[boxid + 1] - thispeaks[last_matched_peak, 1]
+            lcap = ldist / dist_b_fibs - 1
+            rcap = rdist / dist_b_fibs - 1
+            print('L distance', ldist, lcap)
+            print('R distance', rdist, rcap)
+            lcapi = int(lcap + 0.5)
+            rcapi = int(rcap + 0.5)
+
+            on_r = rcapi <= lcapi
+            mincap = min(lcapi, rcapi)
+            maxcap = max(lcapi, rcapi)
+
+            cap1 = min(mincap, remainig)
+            cap2 = min(maxcap, remainig - cap1)
+            cap3 = remainig - cap1 - cap2
+
+            if cap3 > 0:
+                print('we dont have space', cap3, 'fibers no allocated')
+
+            if on_r:
+                # Fill rcap fibers, then lcap
+                capr = cap1
+                capl = cap2
+            else:
+                capr = cap2
+                capl = cap1
+
+            addl = [(x, None) for x in range(-capl, 0)]
+            addr = [(x, None) for x in range(last_matched_fiber + 1, last_matched_fiber + 1 + capr)]
+            print('add', capr, 'fibers on the right')
+            print('add', capl, 'fibers on the left')
+            print(addl)
+            print(addr)
+            pairs_1 = addl + pairs_1 + addr
+            print(pairs_1)
+
+        # reindex
+        assert(len(pairs_1) == nfibers)
+
+        for fibid, (relfibid, match) in enumerate(pairs_1, counted_fibers):
+            if match is not None:
+                fiber_traces[fibid] = FiberTraceInfo(fibid, box['id'])
+                fiber_traces[fibid].start = (center, thispeaks[match, 1], thispeaks[match, 2])
+            else:
+                # FIXME: what to do for no matches
+                pass
+        counted_fibers += nfibers
+
+        import matplotlib.pyplot as plt
+        plt.xlim([box_borders[boxid], box_borders[boxid + 1]])
+        plt.plot(colcut, 'b-')
+        plt.plot(thispeaks[:, 1], thispeaks[:, 2], 'ro')
+        plt.plot(thispeaks[:, 1], thispeaks[:, 2], 'ro')
+        plt.plot(plt_expected_pos, [(1.1 * thispeaks[:, 2].max()) for _ in plt_expected_pos], 'go')
+        plt.show()
 
     return fiber_traces

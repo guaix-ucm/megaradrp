@@ -32,7 +32,7 @@ from megaradrp.products import MasterFiberFlatFrame, TraceMap
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.requirements import MasterDarkRequirement
-from megaradrp.trace.traces import init_traces
+from megaradrp.trace.traces import init_traces_ex
 
 
 _logger = logging.getLogger('numina.recipes.megara')
@@ -59,16 +59,24 @@ class TraceMapRecipe(MegaraBaseRecipe):
         reduced = self.bias_process_common(rinput.obresult, parameters)
 
         data = reduced[0].data
+        # For a given VPH, the position of the borders of the boxes
+        # depend on position
+        # For our current VPH
         cstart = 2000
+        box_borders = [153, 294, 429, 557, 733, 906, 1120, 1373, 1823, 2287, 2737, 2992, 3205, 3377, 3553, 3684, 3815,
+                        3962]
+
         hs = 3
         step1 = 2
-        background1 = 150.0
-        maxdis1 = 2.0
+        _logger.info('estimate background in column %i', cstart)
+        background1 = estimate_background(data, center=cstart, hs=hs, boxref=box_borders)
+        _logger.info('background level is %f', background1)
 
+        maxdis1 = 2.0
         _logger.info('find peaks in column %i', cstart)
 
-        central_peaks = init_traces(data, center=cstart, hs=hs,
-                                background=background1)
+        central_peaks = init_traces_ex(data, center=cstart, hs=hs,
+                                background=background1, box_borders=box_borders)
 
         _logger.info(' %i peaks found', len(central_peaks))
 
@@ -95,3 +103,39 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         return self.create_result(fiberflat_frame=reduced,
                                   master_traces=tracelist)
+
+
+def estimate_background(image, center, hs, boxref):
+    """Estimate background from values in boxes between fibers"""
+    import numpy as np
+
+    ixmin = 0
+    ixmax = image.shape[0]
+
+    xx = np.arange(image.shape[0])
+
+    cut_region = slice(center-hs, center+hs)
+    cut = image[boxref, cut_region]
+
+    colcut = cut.mean(axis=1)
+    colcut_std = cut.std(axis=1)
+
+    idmax = colcut.argmax()
+    max_val = colcut[idmax]
+    max_std = colcut_std[idmax]
+    background = max_val + 5 * max_std
+
+
+    # import matplotlib.pyplot as plt
+
+    #maxt = peak_detection_mean_window(colcut, x=xx, k=3, xmin=ixmin, xmax=ixmax, background=background)
+    #print('maxt', maxt)
+    #plt.ylim([-600, 600])
+    #plt.plot(colcut, 'b.-')
+    #plt.plot(maxt[:,0], maxt[:,2], 'r*')
+
+    # plt.plot(boxref, colcut, 'r*')
+
+    #plt.plot(box_borders2, vborders2, 'r*')
+    # plt.show()
+    return background
