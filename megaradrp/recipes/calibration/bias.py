@@ -35,6 +35,7 @@ class BiasRecipe(MegaraBaseRecipe):
     """Process BIAS images and create MASTER_BIAS."""
 
     master_bias = Product(MasterBias)
+    master_bpm = MasterBPMRequirement()
 
     def __init__(self):
         super(BiasRecipe, self).__init__(version="0.1.0")
@@ -46,7 +47,9 @@ class BiasRecipe(MegaraBaseRecipe):
         if not rinput.obresult.images:
             raise RecipeError('Frame list is empty')
 
-        hdu, data = self.hdu_creation(rinput.obresult)
+        parameters = self.get_parameters(rinput)
+
+        hdu, data = self.hdu_creation(rinput.obresult, parameters)
 
         hdr = hdu[0].header
         hdr = self.set_base_headers(hdr)

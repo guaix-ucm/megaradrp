@@ -23,12 +23,14 @@ from tempfile import mkdtemp
 
 import astropy.io.fits as fits
 import numpy as np
+
 from numina.core import DataFrame, ObservationResult
 
 from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
 from megaradrp.recipes.calibration.tests.test_bpm_common import generate_bias
 from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.actions import simulate_flat
+from megaradrp.core.insconf import MegaraInstrumentConfiguration
 
 
 # @pytest.mark.remote
@@ -52,7 +54,8 @@ def test_bpm():
     readpars1 = ReadParams(gain=gain, ron=ron, bias=bias)
     readpars2 = ReadParams(gain=gain, ron=ron, bias=bias)
 
-    detector = MegaraDetectorSat('megara_test_detector', DSHAPE, OSCAN, PSCAN, qe=qe,
+    detector = MegaraDetectorSat('megara_test_detector', DSHAPE, OSCAN, PSCAN,
+                                 qe=qe,
                                  dark=(3.0 / 3600.0),
                                  readpars1=readpars1, readpars2=readpars2,
                                  bins='11')
@@ -79,6 +82,16 @@ def test_bpm():
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'bias_image'
+    ob.configuration = MegaraInstrumentConfiguration('configuration', {
+        'trim1': [[0, 2056], [50, 4146]],
+        'trim2': [[2156, 4212], [50, 4146]],
+        'bng': [1, 1],
+        'overscan1': [[0, 2056], [4149, 4196]],
+        'overscan2': [[2156, 4212], [0, 50]],
+        'prescan1': [[0, 2056], [0, 50]],
+        'prescan2': [[2156, 4212], [4145, 4196]],
+        'middle1': [[2056, 2106], [50, 4146]],
+        'middle2': [[2106, 2156], [50, 4146]]})
     names = []
 
     for aux in range(number * 2):
@@ -89,7 +102,8 @@ def test_bpm():
     ri = recipe.create_input(obresult=ob, master_bias=DataFrame(
         filename=open(temporary_path + '/master_bias_data0.fits').name))
     aux = recipe.run(ri)
-    fits.writeto('%s/master_bpm.fits' % temporary_path, aux.master_bpm.frame[0].data[1], clobber=True)
+    fits.writeto('%s/master_bpm.fits' % temporary_path,
+                 aux.master_bpm.frame[0].data[1], clobber=True)
     shutil.rmtree(temporary_path)
 
 

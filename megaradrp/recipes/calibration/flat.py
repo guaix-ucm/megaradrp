@@ -22,8 +22,6 @@
 from __future__ import division, print_function
 
 import logging
-import multiprocessing as mp
-import numpy
 
 from astropy.io import fits
 
@@ -38,7 +36,6 @@ from megaradrp.requirements import MasterDarkRequirement, MasterSlitFlatRequirem
 from megaradrp.core.processing import apextract_tracemap
 from numina.core.products import DataFrameType
 from megaradrp.processing.weights import WeightsCorrector
-
 
 _logger = logging.getLogger('numina.recipes.megara')
 

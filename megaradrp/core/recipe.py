@@ -18,19 +18,21 @@
 #
 
 import logging
+
 import numina.array.combine as combine
 import numpy as np
-
 from astropy.io import fits
-from megaradrp.processing.trimover import OverscanCorrector, TrimImage
-from megaradrp.processing.slitflat import SlitFlatCorrector
 from numina.flow import SerialFlow
 from numina.flow.processing import BiasCorrector, BadPixelCorrector
 from numina.flow.processing import DarkCorrector
 from numina.core import BaseRecipe
 from numina.core.dataholders import Product
 from numina.core.products import QualityControlProduct
+
 from numina.core.requirements import ObservationResultRequirement
+
+from megaradrp.processing.trimover import OverscanCorrector, TrimImage
+from megaradrp.processing.slitflat import SlitFlatCorrector
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -40,7 +42,6 @@ class MegaraBaseRecipe(BaseRecipe):
 
     obresult = ObservationResultRequirement()
     qc = Product(QualityControlProduct, dest='qc')
-    # configuration = InstrumentConfigurationRequirement()
 
     def __init__(self, version):
         self.__flow = {'ArcCalibrationRecipe': [OverscanCorrector, TrimImage,
@@ -55,7 +56,8 @@ class MegaraBaseRecipe(BaseRecipe):
                                       BiasCorrector],
                        'FiberFlatRecipe': [OverscanCorrector, TrimImage,
                                            BiasCorrector, DarkCorrector,
-                                           BadPixelCorrector, SlitFlatCorrector],
+                                           BadPixelCorrector,
+                                           SlitFlatCorrector],
                        'SlitFlatRecipe': [OverscanCorrector, TrimImage,
                                           BiasCorrector, BadPixelCorrector,
                                           DarkCorrector],
@@ -63,11 +65,14 @@ class MegaraBaseRecipe(BaseRecipe):
                                           BiasCorrector, BadPixelCorrector,
                                           DarkCorrector],
                        'WeightsRecipe': [OverscanCorrector, TrimImage,
-                                          BiasCorrector, BadPixelCorrector,
+                                         BiasCorrector, BadPixelCorrector,
                                          DarkCorrector, SlitFlatCorrector],
-                       'TwilightFiberFlatRecipe': [OverscanCorrector, TrimImage,
-                                          BiasCorrector, DarkCorrector,
-                                          BadPixelCorrector, SlitFlatCorrector],
+                       'TwilightFiberFlatRecipe': [OverscanCorrector,
+                                                   TrimImage,
+                                                   BiasCorrector,
+                                                   DarkCorrector,
+                                                   BadPixelCorrector,
+                                                   SlitFlatCorrector],
                        'LCBImageRecipe': [OverscanCorrector, TrimImage,
                                           BiasCorrector, BadPixelCorrector,
                                           DarkCorrector, SlitFlatCorrector],
@@ -201,12 +206,12 @@ class MegaraBaseRecipe(BaseRecipe):
         except:
             pass
 
-
         return parameters
 
     def get_wlcalib(self, data):
 
-        wlcalib = [elem['aperture']['function']['coecifients'] for elem in data]
+        wlcalib = [elem['aperture']['function']['coecifients'] for elem in
+                   data]
         return np.array(wlcalib)
 
     def resample_rss_flux(self, rss_old, wcalib):
@@ -217,16 +222,16 @@ class MegaraBaseRecipe(BaseRecipe):
 
         nfibers = rss_old.shape[0]
         nsamples = rss_old.shape[1]
-        z = [0, nsamples-1]
+        z = [0, nsamples - 1]
         res = polyval(z, wcalib.T)
-        all_delt = (res[:,1] - res[:,0]) / nsamples
+        all_delt = (res[:, 1] - res[:, 0]) / nsamples
 
         delts = all_delt.min()
 
         # first pixel is
-        wl_min = res[:,0].min()
+        wl_min = res[:, 0].min()
         # last pixel is
-        wl_max = res[:,1].max()
+        wl_max = res[:, 1].max()
 
         npix = int(math.ceil((wl_max - wl_min) / delts))
         new_x = np.arange(npix)
@@ -237,16 +242,18 @@ class MegaraBaseRecipe(BaseRecipe):
 
         new_borders = self.map_borders(new_wl)
 
-        accum_flux = np.empty((nfibers, nsamples+1))
+        accum_flux = np.empty((nfibers, nsamples + 1))
         accum_flux[:, 1:] = np.cumsum(rss_old, axis=1)
         accum_flux[:, 0] = 0.0
         rss_resampled = np.zeros((nfibers, npix))
         for idx in range(nfibers):
             # We need a monotonic interpolator
             # linear would work, we use a cubic interpolator
-            interpolator = SteffenInterpolator(old_wl_borders[idx], accum_flux[idx], extrapolate='border')
+            interpolator = SteffenInterpolator(old_wl_borders[idx],
+                                               accum_flux[idx],
+                                               extrapolate='border')
             fl_borders = interpolator(new_borders)
-            rss_resampled[idx] = fl_borders[1:]- fl_borders[:-1]
+            rss_resampled[idx] = fl_borders[1:] - fl_borders[:-1]
         return rss_resampled, (wl_min, wl_max, delts)
 
     def map_borders(self, wls):
@@ -255,7 +262,7 @@ class MegaraBaseRecipe(BaseRecipe):
         The border of the pixel is assumed to be midway of the wls
         """
         midpt_wl = 0.5 * (wls[1:] + wls[:-1])
-        all_borders = np.zeros((wls.shape[0]+1,))
+        all_borders = np.zeros((wls.shape[0] + 1,))
         all_borders[1:-1] = midpt_wl
         all_borders[0] = 2 * wls[0] - midpt_wl[0]
         all_borders[-1] = 2 * wls[-1] - midpt_wl[-1]

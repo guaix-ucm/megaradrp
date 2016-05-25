@@ -64,6 +64,9 @@ def trim_and_o_array(array, direction='normal', confFile={}):
     trim2 = get_conf_value(confFile, 'trim2')
     bng = get_conf_value(confFile, 'bng')
 
+    if bng not in [[1,1],[1,2],[2,1],[2,2]]:
+        raise ValueError("%s must be one if '11', '12', '21, '22'" % bng)
+
     nr2 = ((trim1[0][1] - trim1[0][0]) + (trim2[0][1]-trim2[0][0]))/bng[0]
     nc2 = (trim1[1][1] - trim1[1][0]) / bng[1]
     nr = (trim1[0][1] - trim1[0][0])/bng[0]
