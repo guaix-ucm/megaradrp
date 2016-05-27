@@ -63,8 +63,9 @@ class TraceMapRecipe(MegaraBaseRecipe):
         # depend on position
         # For our current VPH
         cstart = 2000
-        box_borders = [153, 294, 429, 557, 733, 906, 1120, 1373, 1823, 2287, 2737, 2992, 3205, 3377, 3553, 3684, 3815,
-                        3962]
+        box_borders = [153, 294, 429, 557, 733, 906, 1120, 1373, 1823, 2287, 2737, 2992, 3205, 3377, 3553, 3684, 3815,3962] # Original
+        box_borders = [153, 294, 425, 558, 731, 906, 1120, 1373, 1829, 2287, 2740, 2996, 3207, 3383, 3557, 3687, 3824,3962] #Calculada!
+
 
         hs = 3
         step1 = 2
@@ -76,7 +77,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         _logger.info('find peaks in column %i', cstart)
 
         central_peaks = init_traces_ex(data, center=cstart, hs=hs,
-                                background=background1, box_borders=box_borders)
+                                box_borders=box_borders)
 
         _logger.info(' %i peaks found', len(central_peaks))
 
@@ -107,12 +108,6 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
 def estimate_background(image, center, hs, boxref):
     """Estimate background from values in boxes between fibers"""
-    import numpy as np
-
-    ixmin = 0
-    ixmax = image.shape[0]
-
-    xx = np.arange(image.shape[0])
 
     cut_region = slice(center-hs, center+hs)
     cut = image[boxref, cut_region]
@@ -125,17 +120,4 @@ def estimate_background(image, center, hs, boxref):
     max_std = colcut_std[idmax]
     background = max_val + 5 * max_std
 
-
-    # import matplotlib.pyplot as plt
-
-    #maxt = peak_detection_mean_window(colcut, x=xx, k=3, xmin=ixmin, xmax=ixmax, background=background)
-    #print('maxt', maxt)
-    #plt.ylim([-600, 600])
-    #plt.plot(colcut, 'b.-')
-    #plt.plot(maxt[:,0], maxt[:,2], 'r*')
-
-    # plt.plot(boxref, colcut, 'r*')
-
-    #plt.plot(box_borders2, vborders2, 'r*')
-    # plt.show()
     return background

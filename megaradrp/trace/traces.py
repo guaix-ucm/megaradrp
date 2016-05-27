@@ -21,7 +21,8 @@ from __future__ import division, print_function
 
 import numpy as np
 
-from .peakdetection import peak_detection_mean_window
+from .peakdetection import peak_detection_mean_window  #Should be avoided
+from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 
 def delicate_centre(x, y):
     pos = np.polyfit(x, y, deg=2)
@@ -162,56 +163,72 @@ def ncl_gen_triplets_master(positions):
     return ntriplets_master, ratios_master_sorted, triplets_master_sorted_list
 
 
-def init_traces_ex(image, center, hs, background, box_borders, tol=1.5):
-    # Window to fix the center of the trace
-    fw = 2
-    # Tolerance to match fibers to peaks
 
-    ixmin = 0
-    ixmax = image.shape[0]
 
-    xx = np.arange(image.shape[0])
+def estimate_thresholds(image, center, hs, boxref):
+    """Estimate background from values in boxes between fibers"""
+
+    cut_region = slice(center-hs, center+hs)
+    cut = image[boxref, cut_region]
+
+    colcut = cut.mean(axis=1)
+    colcut_std = cut.std(axis=1)
+
+    max_val = colcut
+    max_std = colcut_std
+    background = max_val + 2 * max_std
+
+    return background
+
+def init_traces_ex(image, center, hs, box_borders, tol=1.5):
 
     cut_region = slice(center-hs, center+hs)
     cut = image[:,cut_region]
     colcut = cut.mean(axis=1)
 
-    maxt1 = peak_detection_mean_window(colcut, x=xx, k=3, xmin=ixmin, xmax=ixmax, background=background)
-    print('initial peaks found:', len(maxt1))
-
-    peaks_y = []
-    print('refine peaks and filter')
-    for peaks  in maxt1:
-        peakp = int(peaks[1])
-        tx, py, _pos = delicate_centre(xx[peakp - fw: peakp + fw + 1],
-                                       colcut[peakp - fw: peakp + fw + 1])
-        if abs(peakp - tx) < 1:
-            # If the distance is greater than 1, then the max
-            # should be in that pixel
-            #print(peakp, tx, peaks[2], py)
-            peaks_y.append((peaks[1], tx, py))
-        else:
-            pass
-            # peaks_y.append((peaks[1], tx, py))
-
-    peaks_y = np.array(peaks_y)
-    print('filtered peaks:', len(maxt1))
-    # Interval where the peak is
-    box_match = np.digitize(peaks_y[:, 0], box_borders)
+    ##########################################################
+    # Iba aqui
+    ##########################################################
 
     counted_fibers = 0
     fiber_traces = {}
+    total_peaks = 0
+    total_peaks_pos = []
+
+    thresholds = estimate_thresholds(image, center, 3, box_borders)
 
     # print('pairing fibers')
     for box in boxes:
         nfibers = box['nfibers']
         boxid = box['id'] - 1
+
+        ##########################################################
+
+        ipeaks_int = find_peaks_indexes(colcut, 3, thresholds[boxid])
+        ipeaks_float = refine_peaks(colcut, ipeaks_int, 3)[0]
+        peaks_y = np.ones((ipeaks_int.shape[0],3))
+        peaks_y[:,0] = ipeaks_int
+        peaks_y[:,1] = ipeaks_float
+        peaks_y[:,2] = colcut[ipeaks_int]
+
+
+        # Interval where the peak is
+        box_match = np.digitize(peaks_y[:, 0], box_borders)
+        ##########################################################
+
+
         dist_b_fibs = (box_borders[boxid + 1] - box_borders[boxid]) / (nfibers + 2.0)
         mask_fibers = (box_match == (boxid + 1))
         # Peaks in this box
         thispeaks = peaks_y[mask_fibers]
         npeaks = len(thispeaks)
-        plt_expected_pos = box_borders[boxid] + dist_b_fibs* np.arange(0, nfibers + 3)
+        total_peaks += npeaks
+        for elem in thispeaks:
+            total_peaks_pos.append(elem.tolist())
+
+
+
+        plt_expected_pos = box_borders[boxid] + dist_b_fibs* np.arange(0, nfibers + 2)
 
         print('box:', box['id'])
         # Start by matching the first peak
@@ -314,12 +331,25 @@ def init_traces_ex(image, center, hs, background, box_borders, tol=1.5):
                 pass
         counted_fibers += nfibers
 
-        import matplotlib.pyplot as plt
-        plt.xlim([box_borders[boxid], box_borders[boxid + 1]])
-        plt.plot(colcut, 'b-')
-        plt.plot(thispeaks[:, 1], thispeaks[:, 2], 'ro')
-        plt.plot(thispeaks[:, 1], thispeaks[:, 2], 'ro')
-        plt.plot(plt_expected_pos, [(1.1 * thispeaks[:, 2].max()) for _ in plt_expected_pos], 'go')
-        plt.show()
+
+        # import matplotlib.pyplot as plt
+        # plt.xlim([box_borders[boxid], box_borders[boxid + 1]])
+        # plt.plot(colcut, 'b-')
+        # plt.vlines(plt_expected_pos[1:-1],0,40000)
+        # plt.plot(thispeaks[:, 1], thispeaks[:, 2], 'ro')
+        # plt.plot(peaks_y[:,1], peaks_y[:, 2], 'ro')
+        # plt.plot(plt_expected_pos, [(1.1 * thispeaks[:, 2].max()) for _ in plt_expected_pos], 'go')
+        # plt.title('Box %s' %box['id'])
+        # plt.show()
+
+        print ('*' * 250)
+
+    print ('total found peaks: %s' %total_peaks)
+
+    import matplotlib.pyplot as plt
+    total_peaks_pos = np.array(total_peaks_pos)
+    plt.plot(colcut, 'b-')
+    plt.plot(total_peaks_pos[:, 1], total_peaks_pos[:, 2], 'ro')
+    plt.show()
 
     return fiber_traces
