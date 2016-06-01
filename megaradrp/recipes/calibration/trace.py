@@ -49,12 +49,9 @@ class TraceMapRecipe(MegaraBaseRecipe):
     master_traces = Product(TraceMap)
 
     def __init__(self):
-        super(TraceMapRecipe, self).__init__(
-            version="0.1.0"
-        )
+        super(TraceMapRecipe, self).__init__(version="0.1.0")
 
     def run(self, rinput):
-
         parameters = self.get_parameters(rinput)
         reduced = self.bias_process_common(rinput.obresult, parameters)
 
@@ -62,25 +59,22 @@ class TraceMapRecipe(MegaraBaseRecipe):
         # For a given VPH, the position of the borders of the boxes
         # depend on position
         # For our current VPH
-        cstart = 2000
-        box_borders = [153, 294, 429, 557, 733, 906, 1120, 1373, 1823, 2287, 2737, 2992, 3205, 3377, 3553, 3684, 3815,3962] # Original
-        box_borders = [153, 294, 425, 558, 731, 906, 1120, 1373, 1829, 2287, 2740, 2996, 3207, 3383, 3557, 3687, 3824,3962] #Calculada!
-
+        cstart = rinput.obresult.configuration.values['box']['boxcol']
+        box_borders = rinput.obresult.configuration.values['box']['real']
 
         hs = 3
         step1 = 2
+        poldeg = 5
+        maxdis1 = 2.0
+
         _logger.info('estimate background in column %i', cstart)
         background1 = estimate_background(data, center=cstart, hs=hs, boxref=box_borders)
         _logger.info('background level is %f', background1)
 
-        maxdis1 = 2.0
+
         _logger.info('find peaks in column %i', cstart)
 
-        central_peaks = init_traces_ex(data, center=cstart, hs=hs,
-                                box_borders=box_borders)
-
-        _logger.info(' %i peaks found', len(central_peaks))
-
+        central_peaks = init_traces_ex(data, center=cstart, hs=hs,box_borders=box_borders)
 
         # The byteswapping is required by the cython module
         if data.dtype.byteorder != '=':
@@ -93,13 +87,26 @@ class TraceMapRecipe(MegaraBaseRecipe):
         _logger.info('trace peaks')
         for dtrace in central_peaks.values():
 
-            mm = trace(image2, x=cstart, y=dtrace.start[1], step=step1,
+            if dtrace.start:
+                mm = trace(image2, x=cstart, y=dtrace.start[1], step=step1,
                          hs=hs, background=background1, maxdis=maxdis1)
+                if len(mm) < poldeg + 1:
+                    _logger.warning('in fibid %d, only %d points to fit pol of degree %d',
+                                    dtrace.fibid, len(mm), poldeg)
+                    pfit = numpy.array([])
+                else:
+                    pfit = numpy.polyfit(mm[:,0], mm[:,1], deg=poldeg)
 
-            pfit = numpy.polyfit(mm[:,0], mm[:,1], deg=5)
+                start = mm[0, 0]
+                stop = mm[-1,0]
+            else:
+                pfit = numpy.array([])
+                start = cstart
+                stop = cstart
+
 
             tracelist.append({'fibid': dtrace.fibid, 'boxid': dtrace.boxid,
-                              'start':0, 'stop':4095,
+                              'start':int(start), 'stop':int(stop),
                               'fitparms': pfit.tolist()})
 
         return self.create_result(fiberflat_frame=reduced,

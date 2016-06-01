@@ -108,6 +108,98 @@ def apextract(data, trace):
         rss[idx] = m
     return rss
 
+def apextract_tracemap_2(data, tracemap):
+    """Extract apertures using a tracemap."""
+
+    existing = [None]
+    for t in tracemap:
+        if t['fitparms']:
+            t['pol'] = np.poly1d(t['fitparms'])
+            existing.append(t)
+
+    existing.append(None)
+    # Compute borders
+    borders = []
+
+    # Something special for the first and the last..
+    # The rest cases
+    for t1, t2, t3 in zip(existing, existing[1:], existing[2:]):
+        # Distance to contfibers # in box
+        if t1 is None:
+            d21 = 100
+        else:
+            d21 = t2['fibid'] - t1['fibid']
+        if t3 is None:
+            d32 = 100
+        else:
+            d32 = t3['fibid'] - t2['fibid']
+
+        # Right border
+        if d32 == 1:
+            pix_32 = 0.5 * (t2['pol'] + t3['pol'])
+        elif d32 == 2:
+            pix_32 = 0.5 * (t2['pol'] + t3['pol'])
+            pix_32 = 0.5 * (pix_32 + t2['pol'])
+        elif d32 > 2:
+            pix_32 = None
+
+        if d21 == 1:
+            pix_21 = 0.5 * (t2['pol'] + t1['pol'])
+        elif d21 == 2:
+            pix_21 = 0.5 * (t2['pol'] + t1['pol'])
+            pix_21 = 0.5 * (pix_21 + t2['pol'])
+        elif d21 > 2:
+            pix_21 = None
+
+        if pix_32 is None and pix_21 is None:
+            continue
+
+        if pix_32 is None:
+            # Recompute pix32 using pix_21
+            pix_32 = t2['pol'] + (t2['pol'] - pix_21)
+
+        if pix_21 is None:
+            # Recompute pix21 using pix_32
+            pix_21 = t2['pol'] - (pix_32 - t2['pol'])
+
+        borders.append((t2['fibid'], pix_21, pix_32))
+
+    rss = extract_simple_rss2(data, borders)
+
+    return rss
+
+
+def extract_simple_rss2(arr, borders2, axis=0, out=None):
+    import numpy
+    from numina.array.trace.extract import extract_simple_intl
+    # If arr is not in native byte order, the C-extension won't work
+    if arr.dtype.byteorder != '=':
+        arr2 = arr.byteswap().newbyteorder()
+    else:
+        arr2 = arr
+
+    if axis == 0:
+        arr3 = arr2
+    elif axis == 1:
+        arr3 = arr2.T
+    else:
+        raise ValueError("'axis' must be 0 or 1")
+
+    if out is None:
+        out = numpy.zeros((borders2[-1][0], arr3.shape[1]), dtype='float')
+
+    xx = numpy.arange(arr3.shape[1])
+
+    # Borders contains a list of function objects
+    for idx, b1, b2 in borders2:
+        bb1 = b1(xx)
+        bb1[bb1 < -0.5] = -0.5
+        bb2 = b2(xx)
+        bb2[bb2 > arr3.shape[0] - 0.5] = arr3.shape[0] - 0.5
+        extract_simple_intl(arr3, xx, bb1, bb2, out[idx-1])
+    return out
+
+
 
 def apextract_tracemap(data, tracemap):
     """Extract apertures using a tracemap."""
@@ -128,10 +220,19 @@ def apextract_tracemap(data, tracemap):
     borders.append((pix_01, pix_12))
 
     for idx in range(1, len(pols)-1):
-        pix_01 = pix_12
-        pix_12 = 0.5 * (pols[idx] + pols[idx+1])
-        borders.append((pix_01, pix_12))
+        if pols[idx].order!=0:
+            pix_01 = pix_12
+            pix_12 = 0.5 * (pols[idx] + pols[idx+1])
+            borders.append((pix_01, pix_12))
+        else:
+            borders.append((np.poly1d(0),np.poly1d(0)))
+        # else:
+        #     if pols[idx].order==0:
+        #         borders.append((pix_01, pols[idx+1]))
+        #     else:
+        #         borders.append((pix_01, pols[idx+1]))
 
+        # borders.append((pix_01, pix_12))
     # Estimate right border for the last trace
     pix_01 = pix_12
     # Use the half distance in last trace
@@ -139,7 +240,9 @@ def apextract_tracemap(data, tracemap):
 
     borders.append((pix_01, pix_12))
 
-    rss = extract_simple_rss(data, borders)
+    out = np.zeros((len(pols), data.shape[1]), dtype='float')
+
+    rss = extract_simple_rss(data, borders, out=out)
 
     return rss
 
