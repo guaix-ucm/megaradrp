@@ -23,7 +23,8 @@ import numpy as np
 import logging
 
 from .peakdetection import peak_detection_mean_window  #Should be avoided
-from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
+from numina.array.peaks.peakdet import refine_peaks
+from skimage.feature import peak_local_max
 
 
 _logger = logging.getLogger('numina.recipes.megara')
@@ -169,21 +170,6 @@ def ncl_gen_triplets_master(positions):
 
 
 
-def estimate_thresholds(image, center, hs, boxref):
-    """Estimate background from values in boxes between fibers"""
-
-    cut_region = slice(center-hs, center+hs)
-    cut = image[boxref, cut_region]
-
-    colcut = cut.mean(axis=1)
-    colcut_std = cut.std(axis=1)
-
-    max_val = colcut
-    max_std = colcut_std
-    background = max_val + 2 * max_std
-
-    return background
-
 def init_traces_ex(image, center, hs, box_borders, tol=1.5):
 
     cut_region = slice(center-hs, center+hs)
@@ -195,27 +181,18 @@ def init_traces_ex(image, center, hs, box_borders, tol=1.5):
     total_peaks = 0
     total_peaks_pos = []
 
-    thresholds = estimate_thresholds(image, center, 3, box_borders)
+    ipeaks_int = peak_local_max(colcut, min_distance=2)[:, 0]
+    ipeaks_float = refine_peaks(colcut, ipeaks_int, 3)[0]
+    peaks_y = np.ones((ipeaks_int.shape[0],3))
+    peaks_y[:,0] = ipeaks_int
+    peaks_y[:,1] = ipeaks_float
+    peaks_y[:,2] = colcut[ipeaks_int]
+    box_match = np.digitize(peaks_y[:, 0], box_borders)
 
-    # _logger.debug('pairing fibers')
+    _logger.debug('pairing fibers')
     for box in boxes:
         nfibers = box['nfibers']
         boxid = box['id'] - 1
-
-        ##########################################################
-
-        ipeaks_int = find_peaks_indexes(colcut, 3, thresholds[boxid])
-        ipeaks_float = refine_peaks(colcut, ipeaks_int, 3)[0]
-        peaks_y = np.ones((ipeaks_int.shape[0],3))
-        peaks_y[:,0] = ipeaks_int
-        peaks_y[:,1] = ipeaks_float
-        peaks_y[:,2] = colcut[ipeaks_int]
-
-
-        # Interval where the peak is
-        box_match = np.digitize(peaks_y[:, 0], box_borders)
-        ##########################################################
-
 
         dist_b_fibs = (box_borders[boxid + 1] - box_borders[boxid]) / (nfibers + 2.0)
         mask_fibers = (box_match == (boxid + 1))
@@ -334,11 +311,11 @@ def init_traces_ex(image, center, hs, box_borders, tol=1.5):
         # plt.title('Box %s' %box['id'])
         # plt.show()
 
-    import matplotlib.pyplot as plt
-    total_peaks_pos = np.array(total_peaks_pos)
-    plt.plot(colcut, 'b-')
-    plt.plot(total_peaks_pos[:, 1], total_peaks_pos[:, 2], 'ro')
-    plt.show()
+    # import matplotlib.pyplot as plt
+    # total_peaks_pos = np.array(total_peaks_pos)
+    # plt.plot(colcut, 'b-')
+    # plt.plot(total_peaks_pos[:, 1], total_peaks_pos[:, 2], 'ro')
+    # plt.show()
 
     _logger.debug ('total found peaks: %s' %total_peaks)
     _logger.debug ('total found + recovered peaks: %s' %counted_fibers)

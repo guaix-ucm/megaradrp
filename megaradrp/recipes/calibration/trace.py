@@ -34,6 +34,7 @@ from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.requirements import MasterDarkRequirement
 from megaradrp.trace.traces import init_traces_ex
 
+from skimage.filters import threshold_otsu
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -74,7 +75,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         _logger.info('find peaks in column %i', cstart)
 
-        central_peaks = init_traces_ex(data, center=cstart, hs=hs,box_borders=box_borders)
+        central_peaks = init_traces_ex(data, center=cstart, hs=hs,box_borders=box_borders,tol=1.63)
 
         # The byteswapping is required by the cython module
         if data.dtype.byteorder != '=':
@@ -104,7 +105,6 @@ class TraceMapRecipe(MegaraBaseRecipe):
                 start = cstart
                 stop = cstart
 
-
             tracelist.append({'fibid': dtrace.fibid, 'boxid': dtrace.boxid,
                               'start':int(start), 'stop':int(stop),
                               'fitparms': pfit.tolist()})
@@ -120,11 +120,5 @@ def estimate_background(image, center, hs, boxref):
     cut = image[boxref, cut_region]
 
     colcut = cut.mean(axis=1)
-    colcut_std = cut.std(axis=1)
 
-    idmax = colcut.argmax()
-    max_val = colcut[idmax]
-    max_std = colcut_std[idmax]
-    background = max_val + 5 * max_std
-
-    return background
+    return threshold_otsu(colcut)
