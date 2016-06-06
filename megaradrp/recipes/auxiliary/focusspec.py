@@ -88,7 +88,8 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
     def run(self, rinput):
         # Basic processing
         _logger.info('start focus spectrograph')
-        flow = self.create_flow(rinput.master_bias)
+        flow = self.create_flow(rinput.master_bias,
+                                rinput.obresult.configuration.values)
 
         ever = []
         focci = []
@@ -110,7 +111,8 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         _logger.info('pair lines in images')
         line_fibers = self.filter_lines(ever)
 
-        focus_wavelength = self.generateJSON(ever, self.get_wlcalib(rinput.wlcalib),
+        focus_wavelength = self.generateJSON(ever,
+                                             self.get_wlcalib(rinput.wlcalib),
                                              rinput.obresult.images)
 
         _logger.info('fit FWHM of lines')
@@ -159,11 +161,12 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         index = numpy.where(numpy.all(a == b, axis=1))
         return final[index[0], [2]]
 
-    def create_flow(self, master_bias):
+    def create_flow(self, master_bias, confFile):
 
         biasmap = master_bias.open()[0].data
 
-        flows = [OverscanCorrector(), TrimImage(),
+        flows = [OverscanCorrector(confFile=confFile),
+                 TrimImage(confFile=confFile),
                  BiasCorrector(biasmap=biasmap)]
         basicflow = SerialFlow(flows)
         return basicflow

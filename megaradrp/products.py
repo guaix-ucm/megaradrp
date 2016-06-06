@@ -38,10 +38,8 @@
 
 import yaml
 
-
 from numina.core import DataFrameType, DataProductType
 from numina.core.products import DataProductTag
-from numina.core.products import ArrayType
 
 
 class MEGARAProductFrame(DataFrameType, DataProductTag):
@@ -132,7 +130,8 @@ class JSONstorage(DataProductType):
         filename = where.destination + '.json'
 
         with open(filename, 'w') as fd:
-            fd.write(json.dumps(obj))
+            fd.write(json.dumps(obj, sort_keys=True, indent=2,
+                                separators=(',', ': ')))
 
         return filename
 
@@ -144,6 +143,7 @@ class JSONstorage(DataProductType):
         except IOError as e:
             raise e
         return data
+
 
 class WavelengthCalibration(JSONstorage):
     pass

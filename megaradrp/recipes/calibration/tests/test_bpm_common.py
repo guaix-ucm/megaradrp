@@ -23,6 +23,8 @@ import astropy.io.fits as fits
 import numpy as np
 from numina.core import DataFrame, ObservationResult
 
+from megaradrp.core.insconf import MegaraInstrumentConfiguration
+
 
 def generate_bias(detector, number, temporary_path):
     from megaradrp.simulation.actions import simulate_bias
@@ -38,11 +40,22 @@ def generate_bias(detector, number, temporary_path):
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'bias_image'
+    ob.configuration = MegaraInstrumentConfiguration('configuration', {
+        'trim1': [[0, 2056], [50, 4146]],
+        'trim2': [[2156, 4212], [50, 4146]],
+        'bng': [1, 1],
+        'overscan1': [[0, 2056], [4149, 4196]],
+        'overscan2': [[2156, 4212], [0, 50]],
+        'prescan1': [[0, 2056], [0, 50]],
+        'prescan2': [[2156, 4212], [4145, 4196]],
+        'middle1': [[2056, 2106], [50, 4146]],
+        'middle2': [[2106, 2156], [50, 4146]]})
     ob.frames = [DataFrame(filename=f) for f in fs]
 
     recipe = BiasRecipe()
     ri = recipe.create_input(obresult=ob)
     return recipe.run(ri)
+
 
 def crear_archivos(temporary_path):
     from megaradrp.simulation.actions import simulate_flat
@@ -63,7 +76,8 @@ def crear_archivos(temporary_path):
     readpars1 = ReadParams(gain=gain, ron=ron, bias=bias)
     readpars2 = ReadParams(gain=gain, ron=ron, bias=bias)
 
-    detector = MegaraDetectorSat('megara_test_detector', DSHAPE, OSCAN, PSCAN, qe=qe,
+    detector = MegaraDetectorSat('megara_test_detector', DSHAPE, OSCAN, PSCAN,
+                                 qe=qe,
                                  dark=(3.0 / 3600.0),
                                  readpars1=readpars1, readpars2=readpars2,
                                  bins='11')
@@ -86,6 +100,16 @@ def crear_archivos(temporary_path):
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'bias_image'
+    ob.configuration = MegaraInstrumentConfiguration('configuration', {
+        'trim1': [[0, 2056], [50, 4146]],
+        'trim2': [[2156, 4212], [50, 4146]],
+        'bng': [1, 1],
+        'overscan1': [[0, 2056], [4149, 4196]],
+        'overscan2': [[2156, 4212], [0, 50]],
+        'prescan1': [[0, 2056], [0, 50]],
+        'prescan2': [[2156, 4212], [4145, 4196]],
+        'middle1': [[2056, 2106], [50, 4146]],
+        'middle2': [[2106, 2156], [50, 4146]]})
     names = []
 
     for aux in range(number):
@@ -96,7 +120,7 @@ def crear_archivos(temporary_path):
     ri = recipe.create_input(obresult=ob, master_bias=DataFrame(
         filename=open(temporary_path + '/master_bias_data0.fits').name))
     aux = recipe.run(ri)
-    fits.writeto('%s/master_bpm.fits' % temporary_path, aux.master_bpm.frame[0].data[1], clobber=True)
+    fits.writeto('%s/master_bpm.fits' % temporary_path,
+                 aux.master_bpm.frame[0].data[1], clobber=True)
 
     return names
-
