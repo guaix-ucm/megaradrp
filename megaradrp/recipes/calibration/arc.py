@@ -42,6 +42,7 @@ from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.requirements import MasterDarkRequirement
 from megaradrp.core.processing import apextract_tracemap
 from megaradrp.core.processing import apextract_tracemap_2
+from skimage.feature import peak_local_max
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -102,6 +103,24 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         plt.draw()
         # plt.show()
 
+    def detrend(self, m, deg=5, tol=1e-3):
+        import numpy as np
+        nloop = 10
+        xx = np.arange(len(m))
+        ss = m.copy()
+        m2 = ss
+        pol = np.ones((deg+1,))
+        for _ in range(nloop):
+            pol_new = np.polyfit(xx, ss, deg)
+            pol2 = numpy.linalg.norm(pol)
+            pol1 = numpy.linalg.norm(pol - pol_new)
+            if pol1 / pol2 < tol:
+                break
+            pol = pol_new
+            m2 = np.polyval(pol, xx)
+            ss = np.minimum(ss, m2)
+        return m2
+
     def calibrate_wl2(self, rss, lines_catalog, poldeg, times_sigma=50.0):
         #
         # read master table (TBM) and generate auxiliary parameters (valid for
@@ -117,78 +136,103 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         coeff_table = numpy.zeros((nspec, poldeg + 1))
         # Loop over rows in RSS
         nwinwidth = 5
+        error_contador = 0
         for idx, row in enumerate(rss):
             if numpy.any(row):
-                _logger.info('Starting row %d', idx)
-                # find peaks (initial search providing integer numbers)
-                threshold = numpy.median(row) + times_sigma * sigmaG(row)
-
-                ipeaks_int = find_peaks_indexes(row, nwinwidth, threshold)
-                ipeaks_float = refine_peaks(row, ipeaks_int, nwinwidth)[0]
-
-                # define interpolation function and interpolate the refined peak
-                # location, passing from index number (within the row array)
-                # to channel number (note that this step takes care of the fact
-                # that the extracted spectrum may correspond to a subregion in the
-                # spectral direction)
-
-                # FIXME: xchannel ???
-                # This comes from Nico's code, so probably pixels
-                # will start in 1
-                naxis1 = row.shape[0]
-                xchannel = numpy.arange(1, naxis1 + 1)
-
-                finterp_channel = interp1d(range(xchannel.size), xchannel,
-                                           kind='linear')
-                xpeaks_refined = finterp_channel(ipeaks_float)
-                lista_xpeaks_refined.append(xpeaks_refined)
-                wv_ini_search = int(lines_catalog[0][0]-1000) # initially: 3500
-                wv_end_search = int(lines_catalog[-1][0]+1000) #initially: 4500
-
-                _logger.info('wv_ini_search %s', wv_ini_search)
-                _logger.info('wv_end_search %s', wv_end_search)
-
                 try:
-                    solution = arccalibration_direct(wv_master,
-                                                     ntriplets_master,
-                                                     ratios_master_sorted,
-                                                     triplets_master_sorted_list,
-                                                     xpeaks_refined,
-                                                     naxis1,
-                                                     wv_ini_search=wv_ini_search,
-                                                     wv_end_search=wv_end_search,
-                                                     error_xpos_arc=0.3, #initially: 2.0
-                                                     times_sigma_r=3.0,
-                                                     frac_triplets_for_sum=0.50,
-                                                     times_sigma_theil_sen=10.0,
-                                                     poly_degree_wfit=poldeg,
-                                                     times_sigma_polfilt=10.0,
-                                                     times_sigma_inclusion=5.0)
+                    import matplotlib.pyplot as plt
+                    from skimage.filters import threshold_otsu
 
-                    _logger.info('Solution for row %d completed', idx)
-                    _logger.info('Fitting solution for row %d', idx)
-                    numpy_array_with_coeff, crval1_approx, cdelt1_approx = \
-                        fit_solution(wv_master,
-                                     xpeaks_refined,
-                                     solution,
-                                     poly_degree_wfit=poldeg,
-                                     weighted=False)
+                    # row = row[:2250] #funciona con idx=299 threshold_rel=0.13, min_distance=50
+                    # row = row[:1860]
+                    # aux = numpy.ones((2850))
+                    # aux[:1350] = row[:1350]
+                    # aux[1350:] = row[1450:2950]
+                    # row = aux
 
-                    _logger.info('approximate crval1, cdelt1: %f %f',
-                                 crval1_approx,
-                                 cdelt1_approx)
+                    trend = self.detrend(row)
+                    fibdata_detrend = row - trend
+                    row = fibdata_detrend[:1850]
 
-                    _logger.info('fitted coefficients %s', numpy_array_with_coeff)
-                    coeff_table[idx] = numpy_array_with_coeff
-                except TypeError as error:
-                    _logger.error("%s", error)
+                    _logger.info('Starting row %d', idx)
+                    # find peaks (initial search providing integer numbers)
+                    ipeaks_int = peak_local_max(row, threshold_rel=0.02, min_distance=40)[:, 0]
+                    logging.warning('ipeaks_int: %s', ipeaks_int)
+                    ipeaks_float = refine_peaks(row, ipeaks_int, nwinwidth)[0]
+
+                    # plt.plot(row)
+                    # plt.plot(ipeaks_int, row[ipeaks_int],'ro', alpha=.9, ms=7, label="ipeaks_int")
+                    # # plt.plot(ipeaks_int2, row[ipeaks_int2],'gs', alpha=.5 , ms=10)
+                    # plt.legend()
+                    # plt.show()
+
+                    # define interpolation function and interpolate the refined peak
+                    # location, passing from index number (within the row array)
+                    # to channel number (note that this step takes care of the fact
+                    # that the extracted spectrum may correspond to a subregion in the
+                    # spectral direction)
+
+                    # FIXME: xchannel ???
+                    # This comes from Nico's code, so probably pixels
+                    # will start in 1
+                    naxis1 = row.shape[0]
+                    xchannel = numpy.arange(1, naxis1 + 1)
+
+                    finterp_channel = interp1d(range(xchannel.size), xchannel,
+                                               kind='linear')
+                    xpeaks_refined = finterp_channel(ipeaks_float)
+                    lista_xpeaks_refined.append(xpeaks_refined)
+                    wv_ini_search = int(lines_catalog[0][0]-1000) # initially: 3500
+                    wv_end_search = int(lines_catalog[-1][0]+1000) #initially: 4500
+
+                    _logger.info('wv_ini_search %s', wv_ini_search)
+                    _logger.info('wv_end_search %s', wv_end_search)
+
+                    try:
+                        solution = arccalibration_direct(wv_master,
+                                                         ntriplets_master,
+                                                         ratios_master_sorted,
+                                                         triplets_master_sorted_list,
+                                                         xpeaks_refined,
+                                                         naxis1,
+                                                         wv_ini_search=wv_ini_search,
+                                                         wv_end_search=wv_end_search,
+                                                         error_xpos_arc=0.3, #initially: 2.0
+                                                         times_sigma_r=3.0,
+                                                         frac_triplets_for_sum=0.50,
+                                                         times_sigma_theil_sen=10.0,
+                                                         poly_degree_wfit=poldeg,
+                                                         times_sigma_polfilt=10.0,
+                                                         times_sigma_inclusion=5.0)
+
+                        _logger.info('Solution for row %d completed', idx)
+                        _logger.info('Fitting solution for row %d', idx)
+                        numpy_array_with_coeff, crval1_approx, cdelt1_approx = \
+                            fit_solution(wv_master,
+                                         xpeaks_refined,
+                                         solution,
+                                         poly_degree_wfit=poldeg,
+                                         weighted=False)
+
+                        _logger.info('approximate crval1, cdelt1: %f %f',
+                                     crval1_approx,
+                                     cdelt1_approx)
+
+                        _logger.info('fitted coefficients %s', numpy_array_with_coeff)
+                        coeff_table[idx] = numpy_array_with_coeff
+                    except TypeError as error:
+                        _logger.error("%s", error)
+                except:
+                    _logger.error('Erro en Fibra: %s', idx)
+                    error_contador += 1
             else:
                 lista_xpeaks_refined.append(numpy.array([]))
                 solution = []
 
+            _logger.error('ERRORES: %s', error_contador)
+
             lista_solution.append(solution)
             # coeff_table[idx] = numpy_array_with_coeff
-
 
 
         data_wlcalib = self.generateJSON(coeff_table, lista_solution,
@@ -308,29 +352,31 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             features = []
             function = {}
 
-            if numpy.any(xpeaks):
+            if numpy.any(xpeaks) and lista_solution[ind]:
                 res = polyval(xpeaks, coeff_table[ind])
                 _logger.info('indice: %s', ind)
 
-                feature = {'xpos':None,
-                           'wavelength':None,
-                           'reference':None,
-                           'flux':None,
-                           'category':None
-                  }
-                for aux, elem in enumerate(xpeaks):
-                    feature['xpos'] = xpeaks[aux]
-                    feature['wavelength'] = res[aux]
-                    feature['reference'] = lines_catalog[aux][0]
-                    feature['flux'] = lines_catalog[aux][1]
-                    feature['category'] = lista_solution[ind][aux]['type']
-                    features.append(feature)
+                if numpy.any(res):
 
-                function = {
-                    'method':'least squares',
-                    'order':poldeg,
-                    'coecifients': coeff_table[ind].tolist()
-                }
+                    feature = {'xpos':None,
+                               'wavelength':None,
+                               'reference':None,
+                               'flux':None,
+                               'category':None
+                      }
+                    for aux, elem in enumerate(xpeaks):
+                        feature['xpos'] = xpeaks[aux]
+                        feature['wavelength'] = res[aux]
+                        feature['reference'] = lines_catalog[aux][0]
+                        feature['flux'] = lines_catalog[aux][1]
+                        feature['category'] = lista_solution[ind][aux]['type']
+                        features.append(feature)
+
+                    function = {
+                        'method':'least squares',
+                        'order':poldeg,
+                        'coecifients': coeff_table[ind].tolist()
+                    }
 
             record['aperture'] = {'id': ind + 1,
                                   'features': features,
