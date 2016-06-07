@@ -29,80 +29,7 @@ from skimage.feature import peak_local_max
 
 _logger = logging.getLogger('numina.recipes.megara')
 
-def delicate_centre(x, y):
-    pos = np.polyfit(x, y, deg=2)
-    tx = -pos[1] / (2 * pos[0])
-    py = np.polyval(pos, tx)
-    return tx, py, pos
-
-
-class FiberTraceInfo(object):
-    def __init__(self, fibid, boxid):
-        self.boxid = boxid
-        self.fibid = fibid
-        self.start = None
-
-
-def init_traces(image, center, hs, background, maxdis=9.0):
-
-    ixmin = 0
-    ixmax = image.shape[0]
-
-    box_borders = [123, 262, 400, 536, 713, 887, 1103, 1360, 1823, 2287, 2750, 3007, 3223, 3397, 3574, 3710, 3848, 3985]
-    box_borders2 = [150, 294, 429, 557, 733, 906, 1120, 1373, 1823, 2287, 2737, 2992, 3205, 3377, 3553, 3684, 3815, 3962]
-    vborders2 = [676, 818, 1966, 1222, 3502, 5415, 2110, 2850, 2133, 2800, 3004, 4134, 6046, 4886, 1458, 2614, 900, 721]
-
-    for x1, x2 in zip(box_borders, box_borders2):
-        _logger.debug (x1, x1-x2)
-
-    xx = np.arange(image.shape[0])
-
-    cut_region = slice(center-hs, center+hs)
-    cut = image[:,cut_region]
-    colcut = cut.mean(axis=1)
-
-    import matplotlib.pyplot as plt
-
-    _logger.debug('background', background)
-    maxt = peak_detection_mean_window(colcut, x=xx, k=3, xmin=ixmin, xmax=ixmax, background=background)
-    _logger.debug('maxt', maxt)
-    #plt.ylim([-600, 600])
-    plt.plot(colcut)
-    #plt.plot(maxt[:,0], maxt[:,2], 'r*')
-    plt.plot(box_borders, [5000 for i in box_borders], 'g*')
-    plt.plot(box_borders2, vborders2, 'r*')
-    plt.show()
-    peakdist = np.diff(maxt[:,1])
-    npeaks = maxt.shape[0]
-
-    # Count the number of groups
-    # fibers separated by more than "maxdis" pixels
-    group_changes = np.nonzero(peakdist > maxdis)[0]
-    # Fill groups
-    groups = np.ones(npeaks, dtype='int')
-    for p in group_changes:
-        groups[p+1:] += 1
-
-    fiber_traces = {}
-    for fibid in range(1, npeaks+1):
-        fiber_traces[fibid] = FiberTraceInfo(fibid, int(groups[fibid-1]))
-
-    # Window to fix the center of the trace
-    fw = 2
-    for fibid, trace in fiber_traces.items():
-        _xi, _yi, _vali = center, maxt[fibid-1,1], maxt[fibid-1,2]
-        pixmax = int(maxt[fibid-1,0])
-        # Take 2*2+1 pix
-        # This part and interp_max_3(image[nearp3-1:nearp3+2, col])
-        # should do the same
-        tx, py, _pos = delicate_centre(xx[pixmax-fw: pixmax+fw+1], 
-                                     colcut[pixmax-fw: pixmax+fw+1])
-
-        trace.start = (center, tx, py)
-
-    return fiber_traces
-
-
+# Number of fibers in the boxes of the pseudo-slit of the LCB
 boxes = [
     {'nfibers': 21,
      'id': 1},
@@ -140,34 +67,61 @@ boxes = [
      'id': 17}
 ]
 
-def ncl_gen_triplets_master(positions):
-    import itertools
 
-    nlines_master = len(positions)
-    iter_comb_triplets = itertools.combinations(range(nlines_master), 3)
-    triplets_master_list = list(iter_comb_triplets)
-    # _logger.debug(iter_comb_triplets) This is iterator
-    # For each triplet, compute the relative position of the central line.
-
-    ntriplets_master = len(triplets_master_list)
-
-    ratios_master = np.zeros(ntriplets_master)
-    for i_tupla in range(ntriplets_master):
-        i1, i2, i3 = triplets_master_list[i_tupla]
-        delta1 = positions[i2] - positions[i1]
-        delta2 = positions[i3] - positions[i1]
-        ratios_master[i_tupla] = delta1 / delta2
-
-    # Compute the array of indices that index the above ratios in sorted order.
-    isort_ratios_master = np.argsort(ratios_master)
-
-    # Simultaneous sort of position ratios and triplets.
-    ratios_master_sorted = ratios_master[isort_ratios_master]
-    triplets_master_sorted_list = [triplets_master_list[i] for i in isort_ratios_master]
-
-    return ntriplets_master, ratios_master_sorted, triplets_master_sorted_list
+def delicate_centre(x, y):
+    pos = np.polyfit(x, y, deg=2)
+    tx = -pos[1] / (2 * pos[0])
+    py = np.polyval(pos, tx)
+    return tx, py, pos
 
 
+class FiberTraceInfo(object):
+    def __init__(self, fibid, boxid):
+        self.boxid = boxid
+        self.fibid = fibid
+        self.start = None
+
+
+def init_traces(image, center, hs, background, maxdis=9.0):
+    ixmin = 0
+    ixmax = image.shape[0]
+
+    xx = np.arange(image.shape[0])
+
+    cut_region = slice(center - hs, center + hs)
+    cut = image[:, cut_region]
+    colcut = cut.mean(axis=1)
+    maxt = peak_detection_mean_window(colcut, x=xx, k=3, xmin=ixmin, xmax=ixmax, background=background)
+
+    peakdist = np.diff(maxt[:, 1])
+    npeaks = maxt.shape[0]
+
+    # Count the number of groups
+    # fibers separated by more than "maxdis" pixels
+    group_changes = np.nonzero(peakdist > maxdis)[0]
+    # Fill groups
+    groups = np.ones(npeaks, dtype='int')
+    for p in group_changes:
+        groups[p + 1:] += 1
+
+    fiber_traces = {}
+    for fibid in range(1, npeaks + 1):
+        fiber_traces[fibid] = FiberTraceInfo(fibid, int(groups[fibid - 1]))
+
+    # Window to fix the center of the trace
+    fw = 2
+    for fibid, trace in fiber_traces.items():
+        _xi, _yi, _vali = center, maxt[fibid - 1, 1], maxt[fibid - 1, 2]
+        pixmax = int(maxt[fibid - 1, 0])
+        # Take 2*2+1 pix
+        # This part and interp_max_3(image[nearp3-1:nearp3+2, col])
+        # should do the same
+        tx, py, _pos = delicate_centre(xx[pixmax - fw: pixmax + fw + 1],
+                                       colcut[pixmax - fw: pixmax + fw + 1])
+
+        trace.start = (center, tx, py)
+
+    return fiber_traces
 
 
 def init_traces_ex(image, center, hs, box_borders, tol=1.5):
@@ -293,7 +247,7 @@ def init_traces_ex(image, center, hs, box_borders, tol=1.5):
             _logger.debug(pairs_1)
 
         # reindex
-        assert(len(pairs_1) == nfibers)
+        # assert(len(pairs_1) == nfibers)
 
         for fibid, (relfibid, match) in enumerate(pairs_1, counted_fibers):
             fiber_traces[fibid] = FiberTraceInfo(fibid+1, box['id'])

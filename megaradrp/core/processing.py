@@ -25,6 +25,7 @@ from numina.array.trace.extract import extract_simple_rss
 
 _direc = ['normal', 'mirror']
 
+
 def trimOut(data, direction='normal', out='trimmed.fits', confFile={}):
     '''
 
@@ -89,6 +90,7 @@ def trim_and_o_array(array, direction='normal', confFile={}):
 
     return finaldata
 
+
 def get_conf_value(confFile, key=''):
     if confFile:
         if key in confFile.keys():
@@ -99,6 +101,7 @@ def get_conf_value(confFile, key=''):
         else:
             raise ValueError('Key is not in configuration file')
     raise ValueError('Instrument configuration is not in the system')
+
 
 def apextract(data, trace):
     """Extract apertures."""
@@ -111,8 +114,13 @@ def apextract(data, trace):
         rss[idx] = m
     return rss
 
+
 def apextract_tracemap_2(data, tracemap):
-    """Extract apertures using a tracemap."""
+    """Extract apertures using a tracemap.
+
+    Consider that the nearest fiber could be far away if there
+    are missing fibers.
+    """
 
     existing = [None]
     for t in tracemap:
@@ -124,18 +132,17 @@ def apextract_tracemap_2(data, tracemap):
     # Compute borders
     borders = []
 
-    # Something special for the first and the last..
-    # The rest cases
+    # Handle the first and last using centinels
     for t1, t2, t3 in zip(existing, existing[1:], existing[2:]):
         # Distance to contfibers # in box
         if t1 is None:
             d21 = 100
         else:
-            d21 = t2['fibid'] - t1['fibid']
+            d21 = (t2['fibid'] - t1['fibid']) + (t2['boxid'] - t1['boxid'])
         if t3 is None:
             d32 = 100
         else:
-            d32 = t3['fibid'] - t2['fibid']
+            d32 = (t3['fibid'] - t2['fibid']) + (t3['boxid'] - t2['boxid'])
 
         # Right border
         if d32 == 1:
@@ -175,6 +182,7 @@ def apextract_tracemap_2(data, tracemap):
 def extract_simple_rss2(arr, borders2, axis=0, out=None):
     import numpy
     from numina.array.trace.extract import extract_simple_intl
+    # FIXME, this should be changed in numina
     # If arr is not in native byte order, the C-extension won't work
     if arr.dtype.byteorder != '=':
         arr2 = arr.byteswap().newbyteorder()
@@ -201,7 +209,6 @@ def extract_simple_rss2(arr, borders2, axis=0, out=None):
         bb2[bb2 > arr3.shape[0] - 0.5] = arr3.shape[0] - 0.5
         extract_simple_intl(arr3, xx, bb1, bb2, out[idx-1])
     return out
-
 
 
 def apextract_tracemap(data, tracemap):
@@ -250,11 +257,8 @@ def apextract_tracemap(data, tracemap):
     return rss
 
 
-
-
-
 def apextract_weights(data, weights, size=4096):
-    """Extract apertures using a tracemap."""
+    """Extract apertures using a map of weights."""
 
     import multiprocessing as mp
 

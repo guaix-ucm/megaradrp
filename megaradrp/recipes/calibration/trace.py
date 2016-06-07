@@ -69,8 +69,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
         maxdis1 = 2.0
 
         _logger.info('estimate background in column %i', cstart)
-        background1 = estimate_background(data, center=cstart, hs=hs, boxref=box_borders)
-        _logger.info('background level is %f', background1)
+        background = estimate_background(data, center=cstart, hs=hs, boxref=box_borders)
+        _logger.info('background level is %f', background)
 
 
         _logger.info('find peaks in column %i', cstart)
@@ -87,10 +87,12 @@ class TraceMapRecipe(MegaraBaseRecipe):
         tracelist = []
         _logger.info('trace peaks')
         for dtrace in central_peaks.values():
-
+            # FIXME, for traces, the background must be local, the background
+            # in the center is not always good
+            local_trace_background = background
             if dtrace.start:
                 mm = trace(image2, x=cstart, y=dtrace.start[1], step=step1,
-                         hs=hs, background=background1, maxdis=maxdis1)
+                         hs=hs, background=local_trace_background, maxdis=maxdis1)
                 if len(mm) < poldeg + 1:
                     _logger.warning('in fibid %d, only %d points to fit pol of degree %d',
                                     dtrace.fibid, len(mm), poldeg)

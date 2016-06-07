@@ -137,6 +137,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
 
     def detrend(self, m, deg=5, tol=1e-3):
+        # FIXME: this should go to numina
         import numpy as np
         nloop = 10
         xx = np.arange(len(m))
@@ -187,7 +188,10 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
                     trend = self.detrend(row)
                     fibdata_detrend = row - trend
-                    row = fibdata_detrend[:1850]
+                    # A fix for May 2016 test images
+                    # that only have lines there
+                    #row = fibdata_detrend[:1850]
+                    row = fibdata_detrend
 
                     _logger.info('Starting row %d', idx)
                     # find peaks (initial search providing integer numbers)
@@ -259,8 +263,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 missing_fib += 1
                 lista_xpeaks_refined.append(numpy.array([]))
 
-            _logger.error('ERRORES: %s', error_contador)
-            _logger.error('Perdidas: %s', missing_fib)
+            _logger.error('ERRORS: %s', error_contador)
+            _logger.error('Lost: %s', missing_fib)
 
             lista_solution.append(solution)
             # coeff_table[idx] = numpy_array_with_coeff
@@ -276,7 +280,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         fwhm_image = fits.PrimaryHDU(image)
         fwhm_image = fits.HDUList([fwhm_image])
 
-        _logger.info('Fin')
+        _logger.info('End')
 
         return data_wlcalib, fwhm_image
 
