@@ -264,7 +264,7 @@ def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, 
     xcenter = detector.dshape[1] // 2
     ycenter = detector.dshape[0] // 2
 
-    spos = -PIXSCALE * (np.arange(0, DSHAPE[1] * scale) - scale * xcenter) / scale
+    spos = PIXSCALE * (np.arange(0, DSHAPE[1] * scale) - scale * xcenter) / scale
 
     wl_in_super = vph.ps_x_wl(y_ps_fibers, -spos, grid=True)
     # revert
