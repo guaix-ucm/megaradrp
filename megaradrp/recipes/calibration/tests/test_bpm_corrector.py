@@ -29,7 +29,7 @@ from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
 
 from megaradrp.recipes.calibration.tests.test_bpm_common import crear_archivos
-from megaradrp.loader.insconf import MegaraInstrumentConfiguration
+from megaradrp.core.insconf import MegaraInstrumentConfiguration
 
 class TestRecipe(MegaraBaseRecipe):
     obresult = ObservationResultRequirement()

@@ -10,7 +10,7 @@ from megaradrp.recipes.calibration.tests.test_bpm_common import generate_bias
 from megaradrp.simulation.factory import MegaraImageFactory
 from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.actions import simulate_dark_fits
-from megaradrp.loader.insconf import MegaraInstrumentConfiguration
+from megaradrp.core.insconf import MegaraInstrumentConfiguration
 
 def test_dark():
     PSCAN = 50
