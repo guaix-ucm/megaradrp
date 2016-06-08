@@ -179,13 +179,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     import matplotlib.pyplot as plt
                     from skimage.filters import threshold_otsu
 
-                    # row = row[:2250] #funciona con idx=299 threshold_rel=0.13, min_distance=50
-                    # row = row[:1860]
-                    # aux = numpy.ones((2850))
-                    # aux[:1350] = row[:1350]
-                    # aux[1350:] = row[1450:2950]
-                    # row = aux
-
                     trend = self.detrend(row)
                     fibdata_detrend = row - trend
                     # A fix for May 2016 test images
@@ -405,21 +398,16 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 
                 if numpy.any(res):
                     for aux, elem in enumerate(xpeaks):
-                        feature = {'xpos':None,
-                                   'wavelength':None,
-                                   'reference':None,
-                                   'flux':None,
-                                   'category':None
-                          }
+                        if len(lines_rss_fwhm[ind])>aux:
+                            feature = {'xpos': xpeaks[aux],
+                                       'wavelength': res[aux],
+                                       'reference': lines_catalog[aux][0],
+                                       'flux': lines_rss_fwhm[ind][aux][3],
+                                       'category': lista_solution[ind][aux]['type'],
+                                       'fwhm': lines_rss_fwhm[ind][aux][2],
+                                       'ypos': lines_rss_fwhm[ind][aux][1] + 1}
 
-                        feature['xpos'] = xpeaks[aux]
-                        feature['wavelength'] = res[aux]
-                        feature['reference'] = lines_catalog[aux][0]
-                        feature['flux'] = lines_rss_fwhm[ind][aux][3]
-                        feature['category'] = lista_solution[ind][aux]['type']
-                        feature['fwhm'] = lines_rss_fwhm[ind][aux][2]
-                        feature['ypos'] = lines_rss_fwhm[ind][aux][1] + 1## Fits coordinate.
-                        features.append(feature)
+                            features.append(feature)
 
             function = {
                 'method':'least squares',
