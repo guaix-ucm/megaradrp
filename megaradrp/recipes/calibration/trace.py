@@ -23,6 +23,7 @@ from __future__ import division, print_function
 
 import logging
 import numpy
+import matplotlib.pyplot as plt
 
 from numina.array.trace.traces import trace
 from numina.core import Product
@@ -89,10 +90,17 @@ class TraceMapRecipe(MegaraBaseRecipe):
         for dtrace in central_peaks.values():
             # FIXME, for traces, the background must be local, the background
             # in the center is not always good
-            local_trace_background = background
+            local_trace_background = 300 # background
             if dtrace.start:
                 mm = trace(image2, x=cstart, y=dtrace.start[1], step=step1,
                          hs=hs, background=local_trace_background, maxdis=maxdis1)
+                if False:
+                    plt.plot(mm[:,0], mm[:,1])
+                    plt.savefig('trace-xy-%d.png' % dtrace.fibid)
+                    plt.close()
+                    plt.plot(mm[:,0], mm[:,2])
+                    plt.savefig('trace-xz-%d.png' % dtrace.fibid)
+                    plt.close()
                 if len(mm) < poldeg + 1:
                     _logger.warning('in fibid %d, only %d points to fit pol of degree %d',
                                     dtrace.fibid, len(mm), poldeg)

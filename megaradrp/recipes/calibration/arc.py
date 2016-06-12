@@ -26,6 +26,9 @@ import logging
 import numpy
 from astropy.io import fits
 from scipy.interpolate import interp1d
+import matplotlib.pyplot as plt
+from skimage.filters import threshold_otsu
+
 from numina.core import Requirement, Product, Parameter, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import LinesCatalog
@@ -71,10 +74,14 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         parameters = self.get_parameters(rinput)
         reduced = self.bias_process_common(rinput.obresult, parameters)
 
-        _logger.info('extract fibers')
         _logger.info('extract fibers, %i', len(rinput.tracemap))
+        # List of nonextracted fiberids
+        fibids_not_traced = [trace['fibid'] for trace in rinput.tracemap if not trace['fitparms']]
+        _logger.info('not traced fibers, %i', len(fibids_not_traced))
+
         # rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
         rssdata = apextract_tracemap_2(reduced[0].data, rinput.tracemap)
+
         rsshdu = fits.PrimaryHDU(rssdata, header=reduced[0].header)
         header_list = self.getHeaderList(
             [reduced, rinput.obresult.images[0].open()])
@@ -89,7 +96,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         #                                  rinput.polynomial_degree, rinput.tracemap)
         
         data_wlcalib, fwhm_image = self.calibrate_wl2(rssdata, rinput.lines_catalog,
-                                        rinput.polynomial_degree, rinput.tracemap)
+                                        rinput.polynomial_degree, rinput.tracemap,
+                                                      skiptraces=fibids_not_traced)
         
         # WL calibration goes here
         return self.create_result(arc_image=reduced, arc_rss=rss,
@@ -155,13 +163,14 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             ss = np.minimum(ss, m2)
         return m2
 
-    def calibrate_wl2(self, rss, lines_catalog, poldeg, tracemap, times_sigma=50.0):
+    def calibrate_wl2(self, rss, lines_catalog, poldeg, tracemap, times_sigma=50.0, skiptraces=None):
         #
         # read master table (TBM) and generate auxiliary parameters (valid for
         # all the slits) for the wavelength calibration
         lista_solution = []
         lista_xpeaks_refined = []
-
+        if skiptraces is None:
+            skiptraces = []
         wv_master = lines_catalog[:, 0]
         ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
             gen_triplets_master(wv_master)
@@ -174,95 +183,99 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         missing_fib = 0
         for idx, row in enumerate(rss):
             solution = []
-            if numpy.any(row):
-                try:
-                    import matplotlib.pyplot as plt
-                    from skimage.filters import threshold_otsu
+            fibid = idx + 1
+            if fibid not in skiptraces:
 
-                    trend = self.detrend(row)
-                    fibdata_detrend = row - trend
-                    # A fix for May 2016 test images
-                    # that only have lines there
-                    #row = fibdata_detrend[:1850]
-                    row = fibdata_detrend
+                trend = self.detrend(row)
+                fibdata_detrend = row - trend
+                # A fix for May 2016 test images
+                # that only have lines there
+                row = fibdata_detrend[:3000]
+                #row = fibdata_detrend
 
-                    _logger.info('Starting row %d', idx)
-                    # find peaks (initial search providing integer numbers)
-                    ipeaks_int = peak_local_max(row, threshold_rel=0.02, min_distance=40)[:, 0]
-                    logging.warning('ipeaks_int: %s', ipeaks_int)
-                    ipeaks_float = refine_peaks(row, ipeaks_int, nwinwidth)[0]
+                _logger.info('Starting row %d, fibid %d', idx, fibid)
+                # find peaks (initial search providing integer numbers)
+                ipeaks_int = peak_local_max(row, threshold_rel=0.02, threshold_abs=5000,
+                                            min_distance=6)[:, 0]
+                _logger.debug('ipeaks_int: %s', ipeaks_int)
+                ipeaks_float = refine_peaks(row, ipeaks_int, nwinwidth)[0]
 
-                    # plt.plot(row)
-                    # plt.plot(ipeaks_int, row[ipeaks_int],'ro', alpha=.9, ms=7, label="ipeaks_int")
+                if False:
+                    plt.title('fibid %d' % fibid)
+                    plt.plot(row)
+                    plt.plot(ipeaks_int, row[ipeaks_int],'ro', alpha=.9, ms=7, label="ipeaks_int")
                     # # plt.plot(ipeaks_int2, row[ipeaks_int2],'gs', alpha=.5 , ms=10)
-                    # plt.legend()
-                    # plt.show()
+                    plt.legend()
+                    plt.show()
 
-                    # FIXME: xchannel ???
-                    # This comes from Nico's code, so probably pixels
-                    # will start in 1
-                    naxis1 = row.shape[0]
-                    xchannel = numpy.arange(1, naxis1 + 1)
+                # FIXME: xchannel ???
+                # This comes from Nico's code, so probably pixels
+                # will start in 1
+                naxis1 = row.shape[0]
+                xchannel = numpy.arange(1, naxis1 + 1)
 
-                    finterp_channel = interp1d(range(xchannel.size), xchannel,
-                                               kind='linear')
-                    xpeaks_refined = finterp_channel(ipeaks_float)
-                    lista_xpeaks_refined.append(xpeaks_refined)
-                    wv_ini_search = int(lines_catalog[0][0]-1000) # initially: 3500
-                    wv_end_search = int(lines_catalog[-1][0]+1000) #initially: 4500
+                finterp_channel = interp1d(range(xchannel.size), xchannel,
+                                           kind='linear')
+                xpeaks_refined = finterp_channel(ipeaks_float)
+                lista_xpeaks_refined.append(xpeaks_refined)
+                wv_ini_search = int(lines_catalog[0][0]-1000) # initially: 3500
+                wv_end_search = int(lines_catalog[-1][0]+1000) #initially: 4500
 
-                    _logger.info('wv_ini_search %s', wv_ini_search)
-                    _logger.info('wv_end_search %s', wv_end_search)
+                _logger.info('wv_ini_search %s', wv_ini_search)
+                _logger.info('wv_end_search %s', wv_end_search)
+                try:
+                    solution = arccalibration_direct(wv_master,
+                                                     ntriplets_master,
+                                                     ratios_master_sorted,
+                                                     triplets_master_sorted_list,
+                                                     xpeaks_refined,
+                                                     naxis1,
+                                                     wv_ini_search=wv_ini_search,
+                                                     wv_end_search=wv_end_search,
+                                                     error_xpos_arc=0.3, #initially: 2.0
+                                                     times_sigma_r=3.0,
+                                                     frac_triplets_for_sum=0.50,
+                                                     times_sigma_theil_sen=10.0,
+                                                     poly_degree_wfit=poldeg,
+                                                     times_sigma_polfilt=10.0,
+                                                     times_sigma_inclusion=5.0)
 
-                    try:
-                        solution = arccalibration_direct(wv_master,
-                                                         ntriplets_master,
-                                                         ratios_master_sorted,
-                                                         triplets_master_sorted_list,
-                                                         xpeaks_refined,
-                                                         naxis1,
-                                                         wv_ini_search=wv_ini_search,
-                                                         wv_end_search=wv_end_search,
-                                                         error_xpos_arc=0.3, #initially: 2.0
-                                                         times_sigma_r=3.0,
-                                                         frac_triplets_for_sum=0.50,
-                                                         times_sigma_theil_sen=10.0,
-                                                         poly_degree_wfit=poldeg,
-                                                         times_sigma_polfilt=10.0,
-                                                         times_sigma_inclusion=5.0)
+                    _logger.info('Solution for row %d completed', idx)
+                    _logger.info('Fitting solution for row %d', idx)
+                    numpy_array_with_coeff, crval1_approx, cdelt1_approx = \
+                        fit_solution(wv_master,
+                                     xpeaks_refined,
+                                     solution,
+                                     poly_degree_wfit=poldeg,
+                                     weighted=False)
 
-                        _logger.info('Solution for row %d completed', idx)
-                        _logger.info('Fitting solution for row %d', idx)
-                        numpy_array_with_coeff, crval1_approx, cdelt1_approx = \
-                            fit_solution(wv_master,
-                                         xpeaks_refined,
-                                         solution,
-                                         poly_degree_wfit=poldeg,
-                                         weighted=False)
+                    _logger.info('approximate crval1, cdelt1: %f %f',
+                                 crval1_approx,
+                                 cdelt1_approx)
 
-                        _logger.info('approximate crval1, cdelt1: %f %f',
-                                     crval1_approx,
-                                     cdelt1_approx)
+                    _logger.info('fitted coefficients %s', numpy_array_with_coeff)
+                    coeff_table[idx] = numpy_array_with_coeff
 
-                        _logger.info('fitted coefficients %s', numpy_array_with_coeff)
-                        coeff_table[idx] = numpy_array_with_coeff
-                    except TypeError as error:
-                        _logger.error("%s", error)
                 except ValueError as error:
                     _logger.error("%s", error)
-                    _logger.error('Erro en Fibra: %s', idx)
+                    _logger.info('error in row %d, fibid %d', idx, fibid)
+                    if fibid > 450:
+                        plt.title('fibid %d' % fibid)
+                        plt.plot(row)
+                        plt.plot(ipeaks_int, row[ipeaks_int], 'ro', alpha=.9, ms=7, label="ipeaks_int")
+                        # # plt.plot(ipeaks_int2, row[ipeaks_int2],'gs', alpha=.5 , ms=10)
+                        plt.legend()
+                        plt.show()
                     error_contador += 1
             else:
+                _logger.info('skipping row %d, fibid %d, not extracted', idx, fibid)
                 missing_fib += 1
                 lista_xpeaks_refined.append(numpy.array([]))
 
-            _logger.error('ERRORS: %s', error_contador)
-            _logger.error('Lost: %s', missing_fib)
-
             lista_solution.append(solution)
             # coeff_table[idx] = numpy_array_with_coeff
-
-
+        _logger.info('Errors in fitting: %s', error_contador)
+        _logger.info('Missing fibers: %s', missing_fib)
         lines_rss_fwhm = self.run_on_image(rss, tracemap)
         data_wlcalib = self.generateJSON(coeff_table, lista_solution,
                                          lista_xpeaks_refined, poldeg,

@@ -64,7 +64,7 @@ class OverscanCorrector(TagOptionalCorrector):
         self.pcol2 = (slice(prescanX, prescanY), slice(prescanZ, prescanT))
         self.ocol2 = (slice(overscanX, overscanY), slice(overscanZ, overscanT))
 
-        self.test_image()
+        # self.test_image()
 
         if tagger is None:
             tagger = TagFits('NUM-OVPE', 'Over scan/prescan')

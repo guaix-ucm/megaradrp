@@ -138,7 +138,7 @@ def create_optics():
 def illum1(x, y):
     """Explicit illumination in the focal plane"""
     r = np.hypot(x, y)
-    return np.where(r <= 50.0, 1.0, 0.5)
+    return np.where(r <= 50.0, 1.0, 0.0)
 
 
 def illum2(x, y):
@@ -245,8 +245,8 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    illum = None
-    cu = create_calibration_unit(illum=None)
+    illum = illum1
+    cu = create_calibration_unit(illum=illum)
     instrument = create_instrument()
     telescope = create_telescope()
 
