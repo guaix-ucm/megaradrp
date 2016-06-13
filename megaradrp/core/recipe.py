@@ -210,7 +210,7 @@ class MegaraBaseRecipe(BaseRecipe):
 
     def get_wlcalib(self, data):
 
-        wlcalib = [elem['aperture']['function']['coecifients'] for elem in
+        wlcalib = [elem['aperture']['function']['coefficients'] for elem in
                    data]
         return np.array(wlcalib)
 
