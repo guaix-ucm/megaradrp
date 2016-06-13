@@ -259,7 +259,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 except ValueError as error:
                     _logger.error("%s", error)
                     _logger.info('error in row %d, fibid %d', idx, fibid)
-                    if fibid > 450:
+                    if False:
                         plt.title('fibid %d' % fibid)
                         plt.plot(row)
                         plt.plot(ipeaks_int, row[ipeaks_int], 'ro', alpha=.9, ms=7, label="ipeaks_int")
