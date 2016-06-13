@@ -136,10 +136,13 @@ def init_traces_ex(image, center, hs, box_borders, tol=1.5):
     total_peaks_pos = []
 
     ipeaks_int = peak_local_max(colcut, min_distance=2, threshold_rel=0.2)[:, 0]
-    import matplotlib.pyplot as plt
-    plt.plot(colcut)
-    plt.plot(ipeaks_int, colcut[ipeaks_int], 'r*')
-    plt.show()
+    if False:
+        import matplotlib.pyplot as plt
+        plt.plot(colcut)
+        plt.plot(ipeaks_int, colcut[ipeaks_int], 'r*')
+        for border in box_borders:
+            plt.axvline(border, color='k')
+        plt.show()
     ipeaks_float = refine_peaks(colcut, ipeaks_int, 3)[0]
     peaks_y = np.ones((ipeaks_int.shape[0],3))
     peaks_y[:,0] = ipeaks_int

@@ -188,7 +188,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
                 trend = self.detrend(row)
                 fibdata_detrend = row - trend
-                # A fix for May 2016 test images
+                # A fix for LR-V Jun 2016 test images
                 # that only have lines there
                 row = fibdata_detrend[:3000]
                 #row = fibdata_detrend

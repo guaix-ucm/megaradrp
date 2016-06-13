@@ -61,8 +61,9 @@ class TraceMapRecipe(MegaraBaseRecipe):
         # For a given VPH, the position of the borders of the boxes
         # depend on position
         # For our current VPH
+        current_vph = rinput.obresult.tags['vph']
         cstart = rinput.obresult.configuration.values['box']['boxcol']
-        box_borders = rinput.obresult.configuration.values['box']['real']
+        box_borders = rinput.obresult.configuration.values['box'][current_vph]
 
         hs = 3
         step1 = 2
@@ -73,10 +74,9 @@ class TraceMapRecipe(MegaraBaseRecipe):
         background = estimate_background(data, center=cstart, hs=hs, boxref=box_borders)
         _logger.info('background level is %f', background)
 
-
         _logger.info('find peaks in column %i', cstart)
 
-        central_peaks = init_traces_ex(data, center=cstart, hs=hs,box_borders=box_borders,tol=1.63)
+        central_peaks = init_traces_ex(data, center=cstart, hs=hs, box_borders=box_borders, tol=1.63)
 
         # The byteswapping is required by the cython module
         if data.dtype.byteorder != '=':
