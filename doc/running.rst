@@ -153,6 +153,19 @@ The we run::
 We get information of what's going on through logging messages. In the end, the result and log files are stored in ``obsid<id_of_obs>_results``.
 The working directory ``obsid<id_of_obs>_work`` can be inspected too.
 
+On the other hand, in the following we attach a short code to run megaradrp
+by using a Python script:
+
+.. code-block:: python
+
+    from numina.user.cli import main
+    from megaradrp.loader import load_drp
+
+    def run_recipe():
+        main(['run', 'obsresult.yaml', '-r', 'requirements.yaml'])
+
+    if __name__ == "__main__":
+        run_recipe()
 
 
 Pipeline's Flow Example
@@ -305,5 +318,9 @@ MEGARA_FIBER_FLAT_IMAGE:
       - flat3.fits
       - flat4.fits
       - flat5.fits
+
+Notice that if you would want to execute this example automatically, you could
+code a script (following the same skeleton as shown above) with a loop flow to
+read the .yaml files and the outputs that each recipe generates.
 
 .. _YAML: http://www.yaml.org

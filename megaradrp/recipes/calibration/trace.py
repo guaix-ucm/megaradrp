@@ -40,6 +40,12 @@ from skimage.filters import threshold_otsu
 _logger = logging.getLogger('numina.recipes.megara')
 
 
+vph_thr = {'LR-I': 0.27,
+           'LR-R': 0.37,
+           'LR-V': 0.27,
+           'LR-Z': 0.27,
+           }
+
 class TraceMapRecipe(MegaraBaseRecipe):
 
     obresult = ObservationResultRequirement()
@@ -76,7 +82,9 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         _logger.info('find peaks in column %i', cstart)
 
-        central_peaks = init_traces_ex(data, center=cstart, hs=hs, box_borders=box_borders, tol=1.63)
+        threshold = vph_thr[current_vph]
+
+        central_peaks = init_traces_ex(data, center=cstart, hs=hs, box_borders=box_borders, tol=1.63, threshold=threshold)
 
         # The byteswapping is required by the cython module
         if data.dtype.byteorder != '=':

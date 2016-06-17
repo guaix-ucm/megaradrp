@@ -124,7 +124,7 @@ def init_traces(image, center, hs, background, maxdis=9.0):
     return fiber_traces
 
 
-def init_traces_ex(image, center, hs, box_borders, tol=1.5):
+def init_traces_ex(image, center, hs, box_borders, tol=1.5, threshold=0.37):
 
     cut_region = slice(center-hs, center+hs)
     cut = image[:,cut_region]
@@ -135,8 +135,10 @@ def init_traces_ex(image, center, hs, box_borders, tol=1.5):
     total_peaks = 0
     total_peaks_pos = []
 
-    ipeaks_int = peak_local_max(colcut, min_distance=2, threshold_rel=0.2)[:, 0]
-    if True:
+    # ipeaks_int = peak_local_max(colcut, min_distance=2, threshold_rel=0.2)[:, 0]
+    ipeaks_int = peak_local_max(colcut, min_distance=3, threshold_rel=threshold)[:, 0] # All VPH
+    if False:
+
         import matplotlib.pyplot as plt
         plt.plot(colcut)
         plt.plot(ipeaks_int, colcut[ipeaks_int], 'r*')
@@ -253,8 +255,9 @@ def init_traces_ex(image, center, hs, box_borders, tol=1.5):
             pairs_1 = addl + pairs_1 + addr
             _logger.debug(pairs_1)
 
+
         # reindex
-        # assert(len(pairs_1) == nfibers)
+        assert(len(pairs_1) == nfibers)
 
         for fibid, (relfibid, match) in enumerate(pairs_1, counted_fibers):
             fiber_traces[fibid] = FiberTraceInfo(fibid+1, box['id'])
