@@ -17,20 +17,22 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import datetime
 
 import numpy as np
 
 from megaradrp.core.processing import trimOut, get_conf_value
-from numina.flow.processing import TagOptionalCorrector, TagFits
+from numina.flow.processing import Corrector
 
 _logger = logging.getLogger('megara.processing')
 
 
-class OverscanCorrector(TagOptionalCorrector):
+class OverscanCorrector(Corrector):
     '''A Node that corrects a frame from overscan.'''
 
-    def __init__(self, datamodel=None, mark=True, tagger=None,
-                 dtype='float32', confFile={}):
+    def __init__(self, datamodel=None, dtype='float32', confFile=None):
+
+        confFile = {} if confFile is None else confFile
 
         trim1 = get_conf_value(confFile, 'trim1')
         trim2 = get_conf_value(confFile, 'trim2')
@@ -65,13 +67,7 @@ class OverscanCorrector(TagOptionalCorrector):
         self.ocol2 = (slice(overscanX, overscanY), slice(overscanZ, overscanT))
 
         # self.test_image()
-
-        if tagger is None:
-            tagger = TagFits('NUM-OVPE', 'Over scan/prescan')
-
         super(OverscanCorrector, self).__init__(datamodel=datamodel,
-                                                tagger=tagger,
-                                                mark=mark,
                                                 dtype=dtype)
 
     def _get_conf_value(self, confFile, key=''):
@@ -112,7 +108,8 @@ class OverscanCorrector(TagOptionalCorrector):
 
         fits.writeto('eq_estimado.fits', data, clobber=True)
 
-    def _run(self, img):
+    def run(self, img):
+        imgid = self.get_imgid(img)
         data = img[0].data
 
         p1 = data[self.pcol1].mean()
@@ -136,24 +133,34 @@ class OverscanCorrector(TagOptionalCorrector):
         avg = (p2 + oc2) / 2.0
         _logger.debug('average scan2 is %f', avg)
         data[self.trim2] -= avg
+        hdr = img['primary'].header
+        hdr['NUM-OVPE'] = imgid
+        hdr['history'] = 'Overscan correction {}'.format(imgid)
+        hdr['history'] = 'Overscan correction time {}'.format(datetime.datetime.utcnow().isoformat())
+        hdr['history'] = 'Mean of prescan1 is %f' % p1
+        hdr['history'] = 'col overscan1 is %f' %  oc1
+        hdr['history'] = 'average scan1 is %f' % avg
+        hdr['history'] = 'prescan2 is %f' %  p2
+        hdr['history'] = 'col overscan2 is %f' % oc2
+        hdr['history'] = 'average scan2 is %f' % avg
+
         return img
 
 
-class TrimImage(TagOptionalCorrector):
+class TrimImage(Corrector):
     '''A Node that trims images.'''
 
-    def __init__(self, datamodel=None, mark=True,
-                 tagger=None, dtype='float32', confFile={}):
-        self.confFile = confFile
-        if tagger is None:
-            tagger = TagFits('NUM-TRIM', 'Trimming')
+    def __init__(self, datamodel=None, dtype='float32', confFile=None):
+        self.confFile = confFile if confFile is not None else {}
+        super(TrimImage, self).__init__(datamodel=datamodel, dtype=dtype)
 
-        super(TrimImage, self).__init__(datamodel=datamodel, tagger=tagger,
-                                        mark=mark, dtype=dtype)
-
-    def _run(self, img):
+    def run(self, img):
         _logger.debug('trimming image %s', img)
-
+        imgid = self.get_imgid(img)
         img[0] = trimOut(img[0], confFile=self.confFile)
+        hdr = img['primary'].header
+        hdr['NUM-TRIM'] = 'Image section'
+        hdr['history'] = 'Trimming correction {}'.format(imgid)
+        hdr['history'] = 'Trimming correction time {}'.format(datetime.datetime.utcnow().isoformat())
 
         return img

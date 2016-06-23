@@ -19,6 +19,7 @@ configurations:
       LR-I: [140, 281, 409, 545, 714, 883, 1098, 1349, 1804, 2253, 2709, 2961, 3173, 3346, 3520, 3648, 3776, 3920]
       real: [153, 294, 425, 558, 731, 906, 1120, 1373, 1829, 2287, 2740, 2996, 3207, 3383, 3557, 3687, 3824, 3962] #Imagen real
       LR-V: [153, 294, 427, 558, 735, 906, 1120, 1373, 1829, 2287, 2740, 2996, 3209, 3381, 3553, 3687, 3824, 3962]
+      LR-R: [245, 383, 518, 648, 823, 985, 1206, 1457, 1910, 2365, 2812, 3064, 3274, 3446, 3620, 3754, 3886, 4022]
   ing:
     trim1: [[0,2056],[52,4148]]
     trim2: [[2156,4212],[48,4144]]
@@ -39,180 +40,134 @@ configurations:
       real: [153, 294, 427, 558, 735, 906, 1120, 1373, 1829, 2287, 2740, 2996, 3209, 3381, 3553, 3687, 3824, 3962] #Imagen real 9 Jun
       LR-I: [140, 281, 409, 545, 714, 883, 1098, 1349, 1804, 2253, 2709, 2961, 3173, 3346, 3520, 3648, 3776, 3920]
       LR-V: [153, 294, 427, 558, 735, 906, 1120, 1373, 1829, 2287, 2740, 2996, 3209, 3381, 3553, 3687, 3824, 3962]
+      LR-R: [245, 383, 518, 648, 823, 985, 1206, 1457, 1910, 2365, 2812, 3064, 3274, 3446, 3620, 3754, 3886, 4022]
 modes:
-- date: 2013-11-12
-  description: A mode where the recipe successes, used for testing
-  key: success
-  name: Success
-  reference: numina
-  status: FINAL
+- name: Success
   summary: A mode where the recipe successes
+  description: A mode where the recipe successes, used for testing
+  key: MEGARA_SUCCESS
   tagger: null
-- date: 2013-11-12
-  description: A mode where the recipe fails, used for testing
-  key: fail
-  name: Fail
-  reference: numina
-  status: FINAL
+- name: Fail
   summary: A mode where the recipe fails
+  description: A mode where the recipe fails, used for testing
+  key: MEGARA_FAIL
   tagger: null
-- date: 2012-05-21
-  description: Recipe to process bias images
-  key: bias_image
-  name: Bias Image
-  reference: IPUREMI_323
-  status: DRAFT
+- name: Bias Image
   summary: Recipe to process bias images
+  description: Recipe to process bias images
+  key: MEGARA_BIAS_IMAGE
   tagger: null
-- date: 2012-05-21
-  description: Lines and mode lines
-  key: dark_image
-  name: Dark current Image
-  reference: IPUREMI_323
-  status: DRAFT
+- name: Dark current Image
   summary: Summary of Dark current Image
-  uuid: 5b15db30-7774-4823-9645-e8ca27a866af
-  tagger: null
-- date: 2014-04-23
   description: Lines and mode lines
-  key: fiber_flat_image
-  name: Fiber Flat Image
-  reference: IPUREMI_323
-  status: DRAFT
+  key: MEGARA_DARK_IMAGE
+  tagger: null
+- name: Fiber Flat Image
   summary: Summary of Fiber Flat Image
-  uuid: 8a20058f-8887-4b6d-9b65-c113258eccee
-  tagger: megaradrp.taggers.tagger_base_image
-- date: 2014-04-25
   description: Lines and mode lines
-  key: mos_image
-  name: Image with the fiber MOS
-  reference: IPUREMI_323
-  status: DRAFT
-  summary: Summary of Fiber MOS image
-  uuid: 6b2ea25b-e6e4-4e0c-b374-825c70387668
+  key: MEGARA_FIBERFLAT_IMAGE
   tagger: megaradrp.taggers.tagger_base_image
-- date: 2014-04-28
+- name: Image with the fiber MOS
+  summary: Summary of Fiber MOS image
   description: Lines and mode lines
-  key: flux_calibration
-  name: Pseudo flux-calibration
-  reference: IPUREMI_323
-  status: DRAFT
-  summary: Summary of Fiber MOS image
-  uuid: 9114511f-15d8-40d2-a0b1-e4a6202a3e39
+  key: MEGARA_MOS_IMAGE
   tagger: megaradrp.taggers.tagger_base_image
-- date: 2014-12-10
+- name: Pseudo flux-calibration
+  summary: Summary of Fiber MOS image
   description: Lines and mode lines
-  key: trace_map
-  name: Trace Map
-  reference: IPUREMI_323
-  status: DRAFT
-  summary: Summary of Fiber MOS image
-  uuid: 4e5a5d6f-3bee-4630-836e-0eabdf5e9f9b
+  key: MEGARA_FLUX_CALIBRATION
   tagger: megaradrp.taggers.tagger_base_image
-- date: 2015-05-29
-  description: Process an Arc image
-  key: arc_calibration
-  name: Arc Calibration
-  reference: IPUREMI_323
-  status: DRAFT
+- name: Trace Map
+  summary: Summary of Fiber MOS image
+  description: Lines and mode lines
+  key: MEGARA_TRACE_MAP
+  tagger: megaradrp.taggers.tagger_base_image
+- name: Arc Calibration
   summary: Summary of Arc Calibration
-  uuid: c1842e00-2005-48bb-9a0e-8a8161f97fdf
+  description: Process an Arc image
+  key: MEGARA_ARC_CALIBRATION
   tagger: megaradrp.taggers.tagger_base_image
-- date: 2012-05-21
-  description: Bad Pixels
-  key: bpm
-  name: Bad Pixel Mask
-  reference: xxx
-  status: DRAFT
+- name: Bad Pixel Mask
   summary: Bad Pixel Mask
-  uuid: xxxxxx
+  description: Bad Pixels
+  key: MEGARA_BAD_PIXEL_MASK
   tagger: null
-- date: 2016-03-03
-  description: Slit Flat
-  key: slit_flat
-  name: Slit Flat
+- name: Slit Flat
   summary: Slit Flat
+  description: Slit Flat
+  key: MEGARA_SLITFLAT
   tagger: megaradrp.taggers.tagger_base_image
-- date: 2016-03-10
-  description: Weights
-  key: weights
-  name: Weights
+- name: Weights
   summary: Weights
+  description: Weights
+  key: MEGARA_WEIGHTS
   tagger: megaradrp.taggers.tagger_base_image
-- key: focus_spectrograph
+- key: MEGARA_FOCUS_SPECTROGRAPH
   name: Focus Spectrograph
-- date: 2016-04-12
-  description: Twillight fiber flat spectrum
-  key: twilight_flat_image
-  name: Twillight fiber flat
+- name: Twillight fiber flat
   summary: Twillight fiber flat spectrum
+  description: Twillight fiber flat spectrum
+  key: MEGARA_TWILIGHT_FLAT_IMAGE
   tagger: megaradrp.taggers.tagger_base_image
-- date: 2016-04-20
-  description: Image with the LCB
-  key: lcb_image
-  name: Image with the LCB
+- name: Image with the LCB
   summary: Image with the LCB
+  description: Image with the LCB
+  key: MEGARA_LCB_IMAGE
   tagger: megaradrp.taggers.tagger_base_image
-- date: 2016-05-05
-  description: Image with the MOS
-  key: mos_image
-  name: Image with the MOS
+- name: Image with the MOS
   summary: Image with the MOS
+  description: Image with the MOS
+  key: MEGARA_MOS_IMAGE
   tagger: megaradrp.taggers.tagger_base_image
-- date: 2016-05-06
-  description: Extinction Star Recipe
-  key: extinction_star
-  name: Extinction Star Recipe
+- name: Extinction Star Recipe
   summary: Extinction Star Recipe
+  description: Extinction Star Recipe
+  key: MEGARA_EXRINCTION_STAR
   tagger: megaradrp.taggers.tagger_base_image
-- date: 2016-05-06
-  description: LCB Standard Recipe
-  key: lcb_std_star
-  name: LCB Standard Recipe
+- name: LCB Standard Recipe
   summary: LCB Standard Recipe
+  description: LCB Standard Recipe
+  key: MEGARA_LCB_STD_STAR
   tagger: megaradrp.taggers.tagger_base_image
-- date: 2016-05-06
-  description: MOS Standard Recipe
-  key: mos_std_star
-  name: MOS Standard Recipe
+- name: MOS Standard Recipe
   summary: MOS Standard Recipe
+  description: MOS Standard Recipe
+  key: MEGARA_MOS_STD_STAR
   tagger: megaradrp.taggers.tagger_base_image
-- date: 2016-05-06
-  description: Sensivity Star Recipe
-  key: sensivity_star
-  name: Sensivity Star Recipe
+- name: Sensivity Star Recipe
   summary: Sensivity Star Recipe
+  description: Sensivity Star Recipe
+  key: MEGARA_SENSITIVITY_STAR
   tagger: megaradrp.taggers.tagger_base_image
-- date: 2016-05-06
-  description: LCB Fast Mapping Recipe
-  key: lcb_fast_mapping
-  name: LCB Fast Mapping Recipe
+- name: LCB Fast Mapping Recipe
   summary: LCB Fast Mapping Recipe
+  description: LCB Fast Mapping Recipe
+  key: MEGARA_LCB_FAST_MAPPING
   tagger: megaradrp.taggers.tagger_base_image
 pipelines:
   default:
     version: 1
     recipes:
-      arc_calibration: megaradrp.recipes.calibration.arc.ArcCalibrationRecipe
-      bias_image: megaradrp.recipes.calibration.bias.BiasRecipe
-      bpm: megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe
-      dark_image: megaradrp.recipes.calibration.dark.DarkRecipe
-      extinction_star: megaradrp.recipes.scientific.extinctionstar.ExtinctionStarRecipe
-      fail: numina.core.utils.AlwaysFailRecipe
-      fiber_flat_image: megaradrp.recipes.calibration.flat.FiberFlatRecipe
-      flux_calibration: megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipe
-      focus_spectrograph: megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe
-      lcb_fast_mapping: megaradrp.recipes.scientific.lcbfastmapping.LCBFastMappingRecipe
-      lcb_image: megaradrp.recipes.scientific.lcb.LCBImageRecipe
-      lcb_std_star: megaradrp.recipes.scientific.lcbstdstar.LCBStandardRecipe
-      mos_image: megaradrp.recipes.scientific.mos.MOSImageRecipe
-      mos_std_star: megaradrp.recipes.scientific.mosstdstar.MOSStandardRecipe
-      sensivity_star: megaradrp.recipes.scientific.sensivitystar.SensivityStarRecipe
-      slit_flat: megaradrp.recipes.calibration.slitflat.SlitFlatRecipe
-      success: numina.core.utils.AlwaysSuccessRecipe
-      trace_map: megaradrp.recipes.calibration.trace.TraceMapRecipe
-      twilight_flat_image: megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe
-      weights: megaradrp.recipes.calibration.weights.WeightsRecipe
+      MEGARA_SUCCESS: numina.core.utils.AlwaysSuccessRecipe
+      MEGARA_FAIL: numina.core.utils.AlwaysFailRecipe
+      MEGARA_BAD_PIXEL_MASK: megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe
+      MEGARA_BIAS_IMAGE: megaradrp.recipes.calibration.bias.BiasRecipe
+      MEGARA_DARK_IMAGE: megaradrp.recipes.calibration.dark.DarkRecipe
+      MEGARA_ARC_CALIBRATION: megaradrp.recipes.calibration.arc.ArcCalibrationRecipe
+      MEGARA_SLIT_FLAT: megaradrp.recipes.calibration.slitflat.SlitFlatRecipe
+      MEGARA_TRACE_MAP: megaradrp.recipes.calibration.trace.TraceMapRecipe
+      MEGARA_WEIGHTS: megaradrp.recipes.calibration.weights.WeightsRecipe
+      MEGARA_FIBER_FLAT_IMAGE: megaradrp.recipes.calibration.flat.FiberFlatRecipe
+      MEGARA_TWILIGHT_FLAT_IMAGE: megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe
+      MEGARA_FOCUS_SPECTROGRAPH: megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe
+      MEGARA_LCB_IMAGE: megaradrp.recipes.scientific.lcb.LCBImageRecipe
+      MEGARA_LCB_FAST_MAPPING: megaradrp.recipes.scientific.lcbfastmapping.LCBFastMappingRecipe
+      MEGARA_MOS_IMAGE: megaradrp.recipes.scientific.mos.MOSImageRecipe
+      MEGARA_LCB_STD_STAR: megaradrp.recipes.scientific.lcbstdstar.LCBStandardRecipe
+      MEGARA_MOS_STD_STAR: megaradrp.recipes.scientific.mosstdstar.MOSStandardRecipe
+      MEGARA_FLUX_CALIBRATION: megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipe
+      MEGARA_EXTINCTION_STAR: megaradrp.recipes.scientific.extinctionstar.ExtinctionStarRecipe
+      MEGARA_SENSITIVITY_STAR: megaradrp.recipes.scientific.sensivitystar.SensivityStarRecipe
 products:
 - name: megaradrp.products.TraceMap
   alias: TraceMap

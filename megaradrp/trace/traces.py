@@ -136,7 +136,7 @@ def init_traces_ex(image, center, hs, box_borders, tol=1.5):
     total_peaks_pos = []
 
     ipeaks_int = peak_local_max(colcut, min_distance=2, threshold_rel=0.2)[:, 0]
-    if False:
+    if True:
         import matplotlib.pyplot as plt
         plt.plot(colcut)
         plt.plot(ipeaks_int, colcut[ipeaks_int], 'r*')

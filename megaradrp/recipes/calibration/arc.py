@@ -190,7 +190,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 fibdata_detrend = row - trend
                 # A fix for LR-V Jun 2016 test images
                 # that only have lines there
-                row = fibdata_detrend[:3000]
+                row = fibdata_detrend
                 #row = fibdata_detrend
 
                 _logger.info('Starting row %d, fibid %d', idx, fibid)
@@ -259,10 +259,12 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 except ValueError as error:
                     _logger.error("%s", error)
                     _logger.info('error in row %d, fibid %d', idx, fibid)
-                    if False:
+                    if True:
                         plt.title('fibid %d' % fibid)
-                        plt.plot(row)
-                        plt.plot(ipeaks_int, row[ipeaks_int], 'ro', alpha=.9, ms=7, label="ipeaks_int")
+                        rrow = row[::-1]
+                        rpeaks = 4096-ipeaks_int[::-1]
+                        plt.plot(rrow)
+                        plt.plot(rpeaks, rrow[rpeaks], 'ro', alpha=.9, ms=7, label="ipeaks_int")
                         # # plt.plot(ipeaks_int2, row[ipeaks_int2],'gs', alpha=.5 , ms=10)
                         plt.legend()
                         plt.show()

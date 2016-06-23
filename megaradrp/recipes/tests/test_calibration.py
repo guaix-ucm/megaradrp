@@ -41,7 +41,7 @@ def test_recipe1(drpmocker):
     insdrp = DrpSystem().query_by_name('MEGARA')
     pipeline = insdrp.pipelines.get('default')
 
-    recipe_fqn = pipeline.recipes.get('bias_image')
+    recipe_fqn = pipeline.recipes.get('MEGARA_BIAS_IMAGE')
     RecipeClass = import_object(recipe_fqn)
 
     assert RecipeClass is BiasRecipe

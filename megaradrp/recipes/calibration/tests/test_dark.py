@@ -12,6 +12,7 @@ from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.actions import simulate_dark_fits
 from megaradrp.core.insconf import MegaraInstrumentConfiguration
 
+
 def test_dark():
     PSCAN = 50
     DSHAPE = (2056 * 2, 2048 * 2)
@@ -51,7 +52,7 @@ def test_dark():
 
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
-    ob.mode = 'bias_image'
+    ob.mode = 'MEGARA_DARK_IMAGE'
     ob.configuration = MegaraInstrumentConfiguration('configuration', {
         'trim1': [[0, 2056], [50, 4146]],
         'trim2': [[2156, 4212], [50, 4146]],
@@ -76,6 +77,7 @@ def test_dark():
     fits.writeto('%s/master_dark.fits' % temporary_path, aux.master_dark.frame[0].data, clobber=True)
     truncate_data = np.around(aux.master_dark.frame[0].data, decimals=2)
     shutil.rmtree(temporary_path)
+
     assert np.all(truncate_data == np.zeros(truncate_data.shape))
 
 if __name__ == "__main__":
