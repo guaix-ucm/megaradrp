@@ -1,7 +1,6 @@
-
-#####################
+####################
 Running the pipeline
-#####################
+####################
 
 The MEGARA DRP is run through a command line interface
 provided by :program:`numina`.
@@ -16,9 +15,9 @@ The run mode of numina requires:
 The observation result file and the requirements file are created by the user,
 the format is described in the following sections.
  
----------------------------------
- Format of the observation result
----------------------------------
+--------------------------------
+Format of the observation result
+--------------------------------
 
 The contents of the file is a serialized dictionary with the
 following keys:
@@ -32,6 +31,9 @@ following keys:
 *mode*: required, string
     Name of the observing mode, as returned by ``numina show-modes``
 
+*configuration*: required, string
+    Name of the configuration observing mode that might be either ``science (default)`` or ``eng``
+
 *children*: not required, list of integers, defaults to empty list
     Identifications of nested observing blocks
 
@@ -42,26 +44,27 @@ This is an example of the observation result file
 
 .. code-block:: yaml
 
-   id: 21
-   instrument: MEGARA
-   mode: dark_image
-   frames:
-   - r0121.fits
-   - r0122.fits
-   - r0123.fits
-   - r0124.fits
-   - r0125.fits
-   - r0126.fits
-   - r0127.fits
-   - r0128.fits
-   - r0129.fits
-   - r0130.fits
-   - r0131.fits
-   - r0132.fits
+    id: 21
+    instrument: MEGARA
+    mode: MEGARA_DARK_IMAGE
+    configuration: science
+    images:
+      - r0121.fits
+      - r0122.fits
+      - r0123.fits
+      - r0124.fits
+      - r0125.fits
+      - r0126.fits
+      - r0127.fits
+      - r0128.fits
+      - r0129.fits
+      - r0130.fits
+      - r0131.fits
+      - r0132.fits
    
----------------------------------
- Format of the requirements file
----------------------------------
+-------------------------------
+Format of the requirements file
+-------------------------------
 
 This file contains configuration parameters for the recipes that
 are not related to the particular instrument used.
@@ -117,21 +120,21 @@ The # character is a comment, so every line starting with it can safely
 removed. The names of FITS files in the requirements section must be edited to 
 point to existing files.
 
----------------------------------
+--------------------
 Running the pipeline 
----------------------------------
+--------------------
 
 :program:`numina` copies the images (calibrations and raw data) from directory 
 ``datadir`` to directory ``workdir``, where the processing happens. 
 The result is stored in directory ``resultsdir``. 
-The default values are for each directory are``_data``, ``_work`` and ``_results``.
+The default values are for each directory are``data``, ``obsid<id_of_obs>_work`` and ``obsid<id_of_obs>_results``.
 All these directories can be defined in the command line using flags::
 
   $ numina run --workdir /tmp/test1 --datadir /scrat/obs/run12222 obs.yaml -r requires.yaml
 
 See :ref:`numina:cli` for a full description of the command line interface.
 
-Following the example, we create a directory ``_data`` in our current directory and copy
+Following the example, we create a directory ``data`` in our current directory and copy
 there the raw frames from ``r0121.fits`` to ``r0132.fits`` and the master bias ``master_bias-1.fits``.
 
 The we run::
@@ -147,8 +150,160 @@ The we run::
   INFO: result: BiasRecipeResult(qc=Product(type=QualityControlProduct(), dest='qc'), biasframe=Product(type=MasterBias(), dest='biasframe'))
   INFO: storing result
 
-We get information of what's going on through logging messages. In the end, the result and log files are stored in ``_results``.
-The working directory ``_work`` can be inspected too. 
+We get information of what's going on through logging messages. In the end, the result and log files are stored in ``obsid<id_of_obs>_results``.
+The working directory ``obsid<id_of_obs>_work`` can be inspected too.
 
+
+
+Pipeline's Flow Example
+-----------------------
+In this subsection, we detail an example about how to generate a called Master
+Fiber Flat Image. To achieve our goal, a schematic flow can be seen in the next
+Figure:
+
+.. graphviz::
+
+    digraph G {
+        rankdir=LR;
+        subgraph cluster_0 {
+            style=filled;
+            color=lightgrey;
+            node [style=filled,color=white];
+            edge[style=invis]
+            a0 -> a5,a1 -> a4,a2 -> a3;
+            #label = "Observing\nModes";
+        }
+
+        a0 -> a1 [rank=same];
+        a1 -> a2 [rank=same];
+        a1 -> a4 [rank=same];
+        a2 -> a3 [rank=same];
+        a4 -> a3 [rank=same];
+        a5 -> a4 [rank=same];
+
+        a0 [label="MEGARA_BIAS_IMAGE"];
+        a1 [label="MEGARA_TRACE_MAP"];
+        a2 [label="MEGARA_ARC_CALIBRATION"];
+        a3 [label="MEGARA_FIBER_FLAT_IMAGE"];
+        a4 [label="MEGARA_WEIGHTS"];
+        a5 [label="MEGARA_SLIT_FLAT"];
+
+    }
+
+It is important remark that each time a Recipe is run, the results must be
+renamed and copied to the ``data`` directory in order to be the input of the
+next Recipe if it is needed. Taking this in mind, the content of the
+``requirements.yaml`` file might well be and is common to all Recipes:
+
+.. code-block:: yaml
+
+    version: 1
+    products:
+      MEGARA:
+      - {id: 1, type: 'LinesCatalog', tags: {}, content: 'ThAr_arc_LR-U.txt'}
+      - {id: 2, type: 'MasterBias', tags: {}, content: 'master_bias.fits'}
+      - {id: 3, type: 'TraceMap', tags: {}, content: 'master_traces.yaml'}
+      - {id: 4, type: 'MasterFiberFlat', tags: {}, content: 'master_fiberflat.fits'}
+      - {id: 5, type: 'WavelengthCalibration', tags: {}, content: 'master_wlcalib.json'}
+      - {id: 6, type: 'MasterFiberFlatFrame', tags: {}, content: 'fiberflat_frame.fits'}
+      - {id: 7, type: 'MasterWeights', tags: {}, content: 'master_weights.tar'}
+      - {id: 8, type: 'MasterSlitFlat', tags: {}, content: 'master_slitflat.fits'}
+    requirements: {}
+
+In order to run the next example, the user should execute the next command
+at least 6 times taking into account that the file ``obsresult.yaml`` should
+change with each execution::
+
+  $ numina run obsresult.yaml -r requirements.yaml
+
+MEGARA_BIAS_IMAGE:
+
+.. code-block:: yaml
+
+    id: 1
+    instrument: MEGARA
+    mode: MEGARA_BIAS_IMAGE
+    configuration: science
+    images:
+      - bias1.fits
+      - bias2.fits
+      - bias3.fits
+      - bias4.fits
+      - bias5.fits
+
+MEGARA_TRACE_MAP:
+
+.. code-block:: yaml
+
+    id: 2
+    instrument: MEGARA
+    mode: MEGARA_TRACE_MAP
+    configuration: science
+    images:
+      - flat1.fits
+      - flat2.fits
+      - flat3.fits
+      - flat4.fits
+      - flat5.fits
+
+MEGARA_ARC_CALIBRATION:
+
+.. code-block:: yaml
+
+    id: 3
+    instrument: MEGARA
+    mode: MEGARA_ARC_CALIBRATION
+    configuration: science
+    images:
+      - arc1.fits
+      - arc2.fits
+      - arc3.fits
+      - arc4.fits
+      - arc5.fits
+
+MEGARA_SLIT_FLAT:
+
+.. code-block:: yaml
+
+    id: 4
+    instrument: MEGARA
+    mode: MEGARA_SLIT_FLAT
+    configuration: science
+    images:
+      - flat1.fits
+      - flat2.fits
+      - flat3.fits
+      - flat4.fits
+      - flat5.fits
+
+MEGARA_WEIGHTS:
+
+.. code-block:: yaml
+
+    id: 5
+    instrument: MEGARA
+    mode: MEGARA_WEIGHTS
+    configuration: science
+    images:
+      - flat1.fits
+      - flat2.fits
+      - flat3.fits
+      - flat4.fits
+      - flat5.fits
+
+MEGARA_FIBER_FLAT_IMAGE:
+
+.. code-block:: yaml
+
+    id: 6
+    instrument: MEGARA
+    mode: MEGARA_FIBER_FLAT_IMAGE
+    configuration: science
+    images:
+      - flat1.fits
+      - flat2.fits
+      - flat3.fits
+      - flat4.fits
+      - flat5.fits
 
 .. _YAML: http://www.yaml.org

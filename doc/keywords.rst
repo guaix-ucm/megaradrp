@@ -37,6 +37,7 @@ Type Keyword   Example                    Explanation
  R   AIRMASS   1.1908                    Mean airmass of the observation
  R   MJD-OBS   72343.34324               Modified JD of the start of the observation
  S   IMAGETYP  'FLAT'                    Type of the image
+ S   VPH       'LR-R'                    Type of VPH
  S   OBSTYPE   'SLITFLAT'                Type of observation
  L   READPROC   T                        The frame has been preprocessed after readout
  R   EXPOSED                             Photometric time?

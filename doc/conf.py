@@ -14,7 +14,7 @@
 import sys, os
 
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx',
-              'sphinx.ext.todo', 'sphinx.ext.coverage', 'sphinx.ext.mathjax']
+              'sphinx.ext.todo', 'sphinx.ext.graphviz','sphinx.ext.coverage', 'sphinx.ext.mathjax']
 
 master_doc = 'index'
 templates_path = ['_templates']
