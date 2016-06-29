@@ -170,7 +170,7 @@ pipelines:
       MEGARA_SUCCESS: numina.core.utils.AlwaysSuccessRecipe
       MEGARA_FAIL: numina.core.utils.AlwaysFailRecipe
       MEGARA_BAD_PIXEL_MASK: megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe
-      MEGARA_LINEARITY_TEST: numina.core.utils.AlwaysFailRecipe
+      MEGARA_LINEARITY_TEST: megaradrp.recipes.calibration.linearity.LinearityTestRecipe
       MEGARA_BIAS_IMAGE: megaradrp.recipes.calibration.bias.BiasRecipe
       MEGARA_DARK_IMAGE: megaradrp.recipes.calibration.dark.DarkRecipe
       MEGARA_ARC_CALIBRATION: megaradrp.recipes.calibration.arc.ArcCalibrationRecipe
@@ -180,12 +180,12 @@ pipelines:
       MEGARA_FIBER_FLAT_IMAGE: megaradrp.recipes.calibration.flat.FiberFlatRecipe
       MEGARA_TWILIGHT_FLAT_IMAGE: megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe
       MEGARA_FOCUS_SPECTROGRAPH: megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe
-      MEGARA_FOCUS_TELESCOPE: numina.core.utils.AlwaysFailRecipe
-      MEGARA_LCB_ACQUISITION: numina.core.utils.AlwaysFailRecipe
+      MEGARA_FOCUS_TELESCOPE: megaradrp.recipes.auxiliary.focustel.FocusTelescopeRecipe
+      MEGARA_LCB_ACQUISITION: megaradrp.recipes.auxiliary.acquisitionlcb.AcquireLCBRecipe
       MEGARA_LCB_IMAGE: megaradrp.recipes.scientific.lcb.LCBImageRecipe
       MEGARA_LCB_FAST_MAPPING: megaradrp.recipes.scientific.lcbfastmapping.LCBFastMappingRecipe
       MEGARA_LCB_STD_STAR: megaradrp.recipes.scientific.lcbstdstar.LCBStandardRecipe
-      MEGARA_MOS_ACQUISITION: numina.core.utils.AlwaysFailRecipe
+      MEGARA_MOS_ACQUISITION: megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe
       MEGARA_MOS_IMAGE: megaradrp.recipes.scientific.mos.MOSImageRecipe
       MEGARA_MOS_STD_STAR: megaradrp.recipes.scientific.mosstdstar.MOSStandardRecipe
       MEGARA_FLUX_CALIBRATION: megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipe

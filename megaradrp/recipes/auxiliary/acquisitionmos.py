@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,9 +17,13 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Calibrate the non linearity correciont of MEGARA Detector"""
+"""Acquire with MOS Recipe for Megara"""
+
+
+from __future__ import division, print_function
 
 import logging
+
 
 from numina.core import RecipeError
 
@@ -28,15 +32,12 @@ from megaradrp.core.recipe import MegaraBaseRecipe
 
 _logger = logging.getLogger('numina.recipes.megara')
 
-class LinearityTestRecipe(MegaraBaseRecipe):
 
-    """Process LINTEST images and create LINEARITY_CORRECTON."""
-
+class AcquireMOSRecipe(MegaraBaseRecipe):
+    """Process Focus images and find best focus."""
 
     def __init__(self):
-        super(LinearityTestRecipe, self).__init__(
-            version="0.1.0"
-        )
+        super(AcquireMOSRecipe, self).__init__("0.1.0")
 
     def run(self, rinput):
-        raise RecipeError("Recipe not inplemented")
+        raise RecipeError('Recipe not implemented')
