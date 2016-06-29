@@ -121,7 +121,7 @@ modes:
 - name: Extinction Star Recipe
   summary: Extinction Star Recipe
   description: Extinction Star Recipe
-  key: MEGARA_EXRINCTION_STAR
+  key: MEGARA_EXTINCTION_STAR
   tagger: megaradrp.taggers.tagger_base_image
 - name: LCB Standard Recipe
   summary: LCB Standard Recipe
@@ -143,6 +143,26 @@ modes:
   description: LCB Fast Mapping Recipe
   key: MEGARA_LCB_FAST_MAPPING
   tagger: megaradrp.taggers.tagger_base_image
+- name: Linearity test
+  summary: Test the linearity of the MEGARA detector
+  description: Test the linearity of the MEGARA detector
+  key: MEGARA_LINEARITY_TEST
+  tagger: null
+- name: Telescope Focus
+  summary: Telescope Focus
+  description: Telescope Focus
+  key: MEGARA_FOCUS_TELESCOPE
+  tagger: null
+- name: Acquisition with the LCB IFU
+  summary: Acquisition with the LCB IFU
+  description: Acquisition with the LCB IFU
+  key: MEGARA_LCB_ACQUISITION
+  tagger: null
+- name: Acquisition with the Fiber MOS
+  summary: Acquisition with the Fiber MOS
+  description: Acquisition with the Fiber MOS
+  key: MEGARA_MOS_ACQUISITION
+  tagger: null
 pipelines:
   default:
     version: 1
@@ -150,6 +170,7 @@ pipelines:
       MEGARA_SUCCESS: numina.core.utils.AlwaysSuccessRecipe
       MEGARA_FAIL: numina.core.utils.AlwaysFailRecipe
       MEGARA_BAD_PIXEL_MASK: megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe
+      MEGARA_LINEARITY_TEST: numina.core.utils.AlwaysFailRecipe
       MEGARA_BIAS_IMAGE: megaradrp.recipes.calibration.bias.BiasRecipe
       MEGARA_DARK_IMAGE: megaradrp.recipes.calibration.dark.DarkRecipe
       MEGARA_ARC_CALIBRATION: megaradrp.recipes.calibration.arc.ArcCalibrationRecipe
@@ -159,10 +180,13 @@ pipelines:
       MEGARA_FIBER_FLAT_IMAGE: megaradrp.recipes.calibration.flat.FiberFlatRecipe
       MEGARA_TWILIGHT_FLAT_IMAGE: megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe
       MEGARA_FOCUS_SPECTROGRAPH: megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe
+      MEGARA_FOCUS_TELESCOPE: numina.core.utils.AlwaysFailRecipe
+      MEGARA_LCB_ACQUISITION: numina.core.utils.AlwaysFailRecipe
       MEGARA_LCB_IMAGE: megaradrp.recipes.scientific.lcb.LCBImageRecipe
       MEGARA_LCB_FAST_MAPPING: megaradrp.recipes.scientific.lcbfastmapping.LCBFastMappingRecipe
-      MEGARA_MOS_IMAGE: megaradrp.recipes.scientific.mos.MOSImageRecipe
       MEGARA_LCB_STD_STAR: megaradrp.recipes.scientific.lcbstdstar.LCBStandardRecipe
+      MEGARA_MOS_ACQUISITION: numina.core.utils.AlwaysFailRecipe
+      MEGARA_MOS_IMAGE: megaradrp.recipes.scientific.mos.MOSImageRecipe
       MEGARA_MOS_STD_STAR: megaradrp.recipes.scientific.mosstdstar.MOSStandardRecipe
       MEGARA_FLUX_CALIBRATION: megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipe
       MEGARA_EXTINCTION_STAR: megaradrp.recipes.scientific.extinctionstar.ExtinctionStarRecipe
