@@ -1,9 +1,9 @@
 
 .. _reference:
 
-=====================
+=========
 Reference
-=====================
+=========
 
 
 :Release: |version|
@@ -22,7 +22,7 @@ Reference
    :maxdepth: 2
 
    recipes
-   dataproducts
+   products
 
    
 Indices and tables

@@ -33,7 +33,6 @@ from megaradrp.products import MasterFiberFlat
 from megaradrp.products import WavelengthCalibration, MasterWeights
 from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.requirements import MasterDarkRequirement, MasterSlitFlatRequirement
-from megaradrp.core.processing import apextract_tracemap
 from numina.core.products import DataFrameType
 from megaradrp.processing.weights import WeightsCorrector
 
@@ -65,7 +64,6 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         _logger.info('process common')
         reduced = self.bias_process_common(rinput.obresult, parameters)
 
-
         flow = WeightsCorrector(parameters['weights'])
         flow = SerialFlow([flow])
         hdulist = flow(reduced)
@@ -87,25 +85,4 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         rss_fiberflat = fits.PrimaryHDU(final, header=reduced[0].header)
 
         result = self.create_result(master_fiberflat=master_fiberflat, fiberflat_frame=reduced, rss_fiberflat=rss_fiberflat)
-        return result
-
-
-    def run_tracemap(self, rinput):
-        # Basic processing
-        parameters = self.get_parameters(rinput)
-
-        reduced = self.bias_process_common(rinput.obresult, parameters)
-
-        _logger.info('extract fibers')
-        rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
-        # FIXME: we are ignoring here all the possible bad pixels
-        # and WL distortion when doing the normalization
-        # rssdata /= rssdata.mean() #Originally uncomment
-        rsshdu = fits.PrimaryHDU(rssdata, header=reduced[0].header)
-        rss = fits.HDUList([rsshdu])
-
-        _logger.info('extraction completed')
-        _logger.info('fiber flat reduction ended')
-
-        result = self.create_result(fiberflat_frame=reduced, master_fiberflat=rss)
         return result

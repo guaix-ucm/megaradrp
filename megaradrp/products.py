@@ -46,14 +46,17 @@ class MEGARAProductFrame(DataFrameType, DataProductTag):
     pass
 
 
-class MEGARAProcessedFrame(DataFrameType):
-    """A processed image not to be stored"""
-    pass
+# class MEGARAProcessedFrame(DataFrameType):
+#     """A processed image not to be stored"""
+#     pass
 
 
 class MasterBias(MEGARAProductFrame):
     pass
 
+
+class MasterTwilightFlat(MEGARAProductFrame):
+    pass
 
 class MasterDark(MEGARAProductFrame):
     pass

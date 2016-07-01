@@ -1,5 +1,5 @@
 Reduction Recipes
-==================
+=================
 
 Execution environment of the Recipes
 ------------------------------------
@@ -20,7 +20,7 @@ Users of the DFP shall interact with the software through the GTC Inspector.
 
 Recipe Parameters
 -----------------
-MEGARA Recipes based on Numina have a list of required parameters needed to properly configure the Recipe.
+MEGARA Recipes based on Numina have a list of required parameters needed to configure the Recipe properly.
 The Recipe announces the required parameters with the following syntax (the syntax is subject to changes).
 
 .. code-block:: python
@@ -34,10 +34,10 @@ The Recipe announces the required parameters with the following syntax (the synt
         ...
 
 
-When the Recipe is properly configured, it is executed with an observing block
-data structure as input. When run using Numina CLI, this data structure is
+When the Recipe is configured properly, it is executed with an observing block
+data structure as input. When is run using Numina CLI, this data structure is
 created from an user-provided text file. The recipe requirements values are 
-either provided ina text file or have default values.
+either provided in a text file or have default values.
 
 Recipe Products
 --------------- 

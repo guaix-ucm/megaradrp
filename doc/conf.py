@@ -13,8 +13,10 @@
 
 import sys, os
 
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx',
-              'sphinx.ext.todo', 'sphinx.ext.graphviz','sphinx.ext.coverage', 'sphinx.ext.mathjax']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
+              'sphinx.ext.intersphinx', 'sphinx.ext.inheritance_diagram',
+              'sphinx.ext.todo', 'sphinx.ext.graphviz','sphinx.ext.coverage',
+              'sphinx.ext.mathjax']
 
 master_doc = 'index'
 templates_path = ['_templates']
@@ -55,7 +57,6 @@ latex_elements = {
 latex_elements = {
     'fontpkg': '\\usepackage{palatino}',
     }
-latex_show_urls = 'footnote'
 latex_show_urls = 'footnote'
 #latex_appendices = []
 #latex_domain_indices = True

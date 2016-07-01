@@ -27,6 +27,7 @@ import numpy
 from astropy.io import fits
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
+
 from numina.core import Requirement, Product, Parameter, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import LinesCatalog
@@ -39,7 +40,7 @@ from skimage.feature import peak_local_max
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import TraceMap, WavelengthCalibration
-from megaradrp.requirements import MasterBiasRequirement
+from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.requirements import MasterDarkRequirement
 from megaradrp.core.processing import apextract_tracemap_2
 

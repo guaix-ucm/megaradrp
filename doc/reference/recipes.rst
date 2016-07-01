@@ -1,6 +1,6 @@
 
 :mod:`megaradrp.recipes` --- Reduction Recipes for MEGARA
-==========================================================
+=========================================================
 
 .. module:: megaradrp.recipes
    :synopsis:  Reduction Recipes for MEGARA
@@ -13,51 +13,42 @@
    :synopsis:  Calibration Reduction Recipes for MEGARA
 
 
-.. class:: BiasRecipe
+..
+   .. inheritance-diagram:: megaradrp.recipes.calibration.bias megaradrp.recipes.calibration.bpm megaradrp.recipes.calibration.dark megaradrp.recipes.calibration.linearity megaradrp.recipes.calibration.trace megaradrp.recipes.calibration.twilight megaradrp.recipes.calibration.arc
+   :parts: 4
 
-   Bias Recipe
+
+.. class:: bias.BiasRecipe
 
 
-.. class:: DarkRecipe
+.. class:: dark.DarkRecipe
 
-   Dark Recipe
-   
-   
-.. class:: TraceMapRecipe
 
-   Trace Recipe
+.. class:: trace.TraceMapRecipe
 
-.. class:: FiberFlatRecipe
 
-   Fiber Flat Recipe
-   
-.. class:: TwilightFiberFlatRecipe
+.. class:: flat.FiberFlatRecipe
 
-   Fiber Flat Recipe
+.. inheritance-diagram:: megaradrp.recipes.calibration.flat
+   :parts: 1
 
-.. class:: ArcRecipe
+.. class:: twilight.TwilightFiberFlatRecipe
 
-   Arc Recipe
 
-.. class:: BadPixelsMaskRecipe
+.. class:: arc.ArcCalibrationRecipe
 
-   Bad Pixels Mask  Recipe
 
-.. class:: LinearityTestRecipe
+.. class:: bpm.BadPixelsMaskRecipe
 
-   Linearity Test Recipe
 
-.. class:: LCB_IFU_StdStarRecipe
+.. class:: linearity.LinearityTestRecipe
 
-   LCB IFU Standard Star Recipe
 
-.. class:: FiberMOS_StdStarRecipe
 
-   Fiber MOS Standard Star Recipe
 
 
 :mod:`megaradrp.recipes.auxiliary` --- Auxiliary Reduction Recipes for MEGARA
-==============================================================================
+=============================================================================
 
 .. module:: megaradrp.recipes.auxiliary
    :synopsis:  Auxiliary Reduction Recipes for MEGARA
@@ -65,11 +56,28 @@
 TBD
 
 :mod:`megaradrp.recipes.scientific` --- Scientific Reduction Recipes for MEGARA
-===================================================================================
+===============================================================================
 
 .. module:: megaradrp.recipes.scientific
    :synopsis:  Scientific Reduction Recipes for MEGARA
 
-.. class:: FiberMOSRecipe
+.. class:: lcb.LCBImageRecipe
 
-   Fiber MOS Recipe
+.. inheritance-diagram:: megaradrp.recipes.scientific.lcb
+   :parts: 4
+
+.. class:: mos.MOSImageRecipe
+
+.. inheritance-diagram:: megaradrp.recipes.scientific.mos
+   :parts: 4
+
+.. class:: lcbstdstar.LCBStandardRecipe
+
+.. inheritance-diagram:: megaradrp.recipes.scientific.lcbstdstar
+   :parts: 4
+
+.. class:: mosstdstar.MOSStandardRecipe
+
+.. inheritance-diagram:: megaradrp.recipes.scientific.mosstdstar
+   :parts: 4
+
