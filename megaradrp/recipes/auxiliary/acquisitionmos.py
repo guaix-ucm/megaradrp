@@ -30,14 +30,51 @@ from numina.core import RecipeError
 from megaradrp.core.recipe import MegaraBaseRecipe
 
 
+#from astropy.io import fits
+
+from numina.core import Product, DataFrameType
+from numina.core.requirements import ObservationResultRequirement, Requirement
+from numina.array.combine import median
+
+from megaradrp.core.recipe import MegaraBaseRecipe
+from megaradrp.products import MasterFiberFlat, WavelengthCalibration
+from megaradrp.products import MasterWeights
+from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
+from megaradrp.requirements import MasterDarkRequirement, MasterFiberFlatRequirement
+from megaradrp.requirements import MasterSlitFlatRequirement, MasterTwilightRequirement
+from megaradrp.requirements import MasterTraceMapRequirement
+from megaradrp.processing.fiberflat import FiberFlatCorrector
+from megaradrp.processing.twilight import TwilightCorrector
+from megaradrp.processing.weights import WeightsCorrector
+from megaradrp.processing.combine import basic_processing_with_combination
+
 _logger = logging.getLogger('numina.recipes.megara')
 
 
 class AcquireMOSRecipe(MegaraBaseRecipe):
     """Process Focus images and find best focus."""
 
+    obresult = ObservationResultRequirement()
+    master_bpm = MasterBPMRequirement()
+    master_bias = MasterBiasRequirement()
+    master_dark = MasterDarkRequirement()
+    master_slitflat = MasterSlitFlatRequirement(optional=True)
+
+    #master_tracemap = MasterTraceMapRequirement()
+    #master_fiberflat = MasterFiberFlatRequirement()
+    #master_wlcalib = Requirement(WavelengthCalibration, 'Wavelength calibration table')
+    # master_weights = Requirement(MasterWeights, 'Set of files')
+
+    #master_twilight = MasterTwilightRequirement()
+
+    frame = Product(DataFrameType)
+
     def __init__(self):
-        super(AcquireMOSRecipe, self).__init__("0.1.0")
+        super(AcquireMOSRecipe, self).__init__("1")
 
     def run(self, rinput):
-        raise RecipeError('Recipe not implemented')
+        flow = self.init_filters(rinput, rinput.obresult.configuration.values)
+
+        hdulist = basic_processing_with_combination(rinput, flow, method=median)
+
+        return self.create_result(frame=hdulist)

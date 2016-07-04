@@ -22,6 +22,7 @@
 from numina.core import Requirement
 
 from .products import MasterBias, MasterDark, MasterFiberFlat, MasterBPM, MasterSlitFlat, MasterFiberFlatFrame
+from .products import TraceMap
 
 
 class MasterBiasRequirement(Requirement):
@@ -61,7 +62,8 @@ class MasterSlitFlatRequirement(Requirement):
     def __init__(self, optional=True):
         super(MasterSlitFlatRequirement,
               self).__init__(MasterSlitFlat,
-                             'Master slit flat calibration'
+                             'Master slit flat calibration',
+                             optional=optional
                              )
 
 class MasterFiberFlatFrameRequirement(Requirement):
@@ -74,3 +76,9 @@ class MasterTwilightRequirement(Requirement):
     def __init__(self, optional=True):
         super(MasterTwilightRequirement,
               self).__init__(MasterSlitFlat,'Master slit flat calibration')
+
+
+class MasterTraceMapRequirement(Requirement):
+    def __init__(self):
+        super(MasterTraceMapRequirement,
+              self).__init__(TraceMap, 'Trace information of the Apertures')

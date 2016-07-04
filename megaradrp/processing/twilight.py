@@ -22,26 +22,24 @@ import logging
 from astropy.io import fits
 import numpy as np
 
-from numina.flow.processing import TagOptionalCorrector, TagFits
+from numina.flow.processing import Corrector
 
 
 _logger = logging.getLogger('numina.processing')
 
 
-class TwilightCorrector(TagOptionalCorrector):
+class TwilightCorrector(Corrector):
 
     '''A Node that corrects from twilight.'''
 
     def __init__(self, twilight, datamodel=None, mark=True,
                  tagger=None, dtype='float32'):
 
-        if tagger is None:
-            tagger = TagFits('NUM-MFF', 'MEGARA twilight correction')
+
+#            tagger = TagFits('NUM-MFF', 'MEGARA twilight correction')
 
         super(TwilightCorrector, self).__init__(datamodel=datamodel,
-                                                 tagger=tagger,
-                                                 mark=mark,
-                                                 dtype=dtype)
+                                                dtype=dtype)
 
         if isinstance(twilight, fits.HDUList):
             self.corr = twilight[0].data

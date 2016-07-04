@@ -23,6 +23,7 @@ import numina.array.combine as combine
 import numpy as np
 from astropy.io import fits
 from numina.flow import SerialFlow
+from numina.flow.node import IdNode
 from numina.flow.processing import BiasCorrector, BadPixelCorrector
 from numina.flow.processing import DarkCorrector
 from numina.core import BaseRecipe
@@ -35,6 +36,7 @@ from megaradrp.processing.trimover import OverscanCorrector, TrimImage
 from megaradrp.processing.slitflat import SlitFlatCorrector
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.fiberflat import FiberFlatCorrector
+from megaradrp.processing.datamodel import MegaraDataModel
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -313,3 +315,137 @@ class MegaraBaseRecipe(BaseRecipe):
                 if issubclass(fits.ImageHDU, type(elem)):
                     final_list.append(elem)
         return final_list
+
+
+    @classmethod
+    def types_getter(cls):
+        from megaradrp.products import MasterBias, MasterDark, MasterBPM, MasterSlitFlat
+        imgtypes = [None, MasterBPM, MasterBias, MasterDark, MasterSlitFlat]
+        getters = [[get_corrector_o, get_corrector_t], get_corrector_p, get_corrector_bias, get_corrector_dark, get_corrector_sf]
+        return imgtypes, getters
+
+
+    @classmethod
+    def load_getters(cls):
+        import collections
+        imgtypes, getters = cls.types_getter()
+        used_getters = []
+        for rtype, getter in zip(imgtypes, getters):
+            print('load_getters', rtype, getter)
+            if rtype is None:
+                # Unconditional
+                if isinstance(getter, collections.Iterable):
+                    used_getters.extend(getter)
+                else:
+                    used_getters.append(getter)
+            else:
+                # Search
+                for key, val in cls.RecipeInput.stored().items():
+                    if isinstance(val.type, rtype):
+                        if isinstance(getter, collections.Iterable):
+                            used_getters.extend(getter)
+                        else:
+                            used_getters.append(getter)
+                        break
+                else:
+                    pass
+        return used_getters
+
+
+    @classmethod
+    def init_filters_generic(cls, rinput, getters, ins):
+        from numina.flow import SerialFlow
+        # with BPM, bias, dark, flat and sky
+        #if emirdrp.ext.gtc.RUN_IN_GTC:
+        #    _logger.debug('running in GTC environment')
+        #else:
+        _logger.debug('running outside of GTC environment')
+        datamodel = MegaraDataModel()
+        meta = datamodel.gather_info(rinput)
+        _logger.debug('obresult info')
+        for entry in meta['obresult']:
+            _logger.debug('frame info is %s', entry)
+        correctors = [getter(rinput, meta, ins) for getter in getters]
+
+        flow = SerialFlow(correctors)
+
+        return flow
+
+
+    @classmethod
+    def init_filters(cls, rinput, ins):
+        getters = cls.load_getters()
+        return cls.init_filters_generic(rinput, getters, ins)
+
+
+def get_corrector_p(rinput, meta, ins):
+    bpm_info = meta.get('master_bpm')
+    if bpm_info is not None:
+        with rinput.master_bpm.open() as hdul:
+            _logger.info('loading BPM')
+            _logger.debug('BPM image: %s', bpm_info)
+            mbpm = hdul[0].data
+            bpm_corrector = BadPixelCorrector(mbpm, datamodel=MegaraDataModel())
+    else:
+        _logger.info('BPM not provided, ignored')
+        bpm_corrector = IdNode()
+
+    return bpm_corrector
+
+
+def get_corrector_super(rinput, meta, key, correctorclass, datamodel):
+
+    info = meta.get(key)
+    _logger.debug('datamodel is %s', datamodel)
+    req = getattr(rinput, key)
+    if req is not None:
+        with req.open() as hdul:
+            _logger.info('loading %s', key)
+            _logger.debug('%s info: %s', key, info)
+            datac = hdul['primary'].data
+            corrector = correctorclass(datac, datamodel=datamodel)
+    else:
+        _logger.info('%s not provided, ignored', key)
+        corrector = IdNode()
+
+    return corrector
+
+
+def get_corrector_bias(rinput, meta, ins):
+    key = 'master_bias'
+    correctorclass = BiasCorrector
+    datamodel = MegaraDataModel()
+    return get_corrector_super(rinput, meta, key, correctorclass, datamodel)
+
+
+def get_corrector_dark(rinput, meta, ins):
+    from numina.flow.processing import DarkCorrector
+    key = 'master_dark'
+    correctorclass = DarkCorrector
+    datamodel = MegaraDataModel()
+    return get_corrector_super(rinput, meta, key, correctorclass, datamodel)
+
+
+def get_corrector_sf(rinput, meta, ins):
+    key = 'master_slit_flat'
+    info = meta.get(key)
+    if info is not None:
+        req = getattr(rinput, key)
+        with req.open() as hdul:
+            _logger.info('loading BPM')
+            _logger.debug('%s image: %s', key, info)
+            mbpm = hdul[0].data
+            corrector = SlitFlatCorrector(mbpm, datamodel=MegaraDataModel())
+    else:
+        _logger.info('%s not provided, ignored', key)
+        corrector = IdNode()
+
+    return corrector
+
+
+def get_corrector_o(rinput, meta, ins):
+    return OverscanCorrector(confFile=ins)
+
+
+def get_corrector_t(rinput, meta, ins):
+    return TrimImage(confFile=ins)
