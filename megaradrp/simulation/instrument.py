@@ -266,7 +266,7 @@ def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, 
 
     spos = PIXSCALE * (np.arange(0, DSHAPE[1] * scale) - scale * xcenter) / scale
 
-    wl_in_super = vph.ps_x_wl(y_ps_fibers, -spos, grid=True)
+    wl_in_super = vph.ps_x_wl(y_ps_fibers, spos, grid=True)
     # revert
     wl_in_super = wl_in_super[:,::-1]
     # print('wl in super?', wl_in_super.shape)
