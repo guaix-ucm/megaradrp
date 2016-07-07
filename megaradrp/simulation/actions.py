@@ -308,6 +308,31 @@ class MegaraLCBImageSequence(Sequence):
             yield final
 
 
+class MegaraMOSAcquisitionSequence(Sequence):
+    def __init__(self):
+        super(MegaraMOSAcquisitionSequence, self).__init__('MEGARA', 'MEGARA_MOS_ACQUISITION')
+
+    def run(self, control, exposure, repeat):
+        instrument = control.get(self.instrument)
+        telescope = control.get('GTC')
+
+        atm = telescope.inc # Atmosphere model, incoming light
+
+        # Get targets
+        targets1 = control.targets
+        targets2 = [atm.night_spectrum]
+
+        wl_in, ns_illum = all_targets_in_focal_plane(targets1, targets2, [], atm, telescope, instrument)
+
+        out1 = instrument.apply_transmissions_only(wl_in, ns_illum)
+        out2 = instrument.project_rss(wl_in, out1)
+
+        for i in range(repeat):
+            instrument.detector.expose(source=out2, time=exposure)
+            final = instrument.detector.readout()
+            yield final
+
+
 def megara_sequences():
     seqs = {}
     # Keys must correspod to MEGARA ObsMode.key
@@ -321,6 +346,7 @@ def megara_sequences():
     seqs['twilight_flat_image'] = MegaraTwilightFlatSequence()
     seqs['focus_spectrograph'] = MegaraFocusSequence()
     seqs['lcb_image'] = MegaraLCBImageSequence()
+    seqs['MEGARA_MOS_ACQUISITION'] = MegaraLCBImageSequence()
     return seqs
 
 
