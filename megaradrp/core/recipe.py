@@ -33,6 +33,8 @@ from numina.core.requirements import ObservationResultRequirement
 
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
 from megaradrp.processing.slitflat import SlitFlatCorrector
+from megaradrp.processing.aperture import ApertureExtractor
+from megaradrp.processing.fiberflat import FiberFlatCorrector
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -76,6 +78,12 @@ class MegaraBaseRecipe(BaseRecipe):
                        'LCBImageRecipe': [OverscanCorrector, TrimImage,
                                           BiasCorrector, BadPixelCorrector,
                                           DarkCorrector, SlitFlatCorrector],
+                       'PseudoFluxCalibrationRecipe': [OverscanCorrector,
+                                                       TrimImage,BiasCorrector,
+                                                       BadPixelCorrector,
+                                                       DarkCorrector,
+                                                       ApertureExtractor,
+                                                       FiberFlatCorrector],
                        }
         super(MegaraBaseRecipe, self).__init__(version=version)
 
@@ -106,6 +114,18 @@ class MegaraBaseRecipe(BaseRecipe):
                     else:
                         del (flow[cont])
                         cont -= 1
+                elif issubclass(ApertureExtractor, flow[cont]):
+                    if 'traces' in params.keys():
+                        flow[cont] = (flow[cont](params['traces']))
+                    else:
+                        del (flow[cont])
+                        cont -= 1
+                elif issubclass(FiberFlatCorrector, flow[cont]):
+                    if 'fiberflat' in params.keys():
+                        flow[cont] = (flow[cont](params['fiberflat']))
+                    else:
+                        del (flow[cont])
+                        cont -= 1
                 elif issubclass(TrimImage, flow[cont]) or issubclass(
                         OverscanCorrector, flow[cont]):
                     flow[cont] = (flow[cont](confFile=confFile))
@@ -125,7 +145,8 @@ class MegaraBaseRecipe(BaseRecipe):
         hdr = hdu[0].header
         hdr = self.set_base_headers(hdr)
         hdr['CCDMEAN'] = data[0].mean()
-        del hdr['FILENAME']
+        if 'FILENAME' in hdr.keys():
+            del hdr['FILENAME']
 
         varhdu = fits.ImageHDU(data[1], name='VARIANCE')
         num = fits.ImageHDU(data[2], name='MAP')
@@ -203,6 +224,12 @@ class MegaraBaseRecipe(BaseRecipe):
         try:
             if rinput.master_weights:
                 parameters['weights'] = rinput.master_weights
+        except:
+            pass
+
+        try:
+            if rinput.traces:
+                parameters['traces'] = rinput.traces
         except:
             pass
 

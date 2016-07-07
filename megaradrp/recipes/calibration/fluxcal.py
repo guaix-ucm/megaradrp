@@ -22,22 +22,13 @@
 import logging
 
 import numpy
-
 from scipy.interpolate import interp1d
-
 from astropy.io import fits
 from astropy import wcs
-
 from numina.core import Product, Requirement
 from numina.core.requirements import ObservationResultRequirement
-from numina.array.combine import median as c_median
-from numina.flow import SerialFlow
-from numina.flow.processing import BiasCorrector
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.processing.trimover import OverscanCorrector, TrimImage
-from megaradrp.processing.fiberflat import FiberFlatCorrector
-from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.requirements import MasterBiasRequirement
 from megaradrp.requirements import MasterFiberFlatRequirement
 from megaradrp.products import MasterFiberFlat
@@ -45,84 +36,37 @@ from megaradrp.products import TraceMap, MasterSensitivity
 
 _logger = logging.getLogger('numina.recipes.megara')
 
-class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
 
+class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
-    master_fiber_flat = MasterFiberFlatRequirement()
+    master_fiberflat = MasterFiberFlatRequirement()
     traces = Requirement(TraceMap, 'Trace information of the Apertures')
-    reference_spectrum = Requirement(
-        MasterFiberFlat, 'Reference spectrum')
+    reference_spectrum = Requirement(MasterFiberFlat, 'Reference spectrum')
 
     calibration = Product(MasterSensitivity)
     calibration_rss = Product(MasterSensitivity)
 
     def __init__(self):
-        super(PseudoFluxCalibrationRecipe, self).__init__(
-            version="0.1.0"
-        )
+        super(PseudoFluxCalibrationRecipe, self).__init__(version="0.1.0")
 
     def run(self, rinput):
         _logger.info('starting pseudo flux calibration')
 
-        o_c = OverscanCorrector()
-        t_i = TrimImage()
+        parameters = self.get_parameters(rinput)
+        reduced = self.bias_process_common(rinput.obresult, parameters)
 
-        with rinput.master_bias.open() as hdul:
-            mbias = hdul[0].data.copy()
-            b_c = BiasCorrector(mbias)
-
-        a_e = ApertureExtractor(rinput.traces)
-
-        with rinput.master_fiber_flat.open() as hdul:
-            f_f_c = FiberFlatCorrector(hdul)
-
-        basicflow = SerialFlow([o_c, t_i, b_c, a_e, f_f_c])
-
-        t_data = []
-
-        try:
-            for frame in rinput.obresult.images:
-                hdulist = frame.open()
-                hdulist = basicflow(hdulist)
-                t_data.append(hdulist)
-
-            data_t = c_median([d[0].data for d in t_data], dtype='float32')
-            template_header = t_data[0][0].header
-            hdu_t = fits.PrimaryHDU(data_t[0], header=template_header)
-        finally:
-            for hdulist in t_data:
-                hdulist.close()
-
-        hdr = hdu_t.header
-        hdr = self.set_base_headers(hdr)
-        hdr['CCDMEAN'] = data_t[0].mean()
-        hdr['NUMTYP'] = ('SCIENCE_TARGET', 'Data product type')
+        # hdr['NUMTYP'] = ('SCIENCE_TARGET', 'Data product type')
 
         # FIXME: hardcoded calibration
         # Polynomial that translates pixels to wl
         _logger.warning('using hardcoded LR-U spectral calibration')
-        wlcal = [7.12175997e-10, -9.36387541e-06,
-                 2.13624855e-01, 3.64665269e+03]
+        wlcal = [7.12175997e-10, -9.36387541e-06, 2.13624855e-01,
+                 3.64665269e+03]
         plin = numpy.poly1d(wlcal)
-        wl_n_r = plin(range(1, hdu_t.data.shape[1] + 1))  # Non-regular WL
+        wl_n_r = plin(range(1, reduced[0].data.shape[1] + 1))  # Non-regular WL
 
         _logger.info('resampling reference spectrum')
-
-        wlr = [3673.12731884058, 4417.497427536232]
-        size = hdu_t.data.shape[1]
-        delt = (wlr[1] - wlr[0]) / (size - 1)
-
-        def add_wcs(hdr):
-            hdr['CRPIX1'] = 1
-            hdr['CRVAL1'] = wlr[0]
-            hdr['CDELT1'] = delt
-            hdr['CTYPE1'] = 'WAVELENGTH'
-            hdr['CRPIX2'] = 1
-            hdr['CRVAL2'] = 1
-            hdr['CDELT2'] = 1
-            hdr['CTYPE2'] = 'PIXEL'
-            return hdr
 
         with rinput.reference_spectrum.open() as hdul:
             # Needs resampling
@@ -137,16 +81,13 @@ class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
             # Reference spectrum evaluated in the irregular WL grid
             final = si(wl_n_r)
 
-        sens_data = final / hdu_t.data
-        hdu_sens = fits.PrimaryHDU(sens_data, header=hdu_t.header)
-
-        # Very simple wl calibration
-        # add_wcs(hdu_sens.header)
-
-        # add_wcs(hdu_t.header)
+        sens_data = final / reduced[0].data
+        hdu_sens = fits.PrimaryHDU(sens_data, header=reduced[0].header)
+        header_list = self.getHeaderList([reduced, rinput.obresult.images[0].open()])
+        hdu_sens = fits.HDUList([hdu_sens] + header_list)
 
         _logger.info('pseudo flux calibration reduction ended')
 
-        result = self.create_result(
-            calibration=hdu_sens, calibration_rss=hdu_t)
+        result = self.create_result(calibration=hdu_sens,
+                                    calibration_rss=reduced)
         return result

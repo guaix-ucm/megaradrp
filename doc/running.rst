@@ -203,7 +203,7 @@ Figure:
 
     }
 
-It is important remark that each time a Recipe is run, the results must be
+It is important to emphasize the fact that each time a Recipe is run, the results must be
 renamed and copied to the ``data`` directory in order to be the input of the
 next Recipe if it is needed. Taking this in mind, the content of the
 ``requirements.yaml`` file might well be and is common to all Recipes:

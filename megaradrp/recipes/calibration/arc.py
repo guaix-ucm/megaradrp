@@ -46,12 +46,12 @@ from megaradrp.core.processing import apextract_tracemap_2
 
 _logger = logging.getLogger('numina.recipes.megara')
 
-vph_thr = {'science':{'LR-I':{'min_distance':30,
-                              'threshold':0.09},
+vph_thr = {'science':{'LR-I':{'min_distance':10,
+                              'threshold':0.02},
                       'LR-R':{'min_distance':10,
                               'threshold':0.03},
                       'LR-V': {'min_distance':30,
-                               'threshold':0.09},
+                               'threshold':0.19},
                       'LR-Z': {'min_distance':60,
                                'threshold':0.02},
                       },
@@ -99,6 +99,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         # rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
         rssdata = apextract_tracemap_2(reduced[0].data, rinput.tracemap)
+        rssdata = numpy.fliplr(rssdata)
 
         rsshdu = fits.PrimaryHDU(rssdata, header=reduced[0].header)
         header_list = self.getHeaderList(
@@ -256,6 +257,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 _logger.debug('ipeaks_int: %s', ipeaks_int)
                 ipeaks_float = refine_peaks(row, ipeaks_int, nwinwidth)[0]
 
+                # if idx==299:
                 if False:
                     plt.title('fibid %d' % fibid)
                     plt.plot(row)
@@ -329,7 +331,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 except (ValueError, TypeError, IndexError) as error:
                     _logger.error("%s", error)
                     _logger.info('error in row %d, fibid %d', idx, fibid)
-                    if True:
+                    if False:
                         plt.title('fibid %d' % fibid)
                         rrow = row[::-1]
                         rpeaks = 4096-ipeaks_int[::-1]
