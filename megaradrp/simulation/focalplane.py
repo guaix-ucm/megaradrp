@@ -60,6 +60,19 @@ class FocalPlane(object):
     def connect_fiber_bundle(self, bundle, fibid, pos):
         self.bundle[bundle.name] = (fibid, pos)
 
+    def connect_fiber_bundle2(self, mos):
+        fibid = []
+        pos = []
+        for robot in mos.children:
+            # Compute positions of the fibers
+            # in focal plane for fibers
+            res1, res2 = robot.fibers_in_focal_plane()
+            fibid.extend(res1)
+            pos.extend(res2)
+            print(res1)
+            print(res2)
+        self.bundle['MOS'] = (fibid, pos)
+
     def get_visible_fibers(self, bundle):
         fibid, allpos = self.bundle[bundle.name]
         p1 = [(fid, pos[0], pos[1], self._cover_s(pos)) for fid, pos in zip(fibid, allpos) if self._filter_s(pos)]

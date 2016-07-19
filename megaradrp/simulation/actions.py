@@ -346,7 +346,7 @@ def megara_sequences():
     seqs['twilight_flat_image'] = MegaraTwilightFlatSequence()
     seqs['focus_spectrograph'] = MegaraFocusSequence()
     seqs['lcb_image'] = MegaraLCBImageSequence()
-    seqs['MEGARA_MOS_ACQUISITION'] = MegaraLCBImageSequence()
+    seqs['MEGARA_MOS_ACQUISITION'] = MegaraMOSAcquisitionSequence()
     return seqs
 
 

@@ -58,3 +58,59 @@ class FiberBundle(object):
                 'static': self.static,
                 'inactive_fibs_id': self.inactive
                 }
+
+
+class LightFiber(object):
+    def __init__(self, name, fibid, transmission=None, inactive=False):
+        self.name = name
+        self.fibid = fibid
+        # Geometry of the fibers
+        self.size = 0.31 * u.arcsec
+        self.area = math.sqrt(3) * self.size ** 2 / 2.0
+        self.fwhm = 3.6
+        self.sigma = self.fwhm / 2.3548
+        self.inactive = inactive
+
+        if transmission is None:
+            self._transmission = Efficiency()
+        else:
+            self._transmission = transmission
+
+    def transmission(self, wl):
+        return self._transmission.response(wl)
+
+    def config_info(self):
+        return {'name': self.name,
+                'fibid': self.fibid,
+                'inactive': self.inactive
+                }
+
+
+class FiberBundle2(object):
+    def __init__(self, name, bid, static=True):
+        self.name = name
+        # Geometry of the fibers
+
+        self.bunds_id = bid
+        self.static = static
+        self.children = []
+
+    def add_light_fiber(self, lf):
+        self.children.append(lf)
+
+    @property
+    def fibs_id(self):
+        return [ch.fibid for ch in self.children]
+
+    @property
+    def inactive_fibs_id(self):
+        return [ch.fibid for ch in self.children if ch.inactive]
+
+    def config_info(self):
+        return {'name': self.name,
+                'nfibers': len(self.children),
+                'fibs_id': self.fibs_id,
+                'id': self.bunds_id,
+                'static': self.static,
+                'inactive_fibs_id': self.inactive_fibs_id
+                }

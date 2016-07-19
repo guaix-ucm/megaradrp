@@ -17,12 +17,14 @@ from megaradrp.simulation import lamps
 from megaradrp.simulation import calibrationunit
 from megaradrp.simulation.actions import megara_sequences
 from megaradrp.simulation.telescope import Telescope
-from megaradrp.simulation.fiberbundle import FiberBundle
+from megaradrp.simulation.fiberbundle import FiberBundle, FiberBundle2, LightFiber
 from megaradrp.simulation.instrument import PseudoSlit
 from megaradrp.simulation.focalplane import FocalPlane
 from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.vph import MegaraVPH
 from megaradrp.simulation.shutter import MegaraShutter
+from megaradrp.simulation.fibermos import FiberMOS, RoboticPositioner, PseudoSlit2
+
 
 _logger = logging.getLogger("megaradrp.simulation")
 
@@ -78,6 +80,40 @@ def create_mos(focal_plane):
 
     focal_plane.connect_fiber_bundle(fibers_mos, fib_ids, layouttable[:,0:2])
     return focal_plane, fibers_mos, pseudo_slit_mos
+
+
+def create_mos2(focal_plane):
+    _logger.info('create MOS2')
+    layouttable = np.loadtxt('v02/MOS_spaxel_centers.dat')
+    # Create fiber bundles and light fibers
+    fiber_bundles = {}
+    for line in layouttable:
+        idx =  int(line[3])
+        if idx not in fiber_bundles:
+            name = 'FiberBundle_{}'.format(idx)
+            fiber_bundles[idx] = FiberBundle2(name, bid=idx)
+        fibid = int(line[4])
+        name = 'LightFiber_{}'.format(fibid)
+        lf = LightFiber(name, fibid)
+        fiber_bundles[idx].add_light_fiber(lf)
+
+    # Center of bundles
+    fiber_mos = FiberMOS('FiberMOS')
+    for line in layouttable[3::7]:
+        #print(line[0], line[1], line[3])
+        idx =  int(line[3])
+        name = 'RoboticPositioner_{}'.format(idx)
+        rb = RoboticPositioner(name, id=idx, pos=(line[0], line[1], 0.0), parent=fiber_mos)
+        rb.connect_bundle(fiber_bundles[idx])
+    #print(fiber_mos.config_info())
+
+    fib_ids = layouttable[:,4].astype('int').tolist()
+
+    pseudo_slit_mos = PseudoSlit2(name="PseudoSlitMOS", insmode='MOS')
+    pseudo_slit_mos.connect_fibers(fib_ids, layouttable[:,2])
+
+    focal_plane.connect_fiber_bundle2(fiber_mos)
+    return focal_plane, fiber_mos, pseudo_slit_mos
 
 
 def create_wheel():
@@ -157,9 +193,13 @@ def create_instrument():
 
     detector = create_detector()
 
+    # fibers_mos_base = FiberMOS('FiberMOS')
+
+    # print(fibers_mos_base.config_info())
     focal_plane = FocalPlane()
     focal_plane, fibers_lcb, pseudo_slit_lcb = create_lcb(focal_plane)
     focal_plane, fibers_mos, pseudo_slit_mos = create_mos(focal_plane)
+    create_mos2(focal_plane)
 
     pseudo_slit = dict(lcb=pseudo_slit_lcb, mos=pseudo_slit_mos)
     fibers = dict(lcb=fibers_lcb, mos=fibers_mos)
@@ -233,6 +273,8 @@ if __name__ == '__main__':
 
     parser.add_argument('-p', '--parameters', metavar="FILE",
                         help="FILE with observing parameters")
+    parser.add_argument('-m', '--mos', metavar="FILE",
+                        help="FILE with Fiber MOS Configuration")
     parser.add_argument('-t', '--targets', metavar="FILE",
                         help="FILE with target configuration")
     parser.add_argument('-e', '--exposure', type=restricted_float, default=0.0,
@@ -280,6 +322,12 @@ if __name__ == '__main__':
         instrument.configure(oparam)
 
         cu.select(oparam['lamp'])
+
+    if args.mos:
+        mosconfig = yaml.load(open(args.mos))
+        _logger.debug('Configure Fiber MOS with file %s', args.mos)
+    else:
+        _logger.debug('Fiber MOS in default positions')
 
     if args.targets:
         _logger.debug('load targets file %s', args.targets)
