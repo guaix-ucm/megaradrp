@@ -71,15 +71,31 @@ class RoboticPositioner(HWDevice2):
     def fibers_in_focal_plane(self):
         # Given PA and center, return position
         # of the fibers
+        import math
+        import numpy as np
+        base = math.pi / 3.0
+        ini = base / 2.0
+        rad = 0.5365 # Geometry
+        PA = self.pa * (math.pi / 180)
+
         if self.fb is None:
             return ([], [])
         else:
-            res1 = []
-            res2 = []
-            for idx, fibid in enumerate(self.fb.fibs_id):
-                res1.append(fibid)
-                res2.append([self.x, self.y])
-            return res1, res2
+            # To the left
+            #angs = PA + ini + base * np.arange(6)
+            # To the right
+            angs = -PA + ini + base * np.arange(6)
+            m0 = rad * np.cos(angs)
+            m1 = rad * np.sin(angs)
+
+            # Rearrange
+            xx = m0[[2, 3, 1, 0, 4, 5, 0]]
+            yy = m1[[2, 3, 1, 0, 4, 5, 0]]
+            xx[3] = 0.0 # Center
+            yy[3] = 0.0 # Center
+            xx += self.x
+            yy += self.y
+            return self.fb.fibs_id, list(zip(xx, yy))
 
     @property
     def x(self):
