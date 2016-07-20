@@ -164,11 +164,11 @@ class MegaraImageFactory(object):
         # Focal plane
         meta_fplane = meta.get('fplane', {})
         cover = meta_fplane.get('cover', 'unknown')
-        pheader['COVER'] = cover
+        # pheader['COVER'] = cover
         cover1 = meta_fplane.get('cover1', 'unknown')
-        pheader['COVER1'] = cover1
+        # pheader['COVER1'] = cover1
         cover2 = meta_fplane.get('cover2', 'unknown')
-        pheader['COVER2'] = cover2
+        # pheader['COVER2'] = cover2
 
         # Instrument mode
         meta_pslit = meta.get('pslit')
@@ -186,13 +186,13 @@ class MegaraImageFactory(object):
         # Bundles and fibers
         # IN a second extension
         hdu2 = fits.ImageHDU()
-        meta_bundle = meta.get('fbundle')
+        #meta_bundle = meta.get('fbundle')
         # FIXME: Ugly hack...
-        b = control.get('MEGARA').focal_plane.bundle
-        id, pos = b[meta_bundle['name']]
+        #b = control.get('MEGARA').focal_plane.bundle
+        #id, pos = b[meta_bundle['name']]
 
-        self.bun_fib(meta, hdu2.header, id, pos)
-        hdu2.header['EXTNAME'] = 'FIBERS'
+        #self.bun_fib(meta, hdu2.header, id, pos)
+        #hdu2.header['EXTNAME'] = 'FIBERS'
 
         hdul = fits.HDUList([hdu1, hdu2])
         return hdul

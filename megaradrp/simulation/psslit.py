@@ -19,36 +19,36 @@
 
 import math
 
-from astropy import units as u
+import numpy as np
+from scipy.stats import norm
+import scipy.interpolate as ii
+from scipy.ndimage.filters import convolve1d
 
 from .efficiency import Efficiency
+from .device import HWDevice
 
 
-class FiberBundle(object):
-    def __init__(self, name, bid, static=True):
-        self.name = name
-        # Geometry of the fibers
+class PseudoSlit(HWDevice):
+    def __init__(self, name, insmode):
 
-        self.bunds_id = bid
-        self.static = static
-        self.children = []
+        super(PseudoSlit, self).__init__(name)
 
-    def add_light_fiber(self, lf):
-        self.children.append(lf)
+        # Positions of the fibers in the PS slit
+        self.insmode = insmode
+        self.fibers = {}
 
-    @property
-    def fibs_id(self):
-        return [ch.fibid for ch in self.children]
+    def connect_fibers(self, fibers, positions):
 
-    @property
-    def inactive_fibs_id(self):
-        return [ch.fibid for ch in self.children if ch.inactive]
+        for fibid, pos in enumerate(positions, 1):
+            lf = fibers[fibid]
+            self.fibers[fibid] = (lf, pos)
+
+    def y_pos(self, fibsid):
+        result = []
+        for fibid in fibsid:
+            fiber, pos = self.fibers[fibid]
+            result.append(pos)
+        return result
 
     def config_info(self):
-        return {'name': self.name,
-                'nfibers': len(self.children),
-                'fibs_id': self.fibs_id,
-                'id': self.bunds_id,
-                'static': self.static,
-                'inactive_fibs_id': self.inactive_fibs_id
-                }
+        return {'name': self.name, 'insmode': self.insmode}

@@ -19,6 +19,7 @@
 
 
 import traceback
+import inspect
 
 
 class Signal(object):
@@ -63,3 +64,18 @@ class HWDevice(object):
         self.parent = newparent
         if self.parent:
             self.parent.children.append(self)
+
+    def get_properties(self):
+        meta = self.init_config_info()
+        for key, prop in inspect.getmembers(self.__class__):
+            if isinstance(prop, property):
+                meta[key] = getattr(self, key)
+        return meta
+
+    def init_config_info(self):
+        return dict(name=self.name)
+
+    def end_config_info(self, meta):
+        if self.children:
+            meta['children'] = [child.name for child in self.children]
+        return meta

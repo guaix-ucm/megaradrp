@@ -28,22 +28,6 @@ from .efficiency import Efficiency
 from .device import HWDevice
 
 
-class PseudoSlit(HWDevice):
-    def __init__(self, name, insmode):
-
-        super(PseudoSlit, self).__init__(name)
-
-        # Positions of the fibers in the PS slit
-        self.y_pos = {}
-        self.insmode = insmode
-
-    def connect_fibers(self, fibid, pos):
-        self.y_pos = dict(zip(fibid, pos))
-
-    def config_info(self):
-        return {'name': self.name, 'insmode': self.insmode}
-
-
 class InternalOptics(object):
     def __init__(self, transmission=None):
 
@@ -256,8 +240,7 @@ def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, 
 
     # Scale for super sampling
     # scale 8 by default
-
-    y_ps_fibers = [pseudo_slit.y_pos[fid] for fid in vis_fibs_id]
+    y_ps_fibers = pseudo_slit.y_pos(vis_fibs_id)
     DSHAPE = detector.dshape
     PIXSCALE = detector.pixscale
     # Scale for super sampling
@@ -319,7 +302,7 @@ def project_rss_w(visible_fib_ids, pseudo_slit, vph, detector, sigma):
     xcenter = DSHAPE[1] // 2
     ycenter = DSHAPE[0] // 2
 
-    y_ps_fibers = [pseudo_slit.y_pos[fid] for fid in visible_fib_ids]
+    y_ps_fibers = pseudo_slit.y_pos(visible_fib_ids)
 
     spos = -PIXSCALE * (np.arange(0, DSHAPE[1]) - xcenter)
     wl_in_detector = vph.ps_x_wl(y_ps_fibers, -spos, grid=True)

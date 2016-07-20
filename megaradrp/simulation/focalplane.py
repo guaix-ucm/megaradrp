@@ -19,69 +19,35 @@
 
 import numpy
 
+
 class FocalPlane(object):
 
-    NAMES = {'UNSET': 3, 'LEFT': 2, 'RIGHT': 1, 'SET': 0}
-    CODES = {3: 'UNSET', 2: 'LEFT', 1: 'RIGHT', 0: 'SET'}
-    HCODES = {1: 'PARKED', 0: 'INPLACE'}
+    def __init__(self, cover):
 
-    def __init__(self):
-
-        self._cover_status = 3
-
-        self._filter_s = lambda x: True
-        self._cover_s = lambda x: 1.0
-
-        self.bundle = {}
+        self.fiberset = {}
+        self.cover = cover
 
     def set_cover(self, mode):
         """Cover in the focal plane."""
 
-        if mode.upper() not in self.NAMES:
-            raise ValueError('"%s" mode is not recognized' % mode)
+        self.cover.set(mode)
 
-        self._cover_status = self.NAMES[mode.upper()]
+    def connect_lcb(self, lcb):
+        self.fiberset['LCB'] = lcb
 
-        self._cover_s = lambda x: 1.0
-
-        if self._cover_status == 3:
-            self._filter_s = lambda x: True
-            self._cover_s = lambda x: 1.0
-        elif self._cover_status == 2:
-            self._filter_s = lambda pos: pos[0] >= 0.0
-            self._cover_s = lambda pos: 1.0 if pos[0] > 0.0 else 0.5
-        elif self._cover_status == 1:
-            self._filter_s = lambda pos: pos[0] <= 0.0
-            self._cover_s = lambda pos: 1.0 if pos[0] < 0.0 else 0.5
-        else:
-            self._filter_s = lambda pos: False
-            self._cover_s = lambda pos: 0.0
-
-    def connect_fiber_bundle(self, bundle, fibid, pos):
-        self.bundle[bundle.name] = (fibid, pos)
-
-    def connect_fiber_bundle2(self, mos):
-        fibid = []
-        pos = []
-        for robot in mos.children:
-            # Compute positions of the fibers
-            # in focal plane for fibers
-            res1, res2 = robot.fibers_in_focal_plane()
-            fibid.extend(res1)
-            pos.extend(res2)
-            print(res1)
-            print(res2)
-        self.bundle['MOS'] = (fibid, pos)
+    def connect_fibermos(self, mos):
+        self.fiberset['MOS'] = mos
 
     def get_visible_fibers(self, bundle):
-        fibid, allpos = self.bundle[bundle.name]
-        p1 = [(fid, pos[0], pos[1], self._cover_s(pos)) for fid, pos in zip(fibid, allpos) if self._filter_s(pos)]
+        fibid, allpos = self.fiberset[bundle.name].fibers_in_focal_plane()
+
+        p1 = self.cover.visible_fibers(fibid, allpos)
 
         return numpy.array(p1, dtype=[('fibid', 'i4'),('x', 'f4'), ('y', 'f4'), ('cover', 'f4')])
 
     def get_all_fibers(self, bundle):
 
-        fibid, all_pos = self.bundle[bundle.name]
+        fibid, all_pos = self.fiberset[bundle.name].fibers_in_focal_plane()
 
         p2 = numpy.empty((len(fibid,)), dtype=[('fibid', 'i4'),('x', 'f4'), ('y', 'f4'), ('cover', 'f4')])
         p2['fibid'] = fibid
@@ -92,6 +58,4 @@ class FocalPlane(object):
         return p2
 
     def config_info(self):
-        return {'cover': self.CODES[self._cover_status],
-                'cover1': self.HCODES[self._cover_status & 1],
-                'cover2': self.HCODES[(self._cover_status & 2) >> 1]}
+        return {'cover': self.cover.config_info()}

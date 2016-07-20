@@ -17,30 +17,15 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import inspect
+import math
+
+import numpy
+from astropy import units as u
 
 from .device import HWDevice
 
 
-class HWDevice2(HWDevice):
-
-    def get_properties(self):
-        meta = self.init_config_info()
-        for key, prop in inspect.getmembers(self.__class__):
-            if isinstance(prop, property):
-                meta[key] = getattr(self, key)
-        return meta
-
-    def init_config_info(self):
-        return dict(name=self.name)
-
-    def end_config_info(self, meta):
-        if self.children:
-            meta['children'] = [child.name for child in self.children]
-        return meta
-
-
-class RoboticPositioner(HWDevice2):
+class RoboticPositioner(HWDevice):
     def __init__(self, name, id, pos=None, parent=None):
         super(RoboticPositioner,self). __init__(name, parent)
         self._id = id
@@ -55,6 +40,12 @@ class RoboticPositioner(HWDevice2):
         self.pa_ = self.pa_fix
 
         self.fb = None
+
+        self.size = 0.31 * u.arcsec
+        self.area = math.sqrt(3) * self.size ** 2 / 2.0
+        self.fwhm = 3.6
+        self.sigma = self.fwhm / 2.3548
+
 
     def move_to(self, x, y, pa):
         # FIME: check this is inside patrol area
@@ -71,8 +62,7 @@ class RoboticPositioner(HWDevice2):
     def fibers_in_focal_plane(self):
         # Given PA and center, return position
         # of the fibers
-        import math
-        import numpy as np
+
         base = math.pi / 3.0
         ini = base / 2.0
         rad = 0.5365 # Geometry
@@ -84,13 +74,14 @@ class RoboticPositioner(HWDevice2):
             # To the left
             #angs = PA + ini + base * np.arange(6)
             # To the right
-            angs = -PA + ini + base * np.arange(6)
-            m0 = rad * np.cos(angs)
-            m1 = rad * np.sin(angs)
+            angs = -PA + ini + base * numpy.arange(6)
+            m0 = rad * numpy.cos(angs)
+            m1 = rad * numpy.sin(angs)
 
-            # Rearrange
+            # Rearrange, fibers are counted in different order
             xx = m0[[2, 3, 1, 0, 4, 5, 0]]
             yy = m1[[2, 3, 1, 0, 4, 5, 0]]
+            # This is the central fiber
             xx[3] = 0.0 # Center
             yy[3] = 0.0 # Center
             xx += self.x
@@ -117,34 +108,102 @@ class RoboticPositioner(HWDevice2):
         return meta
 
 
-class FiberMOS(HWDevice2):
+class FiberMOS(HWDevice):
     def __init__(self, name):
         super(FiberMOS, self).__init__(name, parent=None)
 
-        self.nrobots = 0
-
     @property
     def nbundle(self):
-        return self.nrobots
+        return len(self.children)
+
+    @property
+    def nfibers(self):
+        return 7 * self.nbundle
+
+    @property
+    def size(self):
+        # ibrad = instrument.fibers.size
+        return self.children[0].size
+
+    @property
+    def sigma(self):
+        # ibrad = instrument.fibers.size
+        return self.children[0].sigma
+
+    @property
+    def area(self):
+        #fibarea = instrument.fibers.area
+        return self.children[0].area
+
+    def transmission(self, wlin):
+        # Loop over robots and fibers..
+        result = numpy.zeros((self.nfibers, wlin.shape[0]))
+        for robot in self.children:
+            for lf in robot.fb.children:
+                result[lf.fibid - 1] = lf.transmission(wlin)
+        return result
+
+    def fibers_in_focal_plane(self):
+        fibid = []
+        pos = []
+        for robot in self.children:
+            # Compute positions of the fibers
+            # in focal plane for fibers
+            res1, res2 = robot.fibers_in_focal_plane()
+            fibid.extend(res1)
+            pos.extend(res2)
+
+        return fibid, pos
 
     def config_info(self):
         return visit(self)
 
 
-class PseudoSlit2(HWDevice):
-    def __init__(self, name, insmode):
+class LargeCompactBundle(object):
+    def __init__(self, name, lightfibers, lcb_pos):
+        self.name = name
+        super(LargeCompactBundle, self).__init__()
+        self.children = lightfibers
+        self.lcb_pos = lcb_pos
 
-        super(PseudoSlit2, self).__init__(name)
+    @property
+    def nbundle(self):
+        return len(self.children) // 7
 
-        # Positions of the fibers in the PS slit
-        self.y_pos = {}
-        self.insmode = insmode
+    @property
+    def nfibers(self):
+        return len(self.children)
 
-    def connect_fibers(self, fibid, pos):
-        self.y_pos = dict(zip(fibid, pos))
+    @property
+    def size(self):
+        # ibrad = instrument.fibers.size
+        return self.children[0].size
+
+    @property
+    def sigma(self):
+        # ibrad = instrument.fibers.size
+        return self.children[0].sigma
+
+    @property
+    def area(self):
+        #fibarea = instrument.fibers.area
+        return self.children[0].area
+
+    def transmission(self, wlin):
+        # Loop over robots and fibers..
+        result = numpy.zeros((self.nfibers, wlin.shape[0]))
+        for lf in self.children:
+            result[lf.fibid - 1] = lf.transmission(wlin)
+        return result
+
+    def fibers_in_focal_plane(self):
+        fibid = [fiber.fibid for fiber in self.children]
+        pos = [self.lcb_pos[fiber.fibid] for fiber in self.children]
+
+        return fibid, pos
 
     def config_info(self):
-        return {'name': self.name, 'insmode': self.insmode}
+        return {'name': 'LCB'}
 
 
 def visit(node, root='', meta=None):

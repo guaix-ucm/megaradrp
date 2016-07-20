@@ -17,14 +17,15 @@ from megaradrp.simulation import lamps
 from megaradrp.simulation import calibrationunit
 from megaradrp.simulation.actions import megara_sequences
 from megaradrp.simulation.telescope import Telescope
-from megaradrp.simulation.fiberbundle import FiberBundle, FiberBundle2, LightFiber
-from megaradrp.simulation.instrument import PseudoSlit
+from megaradrp.simulation.fiberbundle import FiberBundle
+from megaradrp.simulation.lightfiber import LightFiber
+from megaradrp.simulation.psslit import PseudoSlit
 from megaradrp.simulation.focalplane import FocalPlane
 from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.vph import MegaraVPH
 from megaradrp.simulation.shutter import MegaraShutter
-from megaradrp.simulation.fibermos import FiberMOS, RoboticPositioner, PseudoSlit2
-
+from megaradrp.simulation.fibermos import FiberMOS, RoboticPositioner, LargeCompactBundle
+from megaradrp.simulation.cover import MEGARA_Cover
 
 _logger = logging.getLogger("megaradrp.simulation")
 
@@ -51,69 +52,73 @@ def create_detector():
     return detector
 
 
-def create_lcb(focal_plane):
+def create_lcb():
     _logger.info('create lcb')
     layouttable = np.loadtxt('v02/LCB_spaxel_centers.dat')
-    fib_ids = layouttable[:,4].astype('int').tolist()
-    bun_ids = layouttable[:,3].astype('int').tolist()
 
-    trans = EfficiencyFile('v02/tfiber_0.1aa_20m.dat')
-    fibers_lcb = FiberBundle("BUNDLE.LCB", fib_ids, bun_ids, static=True, transmission=trans, inactive=[1, 3])
-
-    pseudo_slit_lcb = PseudoSlit(name="PSLT.LCB", insmode='LCB')
-    pseudo_slit_lcb.connect_fibers(fib_ids, layouttable[:,2])
-
-    focal_plane.connect_fiber_bundle(fibers_lcb, fib_ids, layouttable[:,0:2])
-    return focal_plane, fibers_lcb, pseudo_slit_lcb
-
-
-def create_mos(focal_plane):
-    _logger.info('create mos')
-    layouttable = np.loadtxt('v02/MOS_spaxel_centers.dat')
-    fib_ids = layouttable[:,4].astype('int').tolist()
-    bun_ids = layouttable[:,3].astype('int').tolist()
-    trans = EfficiencyFile('v02/tfiber_0.1aa_20m.dat')
-    fibers_mos = FiberBundle("BUNDLE.MOS", fib_ids, bun_ids, static=False, transmission=trans, inactive=[1, 3])
-
-    pseudo_slit_mos = PseudoSlit(name="PSLT.MOS", insmode='MOS')
-    pseudo_slit_mos.connect_fibers(fib_ids, layouttable[:,2])
-
-    focal_plane.connect_fiber_bundle(fibers_mos, fib_ids, layouttable[:,0:2])
-    return focal_plane, fibers_mos, pseudo_slit_mos
-
-
-def create_mos2(focal_plane):
-    _logger.info('create MOS2')
-    layouttable = np.loadtxt('v02/MOS_spaxel_centers.dat')
-    # Create fiber bundles and light fibers
     fiber_bundles = {}
+    lfs = {}
+    # FIXME: a trans object per fiber is very slow
+    trans = EfficiencyFile('v02/tfiber_0.1aa_20m.dat')
     for line in layouttable:
         idx =  int(line[3])
         if idx not in fiber_bundles:
             name = 'FiberBundle_{}'.format(idx)
-            fiber_bundles[idx] = FiberBundle2(name, bid=idx)
+            fiber_bundles[idx] = FiberBundle(name, bid=idx)
         fibid = int(line[4])
         name = 'LightFiber_{}'.format(fibid)
-        lf = LightFiber(name, fibid)
+
+        lf = LightFiber(name, fibid, transmission=trans)
         fiber_bundles[idx].add_light_fiber(lf)
+        lfs[fibid] = lf
+
+    lcb_pos = {}
+    for line in layouttable:
+        idx =  int(line[4])
+        lcb_pos[idx] = (line[0], line[1])
+    lcb = LargeCompactBundle('LCB', lfs.values(), lcb_pos)
+
+    pseudo_slit_lcb = PseudoSlit(name="PseudoSlitLCB", insmode='LCB')
+    pseudo_slit_lcb.connect_fibers(lfs, layouttable[:,2])
+
+
+    return lcb, pseudo_slit_lcb
+
+
+def create_mos():
+    _logger.info('create MOS')
+    layouttable = np.loadtxt('v02/MOS_spaxel_centers.dat')
+    # Create fiber bundles and light fibers
+    fiber_bundles = {}
+    lfs = {}
+    # FIXME: a trans object per fiber is very slow
+    trans = EfficiencyFile('v02/tfiber_0.1aa_20m.dat')
+    for line in layouttable:
+        idx =  int(line[3])
+        if idx not in fiber_bundles:
+            name = 'FiberBundle_{}'.format(idx)
+            fiber_bundles[idx] = FiberBundle(name, bid=idx)
+        fibid = int(line[4])
+        name = 'LightFiber_{}'.format(fibid)
+
+        lf = LightFiber(name, fibid, transmission=trans)
+        fiber_bundles[idx].add_light_fiber(lf)
+        lfs[fibid] = lf
 
     # Center of bundles
-    fiber_mos = FiberMOS('FiberMOS')
+    fiber_mos = FiberMOS('MOS')
     for line in layouttable[3::7]:
         #print(line[0], line[1], line[3])
         idx =  int(line[3])
         name = 'RoboticPositioner_{}'.format(idx)
         rb = RoboticPositioner(name, id=idx, pos=(line[0], line[1], 0.0), parent=fiber_mos)
         rb.connect_bundle(fiber_bundles[idx])
-    #print(fiber_mos.config_info())
 
-    fib_ids = layouttable[:,4].astype('int').tolist()
+    pseudo_slit_mos = PseudoSlit(name="PseudoSlitMOS", insmode='MOS')
+    #pseudo_slit_mos.connect_fibers(fib_ids, layouttable[:,2])
+    pseudo_slit_mos.connect_fibers(lfs, layouttable[:, 2])
 
-    pseudo_slit_mos = PseudoSlit2(name="PseudoSlitMOS", insmode='MOS')
-    pseudo_slit_mos.connect_fibers(fib_ids, layouttable[:,2])
-
-    focal_plane.connect_fiber_bundle2(fiber_mos)
-    return focal_plane, fiber_mos, pseudo_slit_mos
+    return fiber_mos, pseudo_slit_mos
 
 
 def create_wheel():
@@ -196,13 +201,16 @@ def create_instrument():
     # fibers_mos_base = FiberMOS('FiberMOS')
 
     # print(fibers_mos_base.config_info())
-    focal_plane = FocalPlane()
-    focal_plane, fibers_lcb, pseudo_slit_lcb = create_lcb(focal_plane)
-    focal_plane, fibers_mos, pseudo_slit_mos = create_mos(focal_plane)
-    create_mos2(focal_plane)
+    cover = MEGARA_Cover()
+    focal_plane = FocalPlane(cover)
+    fibers_lcb, pseudo_slit_lcb = create_lcb()
+    focal_plane.connect_lcb(fibers_lcb)
+
+    fiber_mos, pseudo_slit_mos = create_mos()
+    focal_plane.connect_fibermos(fiber_mos)
 
     pseudo_slit = dict(lcb=pseudo_slit_lcb, mos=pseudo_slit_mos)
-    fibers = dict(lcb=fibers_lcb, mos=fibers_mos)
+    fibers = dict(lcb=fibers_lcb, mos=fiber_mos)
 
     wheel = create_wheel()
     internal = create_optics()
@@ -215,6 +223,10 @@ def create_instrument():
                                   detector=detector,
                                   shutter=MegaraShutter()
     )
+
+    cover.set_parent(instrument)
+    fiber_mos.set_parent(instrument)
+
     return instrument
 
 
