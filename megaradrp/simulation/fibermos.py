@@ -176,12 +176,10 @@ class LargeCompactBundle(object):
 
     @property
     def size(self):
-        # ibrad = instrument.fibers.size
         return self.children[0].size
 
     @property
     def sigma(self):
-        # ibrad = instrument.fibers.size
         return self.children[0].sigma
 
     @property

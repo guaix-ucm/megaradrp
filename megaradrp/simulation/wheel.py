@@ -74,7 +74,7 @@ class Carrousel(HWDevice):
         else:
             raise ValueError('No object named %s' % name)
 
-    def config_info(self):
+    def init_config_info(self):
         if self._current:
             if isinstance(self._current, string_types):
                 label = self._current

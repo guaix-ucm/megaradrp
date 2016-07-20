@@ -275,7 +275,7 @@ if __name__ == '__main__':
     from megaradrp.simulation.atmosphere import AtmosphereModel, generate_gaussian_profile
 
     try:
-        from numinadb.controldb import ControlSystem
+        from numinadb.controldb import ControlSystem1
     except ImportError:
         from megaradrp.simulation.control import ControlSystem
 
@@ -356,7 +356,19 @@ if __name__ == '__main__':
     etime = args.exposure
     repeat = args.nimages
 
+    import yaml
+    import json
+    obj = instrument.config_info()
+
+    filename = 'alldata.json'
+    with open(filename, 'w') as fd:
+        fd.write(json.dumps(obj, sort_keys=True, indent=2,
+                            separators=(',', ': ')))
+
+    #yaml.dump(m, open('alldata.yaml', 'rw+'))
+
     _logger.debug('Exposure time is %f', etime)
     _logger.debug('Number of images is %d', repeat)
-    with control:
-        control.run(exposure=etime, repeat=repeat)
+    #with control:
+    #    control.meta(exposure=etime, repeat=repeat)
+    #    control.run(exposure=etime, repeat=repeat)

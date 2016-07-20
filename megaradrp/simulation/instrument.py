@@ -111,22 +111,22 @@ class MegaraInstrument(HWDevice):
         self._internal_focus_factor = 1.0 + (math.cosh((x-self._ref_focus) / 2.0) - 1.0 ) / 5.0
         self._internal_focus = x
 
+    @property
+    def focus(self):
+        return self._internal_focus
+
     def get_visible_fibers(self):
         return self.focal_plane.get_visible_fibers(self.fibers)
 
-    def config_info(self):
-
+    def init_config_info(self):
         result = {
-            'detector': self.detector.config_info(),
-            'vph': self.vph.config_info(),
-            'fplane': self.focal_plane.config_info(),
+            'name': self.name,
+            #'detector': self.detector.config_info(),
+            'MEGARA.VPH': self.vph.config_info(),
+            #'fplane': self.focal_plane.config_info(),
             'pslit': self.pseudo_slit.config_info(),
             'fbundle': self.fibers.config_info()
         }
-        #for i in self.children:
-        #    result[i.name] = i.config_info()
-
-        result['focus'] = self._internal_focus
 
         return result
 

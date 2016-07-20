@@ -53,7 +53,7 @@ class HWDevice(object):
         self.set_parent(parent)
 
     def config_info(self):
-        return {'name': self.name}
+        return visit(self)
 
     def configure(self, meta):
         pass
@@ -69,7 +69,10 @@ class HWDevice(object):
         meta = self.init_config_info()
         for key, prop in inspect.getmembers(self.__class__):
             if isinstance(prop, property):
-                meta[key] = getattr(self, key)
+                try:
+                    meta[key] = getattr(self, key).value
+                except:
+                    meta[key] = getattr(self, key)
         return meta
 
     def init_config_info(self):
@@ -79,3 +82,25 @@ class HWDevice(object):
         if self.children:
             meta['children'] = [child.name for child in self.children]
         return meta
+
+
+def visit(node, root='', meta=None):
+    sep = '.'
+    if meta is None:
+        meta = {}
+
+    if node.name is None:
+        base = 'unknown'
+    else:
+        base = node.name
+
+    if root != '':
+        node_name = root + sep + base
+    else:
+        node_name = base
+
+    meta[node_name] = node.get_properties()
+    submeta = meta
+    for child in node.children:
+        visit(child, root=node_name, meta=submeta)
+    return meta
