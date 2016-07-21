@@ -171,10 +171,10 @@ class MegaraImageFactory(object):
         # pheader['RONUP'] = meta_det.get('ronup', 1.0)
         # pheader['RONLOW'] = meta_det.get('ronlow', 1.0)
 
-        extract(pheader, meta, ['MEGARA.detector', 'exposed'], 'EXPTIME', default=0.0)
-        extract(pheader, meta, ['MEGARA.detector', 'exposed'], 'EXPOSED', default=0.0)
-        extract(pheader, meta, ['MEGARA.detector', 'vbin'], 'VBIN', default=1)
-        extract(pheader, meta, ['MEGARA.detector', 'hbin'], 'HBIN', default=1)
+        extract(pheader, meta, ['MEGARA.Detector', 'exposed'], 'EXPTIME')
+        extract(pheader, meta, ['MEGARA.Detector', 'exposed'], 'EXPOSED')
+        extract(pheader, meta, ['MEGARA.Detector', 'vbin'], 'VBIN')
+        extract(pheader, meta, ['MEGARA.Detector', 'hbin'], 'HBIN')
 
         extract(pheader, meta, ['MEGARA.Wheel', 'selected', 'setup'], 'VPH', default='unknown')
         pheader['VPHFWHM1'] = 0.0
