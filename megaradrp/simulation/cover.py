@@ -112,13 +112,25 @@ class FullCover(HWDevice):
         self.left.set(l_pos)
         self.right.set(r_pos)
 
+    def set_mode(self, mode):
+        pos = self.NAMES[mode]
+        self.set(pos)
+
     @property
     def position(self):
         return 2 * self.left.position + self.right.position
 
+    @position.setter
+    def position(self, pos):
+        self.set(pos)
+
     @property
     def label(self):
         return self.CODES[self.position]
+
+    @label.setter
+    def label(self, value):
+        self.set_mode(value)
 
 
 class MegaraCover(FullCover):
@@ -135,12 +147,12 @@ class MegaraCover(FullCover):
     def __init__(self, parent=None):
         self.mode = 'UNSET'
         super(MegaraCover, self).__init__(name='Cover', parent=parent)
-        self.set(self.mode)
+        self.set_mode(self.mode)
 
         self._filter_s = lambda x: True
         self._cover_s = lambda x: 1.0
 
-    def set(self, mode):
+    def set_mode(self, mode):
         """Cover in the focal plane."""
         if mode.upper() not in self.NAMES:
             raise ValueError('"%s" mode is not recognized' % mode)

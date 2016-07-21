@@ -227,7 +227,7 @@ def create_instrument():
 
 def create_calibration_unit(illum=None):
 
-    cu = calibrationunit.MegaraCalibrationUnit(capacity=7, name='megcalib')
+    cu = calibrationunit.MegaraCalibrationUnit(capacity=7, name='ICM-MEGARA')
 
     lamp1 = lamps.BlackBodyLamp('FLAT1', 5400 * u.K, illumination=illum, factor=1e-5)
     lamp2 = lamps.FlatLamp('FLAT2', illumination=illum, factor=5.0)
@@ -316,25 +316,20 @@ if __name__ == '__main__':
     control = ControlSystem(factory)
     control.register('MEGARA', instrument)
     control.register('GTC', telescope)
-    control.register('megcalib', cu)
+    control.register('ICM-MEGARA', cu)
     control.register('factory', factory)
 
     # Observation setup
-
     if args.parameters:
-
         oparam = yaml.load(open(args.parameters))
-
-        _logger.debug('Configure MEGARA with profile %s', oparam['description'])
+        _logger.debug('Configure MEGARA')
         instrument.configure(oparam)
-
-        cu.select(oparam['lamp'])
-
+        _logger.debug('Configure ICM-MEGARA')
+        cu.configure(oparam)
     if args.mos:
         mosconfig = yaml.load(open(args.mos))
         _logger.debug('Configure Fiber MOS with file %s', args.mos)
-        fiber_mos = instrument.get_device('MEGARA.MOS')
-        fiber_mos.configure(mosconfig)
+        instrument.configure(mosconfig)
     else:
         _logger.debug('Fiber MOS in default positions')
 

@@ -192,11 +192,11 @@ class MegaraImageFactory(object):
 
         #self.bun_fib(mode, meta, data, pheader)
 
-        calibration_unit = control.get('megcalib')
+        calibration_unit = control.get('ICM-MEGARA')
         meta_megcalib = calibration_unit.config_info()
         if control.mode in ['arc', 'fiberflat', 'focus']:
             # LAMP keywords
-            extract(pheader, meta_megcalib, ['megcalib', 'label'], 'LAMP')
+            extract(pheader, meta_megcalib, ['ICM-MEGARA', 'label'], 'LAMP')
 
         hdu1 = fits.PrimaryHDU(data, header=pheader)
 

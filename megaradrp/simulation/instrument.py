@@ -61,6 +61,10 @@ class FocusActuator(HWDevice):
     def focus(self):
         return self._internal_focus
 
+    @focus.setter
+    def focus(self, value):
+        self.set_focus(value)
+
 
 class MegaraInstrument(HWDevice):
     def __init__(self, focal_plane, pseudo_slit, internal_optics, wheel, detector, shutter):
@@ -136,22 +140,13 @@ class MegaraInstrument(HWDevice):
     def get_visible_fibers(self):
         return self.focal_plane.get_visible_fibers(self.insmode)
 
-    def configure(self, profile):
-        """Configure MEGARA"""
-
-        self.shutter.configure(profile['shutter'])
-
-        self.set_cover(profile['cover'])
-
-        self.set_mode(profile['bundle'])
-
-        self.set_vph(profile['vph'])
-
-        self.detector.configure(profile)
-
     @property
     def insmode(self):
         return self._mode
+
+    @insmode.setter
+    def insmode(self, value):
+        self.set_mode(value)
 
     def project_rss_intl(self, sigma, wl_in, spec_in):
 

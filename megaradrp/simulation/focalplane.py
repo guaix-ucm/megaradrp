@@ -31,7 +31,7 @@ class FocalPlane(object):
     def set_cover(self, mode):
         """Cover in the focal plane."""
 
-        self.cover.set(mode)
+        self.cover.set_mode(mode)
 
     def connect_lcb(self, lcb):
         self.focalbundle['LCB'] = lcb

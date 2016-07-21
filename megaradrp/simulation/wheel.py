@@ -82,20 +82,32 @@ class Carrousel(HWDevice):
         info = super(Carrousel, self).init_config_info()
         if self._current:
             if isinstance(self._current, string_types):
-                label = self._current
                 selected = self._current
             else:
-                label = self._current.name
                 try:
                     selected = self._current.config_info()
                 except AttributeError:
-                    selected = label
+                    selected = self.label
         else:
-            label = 'Unknown'
-            selected = label
-        info['label'] = label
+            selected = self.label
         info['selected'] = selected
         return info
+
+    @property
+    def label(self):
+        if self._current:
+            if isinstance(self._current, string_types):
+                lab = self._current
+            else:
+                lab = self._current.name
+        else:
+            lab = 'Unknown'
+
+        return lab
+
+    @label.setter
+    def label(self, name):
+        self.select(name)
 
 
 class Wheel(Carrousel):

@@ -56,12 +56,11 @@ class Filter(object):
 
 class MegaraShutter(Wheel):
     def __init__(self, parent=None):
-        super(MegaraShutter, self).__init__(capacity=3, name='Shutter',
-        parent=parent)
-        self.put_in_pos(Stop(name='shutter stop'), 0) # FIXME
-        self.put_in_pos(Open(name='shutter open'), 1) # FIXME
+        super(MegaraShutter, self).__init__(capacity=3, name='Shutter', parent=parent)
+        self.put_in_pos(Stop(name='STOP'), 0) # FIXME
+        self.put_in_pos(Open(name='OPEN'), 1) # FIXME
         # sorting order filter
-        self.put_in_pos(Filter(transmission=None, name='filter'), 2) # FIXME
+        self.put_in_pos(Filter(transmission=None, name='FILTER'), 2) # FIXME
         self.move_to(1) # Open by default
 
         # MEGARA shutter has three positions:
@@ -98,6 +97,3 @@ class MegaraShutter(Wheel):
 
     def close(self):
         self.move_to(0)
-
-
-

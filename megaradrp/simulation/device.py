@@ -93,7 +93,7 @@ class HWDevice(object):
 
     def get_device_pair(self, root, trail):
         if root != self.name:
-            raise ValueError('do not belong here')
+            return None
 
         if len(trail) == 0:
             return self
@@ -108,7 +108,8 @@ class HWDevice(object):
     def configure(self, info):
         for key, value in info.items():
             node = self.get_device(key)
-            node.configure_me(value)
+            if node:
+                node.configure_me(value)
 
 
 def visit(node, root='', meta=None):
