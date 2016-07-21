@@ -54,7 +54,7 @@ class FocusActuator(HWDevice):
         if x < 118 or x > 128:
             raise ValueError('focus out of limits')
 
-        self._internal_focus_factor = 1.0 + (math.cosh((x - self._ref_focus) / 2.0) - 1.0) / 5.0
+        self.internal_focus_factor = 1.0 + (math.cosh((x - self._ref_focus) / 2.0) - 1.0) / 5.0
         self._internal_focus = x
 
     @property
@@ -63,7 +63,7 @@ class FocusActuator(HWDevice):
 
 
 class MegaraInstrument(HWDevice):
-    def __init__(self, focal_plane, fibers, pseudo_slit, internal_optics, wheel, detector, shutter):
+    def __init__(self, focal_plane, pseudo_slit, internal_optics, wheel, detector, shutter):
 
         super(MegaraInstrument, self).__init__('MEGARA')
 

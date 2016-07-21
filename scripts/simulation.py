@@ -55,20 +55,19 @@ def create_lcb():
     _logger.info('create LCB')
     layouttable = np.loadtxt('v02/LCB_spaxel_centers.dat')
 
-    fiber_bundles = {}
     fiberset = FiberSet(name='LCB', size=0.31 * u.arcsec, fwhm=3.6)
     # FIXME: a trans object per fiber is very slow
     trans = EfficiencyFile('v02/tfiber_0.1aa_20m.dat')
     for line in layouttable:
         idx =  int(line[3])
-        if idx not in fiber_bundles:
+        if idx not in fiberset.bundles:
             name = 'FiberBundle_{}'.format(idx)
-            fiber_bundles[idx] = FiberBundle(name, bid=idx)
+            fiberset.bundles[idx] = FiberBundle(name, bid=idx)
         fibid = int(line[4])
         name = 'LightFiber_{}'.format(fibid)
 
         lf = LightFiber(name, fibid, transmission=trans)
-        fiber_bundles[idx].add_light_fiber(lf)
+        fiberset.bundles[idx].add_light_fiber(lf)
         fiberset.fibers[fibid] = lf
 
     lcb_pos = {}
@@ -76,9 +75,6 @@ def create_lcb():
         idx =  int(line[4])
         lcb_pos[idx] = (line[0], line[1])
     lcb = LargeCompactBundle('LCB', fiberset, lcb_pos)
-
-    for fb in fiber_bundles.values():
-        fb.set_parent(lcb)
 
     pseudo_slit_lcb = PseudoSlit(name="LCB", insmode='LCB')
     pseudo_slit_lcb.connect_fibers(fiberset, layouttable[:,2])
@@ -90,20 +86,20 @@ def create_mos():
     _logger.info('create MOS')
     layouttable = np.loadtxt('v02/MOS_spaxel_centers.dat')
     # Create fiber bundles and light fibers
-    fiber_bundles = {}
+
     fiberset = FiberSet(name='MOS', size=0.31 * u.arcsec, fwhm=3.6)
     # FIXME: a trans object per fiber is very slow
     trans = EfficiencyFile('v02/tfiber_0.1aa_20m.dat')
     for line in layouttable:
         idx =  int(line[3])
-        if idx not in fiber_bundles:
+        if idx not in fiberset.bundles:
             name = 'FiberBundle_{}'.format(idx)
-            fiber_bundles[idx] = FiberBundle(name, bid=idx, static=False)
+            fiberset.bundles[idx] = FiberBundle(name, bid=idx, static=False)
         fibid = int(line[4])
         name = 'LightFiber_{}'.format(fibid)
 
         lf = LightFiber(name, fibid, transmission=trans)
-        fiber_bundles[idx].add_light_fiber(lf)
+        fiberset.bundles[idx].add_light_fiber(lf)
         fiberset.fibers[fibid] = lf
 
     # Center of bundles
@@ -112,7 +108,7 @@ def create_mos():
         idx =  int(line[3])
         name = 'RoboticPositioner_{}'.format(idx)
         rb = RoboticPositioner(name, id=idx, pos=(line[0], line[1], 0.0), parent=fiber_mos)
-        rb.connect_bundle(fiber_bundles[idx])
+        rb.connect_bundle(fiberset.bundles[idx])
 
     pseudo_slit_mos = PseudoSlit(name="MOS", insmode='MOS')
     pseudo_slit_mos.connect_fibers(fiberset, layouttable[:, 2])
@@ -126,7 +122,7 @@ def create_wheel():
     _logger.info('create vphs')
     vph_conf = {'wl_range': [3653.0, 4051.0, 4386.0]}
     vph = create_vph_by_data('VPH405_LR',
-                             'LR_U',
+                             'LR-U',
                              'v02/VPH405_LR2-extra.dat',
                              'v02/VPH405_LR_res.dat',
                              'v02/tvph_0.1aa.dat',
@@ -136,7 +132,7 @@ def create_wheel():
 
     vph_conf = {'wl_range': [8800.0, 9262.0, 9686.0]}
     vph = create_vph_by_data('VPH926_MR',
-                             'MR_Z',
+                             'MR-Z',
                              'v02/VPH926_MR.txt',
                              'v02/VPH926_MR_res.dat',
                              'v02/tvph_0.1aa.dat',
@@ -146,7 +142,7 @@ def create_wheel():
 
     vph_conf = {'wl_range': [8372.0, 8634.0, 8882.0]}
     vph = create_vph_by_data('VPH863_HR',
-                             'HR_I',
+                             'HR-I',
                              'v02/VPH863_HR.txt',
                              'v02/VPH863_HR_res.dat',
                              'v02/tvph_0.1aa.dat',
@@ -212,13 +208,10 @@ def create_instrument():
     pseudo_slit.put_in_pos(pseudo_slit_lcb, 0)
     pseudo_slit.put_in_pos(pseudo_slit_mos, 1)
 
-    fibers = dict(LCB=fibers_lcb, MOS=fiber_mos)
-
     wheel = create_wheel()
     internal = create_optics()
     _logger.info('create instrument')
     instrument = MegaraInstrument(focal_plane=focal_plane,
-                                  fibers=fibers,
                                   wheel=wheel,
                                   pseudo_slit=pseudo_slit,
                                   internal_optics=internal,
@@ -358,7 +351,6 @@ if __name__ == '__main__':
     etime = args.exposure
     repeat = args.nimages
 
-    import yaml
     import json
     obj = instrument.config_info()
 

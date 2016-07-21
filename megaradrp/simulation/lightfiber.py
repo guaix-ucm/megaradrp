@@ -49,9 +49,11 @@ class LightFiber(object):
                 'inactive': self.inactive
                 }
 
+
 class FiberSet(object):
     def __init__(self, name, size, fwhm):
         self.fibers = {}
+        self.bundles = {}
         self.name = name
 
         # Geometry of the fibers
@@ -67,9 +69,8 @@ class FiberSet(object):
     def transmission(self, wlin):
         # Loop over fibers
         import numpy
-        nfibers = len(self.fibers)
 
-        result = numpy.zeros((nfibers, wlin.shape[0]))
+        result = numpy.zeros((self.nfibers, wlin.shape[0]))
         for lf in self.fibers.values():
             result[lf.fibid - 1] = lf.transmission(wlin)
         return result

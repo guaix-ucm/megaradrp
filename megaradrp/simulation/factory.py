@@ -36,62 +36,69 @@ class MegaraImageFactory(object):
     def __init__(self):
         pass
 
-    def bun_fib(self, meta, hdr, id, pos):
+    def bun_fib_lcb(self, meta, hdr):
 
-        # This bundles are sky by default in LCB
         sky_bundles_in_lcb = [93, 94, 95, 96, 97, 98, 99, 100]
 
-        meta_bundle = meta.get('fbundle')
+        extract(hdr, meta, ['MEGARA.LCB', 'nfibers'], 'NFIBERS')
+        extract(hdr, meta, ['MEGARA.LCB', 'nbundles'], 'NBUNDLES')
 
-        fibs_id = meta_bundle['fibs_id']
-        bunds_id = meta_bundle['bunds_id']
-        broken_fibs = meta_bundle['inactive_fibs_id']
-        static = meta_bundle['static']
-        for i in bunds_id:
-            key = "BUN%03d_P" % i
-            hdr[key] = 0 # priority
-            key = "BUN%03d_I" % i
-            hdr[key] = "unknown"
-            key = "BUN%03d_T" % i
-            if static and i in sky_bundles_in_lcb:
-                hdr[key] = "SKY"
-            else:
-                hdr[key] = "UNASSIGNED"
+        extract(hdr, meta, ['MEGARA.LCB', 'name'], 'INSMODE')
+        fibers_info = extractm(meta, ['MEGARA.LCB', 'fibers'])
+        # FIXME: inactive
+        inactive_fibs_id = []
+        written_bunds = []
+        for fiber_info in fibers_info:
+            fibid, bunid, x, y, inactive = fiber_info
 
-        # This should be in config_info
-        for f, p in zip(id, pos):
+            if bunid not in written_bunds:
+                written_bunds.append(bunid)
+
+                key = "BUN%03d_P" % bunid
+                hdr[key] = 0  # priority
+                key = "BUN%03d_I" % bunid
+                hdr[key] = "unknown"
+                key = "BUN%03d_T" % bunid
+                if bunid in sky_bundles_in_lcb:
+                    hdr[key] = "SKY"
+                else:
+                    hdr[key] = "UNASSIGNED"
+
+            key = "FIB%03d_B" % fibid
+            hdr[key] = fibid
             # Coordinates
-            key = "FIB%03d_X" % f # X
-            hdr[key] = p[0]
-            key = "FIB%03d_Y" % f # Y
-            hdr[key] = p[1]
-
-
-        for f, b in zip(fibs_id, bunds_id):
-            # Coordinates
-            key = "FIB%03d_D" % f # DEC
+            key = "FIB%03d_D" % fibid  # DEC
             hdr[key] = 0.0000
-            key = "FIB%03d_R" % f # RA
+            key = "FIB%03d_R" % fibid  # RA
             hdr[key] = 0.0000
-            key = "FIB%03d_O" % f # PA
+            key = "FIB%03d_O" % fibid  # PA
             hdr[key] = 0.0000
 
-            key = "FIB%03d_A" % f # Active
-            if f in broken_fibs:
+            key = "FIB%03d_A" % fibid  # Active
+            if inactive == 1:
                 hdr[key] = False
             else:
                 hdr[key] = True
 
-            key = "FIB%03d_B" % f
-            hdr[key] = b
-        return hdr
+            # Coordinates
+            key = "FIB%03d_X" % fibid  # X
+            hdr[key] = x
+            key = "FIB%03d_Y" % fibid  # Y
+            hdr[key] = y
 
+        return hdr
 
     def bun_fib_mos(self, meta, hdr):
 
-        nbundle = extractm(meta, ['MEGARA.MOS', 'nbundle'])
 
-        for i in range(1, nbundle + 1):
+        nbundles = extractm(meta, ['MEGARA.MOS', 'nbundles'])
+
+        extract(hdr, meta, ['MEGARA.MOS', 'nfibers'], 'NFIBERS')
+        extract(hdr, meta, ['MEGARA.MOS', 'nbundles'], 'NBUNDLES')
+        extract(hdr, meta, ['MEGARA.MOS', 'name'], 'INSMODE')
+
+
+        for i in range(1, nbundles + 1):
             rbpath = 'MEGARA.MOS.RoboticPositioner_%d' % i
             extract(hdr, meta, [rbpath, 'priority'], "BUN%03d_P" % i, default=0)
             extract(hdr, meta, [rbpath, 'something1'], "BUN%03d_I" % i, default="unknown")
@@ -143,30 +150,18 @@ class MegaraImageFactory(object):
 
     def create(self, data, name, control):
 
-        instrument = control.get('MEGARA')
-        meta = instrument.config_info()
-        calibration_unit = control.get('megcalib')
-        meta_megcalib = calibration_unit.config_info()
-        metacontrol = control.config_info()
-        mode = control.mode
         pheader = fits.Header(self.CARDS_P)
-
         pheader['FILENAME'] = name
-        # OBS mode
-        pheader['OBSMODE'] = mode
+        pheader['OBSMODE'] = control.mode
 
         # Seqs
-        try:
-            ob_data = metacontrol['ob_data']
-            obsid = ob_data.get('obsid', 0)
-            nrep = ob_data.get('repeat', 0)
-            nsec = ob_data.get('count', 0)
-            pheader['OBSID'] = obsid
-            pheader['NNREP'] = nrep
-            pheader['NNSEC'] = nsec
-        except KeyError:
-            pass
+        metacontrol = control.config_info()
+        extract(pheader, metacontrol, ['ob_data', 'obsid'], 'OBSID', default=0.0)
+        extract(pheader, metacontrol, ['ob_data', 'repeat'], 'NNREP', default=0.0)
+        extract(pheader, metacontrol, ['ob_data', 'count'], 'NNSEC', default=0.0)
 
+        instrument = control.get('MEGARA')
+        meta = instrument.config_info()
         # not yet implemented
         # pheader['AMPLAYOU'] = "NORMAL"
         # pheader['AMPUP'] = "G"
@@ -197,9 +192,11 @@ class MegaraImageFactory(object):
 
         #self.bun_fib(mode, meta, data, pheader)
 
-        if mode in ['arc', 'fiberflat', 'focus']:
+        calibration_unit = control.get('megcalib')
+        meta_megcalib = calibration_unit.config_info()
+        if control.mode in ['arc', 'fiberflat', 'focus']:
             # LAMP keywords
-            extract(pheader, meta, ['megcalib', 'label'], 'LAMP')
+            extract(pheader, meta_megcalib, ['megcalib', 'label'], 'LAMP')
 
         hdu1 = fits.PrimaryHDU(data, header=pheader)
 
@@ -211,7 +208,7 @@ class MegaraImageFactory(object):
         if pheader['insmode'] == 'MOS':
             self.bun_fib_mos(meta, hdu2.header)
         else:
-            pass
+            self.bun_fib_lcb(meta, hdu2.header)
 
         hdul = fits.HDUList([hdu1, hdu2])
         return hdul

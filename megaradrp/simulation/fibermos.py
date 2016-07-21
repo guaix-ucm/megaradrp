@@ -41,12 +41,6 @@ class RoboticPositioner(HWDevice):
 
         self.fb = None
 
-        self.size = 0.31 * u.arcsec
-        self.area = math.sqrt(3) * self.size ** 2 / 2.0
-        self.fwhm = 3.6
-        self.sigma = self.fwhm / 2.3548
-
-
     def move_to(self, x, y, pa):
         # FIME: check this is inside patrol area
         self.x_ = x
@@ -117,7 +111,7 @@ class BaseFibersPlane(HWDevice):
         self.fiberset = fiberset
 
     @property
-    def nbundle(self):
+    def nbundles(self):
         return self.nfibers // 7
 
     @property
@@ -167,3 +161,13 @@ class LargeCompactBundle(BaseFibersPlane):
         pos = [self.lcb_pos[fiber.fibid] for fiber in self.fiberset.fibers.values()]
 
         return fibid, pos
+
+    @property
+    def fibers(self):
+        res = []
+        for bundid in self.fiberset.bundles:
+            for lf in self.fiberset.bundles[bundid].lf:
+                pos = self.lcb_pos[lf.fibid]
+                res.append((lf.fibid, bundid, pos[0], pos[1], lf.inactive))
+
+        return res

@@ -17,13 +17,12 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from .device import HWDevice
 
-class FiberBundle(HWDevice):
+class FiberBundle(object):
     def __init__(self, name, bid, static=True):
-        super(FiberBundle, self).__init__(name)
+        super(FiberBundle, self).__init__()
         # Geometry of the fibers
-
+        self.name = name
         self.bunds_id = bid
         self.static = static
         self.lf = []
