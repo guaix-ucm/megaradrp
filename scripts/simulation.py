@@ -51,7 +51,6 @@ def create_detector():
                                  )
     return detector
 
-
 def create_lcb():
     _logger.info('create LCB')
     layouttable = np.loadtxt('v02/LCB_spaxel_centers.dat')
@@ -78,6 +77,9 @@ def create_lcb():
         lcb_pos[idx] = (line[0], line[1])
     lcb = LargeCompactBundle('LCB', fiberset, lcb_pos)
 
+    for fb in fiber_bundles.values():
+        fb.set_parent(lcb)
+
     pseudo_slit_lcb = PseudoSlit(name="LCB", insmode='LCB')
     pseudo_slit_lcb.connect_fibers(fiberset, layouttable[:,2])
 
@@ -96,7 +98,7 @@ def create_mos():
         idx =  int(line[3])
         if idx not in fiber_bundles:
             name = 'FiberBundle_{}'.format(idx)
-            fiber_bundles[idx] = FiberBundle(name, bid=idx)
+            fiber_bundles[idx] = FiberBundle(name, bid=idx, static=False)
         fibid = int(line[4])
         name = 'LightFiber_{}'.format(fibid)
 
@@ -226,7 +228,7 @@ def create_instrument():
 
     cover.set_parent(instrument)
     fiber_mos.set_parent(instrument)
-
+    fibers_lcb.set_parent(instrument)
     return instrument
 
 

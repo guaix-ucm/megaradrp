@@ -17,36 +17,31 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import math
+from .device import HWDevice
 
-from astropy import units as u
-
-from .efficiency import Efficiency
-
-
-class FiberBundle(object):
+class FiberBundle(HWDevice):
     def __init__(self, name, bid, static=True):
-        self.name = name
+        super(FiberBundle, self).__init__(name)
         # Geometry of the fibers
 
         self.bunds_id = bid
         self.static = static
-        self.children = []
+        self.lf = []
 
     def add_light_fiber(self, lf):
-        self.children.append(lf)
+        self.lf.append(lf)
 
     @property
     def fibs_id(self):
-        return [ch.fibid for ch in self.children]
+        return [ch.fibid for ch in self.lf]
 
     @property
     def inactive_fibs_id(self):
-        return [ch.fibid for ch in self.children if ch.inactive]
+        return [ch.fibid for ch in self.lf if ch.inactive]
 
     def config_info(self):
         return {'name': self.name,
-                'nfibers': len(self.children),
+                'nfibers': len(self.lf),
                 'fibs_id': self.fibs_id,
                 'id': self.bunds_id,
                 'static': self.static,
