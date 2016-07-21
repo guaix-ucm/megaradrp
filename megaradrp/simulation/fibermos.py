@@ -20,7 +20,6 @@
 import math
 
 import numpy
-from astropy import units as u
 
 from .device import HWDevice
 
@@ -44,9 +43,13 @@ class RoboticPositioner(HWDevice):
         self._target_name = 'unknown'
 
         self.fb = None
+        self.rpatrol = 10.0
 
     def move_to(self, x, y, pa):
-        # FIME: check this is inside patrol area
+        dis  = math.hypot(x - self.x_fix, y - self.y_fix)
+        if dis >= self.rpatrol:
+            # impossible to move
+            raise ValueError('movement out of patrol area')
         self.x_ = x
         self.y_ = y
         self.pa_ = pa
