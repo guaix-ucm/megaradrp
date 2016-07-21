@@ -100,13 +100,13 @@ class MegaraImageFactory(object):
 
         for i in range(1, nbundles + 1):
             rbpath = 'MEGARA.MOS.RoboticPositioner_%d' % i
-            extract(hdr, meta, [rbpath, 'priority'], "BUN%03d_P" % i, default=0)
-            extract(hdr, meta, [rbpath, 'something1'], "BUN%03d_I" % i, default="unknown")
-            extract(hdr, meta, [rbpath, 'something2'], "BUN%03d_T" % i, default="UNASSIGNED")
+            extract(hdr, meta, [rbpath, 'target_priority'], "BUN%03d_P" % i, default=0)
+            extract(hdr, meta, [rbpath, 'target_name'], "BUN%03d_I" % i, default="unknown")
+            extract(hdr, meta, [rbpath, 'target_type'], "BUN%03d_T" % i, default="UNASSIGNED")
 
             fibs_id = extractm(meta, [rbpath, 'bundle', 'fibs_id'])
             inactive_fibs_id = extractm(meta, [rbpath, 'bundle', 'inactive_fibs_id'])
-            pos_fibs = extractm(meta, [rbpath, 'pos'])
+            pos_fibs = extractm(meta, [rbpath, 'fibers_pos'])
             for fibid, pos in zip(fibs_id, pos_fibs):
                 extract(hdr, meta, [rbpath, 'id'], "FIB%03d_B" % fibid)
                 # Coordinates
