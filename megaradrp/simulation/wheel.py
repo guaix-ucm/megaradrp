@@ -74,16 +74,28 @@ class Carrousel(HWDevice):
         else:
             raise ValueError('No object named %s' % name)
 
+    @property
+    def position(self):
+        return self._pos
+
     def init_config_info(self):
+        info = super(Carrousel, self).init_config_info()
         if self._current:
             if isinstance(self._current, string_types):
                 label = self._current
+                selected = self._current
             else:
                 label = self._current.name
+                try:
+                    selected = self._current.config_info()
+                except AttributeError:
+                    selected = label
         else:
             label = 'Unknown'
-        return {'name': self.name, 'position': self._pos,
-                'label': label}
+            selected = label
+        info['label'] = label
+        info['selected'] = selected
+        return info
 
 
 class Wheel(Carrousel):

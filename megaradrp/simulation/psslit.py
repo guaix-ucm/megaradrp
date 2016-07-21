@@ -17,38 +17,36 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import math
 
-import numpy as np
-from scipy.stats import norm
-import scipy.interpolate as ii
-from scipy.ndimage.filters import convolve1d
-
-from .efficiency import Efficiency
-from .device import HWDevice
+from .wheel import Carrousel
 
 
-class PseudoSlit(HWDevice):
+class PseudoSlit(object):
     def __init__(self, name, insmode):
 
-        super(PseudoSlit, self).__init__(name)
-
-        # Positions of the fibers in the PS slit
+        super(PseudoSlit, self).__init__()
+        self.name = name
         self.insmode = insmode
-        self.fibers = {}
+        self.fiberset = None
+        self.positions = []
 
-    def connect_fibers(self, fibers, positions):
-
-        for fibid, pos in enumerate(positions, 1):
-            lf = fibers[fibid]
-            self.fibers[fibid] = (lf, pos)
+    def connect_fibers(self, fiberset, positions):
+        self.fiberset = fiberset
+        self.positions = positions
 
     def y_pos(self, fibsid):
         result = []
         for fibid in fibsid:
-            fiber, pos = self.fibers[fibid]
+            pos = self.positions[fibid-1]
             result.append(pos)
         return result
 
     def config_info(self):
-        return {'name': self.name, 'insmode': self.insmode}
+        return {'name': self.name,
+                'insmode': self.insmode,
+                'nfibers': len(self.fiberset.fibers),
+                }
+
+
+class PseudoSlitSelector(Carrousel):
+    pass

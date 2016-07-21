@@ -141,15 +141,15 @@ class MegaraLampSequence(Sequence):
         # print('enter targets in focal plane')
         wl = instrument.vph.wltable_interp()
         # Total number of fibers, defines RSS size
-        nfibers = instrument.fibers.nfibers
+        nfibers = instrument.fiberset.nfibers
         # Radius of the fiber (on the focal plane, arcsecs)
-        fibrad = instrument.fibers.size
-        fibarea = instrument.fibers.area
+        fibrad = instrument.fiberset.size
+        fibarea = instrument.fiberset.area
         # Result, RSS like (with higher resolution in WL)
         final = np.zeros((nfibers, wl.shape[0]))
 
         # Centers of profiles
-        tab = instrument.focal_plane.get_visible_fibers(instrument.fibers)
+        tab = instrument.focal_plane.get_visible_fibers(instrument.fiberset.name)
         fibid = tab['fibid']
         pos_x = tab['x']
         pos_y = tab['y']
@@ -401,16 +401,16 @@ def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, instrument):
     # WL in microns
     wl = instrument.vph.wltable_interp()
     # Total number of fibers, defines RSS size
-    nfibers = instrument.fibers.nfibers
+    nfibers = instrument.fiberset.nfibers
     # Radius of the fiber (on the focal plane, arcsecs)
-    fibrad = instrument.fibers.size
-    fibarea = instrument.fibers.area
+    fibrad = instrument.fiberset.size
+    fibarea = instrument.fiberset.area
 
     # Result, RSS like (with higher resolution in WL)
     final = np.zeros((nfibers, wl.shape[0]))
 
     # Centers of profiles
-    tab = instrument.focal_plane.get_visible_fibers(instrument.fibers)
+    tab = instrument.focal_plane.get_visible_fibers(instrument.fiberset.name)
     fibid = tab['fibid']
     pos_x = tab['x']
     pos_y = tab['y']

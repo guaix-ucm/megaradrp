@@ -18,14 +18,14 @@ from megaradrp.simulation import calibrationunit
 from megaradrp.simulation.actions import megara_sequences
 from megaradrp.simulation.telescope import Telescope
 from megaradrp.simulation.fiberbundle import FiberBundle
-from megaradrp.simulation.lightfiber import LightFiber
-from megaradrp.simulation.psslit import PseudoSlit
+from megaradrp.simulation.lightfiber import LightFiber, FiberSet
+from megaradrp.simulation.psslit import PseudoSlit, PseudoSlitSelector
 from megaradrp.simulation.focalplane import FocalPlane
 from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.vph import MegaraVPH
 from megaradrp.simulation.shutter import MegaraShutter
 from megaradrp.simulation.fibermos import FiberMOS, RoboticPositioner, LargeCompactBundle
-from megaradrp.simulation.cover import MEGARA_Cover
+from megaradrp.simulation.cover import MegaraCover
 
 _logger = logging.getLogger("megaradrp.simulation")
 
@@ -45,7 +45,7 @@ def create_detector():
 
     qe_wl = EfficiencyFile('v02/tccdbroad_0.1aa.dat')
 
-    detector = MegaraDetectorSat('megaradetector',
+    detector = MegaraDetectorSat('Detector',
                                  DSHAPE, OSCAN, PSCAN, qe=qe, qe_wl=qe_wl, dark=dcurrent,
                                  readpars1=readpars1, readpars2=readpars2, bins='11'
                                  )
@@ -53,11 +53,11 @@ def create_detector():
 
 
 def create_lcb():
-    _logger.info('create lcb')
+    _logger.info('create LCB')
     layouttable = np.loadtxt('v02/LCB_spaxel_centers.dat')
 
     fiber_bundles = {}
-    lfs = {}
+    fiberset = FiberSet(name='LCB', size=0.31 * u.arcsec, fwhm=3.6)
     # FIXME: a trans object per fiber is very slow
     trans = EfficiencyFile('v02/tfiber_0.1aa_20m.dat')
     for line in layouttable:
@@ -70,17 +70,16 @@ def create_lcb():
 
         lf = LightFiber(name, fibid, transmission=trans)
         fiber_bundles[idx].add_light_fiber(lf)
-        lfs[fibid] = lf
+        fiberset.fibers[fibid] = lf
 
     lcb_pos = {}
     for line in layouttable:
         idx =  int(line[4])
         lcb_pos[idx] = (line[0], line[1])
-    lcb = LargeCompactBundle('LCB', lfs.values(), lcb_pos)
+    lcb = LargeCompactBundle('LCB', fiberset, lcb_pos)
 
-    pseudo_slit_lcb = PseudoSlit(name="PseudoSlitLCB", insmode='LCB')
-    pseudo_slit_lcb.connect_fibers(lfs, layouttable[:,2])
-
+    pseudo_slit_lcb = PseudoSlit(name="LCB", insmode='LCB')
+    pseudo_slit_lcb.connect_fibers(fiberset, layouttable[:,2])
 
     return lcb, pseudo_slit_lcb
 
@@ -90,7 +89,7 @@ def create_mos():
     layouttable = np.loadtxt('v02/MOS_spaxel_centers.dat')
     # Create fiber bundles and light fibers
     fiber_bundles = {}
-    lfs = {}
+    fiberset = FiberSet(name='MOS', size=0.31 * u.arcsec, fwhm=3.6)
     # FIXME: a trans object per fiber is very slow
     trans = EfficiencyFile('v02/tfiber_0.1aa_20m.dat')
     for line in layouttable:
@@ -103,27 +102,25 @@ def create_mos():
 
         lf = LightFiber(name, fibid, transmission=trans)
         fiber_bundles[idx].add_light_fiber(lf)
-        lfs[fibid] = lf
+        fiberset.fibers[fibid] = lf
 
     # Center of bundles
-    fiber_mos = FiberMOS('MOS')
+    fiber_mos = FiberMOS('MOS', fiberset)
     for line in layouttable[3::7]:
-        #print(line[0], line[1], line[3])
         idx =  int(line[3])
         name = 'RoboticPositioner_{}'.format(idx)
         rb = RoboticPositioner(name, id=idx, pos=(line[0], line[1], 0.0), parent=fiber_mos)
         rb.connect_bundle(fiber_bundles[idx])
 
-    pseudo_slit_mos = PseudoSlit(name="PseudoSlitMOS", insmode='MOS')
-    #pseudo_slit_mos.connect_fibers(fib_ids, layouttable[:,2])
-    pseudo_slit_mos.connect_fibers(lfs, layouttable[:, 2])
+    pseudo_slit_mos = PseudoSlit(name="MOS", insmode='MOS')
+    pseudo_slit_mos.connect_fibers(fiberset, layouttable[:, 2])
 
     return fiber_mos, pseudo_slit_mos
 
 
 def create_wheel():
     _logger.info('create wheel')
-    wheel = VPHWheel(capacity=3, name='wheel')
+    wheel = VPHWheel(capacity=3, name='Wheel')
     _logger.info('create vphs')
     vph_conf = {'wl_range': [3653.0, 4051.0, 4386.0]}
     vph = create_vph_by_data('VPH405_LR',
@@ -201,7 +198,7 @@ def create_instrument():
     # fibers_mos_base = FiberMOS('FiberMOS')
 
     # print(fibers_mos_base.config_info())
-    cover = MEGARA_Cover()
+    cover = MegaraCover()
     focal_plane = FocalPlane(cover)
     fibers_lcb, pseudo_slit_lcb = create_lcb()
     focal_plane.connect_lcb(fibers_lcb)
@@ -209,8 +206,11 @@ def create_instrument():
     fiber_mos, pseudo_slit_mos = create_mos()
     focal_plane.connect_fibermos(fiber_mos)
 
-    pseudo_slit = dict(lcb=pseudo_slit_lcb, mos=pseudo_slit_mos)
-    fibers = dict(lcb=fibers_lcb, mos=fiber_mos)
+    pseudo_slit = PseudoSlitSelector(name='PseudoSlit', capacity=2)
+    pseudo_slit.put_in_pos(pseudo_slit_lcb, 0)
+    pseudo_slit.put_in_pos(pseudo_slit_mos, 1)
+
+    fibers = dict(LCB=fibers_lcb, MOS=fiber_mos)
 
     wheel = create_wheel()
     internal = create_optics()
@@ -369,6 +369,5 @@ if __name__ == '__main__':
 
     _logger.debug('Exposure time is %f', etime)
     _logger.debug('Number of images is %d', repeat)
-    #with control:
-    #    control.meta(exposure=etime, repeat=repeat)
-    #    control.run(exposure=etime, repeat=repeat)
+    with control:
+        control.run(exposure=etime, repeat=repeat)

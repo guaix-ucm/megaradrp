@@ -56,7 +56,7 @@ class Filter(object):
 
 class MegaraShutter(Wheel):
     def __init__(self, parent=None):
-        super(MegaraShutter, self).__init__(capacity=3, name='shutter',
+        super(MegaraShutter, self).__init__(capacity=3, name='Shutter',
         parent=parent)
         self.put_in_pos(Stop(name='shutter stop'), 0) # FIXME
         self.put_in_pos(Open(name='shutter open'), 1) # FIXME

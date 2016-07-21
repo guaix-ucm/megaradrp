@@ -25,10 +25,11 @@ from .device import HWDevice, Signal
 class HemiCover(HWDevice):
     STATES = [0, 1]
     NAMES = {'PARKED': 1, 'INPLACE': 0}
+    CODES = {1: 'PARKED', 0: 'INPLACE'}
 
-    def __init__(self, name=None, parent=None):
+    def __init__(self, name, parent=None):
         self._pos = 0 # Closed
-        super(HemiCover, self).__init__(name=name, parent=parent)
+        super(HemiCover, self).__init__(name, parent=parent)
 
         self.changed = Signal()
         self.opened = Signal()
@@ -60,23 +61,27 @@ class HemiCover(HWDevice):
             self.opened.emit()
         else:
             self.closed.emit()
-            
-    def pos(self):
+
+    @property
+    def position(self):
         return self._pos
-    
-    def config_info(self):
-        return {'name': self.name, 'position': self._pos, 
-                'label': self.NAMES[self._pos]}
+
+    @property
+    def label(self):
+        return self.CODES[self._pos]
 
 
 class FullCover(HWDevice):
     # STATES = 00, 01, 10, 11 
     # FULL CLOSED, CLOSED LEFT, CLOSED RIGHT, FULL OPEN
     STATES = [0, 1, 2, 3]
+    NAMES = {'UNSET': 3, 'LEFT': 2, 'RIGHT': 1, 'SET': 0}
+    CODES = {3: 'UNSET', 2: 'LEFT', 1: 'RIGHT', 0: 'SET'}
+
     def __init__(self, name=None, parent=None):
         super(FullCover, self).__init__(name, parent=parent)
-        self.left = HemiCover(parent=self)
-        self.right = HemiCover(parent=self)
+        self.left = HemiCover(name='Left', parent=self)
+        self.right = HemiCover(name='Right', parent=self)
 
         self.changed_left = self.left.changed
         self.opened_left = self.left.opened
@@ -107,14 +112,16 @@ class FullCover(HWDevice):
         self.left.set(l_pos)
         self.right.set(r_pos)
 
-    def pos(self):
-        return 2 * self.left.pos() + self.right.pos()
-     
-    def config_info(self):
-        return {'name': self.name, 'position': self.pos()}   
+    @property
+    def position(self):
+        return 2 * self.left.position + self.right.position
+
+    @property
+    def label(self):
+        return self.CODES[self.position]
 
 
-class MEGARA_Cover(FullCover):
+class MegaraCover(FullCover):
     """MEGARA Cover"""
     NAMES = {'UNSET': 3, 'LEFT': 2, 'RIGHT': 1, 'SET': 0}
     CODES = {3: 'UNSET', 2: 'LEFT', 1: 'RIGHT', 0: 'SET'}
@@ -127,7 +134,7 @@ class MEGARA_Cover(FullCover):
 
     def __init__(self, parent=None):
         self.mode = 'UNSET'
-        super(MEGARA_Cover, self).__init__(name='Cover', parent=parent)
+        super(MegaraCover, self).__init__(name='Cover', parent=parent)
         self.set(self.mode)
 
         self._filter_s = lambda x: True
@@ -139,45 +146,28 @@ class MEGARA_Cover(FullCover):
             raise ValueError('"%s" mode is not recognized' % mode)
 
         pos = self.NAMES[mode.upper()]
-        super(MEGARA_Cover, self).set(pos)
+        super(MegaraCover, self).set(pos)
 
-        assert pos == self.pos()
+        assert pos == self.position
 
         self._cover_s = lambda x: 1.0
 
-        if self.pos() == 3:
+        if self.position == 3:
             self._filter_s = lambda x: True
             self._cover_s = lambda x: 1.0
-        elif self.pos() == 2:
+        elif self.position == 2:
             self._filter_s = lambda pos: pos[0] >= 0.0
             self._cover_s = lambda pos: 1.0 if pos[0] > 0.0 else 0.5
-        elif self.pos() == 1:
+        elif self.position == 1:
             self._filter_s = lambda pos: pos[0] <= 0.0
             self._cover_s = lambda pos: 1.0 if pos[0] < 0.0 else 0.5
         else:
             self._filter_s = lambda pos: False
             self._cover_s = lambda pos: 0.0
-    
-    def config_info(self):
-        res = super(MEGARA_Cover, self).config_info()
-
-        my_pos = res['position']
-
-        for name, pos in self.NAMES.items():
-            if pos == my_pos:
-                res['label'] = name
-                break
-        else:
-            res['label'] = 'UNKNOWN'
-            
-        return res
 
     def visible_fibers(self, fibid, allpos):
         p1 = [(fid, pos[0], pos[1], self._cover_s(pos)) for fid, pos in zip(fibid, allpos) if self._filter_s(pos)]
         return p1
 
     def __call__(self, fiber_positions):
-        return self.VALS[self.pos()](fiber_positions)
-
-    def __repr__(self):
-        return "Cover(mode='%s')" % self.mode
+        return self.VALS[self.position](fiber_positions)

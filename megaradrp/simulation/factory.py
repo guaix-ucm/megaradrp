@@ -86,6 +86,44 @@ class MegaraImageFactory(object):
             hdr[key] = b
         return hdr
 
+
+    def bun_fib_mos(self, meta, hdr):
+
+        nbundle = extractm(meta, ['MEGARA.MOS', 'nbundle'])
+
+        for i in range(1, nbundle + 1):
+            rbpath = 'MEGARA.MOS.RoboticPositioner_%d' % i
+            extract(hdr, meta, [rbpath, 'priority'], "BUN%03d_P" % i, default=0)
+            extract(hdr, meta, [rbpath, 'something1'], "BUN%03d_I" % i, default="unknown")
+            extract(hdr, meta, [rbpath, 'something2'], "BUN%03d_T" % i, default="UNASSIGNED")
+
+            fibs_id = extractm(meta, [rbpath, 'bundle', 'fibs_id'])
+            inactive_fibs_id = extractm(meta, [rbpath, 'bundle', 'inactive_fibs_id'])
+            pos_fibs = extractm(meta, [rbpath, 'pos'])
+            for fibid, pos in zip(fibs_id, pos_fibs):
+                extract(hdr, meta, [rbpath, 'id'], "FIB%03d_B" % fibid)
+                # Coordinates
+                key = "FIB%03d_D" % fibid # DEC
+                hdr[key] = 0.0000
+                key = "FIB%03d_R" % fibid # RA
+                hdr[key] = 0.0000
+                key = "FIB%03d_O" % fibid # PA
+                hdr[key] = 0.0000
+
+                key = "FIB%03d_A" % fibid # Active
+                if fibid in inactive_fibs_id:
+                    hdr[key] = False
+                else:
+                    hdr[key] = True
+
+                # Coordinates
+                key = "FIB%03d_X" % fibid # X
+                hdr[key] = pos[0]
+                key = "FIB%03d_Y" % fibid # Y
+                hdr[key] = pos[1]
+
+        return hdr
+
     def create_from_instrument(self, data, name, instrument, mode=''):
         meta = instrument.config_info()
 
@@ -116,22 +154,6 @@ class MegaraImageFactory(object):
         pheader['FILENAME'] = name
         # OBS mode
         pheader['OBSMODE'] = mode
-        # Detector
-        meta_det = meta.get('detector', {})
-
-        exptime = meta_det.get('exposed', 0.0)
-        pheader['EXPTIME'] = exptime
-        pheader['EXPOSED'] = exptime
-        pheader['VBIN'] = meta_det.get('vbin', 1)
-        pheader['HBIN'] = meta_det.get('hbin', 1)
-        # not yet implemented
-        # pheader['AMPLAYOU'] = "NORMAL"
-        # pheader['AMPUP'] = "G"
-        # pheader['AMPLOW'] = "E"
-        # pheader['GAINUP'] = meta_det.get('gainup', 1.0)
-        # pheader['GAINLOW'] = meta_det.get('gainlow', 1.0)
-        # pheader['RONUP'] = meta_det.get('ronup', 1.0)
-        # pheader['RONLOW'] = meta_det.get('ronlow', 1.0)
 
         # Seqs
         try:
@@ -145,54 +167,51 @@ class MegaraImageFactory(object):
         except KeyError:
             pass
 
-        # VPH
-        meta_vph = meta.get('vph', {})
+        # not yet implemented
+        # pheader['AMPLAYOU'] = "NORMAL"
+        # pheader['AMPUP'] = "G"
+        # pheader['AMPLOW'] = "E"
+        # pheader['GAINUP'] = meta_det.get('gainup', 1.0)
+        # pheader['GAINLOW'] = meta_det.get('gainlow', 1.0)
+        # pheader['RONUP'] = meta_det.get('ronup', 1.0)
+        # pheader['RONLOW'] = meta_det.get('ronlow', 1.0)
 
-        vph_name = meta_vph.get('setup', 'unknown')
-        vph_wlrange = meta_vph.get('wl_range', [0.0, 0.0, 0.0])
-        pheader['VPH'] = vph_name
+        extract(pheader, meta, ['MEGARA.detector', 'exposed'], 'EXPTIME', default=0.0)
+        extract(pheader, meta, ['MEGARA.detector', 'exposed'], 'EXPOSED', default=0.0)
+        extract(pheader, meta, ['MEGARA.detector', 'vbin'], 'VBIN', default=1)
+        extract(pheader, meta, ['MEGARA.detector', 'hbin'], 'HBIN', default=1)
+
+        extract(pheader, meta, ['MEGARA.Wheel', 'selected', 'setup'], 'VPH', default='unknown')
         pheader['VPHFWHM1'] = 0.0
         pheader['VPHFWHMC'] = 0.0
         pheader['VPHFWHM2'] = 0.0
-        pheader['VPHWL1'] = vph_wlrange[0]
-        pheader['VPHWLC'] = vph_wlrange[1]
-        pheader['VPHWL2'] = vph_wlrange[2]
-        # Focus
-        focus = meta.get('focus', 0.0)
-        pheader['FOCUS'] = focus
+        extract(pheader, meta, ['MEGARA.Wheel', 'selected', 'wl_range'], 'VPHWL1', selector=lambda x: x[0])
+        extract(pheader, meta, ['MEGARA.Wheel', 'selected', 'wl_range'], 'VPHWLC', selector=lambda x: x[1])
+        extract(pheader, meta, ['MEGARA.Wheel', 'selected', 'wl_range'], 'VPHWL2', selector=lambda x: x[2])
 
-        # Focal plane
-        meta_fplane = meta.get('fplane', {})
-        cover = meta_fplane.get('cover', 'unknown')
-        # pheader['COVER'] = cover
-        cover1 = meta_fplane.get('cover1', 'unknown')
-        # pheader['COVER1'] = cover1
-        cover2 = meta_fplane.get('cover2', 'unknown')
-        # pheader['COVER2'] = cover2
-
-        # Instrument mode
-        meta_pslit = meta.get('pslit')
-        insmode = meta_pslit.get('insmode', 'unknown')
-        pheader['INSMODE'] = insmode
+        extract(pheader, meta, ['MEGARA.Focus', 'focus'], 'FOCUS', default=0)
+        extract(pheader, meta, ['MEGARA.Cover', 'label'], 'cover')
+        extract(pheader, meta, ['MEGARA.Cover.Left', 'label'], 'cover1')
+        extract(pheader, meta, ['MEGARA.Cover.Right', 'label'], 'cover2')
+        extract(pheader, meta, ['MEGARA', 'insmode'], 'insmode', default='unknown')
 
         #self.bun_fib(mode, meta, data, pheader)
 
         if mode in ['arc', 'fiberflat', 'focus']:
             # LAMP keywords
-            pheader['LAMP'] = meta_megcalib['label']
+            extract(pheader, meta, ['megcalib', 'label'], 'LAMP')
 
         hdu1 = fits.PrimaryHDU(data, header=pheader)
 
         # Bundles and fibers
         # IN a second extension
         hdu2 = fits.ImageHDU()
-        #meta_bundle = meta.get('fbundle')
-        # FIXME: Ugly hack...
-        #b = control.get('MEGARA').focal_plane.bundle
-        #id, pos = b[meta_bundle['name']]
 
-        #self.bun_fib(meta, hdu2.header, id, pos)
-        #hdu2.header['EXTNAME'] = 'FIBERS'
+        hdu2.header['EXTNAME'] = 'FIBERS'
+        if pheader['insmode'] == 'MOS':
+            self.bun_fib_mos(meta, hdu2.header)
+        else:
+            pass
 
         hdul = fits.HDUList([hdu1, hdu2])
         return hdul
@@ -247,6 +266,28 @@ class PersistentRunCounter(RunCounter):
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.store()
 
+
+def extract(header, meta, path, key, selector=None, default=None):
+    m = meta
+    if selector is None:
+        selector = lambda x: x
+    try:
+        for part in path:
+            m = m[part]
+        header[key] = selector(m)
+    except KeyError:
+        # Keyword missing
+        if default is not None:
+            header[key] = default
+
+
+def extractm(meta, path, selector=None):
+    m = meta
+    if selector is None:
+        selector = lambda x: x
+    for part in path:
+        m = m[part]
+    return selector(m)
 
 if __name__ == '__main__':
 

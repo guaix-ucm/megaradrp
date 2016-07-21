@@ -310,11 +310,11 @@ class MegaraDetector(DetectorBase):
         return (fshape, (base1, base2), geom1, geom2)
 
     def init_config_info(self):
-        return {'exposed': self._time_last,
-                'name': 'MEGARA detector',
-                'vbin': int(self.bins[-1]),
-                'hbin': int(self.bins[0])
-                }
+        info = super(MegaraDetector, self).init_config_info()
+        info['exposed'] = self._time_last
+        info['vbin'] = int(self.bins[-1])
+        info['hbin'] = int(self.bins[0])
+        return info
 
 
 class MegaraDetectorSat(MegaraDetector):

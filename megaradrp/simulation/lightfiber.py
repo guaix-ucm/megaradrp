@@ -48,3 +48,35 @@ class LightFiber(object):
                 'fibid': self.fibid,
                 'inactive': self.inactive
                 }
+
+class FiberSet(object):
+    def __init__(self, name, size, fwhm):
+        self.fibers = {}
+        self.name = name
+
+        # Geometry of the fibers
+        self.size = size
+        self.area = math.sqrt(3) * self.size ** 2 / 2.0
+        self.fwhm = fwhm
+        self.sigma = self.fwhm / 2.3548
+
+    @property
+    def nfibers(self):
+        return len(self.fibers)
+
+    def transmission(self, wlin):
+        # Loop over fibers
+        import numpy
+        nfibers = len(self.fibers)
+
+        result = numpy.zeros((nfibers, wlin.shape[0]))
+        for lf in self.fibers.values():
+            result[lf.fibid - 1] = lf.transmission(wlin)
+        return result
+
+    def config_info(self):
+        return {'name': self.name,
+                'nfibers': self.nfibers,
+                'fwhm': self.fwhm,
+                'sigma': self.sigma,
+                }

@@ -105,43 +105,44 @@ class RoboticPositioner(HWDevice):
         meta["id"] = self._id
         if self.fb:
             meta['bundle'] = self.fb.config_info()
+            _, pos = self.fibers_in_focal_plane()
+            meta['pos'] = pos
         return meta
 
 
-class FiberMOS(HWDevice):
-    def __init__(self, name):
-        super(FiberMOS, self).__init__(name, parent=None)
+class BaseFibersPlane(HWDevice):
+    def __init__(self, name, fiberset, parent=None):
+
+        super(BaseFibersPlane, self).__init__(name, parent)
+        self.fiberset = fiberset
 
     @property
     def nbundle(self):
-        return len(self.children)
+        return self.nfibers // 7
 
     @property
     def nfibers(self):
-        return 7 * self.nbundle
+        return len(self.fiberset.fibers)
 
     @property
     def size(self):
-        # ibrad = instrument.fibers.size
-        return self.children[0].size
+        return self.fiberset.size
 
     @property
     def sigma(self):
-        # ibrad = instrument.fibers.size
-        return self.children[0].sigma
+        return self.fiberset.sigma
 
     @property
     def area(self):
-        #fibarea = instrument.fibers.area
-        return self.children[0].area
+        return self.fiberset.area
 
     def transmission(self, wlin):
-        # Loop over robots and fibers..
-        result = numpy.zeros((self.nfibers, wlin.shape[0]))
-        for robot in self.children:
-            for lf in robot.fb.children:
-                result[lf.fibid - 1] = lf.transmission(wlin)
-        return result
+        return self.fiberset.transmission(wlin)
+
+
+class FiberMOS(BaseFibersPlane):
+    def __init__(self, name, fiberset, parent=None):
+        super(FiberMOS, self).__init__(name, fiberset, parent)
 
     def fibers_in_focal_plane(self):
         fibid = []
@@ -155,67 +156,14 @@ class FiberMOS(HWDevice):
 
         return fibid, pos
 
-    def config_info(self):
-        return visit(self)
 
-
-class LargeCompactBundle(object):
-    def __init__(self, name, lightfibers, lcb_pos):
-        self.name = name
-        super(LargeCompactBundle, self).__init__()
-        self.children = lightfibers
+class LargeCompactBundle(BaseFibersPlane):
+    def __init__(self, name, fiberset, lcb_pos, parent=None):
+        super(LargeCompactBundle, self).__init__(name, fiberset, parent)
         self.lcb_pos = lcb_pos
 
-    @property
-    def nbundle(self):
-        return len(self.children) // 7
-
-    @property
-    def nfibers(self):
-        return len(self.children)
-
-    @property
-    def size(self):
-        return self.children[0].size
-
-    @property
-    def sigma(self):
-        return self.children[0].sigma
-
-    @property
-    def area(self):
-        #fibarea = instrument.fibers.area
-        return self.children[0].area
-
-    def transmission(self, wlin):
-        # Loop over robots and fibers..
-        result = numpy.zeros((self.nfibers, wlin.shape[0]))
-        for lf in self.children:
-            result[lf.fibid - 1] = lf.transmission(wlin)
-        return result
-
     def fibers_in_focal_plane(self):
-        fibid = [fiber.fibid for fiber in self.children]
-        pos = [self.lcb_pos[fiber.fibid] for fiber in self.children]
+        fibid = [fiber.fibid for fiber in self.fiberset.fibers.values()]
+        pos = [self.lcb_pos[fiber.fibid] for fiber in self.fiberset.fibers.values()]
 
         return fibid, pos
-
-    def config_info(self):
-        return {'name': 'LCB'}
-
-
-def visit(node, root='', meta=None):
-    sep = '.'
-    if meta is None:
-        meta = {}
-
-    if root != '':
-        node_name = root + sep + node.name
-    else:
-        node_name = node.name
-
-    meta[node_name] = node.get_properties()
-    submeta = meta
-    for child in node.children:
-        visit(child, root=node_name, meta=submeta)
-    return meta
