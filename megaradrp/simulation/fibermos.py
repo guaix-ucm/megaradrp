@@ -39,6 +39,10 @@ class RoboticPositioner(HWDevice):
         self.y_ = self.y_fix
         self.pa_ = self.pa_fix
 
+        self._target_priority = 0
+        self._target_type = 'UNASSIGNED'
+        self._target_name = 'unknown'
+
         self.fb = None
 
     def move_to(self, x, y, pa):
@@ -94,13 +98,53 @@ class RoboticPositioner(HWDevice):
     def pa(self):
         return self.pa_
 
+    @property
+    def position(self):
+        return self.x_, self.y_, self.pa_
+
+    @position.setter
+    def position(self, value):
+        self.move_to(value[0], value[1], value[2])
+
+    @property
+    def position_relative(self):
+        return self.x_ - self.x_fix, self.y_ - self.y_fix, self.pa_
+
+    @position_relative.setter
+    def position_relative(self, value):
+        self.move_to(value[0] + self.x_, value[1] + self.y_, value[2] + self.pa_)
+
+    @property
+    def target_priority(self):
+        return self._target_priority
+
+    @target_priority.setter
+    def target_priority(self, value):
+        self._target_priority = value
+
+    @property
+    def target_type(self):
+        return self._target_type
+
+    @target_type.setter
+    def target_type(self, value):
+        self._target_type = value
+
+    @property
+    def target_name(self):
+        return self._target_name
+
+    @target_name.setter
+    def target_name(self, value):
+        self._target_name = value
+
     def init_config_info(self):
         meta = super(RoboticPositioner, self).init_config_info()
         meta["id"] = self._id
         if self.fb:
             meta['bundle'] = self.fb.config_info()
             _, pos = self.fibers_in_focal_plane()
-            meta['pos'] = pos
+            meta['fibers_pos'] = pos
         return meta
 
 
@@ -141,14 +185,17 @@ class FiberMOS(BaseFibersPlane):
     def fibers_in_focal_plane(self):
         fibid = []
         pos = []
-        for robot in self.children:
+        for robot in self.children.values():
             # Compute positions of the fibers
             # in focal plane for fibers
             res1, res2 = robot.fibers_in_focal_plane()
             fibid.extend(res1)
             pos.extend(res2)
-
-        return fibid, pos
+        # This must be sorted
+        fibid = numpy.array(fibid)
+        pos = numpy.array(pos)
+        idx = numpy.argsort(fibid)
+        return fibid[idx], pos[idx]
 
 
 class LargeCompactBundle(BaseFibersPlane):
