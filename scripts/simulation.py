@@ -351,17 +351,18 @@ if __name__ == '__main__':
     etime = args.exposure
     repeat = args.nimages
 
-    import json
-    obj = instrument.config_info()
-
-    filename = 'alldata.json'
-    with open(filename, 'w') as fd:
-        fd.write(json.dumps(obj, sort_keys=True, indent=2,
-                            separators=(',', ': ')))
-
     #yaml.dump(m, open('alldata.yaml', 'rw+'))
 
     _logger.debug('Exposure time is %f', etime)
     _logger.debug('Number of images is %d', repeat)
     with control:
         control.run(exposure=etime, repeat=repeat)
+
+    import json
+
+    obj = instrument.config_info()
+
+    filename = 'alldata.json'
+    with open(filename, 'w') as fd:
+        fd.write(json.dumps(obj, sort_keys=True, indent=2,
+                            separators=(',', ': ')))
