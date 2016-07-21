@@ -333,6 +333,8 @@ if __name__ == '__main__':
     if args.mos:
         mosconfig = yaml.load(open(args.mos))
         _logger.debug('Configure Fiber MOS with file %s', args.mos)
+        fiber_mos = instrument.get_device('MEGARA.MOS')
+        fiber_mos.configure(mosconfig)
     else:
         _logger.debug('Fiber MOS in default positions')
 
