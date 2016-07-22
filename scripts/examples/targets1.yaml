@@ -1,0 +1,22 @@
+central: [120.0, 20.0]
+targets: 
+  obj100:
+    relposition: [-2.0, 3.1]
+    profile: 
+      type: point-like
+    spectrum: 
+      sed: 'v02/targets/vega.dat'
+      factor: 1.0e-2
+      refmag: 
+        value: 15.0 
+        band: v_johnsonbessel
+  obj102:
+    relposition: [2.0, -3.1]
+    profile: 
+      type: point-like
+    spectrum: 
+      sed: 'v02/targets/vega.dat'
+      factor: 1.0e-2
+      refmag:
+        value: 15.0 
+        band: v_johnsonbessel
