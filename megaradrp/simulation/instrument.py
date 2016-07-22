@@ -148,6 +148,14 @@ class MegaraInstrument(HWDevice):
     def insmode(self, value):
         self.set_mode(value)
 
+    @property
+    def cover(self):
+        return self.focal_plane.cover.label
+
+    @cover.setter
+    def cover(self, state):
+        self.set_cover(state)
+
     def project_rss_intl(self, sigma, wl_in, spec_in):
 
         # This will compute only the illuminated fibers
