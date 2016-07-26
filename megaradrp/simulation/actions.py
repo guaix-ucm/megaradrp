@@ -20,6 +20,7 @@
 """Sequences for observing modes of MEGARA"""
 
 import math
+import logging
 
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
@@ -28,6 +29,9 @@ from astropy import units as u
 import astropy.constants as cons
 
 from .convolution import rect_c, hex_c, setup_grid
+
+
+_logger = logging.getLogger("megaradrp.simulation")
 
 
 def simulate_bias(detector):
@@ -350,7 +354,7 @@ def megara_sequences():
     return seqs
 
 
-def simulate_point_like_profile(seeing_model, fibrad, xsize=12.5, ysize=12.5):
+def simulate_point_like_profile(seeing_model, fibrad, angle=0.0, xsize=12.5, ysize=12.5):
     # Simulation of the fraction of flux in each spaxel
     # By convolution of the seeing profile with the
     # spaxel shape
@@ -361,32 +365,32 @@ def simulate_point_like_profile(seeing_model, fibrad, xsize=12.5, ysize=12.5):
     Dy = 0.005
 
     xx, yy, xs, ys, xl, yl = setup_grid(xsize, ysize, Dx, Dy)
-    print('generate hex kernel')
+    # print('generate hex kernel')
     # fibrad without units
-    hex_kernel = hex_c(xx, yy, rad=fibrad)
+    hex_kernel = hex_c(xx, yy, rad=fibrad, ang=angle / 180.0 * math.pi)
 
-    print('generate seeing profile')
+    # print('generate seeing profile')
     sc = seeing_model(xx, yy)
 
-    print('convolve hex kernel with seeing profile')
+    # print('convolve hex kernel with seeing profile')
     # Convolve model gaussian with hex kernel
     convolved = signal.fftconvolve(hex_kernel, sc, mode='same')
-    import matplotlib.pyplot as plt
-    plt.imshow(sc)
-    plt.show()
-    plt.imshow(hex_kernel)
-    plt.show()
-    plt.imshow(convolved)
-    plt.show()
 
-    print('setup 2D interpolator for point-like object')
+    # print('setup 2D interpolator for point-like object')
     # Interpolate
     rbs = RectBivariateSpline(xs, ys, convolved)
 
     def fraction_of_flux(offpos0, offpos1):
+
         # Check those that are inside the convolved image
         result = np.zeros_like(offpos0)
         validfibs = rect_c(offpos0, offpos1, 2 * xl, 2 * yl)
+
+        # FIXME:
+        #import matplotlib.pyplot as plt
+        #plt.imshow(sc, extent=[-xl-0.5*Dx, xl+0.5*Dx, -yl-0.5*Dy,yl+0.5*Dy], origin='lower')
+        #plt.scatter(offpos0[validfibs], offpos1[validfibs])
+        #plt.show()
 
         # Sample convolved image
         # In the positions of active fibers
@@ -421,13 +425,16 @@ def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, instrument):
         pos = np.array(pos)
 
         import scipy.spatial.kdtree as kdtree
+        maxdis = 20.0
         base = kdtree.KDTree(pos)
         for target in t1:
-            print('find robot nearest to ', target.relposition)
-            result = base.query(target.relposition)
-            print result
+            _logger.debug('find robot nearest to %s', target.relposition)
+            result = base.query(target.relposition, distance_upper_bound=maxdis)
+            if result[1] >= 92:
+                _logger.debug('no robot nearest to point within %f', maxdis)
+                continue
             val = ids[result[1]]
-            print('robot is number', val)
+            _logger.debug('robot is number % d', val)
             robot = instrument.get_device('MEGARA.MOS.RoboticPositioner_%d' % val)
             fibid, allpos =  robot.fibers_in_focal_plane()
             tab = instrument.focal_plane.filter_visible_fibers(fibid, allpos)
@@ -436,11 +443,10 @@ def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, instrument):
             pos_y = tab['y']
             cover_frac = tab['cover']
             subfinal = final[fibid - 1]
-            rotang = robot.pa
-            print tab
-            print rotang
-        print 'target mos'
-        #add_target_mos(t1, subfinal, wl, fibrad, pos_x, pos_y, telescope, atmosphere)
+            # FIXME: check angles
+            rotang = 90 - robot.pa
+
+            add_target_mos(target, subfinal, wl, fibrad, pos_x, pos_y, rotang, telescope, atmosphere)
     else:
         tab = instrument.focal_plane.get_visible_fibers(instrument.fiberset.name)
         fibid = tab['fibid']
@@ -479,9 +485,8 @@ def add_target(targets, subfinal, wl, fibrad, pos_x, pos_y, telescope, atmospher
     photon_energy = (cons.h * cons.c / wl)
 
     for target in targets:
-        print('object is', target.name)
+        _logger.debug('object is name is %s', target.name)
         center = target.relposition
-        print(target.name, center)
         # fraction of flux in each fiber
         #scales = np.zeros((nfibers,))
 
@@ -500,39 +505,34 @@ def add_target(targets, subfinal, wl, fibrad, pos_x, pos_y, telescope, atmospher
     return subfinal
 
 
-def add_target_mos(targets, subfinal, wl, fibrad, pos_x, pos_y, telescope, atmosphere):
+def add_target_mos(target, subfinal, wl, fibrad, pos_x, pos_y, rotang, telescope, atmosphere):
 
-    if targets:
-        fraction_of_flux = simulate_point_like_profile(atmosphere.seeing, fibrad.value)
-    else:
-        fraction_of_flux = lambda x, y: 0.0
+    fraction_of_flux = simulate_point_like_profile(atmosphere.seeing, fibrad.value, angle=rotang, xsize=5.0, ysize=5.0)
 
     # res = np.zeros_like(subfinal)
-
     airmass = 1.0
     extinction = np.power(10, -0.4 * airmass * atmosphere.extinction(wl))
 
     energy_unit = u.erg * u.s**-1 * u.cm**-2 * u.AA **-1
     photon_energy = (cons.h * cons.c / wl)
 
-    for target in targets:
-        print('object is', target.name)
-        center = target.relposition
-        print(target.name, center)
-        # fraction of flux in each fiber
-        #scales = np.zeros((nfibers,))
+    _logger.debug('object is %s', target.name)
+    center = target.relposition
+    # fraction of flux in each fiber
+    #scales = np.zeros((nfibers,))
 
-        # Offset fiber positions
-        offpos0 = pos_x - center[0]
-        offpos1 = pos_y - center[1]
+    # Offset fiber positions
+    offpos0 = pos_x - center[0]
+    offpos1 = pos_y - center[1]
 
-        f_o_f = fraction_of_flux(offpos0, offpos1)
-        # If spectrum is in erg s^-1 cm^-2 AA^-1
-        # Handle units
-        sed = target.spectrum['sed'](wl) * extinction * energy_unit
+    f_o_f = fraction_of_flux(offpos0, offpos1)
+    _logger.debug('fraction of flux recovered %f', f_o_f.sum())
+    # If spectrum is in erg s^-1 cm^-2 AA^-1
+    # Handle units
+    sed = target.spectrum['sed'](wl) * extinction * energy_unit
 
-        nphotons = sed / photon_energy * telescope.area * telescope.transmission(wl)
-        subfinal += f_o_f[:, np.newaxis] * nphotons.to(u.s**-1 * u.micron**-1)
+    nphotons = sed / photon_energy * telescope.area * telescope.transmission(wl)
+    subfinal += f_o_f[:, np.newaxis] * nphotons.to(u.s**-1 * u.micron**-1)
 
     return subfinal
 
