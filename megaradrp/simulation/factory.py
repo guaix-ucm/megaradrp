@@ -140,7 +140,7 @@ class MegaraImageFactory(object):
         # OBS mode
         pheader['OBSMODE'] = mode
 
-        exptime = meta.get('exposed', 0.0)
+        exptime = meta[instrument.name].get('exposed', 1.0)
         pheader['EXPTIME'] = exptime
         pheader['EXPOSED'] = exptime
 
