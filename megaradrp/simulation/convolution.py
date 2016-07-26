@@ -7,18 +7,29 @@ from astropy.modeling.functional_models import Fittable2DModel, Parameter
 
 _HEX_SCALE = 0.25 * math.sqrt(3.0)
 
+
 class HexagonA(Fittable2DModel):
 
     amplitude = Parameter(default=1)
     x_0 = Parameter(default=0)
     y_0 = Parameter(default=0)
     radius = Parameter(default=1)
+    angle = Parameter(default=0)
 
     @staticmethod
-    def evaluate(x, y, amplitude, x_0, y_0, radius):
+    def evaluate(x, y, amplitude, x_0, y_0, radius, angle):
+        # Recenter
+        xo = x - x_0
+        yo = y - y_0
+        # Rotate
+        cs = math.cos(angle)
+        ss = math.sin(angle)
+        xr = cs * xo + ss * yo
+        yr = -ss * xo + cs * yo
+        # Scale
         d = radius * 2
-        dx = np.abs(x - x_0) / d
-        dy = np.abs(y - y_0) / d
+        dx = np.abs(xr) / d
+        dy = np.abs(yr) / d
         a = 0.25 * math.sqrt(3.0)
         sel1 = (dy <= a)
         sel2 = (a * dx + 0.25 * dy <= 0.5 * a)
@@ -34,10 +45,15 @@ class HexagonA(Fittable2DModel):
 
 
 # Returns True in inside hexagon, rectangle and square
-def hex_c(x, y, rad):
+def hex_c(x, y, rad, ang=0.0):
+    # Rotate coordinates
+    cs = math.cos(ang)
+    ss = math.sin(ang)
+    xr = cs * x + ss *y
+    yr = -ss * x + cs *y
     d = rad * 2
-    dx = np.abs(x) / d
-    dy = np.abs(y) / d
+    dx = np.abs(xr) / d
+    dy = np.abs(yr) / d
     a = 0.25 * math.sqrt(3.0)
     return (dy <= a) & (a*dx + 0.25*dy <= 0.5*a)
 
