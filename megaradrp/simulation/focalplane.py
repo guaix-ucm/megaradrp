@@ -46,6 +46,12 @@ class FocalPlane(object):
 
         return numpy.array(p1, dtype=self.ddtype)
 
+    def filter_visible_fibers(self, fibid, allpos):
+
+        p1 = self.cover.visible_fibers(fibid, allpos)
+
+        return numpy.array(p1, dtype=self.ddtype)
+
     def get_all_fibers(self, name):
 
         fibid, all_pos = self.focalbundle[name].fibers_in_focal_plane()

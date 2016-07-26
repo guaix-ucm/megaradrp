@@ -200,6 +200,17 @@ class FiberMOS(BaseFibersPlane):
         idx = numpy.argsort(fibid)
         return fibid[idx], pos[idx]
 
+    def robots_in_focal_plane(self):
+        robid = []
+        pos = []
+        for robot in self.children.values():
+            # Compute positions of the fibers
+            # in focal plane for fibers
+            res2 = robot.position
+            robid.append(robot._id)
+            pos.append(res2[:2])
+        return robid, pos
+
 
 class LargeCompactBundle(BaseFibersPlane):
     def __init__(self, name, fiberset, lcb_pos, parent=None):
