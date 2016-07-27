@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -29,7 +29,6 @@ from numina.flow.processing import DarkCorrector
 from numina.core import BaseRecipe
 from numina.core.dataholders import Product
 from numina.core.products import QualityControlProduct
-
 from numina.core.requirements import ObservationResultRequirement
 
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
@@ -37,6 +36,7 @@ from megaradrp.processing.slitflat import SlitFlatCorrector
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.fiberflat import FiberFlatCorrector
 from megaradrp.processing.datamodel import MegaraDataModel
+from megaradrp.processing.twilight import TwilightCorrector
 
 _logger = logging.getLogger('numina.recipes.megara')
 
@@ -74,14 +74,18 @@ class MegaraBaseRecipe(BaseRecipe):
                        'TwilightFiberFlatRecipe': [OverscanCorrector,
                                                    TrimImage,
                                                    BiasCorrector,
-                                                   DarkCorrector,
                                                    BadPixelCorrector,
+                                                   DarkCorrector,
                                                    SlitFlatCorrector],
                        'LCBImageRecipe': [OverscanCorrector, TrimImage,
                                           BiasCorrector, BadPixelCorrector,
                                           DarkCorrector, SlitFlatCorrector],
+                                          # WeightsCorrector,
+                                          # FiberFlatCorrector,
+                                          # TwilightCorrector],
                        'PseudoFluxCalibrationRecipe': [OverscanCorrector,
-                                                       TrimImage,BiasCorrector,
+                                                       TrimImage,
+                                                       BiasCorrector,
                                                        BadPixelCorrector,
                                                        DarkCorrector,
                                                        ApertureExtractor,
@@ -128,6 +132,12 @@ class MegaraBaseRecipe(BaseRecipe):
                     else:
                         del (flow[cont])
                         cont -= 1
+                elif issubclass(TwilightCorrector, flow[cont]):
+                    if 'twilight' in params.keys():
+                        flow[cont] = (flow[cont](params['twilight']))
+                    else:
+                        del (flow[cont])
+                        cont -= 1
                 elif issubclass(TrimImage, flow[cont]) or issubclass(
                         OverscanCorrector, flow[cont]):
                     flow[cont] = (flow[cont](confFile=confFile))
@@ -158,8 +168,9 @@ class MegaraBaseRecipe(BaseRecipe):
     def hdu_creation(self, obresult, params={}):
 
         basicflow = self.__generate_flow(params, obresult.configuration.values)
-        lista = []
         cdata = []
+        headers = []
+        hdulist = []
         try:
             for frame in obresult.images:
                 hdulist = frame.open()
@@ -170,13 +181,18 @@ class MegaraBaseRecipe(BaseRecipe):
 
             data = combine.median([d[0].data for d in cdata], dtype='float32')
             template_header = cdata[0][0].header
-            hdu = fits.PrimaryHDU(data[0], header=template_header)
-            lista.append(hdu)
+
+            for header in hdulist:
+                if 'PRIMARY' in header.name:
+                    headers.append(fits.PrimaryHDU(data[0], header=template_header))
+                else:
+                    headers.append(header)
+
         finally:
             for hdulist in cdata:
                 hdulist.close()
 
-        return fits.HDUList(lista), data
+        return fits.HDUList(headers), data
 
     def get_parameters(self, rinput):
 
@@ -243,8 +259,14 @@ class MegaraBaseRecipe(BaseRecipe):
                    data]
         return np.array(wlcalib)
 
-    def resample_rss_flux(self, rss_old, wcalib):
-        """Resample conserving the flux."""
+    def resample_rss_flux(self, rss_old, wcalib, indexes=[]):
+        """
+
+        :param rss_old: rss image
+        :param wcalib: ndarray of the coefficients
+        :param indexes: is an array to take into account that some wlcalib might not be done
+        :return:
+        """
         import math
         from numpy.polynomial.polynomial import polyval
         from numina.array.interpolation import SteffenInterpolator
@@ -278,9 +300,10 @@ class MegaraBaseRecipe(BaseRecipe):
         for idx in range(nfibers):
             # We need a monotonic interpolator
             # linear would work, we use a cubic interpolator
-            interpolator = SteffenInterpolator(old_wl_borders[idx],
-                                               accum_flux[idx],
-                                               extrapolate='border')
+            if len(indexes)==0:
+                interpolator = SteffenInterpolator(old_wl_borders[idx],accum_flux[idx],extrapolate='border')
+            else:
+                interpolator = SteffenInterpolator(old_wl_borders[idx-indexes[idx]],accum_flux[idx],extrapolate='border')
             fl_borders = interpolator(new_borders)
             rss_resampled[idx] = fl_borders[1:] - fl_borders[:-1]
         return rss_resampled, (wl_min, wl_max, delts)

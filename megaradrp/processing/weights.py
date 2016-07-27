@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -28,14 +28,13 @@ _logger = logging.getLogger('numina.processing')
 
 
 class WeightsCorrector(Corrector):
-    '''A Node that corrects from twilight.'''
+    """A Node that corrects from twilight."""
 
     def __init__(self, master_weights, datamodel=None, mark=True,
                  tagger=None, dtype='float32'):
-        #tagger = TagFits('NUM-MFF', 'MEGARA master_weights correction')
+        # tagger = TagFits('NUM-MFF', 'MEGARA master_weights correction')
 
-        super(WeightsCorrector, self).__init__(datamodel=datamodel,
-                                               dtype=dtype)
+        super(WeightsCorrector, self).__init__(datamodel=datamodel, dtype=dtype)
 
         self.master_weights = master_weights
         self.processes = mp.cpu_count() - 2
@@ -52,7 +51,7 @@ class WeightsCorrector(Corrector):
         aux = self.master_weights.extractall(name + '/')
         return name
 
-    def _run(self, img):
+    def run(self, img):
         '''
         :param img: <numpy.array> reduced image
         :param tar_file: <pointer> tar file to be extracted

@@ -44,6 +44,7 @@ vph_thr = {'LR-I': 0.27,
            'LR-R': 0.37,
            'LR-V': 0.27,
            'LR-Z': 0.27,
+           'LR-U': 0.02,
            }
 
 class TraceMapRecipe(MegaraBaseRecipe):

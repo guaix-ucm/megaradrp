@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -29,14 +29,11 @@ _logger = logging.getLogger('numina.processing')
 
 
 class TwilightCorrector(Corrector):
+    """A Node that corrects from twilight."""
 
-    '''A Node that corrects from twilight.'''
+    def __init__(self, twilight, datamodel=None, dtype='float32'):
 
-    def __init__(self, twilight, datamodel=None, mark=True,
-                 tagger=None, dtype='float32'):
-
-
-#            tagger = TagFits('NUM-MFF', 'MEGARA twilight correction')
+        # tagger = TagFits('NUM-MFF', 'MEGARA twilight correction')
 
         super(TwilightCorrector, self).__init__(datamodel=datamodel,
                                                 dtype=dtype)
@@ -48,7 +45,7 @@ class TwilightCorrector(Corrector):
         self.corrmean = self.corr.mean()
         # self.corrid = self.get_imgid(fiberflat)
 
-    def _run(self, img):
+    def run(self, img):
         imgid = self.get_imgid(img)
         _logger.debug('correct from twilight in image %s', imgid)
 
@@ -59,4 +56,3 @@ class TwilightCorrector(Corrector):
         img[0].data /= self.corr
 
         return img
-

@@ -55,6 +55,7 @@ def create_th_ar_arc_spectrum(wl_in):
              (4348.11900, 80.24873)
              ]
 
+    wl_in = wl_in.value
     s = 8e-6
     flux_out = np.zeros_like(wl_in)
 
