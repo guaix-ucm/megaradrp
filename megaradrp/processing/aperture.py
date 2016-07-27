@@ -30,9 +30,8 @@ class ApertureExtractor(Corrector):
     """A Node that extracts apertures."""
 
     def __init__(self, trace, datamodel=None, dtype='float32'):
-
-        #if tagger is None:
-        #    tagger = TagFits('NUM-MAE', 'MEGARA Aperture extractor')
+        # if tagger is None:
+        #     tagger = TagFits_('NUM-MAE', 'MEGARA Aperture extractor')
 
         super(ApertureExtractor, self).__init__(datamodel=datamodel,
                                                 dtype=dtype)
@@ -57,7 +56,7 @@ class ApertureExtractor2(Corrector):
         self.trace = trace
 
         super(ApertureExtractor2, self).__init__(datamodel=datamodel,
-                                                dtype=dtype)
+                                                 dtype=dtype)
 
     def run(self, img):
         imgid = self.get_imgid(img)

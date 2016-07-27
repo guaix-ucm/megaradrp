@@ -106,10 +106,10 @@ class Grid(dict):
         for pos, value in self.items():
             if trace in value['trace']:
                 indice = np.where(np.in1d(value['trace'], trace)==True)[0][0]
-                fibra = value['real_fiber']
+                bun = value['real_fiber']
                 x_pos = value['x_pos'][indice]
                 y_pos = value['y_pos'][indice]
-                return pos, indice, trace, fibra, x_pos, y_pos
+                return trace, bun, x_pos, y_pos
         return None
 
     def get_neighbours(self, points, radius=0.5):
@@ -117,5 +117,5 @@ class Grid(dict):
         return ind
 
     def get_fiber(self, points):
-        ind = np.array(self.neighbours.query(points, k=1))[1]+1
+        ind = np.array(self.neighbours.query(points, k=1))[1]
         return int(ind)

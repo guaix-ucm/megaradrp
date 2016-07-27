@@ -29,14 +29,14 @@ _logger = logging.getLogger('numina.processing')
 
 
 class TwilightCorrector(Corrector):
-    """A Node that corrects from twilight."""
 
-    def __init__(self, twilight, datamodel=None, dtype='float32'):
+    '''A Node that corrects from twilight.'''
 
-        # tagger = TagFits('NUM-MFF', 'MEGARA twilight correction')
+    def __init__(self, twilight, datamodel=None, mark=True,
+                 tagger=None, dtype='float32'):
 
         super(TwilightCorrector, self).__init__(datamodel=datamodel,
-                                                dtype=dtype)
+                                                 dtype=dtype)
 
         if isinstance(twilight, fits.HDUList):
             self.corr = twilight[0].data

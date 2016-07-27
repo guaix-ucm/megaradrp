@@ -1,5 +1,5 @@
 MEGARA:
-  insmode: LCB
+  insmode: MOS
   cover: UNSET
 MEGARA.Shutter: 
   label: OPEN

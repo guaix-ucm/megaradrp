@@ -21,22 +21,18 @@ import logging
 
 from astropy.io import fits
 import numpy as np
-
 from numina.flow.processing import Corrector
-
 
 _logger = logging.getLogger('numina.processing')
 
 
 class FiberFlatCorrector(Corrector):
-    """A Node that corrects from fiber flat."""
+    '''A Node that corrects from fiber flat.'''
 
     def __init__(self, fiberflat, datamodel=None, dtype='float32'):
 
-        # if tagger is None:
-        #     tagger = TagFits('NUM-MFF', 'MEGARA Fiber flat correction')
-
-        super(FiberFlatCorrector, self).__init__(datamodel=datamodel, dtype=dtype)
+        super(FiberFlatCorrector, self).__init__(datamodel=datamodel,
+                                                 dtype=dtype)
 
         if isinstance(fiberflat, fits.HDUList):
             self.corr = fiberflat[0].data

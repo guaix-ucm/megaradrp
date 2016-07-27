@@ -28,11 +28,11 @@ _logger = logging.getLogger('numina.processing')
 
 
 class WeightsCorrector(Corrector):
-    """A Node that corrects from twilight."""
+    '''A Node that corrects from twilight.'''
 
     def __init__(self, master_weights, datamodel=None, mark=True,
                  tagger=None, dtype='float32'):
-        # tagger = TagFits('NUM-MFF', 'MEGARA master_weights correction')
+        #tagger = TagFits('NUM-MFF', 'MEGARA master_weights correction')
 
         super(WeightsCorrector, self).__init__(datamodel=datamodel, dtype=dtype)
 
