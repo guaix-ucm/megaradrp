@@ -430,7 +430,7 @@ def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, instrument):
         for target in t1:
             _logger.debug('find robot nearest to %s', target.relposition)
             result = base.query(target.relposition, distance_upper_bound=maxdis)
-            if result[1] >= 92:
+            if result[1] >= instrument.fiberset.nfibers:
                 _logger.debug('no robot nearest to point within %f', maxdis)
                 continue
             val = ids[result[1]]
@@ -448,13 +448,15 @@ def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, instrument):
 
             add_target_mos(target, subfinal, wl, fibrad, pos_x, pos_y, rotang, telescope, atmosphere)
     else:
-        tab = instrument.focal_plane.get_visible_fibers(instrument.fiberset.name)
+        lcb = instrument.get_device('MEGARA.LCB')
+        fibid, allpos = lcb.fibers_in_focal_plane()
+        tab = instrument.focal_plane.filter_visible_fibers(fibid, allpos)
         fibid = tab['fibid']
         pos_x = tab['x']
         pos_y = tab['y']
         cover_frac = tab['cover']
         subfinal = final[fibid - 1]
-        add_target(t1, subfinal, wl, fibrad, pos_x, pos_y, telescope, atmosphere)
+        add_targets_lcb(t1, subfinal, wl, fibrad, pos_x, pos_y, telescope, atmosphere)
 
 
     add_sky(t2, subfinal, wl, fibarea, telescope)
@@ -469,12 +471,9 @@ def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, instrument):
     return wl, final
 
 
-def add_target(targets, subfinal, wl, fibrad, pos_x, pos_y, telescope, atmosphere):
+def add_targets_lcb(targets, subfinal, wl, fibrad, pos_x, pos_y, telescope, atmosphere):
 
-    if targets:
-        fraction_of_flux = simulate_point_like_profile(atmosphere.seeing, fibrad.value)
-    else:
-        fraction_of_flux = lambda x, y: 0.0
+    fraction_of_flux = simulate_point_like_profile(atmosphere.seeing, fibrad.value)
 
     # res = np.zeros_like(subfinal)
 
