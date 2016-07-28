@@ -19,66 +19,47 @@
 
 import numpy
 
+
 class FocalPlane(object):
 
-    NAMES = {'UNSET': 3, 'LEFT': 2, 'RIGHT': 1, 'SET': 0}
-    CODES = {3: 'UNSET', 2: 'LEFT', 1: 'RIGHT', 0: 'SET'}
-    HCODES = {1: 'PARKED', 0: 'INPLACE'}
+    def __init__(self, cover):
 
-    def __init__(self):
-
-        self._cover_status = 3
-
-        self._filter_s = lambda x: True
-        self._cover_s = lambda x: 1.0
-
-        self.bundle = {}
+        self.focalbundle = {}
+        self.cover = cover
+        self.ddtype = [('fibid', 'i4'),('x', 'f4'), ('y', 'f4'), ('cover', 'f4')]
 
     def set_cover(self, mode):
         """Cover in the focal plane."""
 
-        if mode.upper() not in self.NAMES:
-            raise ValueError('"%s" mode is not recognized' % mode)
+        self.cover.set_mode(mode)
 
-        self._cover_status = self.NAMES[mode.upper()]
+    def connect_lcb(self, lcb):
+        self.focalbundle['LCB'] = lcb
 
-        self._cover_s = lambda x: 1.0
+    def connect_fibermos(self, mos):
+        self.focalbundle['MOS'] = mos
 
-        if self._cover_status == 3:
-            self._filter_s = lambda x: True
-            self._cover_s = lambda x: 1.0
-        elif self._cover_status == 2:
-            self._filter_s = lambda pos: pos[0] >= 0.0
-            self._cover_s = lambda pos: 1.0 if pos[0] > 0.0 else 0.5
-        elif self._cover_status == 1:
-            self._filter_s = lambda pos: pos[0] <= 0.0
-            self._cover_s = lambda pos: 1.0 if pos[0] < 0.0 else 0.5
-        else:
-            self._filter_s = lambda pos: False
-            self._cover_s = lambda pos: 0.0
+    def get_visible_fibers(self, name):
+        fibid, allpos = self.focalbundle[name].fibers_in_focal_plane()
 
-    def connect_fiber_bundle(self, bundle, fibid, pos):
-        self.bundle[bundle.name] = (fibid, pos)
+        p1 = self.cover.visible_fibers(fibid, allpos)
 
-    def get_visible_fibers(self, bundle):
-        fibid, allpos = self.bundle[bundle.name]
-        p1 = [(fid, pos[0], pos[1], self._cover_s(pos)) for fid, pos in zip(fibid, allpos) if self._filter_s(pos)]
+        return numpy.array(p1, dtype=self.ddtype)
 
-        return numpy.array(p1, dtype=[('fibid', 'i4'),('x', 'f4'), ('y', 'f4'), ('cover', 'f4')])
+    def filter_visible_fibers(self, fibid, allpos):
 
-    def get_all_fibers(self, bundle):
+        p1 = self.cover.visible_fibers(fibid, allpos)
 
-        fibid, all_pos = self.bundle[bundle.name]
+        return numpy.array(p1, dtype=self.ddtype)
 
-        p2 = numpy.empty((len(fibid,)), dtype=[('fibid', 'i4'),('x', 'f4'), ('y', 'f4'), ('cover', 'f4')])
+    def get_all_fibers(self, name):
+
+        fibid, all_pos = self.focalbundle[name].fibers_in_focal_plane()
+
+        p2 = numpy.empty((len(fibid,)), dtype=self.ddtype)
         p2['fibid'] = fibid
         p2['x'] = all_pos[:,0]
         p2['y'] = all_pos[:,1]
         p2['cover'] = 1.0
 
         return p2
-
-    def config_info(self):
-        return {'cover': self.CODES[self._cover_status],
-                'cover1': self.HCODES[self._cover_status & 1],
-                'cover2': self.HCODES[(self._cover_status & 2) >> 1]}

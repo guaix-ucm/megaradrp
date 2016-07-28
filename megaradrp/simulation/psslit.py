@@ -18,31 +18,35 @@
 #
 
 
-class FiberBundle(object):
-    def __init__(self, name, bid, static=True):
-        super(FiberBundle, self).__init__()
-        # Geometry of the fibers
+from .wheel import Carrousel
+
+
+class PseudoSlit(object):
+    def __init__(self, name, insmode):
+
+        super(PseudoSlit, self).__init__()
         self.name = name
-        self.bunds_id = bid
-        self.static = static
-        self.lf = []
+        self.insmode = insmode
+        self.fiberset = None
+        self.positions = []
 
-    def add_light_fiber(self, lf):
-        self.lf.append(lf)
+    def connect_fibers(self, fiberset, positions):
+        self.fiberset = fiberset
+        self.positions = positions
 
-    @property
-    def fibs_id(self):
-        return [ch.fibid for ch in self.lf]
-
-    @property
-    def inactive_fibs_id(self):
-        return [ch.fibid for ch in self.lf if ch.inactive]
+    def y_pos(self, fibsid):
+        result = []
+        for fibid in fibsid:
+            pos = self.positions[fibid-1]
+            result.append(pos)
+        return result
 
     def config_info(self):
         return {'name': self.name,
-                'nfibers': len(self.lf),
-                'fibs_id': self.fibs_id,
-                'id': self.bunds_id,
-                'static': self.static,
-                'inactive_fibs_id': self.inactive_fibs_id
+                'insmode': self.insmode,
+                'nfibers': len(self.fiberset.fibers),
                 }
+
+
+class PseudoSlitSelector(Carrousel):
+    pass

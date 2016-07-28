@@ -18,11 +18,14 @@ from megaradrp.simulation import calibrationunit
 from megaradrp.simulation.actions import megara_sequences
 from megaradrp.simulation.telescope import Telescope
 from megaradrp.simulation.fiberbundle import FiberBundle
-from megaradrp.simulation.instrument import PseudoSlit
+from megaradrp.simulation.lightfiber import LightFiber, FiberSet
+from megaradrp.simulation.psslit import PseudoSlit, PseudoSlitSelector
 from megaradrp.simulation.focalplane import FocalPlane
 from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.vph import MegaraVPH
 from megaradrp.simulation.shutter import MegaraShutter
+from megaradrp.simulation.fibermos import FiberMOS, RoboticPositioner, LargeCompactBundle
+from megaradrp.simulation.cover import MegaraCover
 
 _logger = logging.getLogger("megaradrp.simulation")
 
@@ -42,51 +45,84 @@ def create_detector():
 
     qe_wl = EfficiencyFile('v02/tccdbroad_0.1aa.dat')
 
-    detector = MegaraDetectorSat('megaradetector',
+    detector = MegaraDetectorSat('Detector',
                                  DSHAPE, OSCAN, PSCAN, qe=qe, qe_wl=qe_wl, dark=dcurrent,
                                  readpars1=readpars1, readpars2=readpars2, bins='11'
                                  )
     return detector
 
-
-def create_lcb(focal_plane):
-    _logger.info('create lcb')
+def create_lcb():
+    _logger.info('create LCB')
     layouttable = np.loadtxt('v02/LCB_spaxel_centers.dat')
-    fib_ids = layouttable[:,4].astype('int').tolist()
-    bun_ids = layouttable[:,3].astype('int').tolist()
 
+    fiberset = FiberSet(name='LCB', size=0.31 * u.arcsec, fwhm=3.6)
+    # FIXME: a trans object per fiber is very slow
     trans = EfficiencyFile('v02/tfiber_0.1aa_20m.dat')
-    fibers_lcb = FiberBundle("BUNDLE.LCB", fib_ids, bun_ids, static=True, transmission=trans, inactive=[1, 3])
+    for line in layouttable:
+        idx =  int(line[3])
+        if idx not in fiberset.bundles:
+            name = 'FiberBundle_{}'.format(idx)
+            fiberset.bundles[idx] = FiberBundle(name, bid=idx)
+        fibid = int(line[4])
+        name = 'LightFiber_{}'.format(fibid)
 
-    pseudo_slit_lcb = PseudoSlit(name="PSLT.LCB", insmode='LCB')
-    pseudo_slit_lcb.connect_fibers(fib_ids, layouttable[:,2])
+        lf = LightFiber(name, fibid, transmission=trans)
+        fiberset.bundles[idx].add_light_fiber(lf)
+        fiberset.fibers[fibid] = lf
 
-    focal_plane.connect_fiber_bundle(fibers_lcb, fib_ids, layouttable[:,0:2])
-    return focal_plane, fibers_lcb, pseudo_slit_lcb
+    lcb_pos = {}
+    for line in layouttable:
+        idx =  int(line[4])
+        lcb_pos[idx] = (line[0], line[1])
+    lcb = LargeCompactBundle('LCB', fiberset, lcb_pos)
+
+    pseudo_slit_lcb = PseudoSlit(name="LCB", insmode='LCB')
+    pseudo_slit_lcb.connect_fibers(fiberset, layouttable[:,2])
+
+    return lcb, pseudo_slit_lcb
 
 
-def create_mos(focal_plane):
-    _logger.info('create mos')
+def create_mos():
+    _logger.info('create MOS')
     layouttable = np.loadtxt('v02/MOS_spaxel_centers.dat')
-    fib_ids = layouttable[:,4].astype('int').tolist()
-    bun_ids = layouttable[:,3].astype('int').tolist()
+    # Create fiber bundles and light fibers
+
+    fiberset = FiberSet(name='MOS', size=0.31 * u.arcsec, fwhm=3.6)
+    # FIXME: a trans object per fiber is very slow
     trans = EfficiencyFile('v02/tfiber_0.1aa_20m.dat')
-    fibers_mos = FiberBundle("BUNDLE.MOS", fib_ids, bun_ids, static=False, transmission=trans, inactive=[1, 3])
+    for line in layouttable:
+        idx =  int(line[3])
+        if idx not in fiberset.bundles:
+            name = 'FiberBundle_{}'.format(idx)
+            fiberset.bundles[idx] = FiberBundle(name, bid=idx, static=False)
+        fibid = int(line[4])
+        name = 'LightFiber_{}'.format(fibid)
 
-    pseudo_slit_mos = PseudoSlit(name="PSLT.MOS", insmode='MOS')
-    pseudo_slit_mos.connect_fibers(fib_ids, layouttable[:,2])
+        lf = LightFiber(name, fibid, transmission=trans)
+        fiberset.bundles[idx].add_light_fiber(lf)
+        fiberset.fibers[fibid] = lf
 
-    focal_plane.connect_fiber_bundle(fibers_mos, fib_ids, layouttable[:,0:2])
-    return focal_plane, fibers_mos, pseudo_slit_mos
+    # Center of bundles
+    fiber_mos = FiberMOS('MOS', fiberset)
+    for line in layouttable[3::7]:
+        idx =  int(line[3])
+        name = 'RoboticPositioner_{}'.format(idx)
+        rb = RoboticPositioner(name, id=idx, pos=(line[0], line[1], 0.0), parent=fiber_mos)
+        rb.connect_bundle(fiberset.bundles[idx])
+
+    pseudo_slit_mos = PseudoSlit(name="MOS", insmode='MOS')
+    pseudo_slit_mos.connect_fibers(fiberset, layouttable[:, 2])
+
+    return fiber_mos, pseudo_slit_mos
 
 
 def create_wheel():
     _logger.info('create wheel')
-    wheel = VPHWheel(capacity=3, name='wheel')
+    wheel = VPHWheel(capacity=3, name='Wheel')
     _logger.info('create vphs')
     vph_conf = {'wl_range': [3653.0, 4051.0, 4386.0]}
     vph = create_vph_by_data('VPH405_LR',
-                             'LR_U',
+                             'LR-U',
                              'v02/VPH405_LR2-extra.dat',
                              'v02/VPH405_LR_res.dat',
                              'v02/tvph_0.1aa.dat',
@@ -96,7 +132,7 @@ def create_wheel():
 
     vph_conf = {'wl_range': [8800.0, 9262.0, 9686.0]}
     vph = create_vph_by_data('VPH926_MR',
-                             'MR_Z',
+                             'MR-Z',
                              'v02/VPH926_MR.txt',
                              'v02/VPH926_MR_res.dat',
                              'v02/tvph_0.1aa.dat',
@@ -106,7 +142,7 @@ def create_wheel():
 
     vph_conf = {'wl_range': [8372.0, 8634.0, 8882.0]}
     vph = create_vph_by_data('VPH863_HR',
-                             'HR_I',
+                             'HR-I',
                              'v02/VPH863_HR.txt',
                              'v02/VPH863_HR_res.dat',
                              'v02/tvph_0.1aa.dat',
@@ -157,30 +193,41 @@ def create_instrument():
 
     detector = create_detector()
 
-    focal_plane = FocalPlane()
-    focal_plane, fibers_lcb, pseudo_slit_lcb = create_lcb(focal_plane)
-    focal_plane, fibers_mos, pseudo_slit_mos = create_mos(focal_plane)
+    # fibers_mos_base = FiberMOS('FiberMOS')
 
-    pseudo_slit = dict(lcb=pseudo_slit_lcb, mos=pseudo_slit_mos)
-    fibers = dict(lcb=fibers_lcb, mos=fibers_mos)
+    # print(fibers_mos_base.config_info())
+    cover = MegaraCover()
+    focal_plane = FocalPlane(cover)
+    fibers_lcb, pseudo_slit_lcb = create_lcb()
+    focal_plane.connect_lcb(fibers_lcb)
+
+    fiber_mos, pseudo_slit_mos = create_mos()
+    focal_plane.connect_fibermos(fiber_mos)
+
+    pseudo_slit = PseudoSlitSelector(name='PseudoSlit', capacity=2)
+    pseudo_slit.put_in_pos(pseudo_slit_lcb, 0)
+    pseudo_slit.put_in_pos(pseudo_slit_mos, 1)
 
     wheel = create_wheel()
     internal = create_optics()
     _logger.info('create instrument')
     instrument = MegaraInstrument(focal_plane=focal_plane,
-                                  fibers=fibers,
                                   wheel=wheel,
                                   pseudo_slit=pseudo_slit,
                                   internal_optics=internal,
                                   detector=detector,
                                   shutter=MegaraShutter()
     )
+
+    cover.set_parent(instrument)
+    fiber_mos.set_parent(instrument)
+    fibers_lcb.set_parent(instrument)
     return instrument
 
 
 def create_calibration_unit(illum=None):
 
-    cu = calibrationunit.MegaraCalibrationUnit(capacity=7, name='megcalib')
+    cu = calibrationunit.MegaraCalibrationUnit(capacity=7, name='ICM-MEGARA')
 
     lamp1 = lamps.BlackBodyLamp('FLAT1', 5400 * u.K, illumination=illum, factor=1e-5)
     lamp2 = lamps.FlatLamp('FLAT2', illumination=illum, factor=5.0)
@@ -223,7 +270,7 @@ if __name__ == '__main__':
     from megaradrp.simulation.atmosphere import AtmosphereModel, generate_gaussian_profile
 
     try:
-        from numinadb.controldb import ControlSystem
+        from numinadb.controldb import ControlSystem1
     except ImportError:
         from megaradrp.simulation.control import ControlSystem
 
@@ -233,6 +280,8 @@ if __name__ == '__main__':
 
     parser.add_argument('-p', '--parameters', metavar="FILE",
                         help="FILE with observing parameters")
+    parser.add_argument('-m', '--mos', metavar="FILE",
+                        help="FILE with Fiber MOS Configuration")
     parser.add_argument('-t', '--targets', metavar="FILE",
                         help="FILE with target configuration")
     parser.add_argument('-e', '--exposure', type=restricted_float, default=0.0,
@@ -267,19 +316,22 @@ if __name__ == '__main__':
     control = ControlSystem(factory)
     control.register('MEGARA', instrument)
     control.register('GTC', telescope)
-    control.register('megcalib', cu)
+    control.register('ICM-MEGARA', cu)
     control.register('factory', factory)
 
     # Observation setup
-
     if args.parameters:
-
         oparam = yaml.load(open(args.parameters))
-
-        _logger.debug('Configure MEGARA with profile %s', oparam['description'])
+        _logger.debug('Configure MEGARA')
         instrument.configure(oparam)
-
-        cu.select(oparam['lamp'])
+        _logger.debug('Configure ICM-MEGARA')
+        cu.configure(oparam)
+    if args.mos:
+        mosconfig = yaml.load(open(args.mos))
+        _logger.debug('Configure Fiber MOS with file %s', args.mos)
+        instrument.configure(mosconfig)
+    else:
+        _logger.debug('Fiber MOS in default positions')
 
     if args.targets:
         _logger.debug('load targets file %s', args.targets)
@@ -296,7 +348,18 @@ if __name__ == '__main__':
     etime = args.exposure
     repeat = args.nimages
 
+    #yaml.dump(m, open('alldata.yaml', 'rw+'))
+
     _logger.debug('Exposure time is %f', etime)
     _logger.debug('Number of images is %d', repeat)
     with control:
         control.run(exposure=etime, repeat=repeat)
+
+    import json
+
+    obj = instrument.config_info()
+
+    filename = 'alldata.json'
+    with open(filename, 'w') as fd:
+        fd.write(json.dumps(obj, sort_keys=True, indent=2,
+                            separators=(',', ': ')))

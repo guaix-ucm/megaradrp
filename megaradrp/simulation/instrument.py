@@ -28,22 +28,6 @@ from .efficiency import Efficiency
 from .device import HWDevice
 
 
-class PseudoSlit(HWDevice):
-    def __init__(self, name, insmode):
-
-        super(PseudoSlit, self).__init__(name)
-
-        # Positions of the fibers in the PS slit
-        self.y_pos = {}
-        self.insmode = insmode
-
-    def connect_fibers(self, fibid, pos):
-        self.y_pos = dict(zip(fibid, pos))
-
-    def config_info(self):
-        return {'name': self.name, 'insmode': self.insmode}
-
-
 class InternalOptics(object):
     def __init__(self, transmission=None):
 
@@ -56,37 +40,61 @@ class InternalOptics(object):
         return self._transmission.response(wl)
 
 
+class FocusActuator(HWDevice):
+    def __init__(self, name, parent=None):
+        super(FocusActuator, self).__init__(name, parent)
+
+        # Focus
+        self.internal_focus_factor = 1.0
+        self._ref_focus = 123.123
+        self._internal_focus = self._ref_focus
+
+    def set_focus(self, x):
+        """Arbitrary parametrization of the focus"""
+        if x < 118 or x > 128:
+            raise ValueError('focus out of limits')
+
+        self.internal_focus_factor = 1.0 + (math.cosh((x - self._ref_focus) / 2.0) - 1.0) / 5.0
+        self._internal_focus = x
+
+    @property
+    def focus(self):
+        return self._internal_focus
+
+    @focus.setter
+    def focus(self, value):
+        self.set_focus(value)
+
+
 class MegaraInstrument(HWDevice):
-    def __init__(self, focal_plane, fibers, pseudo_slit, internal_optics, wheel, detector, shutter):
+    def __init__(self, focal_plane, pseudo_slit, internal_optics, wheel, detector, shutter):
 
         super(MegaraInstrument, self).__init__('MEGARA')
 
-        self._mode = 'lcb'
+        self._mode = 'LCB'
         self.detector = detector
+        self.detector.set_parent(self)
 
-        self._pseudo_slit = pseudo_slit
-        for s in self._pseudo_slit:
-            self._pseudo_slit[s].set_parent(self)
+        self.pseudo_slit_sel = pseudo_slit
+        self.pseudo_slit_sel.set_parent(self)
+
+        self.pseudo_slit = self.pseudo_slit_sel.current()
+        self.fiberset = self.pseudo_slit.fiberset
 
         self.focal_plane = focal_plane
-        self._fibers = fibers
 
         # pseudo slit and fiber bundle for current mode
-        self.pseudo_slit = self._pseudo_slit[self._mode]
-        self.fibers = self._fibers[self._mode]
 
         self.wheel = wheel
         self.wheel.set_parent(self)
         self.vph = self.wheel.current()
+
         self.internal_optics = internal_optics
 
         self.shutter = shutter
         self.shutter.set_parent(self)
 
-        # Focus
-        self._internal_focus_factor = 1.0
-        self._ref_focus = 123.123
-        self._internal_focus = self._ref_focus
+        self.focal_actuator = FocusActuator('Focus', self)
 
         # Callbacks get called on predefined events on the devices
         # A callback to maintain self.vph updated
@@ -97,15 +105,21 @@ class MegaraInstrument(HWDevice):
 
         self.wheel.changed.connect(update_current_vph)
 
+        def update_current_pslit(_):
+            self.pseudo_slit = self.pseudo_slit_sel.current()
+
+        self.pseudo_slit_sel.changed.connect(update_current_pslit)
+
     def set_mode(self, mode):
         """Set overall mode of the instrument."""
-        mode_l = mode.lower()
-        if mode_l not in ['mos', 'lcb']:
+        mode_u = mode.upper()
+        if mode_u not in ['MOS', 'LCB']:
             raise ValueError('mode "%s" not valid' % (mode, ))
 
-        self._mode = mode_l
-        self.pseudo_slit = self._pseudo_slit[self._mode]
-        self.fibers = self._fibers[self._mode]
+        self._mode = mode_u
+        self.pseudo_slit_sel.select(self._mode)
+        self.pseudo_slit = self.pseudo_slit_sel.current()
+        self.fiberset = self.pseudo_slit.fiberset
 
     def set_vph(self, vphname):
         """Set VPH of the instrument."""
@@ -121,43 +135,26 @@ class MegaraInstrument(HWDevice):
     def set_focus(self, x):
         """Arbitrary parametrization of the focus"""
 
-        if  x < 118 or x > 128:
-            raise ValueError('focus out of limits')
-
-        self._internal_focus_factor = 1.0 + (math.cosh((x-self._ref_focus) / 2.0) - 1.0 ) / 5.0
-        self._internal_focus = x
+        self.focal_actuator.set_focus(x)
 
     def get_visible_fibers(self):
-        return self.focal_plane.get_visible_fibers(self.fibers)
+        return self.focal_plane.get_visible_fibers(self.insmode)
 
-    def config_info(self):
+    @property
+    def insmode(self):
+        return self._mode
 
-        result = {
-            'detector': self.detector.config_info(),
-            'vph': self.vph.config_info(),
-            'fplane': self.focal_plane.config_info(),
-            'pslit': self.pseudo_slit.config_info(),
-            'fbundle': self.fibers.config_info()
-        }
-        #for i in self.children:
-        #    result[i.name] = i.config_info()
+    @insmode.setter
+    def insmode(self, value):
+        self.set_mode(value)
 
-        result['focus'] = self._internal_focus
+    @property
+    def cover(self):
+        return self.focal_plane.cover.label
 
-        return result
-
-    def configure(self, profile):
-        """Configure MEGARA"""
-
-        self.shutter.configure(profile['shutter'])
-
-        self.set_cover(profile['cover'])
-
-        self.set_mode(profile['bundle'])
-
-        self.set_vph(profile['vph'])
-
-        self.detector.configure(profile)
+    @cover.setter
+    def cover(self, state):
+        self.set_cover(state)
 
     def project_rss_intl(self, sigma, wl_in, spec_in):
 
@@ -167,18 +164,18 @@ class MegaraInstrument(HWDevice):
         return project_rss(visible_fib_ids, self.pseudo_slit, self.vph, self.detector, sigma, wl_in, spec_in)
 
     def project_rss(self, wl_in, spec_in):
-        return self.project_rss_intl(self._internal_focus_factor * self.fibers.sigma, wl_in, spec_in)
+        return self.project_rss_intl(self.focal_actuator.internal_focus_factor * self.fiberset.sigma, wl_in, spec_in)
 
     def project_rss_w(self):
         # This will compute only the illuminated fibers
         visible_fib_ids = [fibid for fibid, _ in self.focal_plane.get_visible_fibers()]
-        sigma = self.fibers.sigma
+        sigma = self.fiberset.sigma
         return project_rss_w(visible_fib_ids, self.pseudo_slit, self.vph, sigma)
 
     def apply_transmissions(self, wltable_in, photons_in):
         """Simulate the image in the focal plane,"""
 
-        spec_in = photons_in * self.fibers.transmission(wltable_in)
+        spec_in = photons_in * self.fiberset.transmission(wltable_in)
 
         # Spectrograph optics transmission
         spec_in *= self.internal_optics.transmission(wltable_in)
@@ -194,7 +191,7 @@ class MegaraInstrument(HWDevice):
     def apply_transmissions_only(self, wltable_in, photons_in):
         """Simulate the image in the focal plane,"""
 
-        spec_in = photons_in * self.fibers.transmission(wltable_in)
+        spec_in = photons_in * self.fiberset.transmission(wltable_in)
 
         # Spectrograph optics transmission
         spec_in *= self.internal_optics.transmission(wltable_in)
@@ -212,7 +209,7 @@ class MegaraInstrument(HWDevice):
 
         # Input spectra in each fiber, in photons
         # Fiber flux is 0 by default
-        base_coverage = np.zeros((self.fibers.nfibers, 1))
+        base_coverage = np.zeros((self.fiberset.nfibers, 1))
 
         tab = self.get_visible_fibers()
         fibid = tab['fibid']
@@ -222,7 +219,7 @@ class MegaraInstrument(HWDevice):
         # This should work with 1D and 2D
         photon_cover = base_coverage * photons_in
 
-        spec_in = photon_cover * self.fibers.transmission(wltable_in)
+        spec_in = photon_cover * self.fiberset.transmission(wltable_in)
 
         # Spectrograph optics transmission
         spec_in *= self.internal_optics.transmission(wltable_in)
@@ -233,15 +230,15 @@ class MegaraInstrument(HWDevice):
         # QE of the detector
         spec_in *= self.detector.qe_wl(wltable_in)
 
-        return self.project_rss(self._internal_focus_factor* self.fibers.sigma, wltable_in, spec_in)
+        return self.project_rss(self.focal_actuator.internal_focus_factor* self.fiberset.sigma, wltable_in, spec_in)
 
     def illumination_in_focal_plane(self, photons, illumination=None):
 
         # Input spectra in each fiber, in photons
         # Fiber flux is 1 by default
-        base_coverage = np.ones((self.fibers.nfibers, 1))
+        base_coverage = np.ones((self.fiberset.nfibers, 1))
 
-        tab = self.focal_plane.get_all_fibers(self.fibers)
+        tab = self.focal_plane.get_all_fibers(self.fiberset)
 
         fibid = tab['fibid']
         pos_x = tab['x']
@@ -256,8 +253,7 @@ def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, 
 
     # Scale for super sampling
     # scale 8 by default
-
-    y_ps_fibers = [pseudo_slit.y_pos[fid] for fid in vis_fibs_id]
+    y_ps_fibers = pseudo_slit.y_pos(vis_fibs_id)
     DSHAPE = detector.dshape
     PIXSCALE = detector.pixscale
     # Scale for super sampling
@@ -266,7 +262,7 @@ def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, 
 
     spos = PIXSCALE * (np.arange(0, DSHAPE[1] * scale) - scale * xcenter) / scale
 
-    wl_in_super = vph.ps_x_wl(y_ps_fibers, -spos, grid=True)
+    wl_in_super = vph.ps_x_wl(y_ps_fibers, spos, grid=True)
     # revert
     wl_in_super = wl_in_super[:,::-1]
     # print('wl in super?', wl_in_super.shape)
@@ -319,7 +315,7 @@ def project_rss_w(visible_fib_ids, pseudo_slit, vph, detector, sigma):
     xcenter = DSHAPE[1] // 2
     ycenter = DSHAPE[0] // 2
 
-    y_ps_fibers = [pseudo_slit.y_pos[fid] for fid in visible_fib_ids]
+    y_ps_fibers = pseudo_slit.y_pos(visible_fib_ids)
 
     spos = -PIXSCALE * (np.arange(0, DSHAPE[1]) - xcenter)
     wl_in_detector = vph.ps_x_wl(y_ps_fibers, -spos, grid=True)

@@ -1,0 +1,13 @@
+MEGARA:
+  insmode: LCB
+  cover: UNSET
+MEGARA.Shutter: 
+  label: OPEN
+MEGARA.Wheel: 
+  label: VPH405_LR
+MEGARA.Cover: 
+  label: UNSET
+MEGARA.Focus: 
+  focus: 124.9
+ICM-MEGARA: 
+  label: HALO1
