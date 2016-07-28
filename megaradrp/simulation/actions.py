@@ -436,17 +436,26 @@ def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, instrument):
             val = ids[result[1]]
             _logger.debug('robot is number % d', val)
             robot = instrument.get_device('MEGARA.MOS.RoboticPositioner_%d' % val)
-            fibid, allpos =  robot.fibers_in_focal_plane()
-            tab = instrument.focal_plane.filter_visible_fibers(fibid, allpos)
-            fibid = tab['fibid']
-            pos_x = tab['x']
-            pos_y = tab['y']
-            cover_frac = tab['cover']
-            subfinal = final[fibid - 1]
+            fibid1, allpos1 =  robot.fibers_in_focal_plane()
+            tab1 = instrument.focal_plane.filter_visible_fibers(fibid1, allpos1)
+            fibid1 = tab1['fibid']
+            pos_x = tab1['x']
+            pos_y = tab1['y']
+            subfinal = final[fibid1 - 1]
             # FIXME: check angles
             rotang = 90 - robot.pa
+            subfinal = add_target_mos(target, subfinal, wl, fibrad, pos_x, pos_y, rotang, telescope, atmosphere)
+            final[fibid1 - 1] = subfinal
 
-            add_target_mos(target, subfinal, wl, fibrad, pos_x, pos_y, rotang, telescope, atmosphere)
+
+        # Recompute all visible fibers
+        fibid, allpos = fibermos.fibers_in_focal_plane()
+        tab = instrument.focal_plane.filter_visible_fibers(fibid, allpos)
+        fibid = tab['fibid']
+        pos_x = tab['x']
+        pos_y = tab['y']
+        cover_frac = tab['cover']
+        subfinal = final[fibid - 1]
     else:
         lcb = instrument.get_device('MEGARA.LCB')
         fibid, allpos = lcb.fibers_in_focal_plane()
@@ -457,7 +466,6 @@ def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, instrument):
         cover_frac = tab['cover']
         subfinal = final[fibid - 1]
         add_targets_lcb(t1, subfinal, wl, fibrad, pos_x, pos_y, telescope, atmosphere)
-
 
     add_sky(t2, subfinal, wl, fibarea, telescope)
 
@@ -484,7 +492,7 @@ def add_targets_lcb(targets, subfinal, wl, fibrad, pos_x, pos_y, telescope, atmo
     photon_energy = (cons.h * cons.c / wl)
 
     for target in targets:
-        _logger.debug('object is name is %s', target.name)
+        _logger.debug('object xname is %s', target.name)
         center = target.relposition
         # fraction of flux in each fiber
         #scales = np.zeros((nfibers,))
@@ -532,8 +540,8 @@ def add_target_mos(target, subfinal, wl, fibrad, pos_x, pos_y, rotang, telescope
 
     nphotons = sed / photon_energy * telescope.area * telescope.transmission(wl)
     subfinal += f_o_f[:, np.newaxis] * nphotons.to(u.s**-1 * u.micron**-1)
-
     return subfinal
+
 
 # Uniform atmosphere objects
 def add_sky(targets, subfinal, wl, fibarea, telescope):
@@ -541,7 +549,7 @@ def add_sky(targets, subfinal, wl, fibarea, telescope):
     energy_unit = u.erg * u.s**-1 * u.cm**-2 * u.AA**-1 * u.arcsec**-2
 
     photon_energy = (cons.h * cons.c / wl)
-
+    _logger.debug('add sky targets')
     for target in targets:
         sed = target(wl) * energy_unit
         nphotons = sed / photon_energy * fibarea * telescope.area * telescope.transmission(wl)

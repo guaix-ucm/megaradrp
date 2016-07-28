@@ -25,6 +25,9 @@ from .device import HWDevice
 
 
 class RoboticPositioner(HWDevice):
+
+    TARGET_TYPES = ['SKY', 'STAR', 'TARGET', 'UNASSIGNED']
+
     def __init__(self, name, id, pos=None, parent=None):
         super(RoboticPositioner,self). __init__(name, parent)
         self._id = id
@@ -131,6 +134,8 @@ class RoboticPositioner(HWDevice):
 
     @target_type.setter
     def target_type(self, value):
+        if value not in self.TARGET_TYPES:
+            raise ValueError("Target type '{}' not in '{}'".format(value, self.TARGET_TYPES))
         self._target_type = value
 
     @property
