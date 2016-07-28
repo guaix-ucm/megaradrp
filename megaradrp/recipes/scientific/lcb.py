@@ -17,9 +17,13 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Calibration Recipes for Megara'''
-from base import ImageRecipe
+"""Calibration Recipes for Megara"""
+
+
 import logging
+
+from megaradrp.recipes.scientific.base import ImageRecipe
+
 
 _logger = logging.getLogger('numina.recipes.megara')
 

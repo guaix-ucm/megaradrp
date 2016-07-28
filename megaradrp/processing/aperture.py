@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -22,7 +22,6 @@ import logging
 from numina.flow.processing import Corrector
 
 from megaradrp.core.processing import apextract, apextract_tracemap
-
 
 _logger = logging.getLogger('numina.processing')
 
@@ -51,17 +50,14 @@ class ApertureExtractor(Corrector):
 class ApertureExtractor2(Corrector):
     """A Node that extracts apertures."""
 
-    def __init__(self, trace, datamodel=None, mark=True,
-                 tagger=None, dtype='float32'):
+    def __init__(self, trace, datamodel=None, dtype='float32'):
+        # if tagger is None:
+        #     tagger = TagFits_('NUM-MAE', 'MEGARA Aperture extractor')
 
-#        if tagger is None:
-#            tagger = TagFits('NUM-MAE', 'MEGARA Aperture extractor')
-        
         self.trace = trace
 
         super(ApertureExtractor2, self).__init__(datamodel=datamodel,
                                                 dtype=dtype)
-
 
     def run(self, img):
         imgid = self.get_imgid(img)
@@ -69,4 +65,3 @@ class ApertureExtractor2(Corrector):
         rss = apextract_tracemap(img[0].data, self.trace)
         img[0].data = rss
         return img
-

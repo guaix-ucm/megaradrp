@@ -54,6 +54,8 @@ vph_thr = {'science':{'LR-I':{'min_distance':10,
                                'threshold':0.19},
                       'LR-Z': {'min_distance':60,
                                'threshold':0.02},
+                      'LR-U':{'min_distance':10,
+                              'threshold': 0.02,}
                       },
            'eng':{'LR-I':{'min_distance':30,
                           'threshold':0.09},
@@ -63,6 +65,9 @@ vph_thr = {'science':{'LR-I':{'min_distance':10,
                            'threshold':0.02},
                   'LR-Z': {'min_distance':60,
                            'threshold':0.03},
+                  'LR-U':{
+                      'min_distance':10,
+                      'threshold': 0.02,}
                   },
 }
 
@@ -99,7 +104,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         # rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
         rssdata = apextract_tracemap_2(reduced[0].data, rinput.tracemap)
-        rssdata = numpy.fliplr(rssdata)
+        # rssdata = numpy.fliplr(rssdata)
 
         rsshdu = fits.PrimaryHDU(rssdata, header=reduced[0].header)
         header_list = self.getHeaderList(
@@ -330,7 +335,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
                 except (ValueError, TypeError, IndexError) as error:
                     _logger.error("%s", error)
-                    _logger.info('error in row %d, fibid %d', idx, fibid)
+                    _logger.error('error in row %d, fibid %d', idx, fibid)
                     if False:
                         plt.title('fibid %d' % fibid)
                         rrow = row[::-1]

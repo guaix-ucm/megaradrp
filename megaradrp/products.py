@@ -150,3 +150,7 @@ class JSONstorage(DataProductType):
 
 class WavelengthCalibration(JSONstorage):
     pass
+
+
+class LCBCalibration(JSONstorage):
+    pass
