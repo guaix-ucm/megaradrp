@@ -91,8 +91,8 @@ class MegaraInstrument(HWDevice):
 
         self.internal_optics = internal_optics
 
-        self.shutter = shutter
-        self.shutter.set_parent(self)
+        self.dev_shutter = shutter
+        self.dev_shutter.set_parent(self)
 
         self.focal_actuator = FocusActuator('Focus', self)
 
@@ -155,6 +155,14 @@ class MegaraInstrument(HWDevice):
     @cover.setter
     def cover(self, state):
         self.set_cover(state)
+
+    @property
+    def shutter(self):
+        return self.dev_shutter.label
+
+    @shutter.setter
+    def shutter(self, value):
+        self.dev_shutter.label = value
 
     def project_rss_intl(self, sigma, wl_in, spec_in):
 
@@ -264,7 +272,11 @@ def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, 
 
     wl_in_super = vph.ps_x_wl(y_ps_fibers, spos, grid=True)
     # revert
-    wl_in_super = wl_in_super[:,::-1]
+    if wl_in_super[0,0] > wl_in_super[0,-1]:
+        reversed = True
+    else:
+        reversed = False
+
     # print('wl in super?', wl_in_super.shape)
     spec_in_super = np.zeros_like(wl_in_super)
 
@@ -288,7 +300,15 @@ def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, 
 
     # Y-positions of the traces
     for idx, y_ps_fiber in enumerate(y_ps_fibers):
-        ytrace[idx] = ycenter + vph.ps_wl_y(y_ps_fiber, wl_in_detector[idx]) / PIXSCALE
+        if reversed:
+            wl_i = wl_in_detector[idx, ::-1]
+            # ps_wl_y inputs must be sorted
+            compy = vph.ps_wl_y(y_ps_fiber, wl_i)[::-1]
+        else:
+            wl_i = wl_in_detector[idx]
+            compy = vph.ps_wl_y(y_ps_fiber, wl_i)
+
+        ytrace[idx] = ycenter + compy / PIXSCALE
 
     nsig = 6 # At 6 sigma, the value of the profile * 60000 counts is
              # << 1
@@ -318,7 +338,7 @@ def project_rss_w(visible_fib_ids, pseudo_slit, vph, detector, sigma):
     y_ps_fibers = pseudo_slit.y_pos(visible_fib_ids)
 
     spos = -PIXSCALE * (np.arange(0, DSHAPE[1]) - xcenter)
-    wl_in_detector = vph.ps_x_wl(y_ps_fibers, -spos, grid=True)
+    wl_in_detector = vph.ps_x_wl(y_ps_fibers, spos, grid=True)
     # revert
     wl_in_detector = wl_in_detector[:,::-1]
 
