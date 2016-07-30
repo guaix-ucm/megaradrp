@@ -94,6 +94,7 @@ class MegaraBiasSequence(Sequence):
 
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
+        instrument.shutter = 'STOP'
         for i in range(repeat):
             instrument.detector.expose()
             final = instrument.detector.readout()
@@ -106,7 +107,7 @@ class MegaraDarkSequence(Sequence):
 
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
-
+        instrument.shutter = 'STOP'
         for i in range(repeat):
             instrument.detector.expose(source=0.0, time=exposure)
             final = instrument.detector.readout()
@@ -120,7 +121,7 @@ class MegaraLampSequence(Sequence):
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
         cu = control.get('megcalib')
-
+        instrument.shutter = 'OPEN'
         # Get active lamp
         lamp = cu.current()
         if lamp == 'EMPTY':
@@ -212,6 +213,7 @@ class MegaraSlitFlatSequence(MegaraLampSequence):
 
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
+        instrument.shutter = 'OPEN'
         cu = control.get('megcalib')
 
         # Get active lamp
@@ -240,6 +242,7 @@ class MegaraTwilightFlatSequence(Sequence):
 
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
+        instrument.shutter = 'OPEN'
         telescope = control.get('GTC')
         atm = telescope.inc # Atmosphere model
         # Simulated tw spectrum
@@ -263,6 +266,7 @@ class MegaraFocusSequence(MegaraLampSequence):
 
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
+        instrument.shutter = 'OPEN'
         cu = control.get('megcalib')
 
         # Get active lamp
@@ -295,6 +299,11 @@ class MegaraLCBImageSequence(Sequence):
         instrument = control.get(self.instrument)
         telescope = control.get('GTC')
 
+        # Setup instrument
+        # Fixed by mode
+        instrument.insmode = 'LCB'
+        instrument.shutter = 'OPEN'
+
         atm = telescope.inc # Atmosphere model, incoming light
 
         # Get targets
@@ -322,6 +331,10 @@ class MegaraMOSAcquisitionSequence(Sequence):
 
         atm = telescope.inc # Atmosphere model, incoming light
 
+        # Setup instrument
+        # Fixed by mode
+        instrument.insmode = 'MOS'
+        instrument.shutter = 'OPEN'
         # Get targets
         targets1 = control.targets
         targets2 = [atm.night_spectrum]
