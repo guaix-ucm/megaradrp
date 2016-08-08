@@ -144,9 +144,12 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
             for fiber, value in image.items():
                 result[name][fiber] = []
                 for arco in value:
-                    res = polyval(arco[0], wlcalib[fiber])
-                    result[name][fiber].append(
-                        [arco[0], arco[1], arco[2], res])
+                    try:
+                        res = polyval(arco[0], wlcalib[fiber])
+                        result[name][fiber].append(
+                            [arco[0], arco[1], arco[2], res])
+                    except:
+                        _logger.error('Error in JSON generation. Check later...')
             counter += 1
 
         _logger.info('end JSON generation')
