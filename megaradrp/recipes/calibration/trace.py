@@ -23,7 +23,6 @@ from __future__ import division, print_function
 
 import logging
 import numpy
-import matplotlib.pyplot as plt
 
 from numina.array.trace.traces import trace
 from numina.core import Product
@@ -39,12 +38,13 @@ from skimage.filters import threshold_otsu
 
 _logger = logging.getLogger('numina.recipes.megara')
 
-
+# FIXME: hardcoded numbers
 vph_thr = {'LR-I': 0.27,
            'LR-R': 0.37,
            'LR-V': 0.27,
            'LR-Z': 0.27,
            'LR-U': 0.02,
+           'HR-I': 0.20,
            }
 
 
@@ -82,9 +82,15 @@ class TraceMapRecipe(MegaraBaseRecipe):
         background = estimate_background(data, center=cstart, hs=hs, boxref=box_borders)
         _logger.info('background level is %f', background)
 
+        if current_vph in vph_thr:
+            threshold = vph_thr[current_vph]
+            _logger.info('rel threshold for %s is %4.2f', current_vph, threshold)
+        else:
+            threshold = 0.3
+            _logger.info('rel threshold not defined for %s, using %4.2f', current_vph, threshold)
+
         _logger.info('find peaks in column %i', cstart)
 
-        threshold = vph_thr[current_vph]
 
         central_peaks = init_traces_ex(data, center=cstart, hs=hs, box_borders=box_borders, tol=1.63, threshold=threshold)
 
@@ -107,6 +113,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
                 mm = trace(image2, x=cstart, y=dtrace.start[1], step=step1,
                          hs=hs, background=local_trace_background, maxdis=maxdis1)
                 if False:
+                    import matplotlib.pyplot as plt
                     plt.plot(mm[:,0], mm[:,1])
                     plt.savefig('trace-xy-%d.png' % dtrace.fibid)
                     plt.close()

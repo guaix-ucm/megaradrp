@@ -22,11 +22,12 @@
 from __future__ import division, print_function
 
 import logging
+import traceback
 
 import numpy
 from astropy.io import fits
 from scipy.interpolate import interp1d
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 from numina.core import Requirement, Product, Parameter, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
@@ -39,17 +40,17 @@ from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 from skimage.feature import peak_local_max
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.types import TraceMap, WavelengthCalibration
+from megaradrp.types import WavelengthCalibration
 import megaradrp.requirements as reqs
 from megaradrp.core.processing import apextract_tracemap_2
 
 _logger = logging.getLogger('numina.recipes.megara')
 
-
-vph_thr = {'science':{'LR-I':{'min_distance':10,
-                              'threshold':0.02},
+# FIXME: hardcoded numbers
+vph_thr = {'default':{'LR-I':{'min_distance':10,
+                              'threshold':0.06},
                       'LR-R':{'min_distance':10,
-                              'threshold':0.03},
+                              'threshold':0.20},
                       'LR-V': {'min_distance':30,
                                'threshold':0.19},
                       'LR-Z': {'min_distance':60,
@@ -57,18 +58,6 @@ vph_thr = {'science':{'LR-I':{'min_distance':10,
                       'LR-U':{'min_distance':10,
                               'threshold': 0.02,}
                       },
-           'eng':{'LR-I':{'min_distance':30,
-                          'threshold':0.09},
-                  'LR-R':{'min_distance':10,
-                          'threshold':0.03},
-                  'LR-V': {'min_distance':30,
-                           'threshold':0.02},
-                  'LR-Z': {'min_distance':60,
-                           'threshold':0.03},
-                  'LR-U':{
-                      'min_distance':10,
-                      'threshold': 0.02,}
-                  },
 }
 
 
@@ -105,7 +94,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         # rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
         rssdata = apextract_tracemap_2(reduced[0].data, rinput.tracemap)
-        # rssdata = numpy.fliplr(rssdata)
+        rssdata = numpy.fliplr(rssdata)
 
         rsshdu = fits.PrimaryHDU(rssdata, header=reduced[0].header)
         header_list = self.getHeaderList(
@@ -123,11 +112,10 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         current_vph = rinput.obresult.tags['vph']
 
         if reduced[0].header['INSTRUME'] == 'MEGARA':
-            threshold = vph_thr['science'][current_vph]['threshold']
-            min_distance = vph_thr['science'][current_vph]['min_distance']
+            threshold = vph_thr['default'][current_vph]['threshold']
+            min_distance = vph_thr['default'][current_vph]['min_distance']
         else:
-            threshold = vph_thr['eng'][current_vph]['threshold']
-            min_distance = vph_thr['eng'][current_vph]['min_distance']
+            raise ValueError('INSTRUME keyword is %s', reduced[0].header['INSTRUME'])
 
         data_wlcalib, fwhm_image = self.calibrate_wl2(rssdata,
                                                       rinput.lines_catalog,
@@ -239,6 +227,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         limit = 0  # LR-R
 
+        # FIXME: hardcoded
+        flux_limit = 600000
+
         for idx, row in enumerate(rss):
             solution = []
             fibid = idx + 1
@@ -257,14 +248,20 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
                 _logger.info('Starting row %d, fibid %d', idx, fibid)
                 # find peaks (initial search providing integer numbers)
-                ipeaks_int = peak_local_max(row, threshold_rel=threshold,
-                                            min_distance=min_distance)[:, 0]
+                ipeaks_int1 = peak_local_max(row, threshold_rel=threshold,
+                                             min_distance=min_distance)[:, 0]
+                # filter by flux
+                _logger.info('Filtering peaks over %5.0f', flux_limit)
+                ipeaks_vals = row[ipeaks_int1]
+                mask = ipeaks_vals < flux_limit
+                ipeaks_int = ipeaks_int1[mask]
                 _logger.debug('LEN (ipeaks_int): %s', len(ipeaks_int))
                 _logger.debug('ipeaks_int: %s', ipeaks_int)
                 ipeaks_float = refine_peaks(row, ipeaks_int, nwinwidth)[0]
 
                 # if idx==299:
                 if False:
+                    import matplotlib.pyplot as plt
                     plt.title('fibid %d' % fibid)
                     plt.plot(row)
                     plt.plot(ipeaks_int, row[ipeaks_int], 'ro', alpha=.9, ms=7,
@@ -283,9 +280,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 xpeaks_refined = finterp_channel(ipeaks_float)
                 lista_xpeaks_refined.append(xpeaks_refined)
                 wv_ini_search = int(
-                    lines_catalog[0][0] - 1000)  # initially: 3500
+                    lines_catalog[0][0] - 200)  # initially: 3500
                 wv_end_search = int(
-                    lines_catalog[-1][0] + 1000)  # initially: 4500
+                    lines_catalog[-1][0] + 200)  # initially: 4500
 
                 try:
 
@@ -337,7 +334,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 except (ValueError, TypeError, IndexError) as error:
                     _logger.error("%s", error)
                     _logger.error('error in row %d, fibid %d', idx, fibid)
+                    traceback.print_exc()
                     if False:
+                        import matplotlib.pyplot as plt
                         plt.title('fibid %d' % fibid)
                         rrow = row[::-1]
                         rpeaks = 4096-ipeaks_int[::-1]
@@ -413,8 +412,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                        kind='linear')
             xpeaks_refined = finterp_channel(ipeaks_float)
             lista_xpeaks_refined.append(xpeaks_refined)
-            wv_ini_search = int(lines_catalog[0][0] - 1000)  # initially: 3500
-            wv_end_search = int(lines_catalog[-1][0] + 1000)  # initially: 4500
+            wv_ini_search = int(lines_catalog[0][0] - 200)  # initially: 3500
+            wv_end_search = int(lines_catalog[-1][0] + 200)  # initially: 4500
 
             _logger.info('wv_ini_search %s', wv_ini_search)
             _logger.info('wv_end_search %s', wv_end_search)
