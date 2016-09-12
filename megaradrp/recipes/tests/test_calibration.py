@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -23,7 +23,7 @@ import pytest
 
 from numina.user.cli import main
 from numina.core import import_object
-from numina.core.pipeline import DrpSystem
+import numina.drps
 from megaradrp.recipes.calibration.bias import BiasRecipe
 from megaradrp.loader import load_drp
 
@@ -38,7 +38,7 @@ def test_recipe1(drpmocker):
 
     drpmocker.add_drp('MEGARA', load_drp)
 
-    insdrp = DrpSystem().query_by_name('MEGARA')
+    insdrp = numina.drps.get_system_drps().query_by_name('MEGARA')
     pipeline = insdrp.pipelines.get('default')
 
     recipe_fqn = pipeline.recipes.get('MEGARA_BIAS_IMAGE')

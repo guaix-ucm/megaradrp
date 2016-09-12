@@ -5,7 +5,7 @@ import pytest
 from numina.tests.testcache import download_cache
 
 from numina.core import import_object
-from numina.core.pipeline import DrpSystem
+import numina.drps
 from numina.core import ObservationResult
 from numina.core import DataFrame
 from megaradrp.recipes.calibration.bias import BiasRecipe
@@ -30,7 +30,7 @@ def test_bias(drpmocker):
 
     # Here we could directly import the required pipeline,
     # but the idea is to test all the process
-    insdrp = DrpSystem().query_by_name(ob.instrument)
+    insdrp = numina.drps.get_system_drps().query_by_name(ob.instrument)
     pipeline = insdrp.pipelines.get('default')
     recipe_fqn = pipeline.recipes.get(ob.mode)
     RecipeClass = import_object(recipe_fqn)
