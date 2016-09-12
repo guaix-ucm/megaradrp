@@ -40,7 +40,7 @@ import astropy.io.fits as fits
 
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import TraceMap, WavelengthCalibration,JSONstorage
+from megaradrp.types import TraceMap, WavelengthCalibration,JSONstorage
 from megaradrp.requirements import MasterBiasRequirement
 from megaradrp.core.processing import apextract_tracemap
 

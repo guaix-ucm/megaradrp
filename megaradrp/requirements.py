@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -21,8 +21,8 @@
 
 from numina.core import Requirement
 
-from .products import MasterBias, MasterDark, MasterFiberFlat, MasterBPM, MasterSlitFlat, MasterFiberFlatFrame
-from .products import TraceMap
+from .types import MasterBias, MasterDark, MasterFiberFlat, MasterBPM, MasterSlitFlat, MasterFiberFlatFrame
+from .types import TraceMap
 
 
 class MasterBiasRequirement(Requirement):

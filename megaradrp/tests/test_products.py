@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,49 +17,92 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from megaradrp.products import TraceMap
+
+import megaradrp.types
+import megaradrp.products
 from tempfile import NamedTemporaryFile
 import pytest
 import yaml
 
+
+def create_test_tracemap():
+    instrument = 'TEST1'
+    tags = {}
+    uuid = '123456789'
+    data = megaradrp.products.TraceMap(instrument=instrument)
+    data.tags = tags
+    data.uuid = uuid
+
+    state = dict(instrument=instrument,
+                 tags=tags,
+                 uuid=uuid,
+                 tracelist=[]
+                 )
+
+    return data, state
+
+
+def test_getstate_traceMap():
+
+    data, state = create_test_tracemap()
+
+    assert (data.__getstate__() == state)
+
+
+def test_setstate_traceMap():
+
+    data, state = create_test_tracemap()
+
+    result = megaradrp.products.TraceMap(instrument='unknown')
+    result.__setstate__(state)
+
+    assert (state['instrument'] == result.instrument)
+    assert (state['tags'] == result.tags)
+    assert (state['uuid'] == result.uuid)
+    assert (state['tracelist'] == result.tracelist)
+
+
 @pytest.mark.xfail
-def test_fail_traceMap(benchmark=None):
-    my_obj = TraceMap()
+def test_fail_traceMap():
+    my_obj = megaradrp.types.TraceMap()
     my_obj._datatype_load('')
 
-def test_load_traceMap(benchmark=None):
-    data = dict(A = 'a',
-                B = dict(C = 'c',
-                         D = 'd',
-                         E = 'e',)
-                )
 
-    my_obj = TraceMap()
+def test_load_traceMap():
+
+    _data, state = create_test_tracemap()
     my_file = NamedTemporaryFile()
+
     with open(my_file.name, 'w') as fd:
-        yaml.dump(data, fd)
+        yaml.dump(state, fd)
+
+    my_obj = megaradrp.types.TraceMap()
     my_open_file = my_obj._datatype_load(my_file.name)
-    assert (my_open_file == {'A': 'a', 'B': {'C': 'c', 'E': 'e', 'D': 'd'}})
+
+    assert (my_open_file.instrument == state['instrument'])
+    assert (my_open_file.tags == state['tags'])
+    assert (my_open_file.uuid == state['uuid'])
+    assert (my_open_file.tracelist == state['tracelist'])
 
 
 def test_dump_traceMap(benchmark=None):
-    class aux(object):
+
+    class Aux(object):
         def __init__(self, destination):
             self.destination = destination
 
-    data = dict(A = 'a',
-                B = dict(C = 'c',
-                         D = 'd',
-                         E = 'e',)
-                )
+    data, state = create_test_tracemap()
 
-    my_obj = TraceMap()
+    my_obj = megaradrp.types.TraceMap()
     my_file = NamedTemporaryFile()
-    work_env = aux(my_file.name)
+    work_env = Aux(my_file.name)
     my_open_file = my_obj._datatype_dump(data, work_env)
+
     with open(my_open_file, 'r') as fd:
         traces = yaml.load(fd)
-    assert (traces == {'A': 'a', 'B': {'C': 'c', 'E': 'e', 'D': 'd'}})
+
+    assert (traces == state)
+
 
 if __name__ == "__main__":
     test_load_traceMap()

@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -19,138 +19,45 @@
 
 """Products of the Megara Pipeline"""
 
-'''
-    RAW_BIAS DataFrameType
-    RAW_DARK DataFrameType
-    RAW_FLAT DataFrameType
-    RAW_ILLUM DataFrameType
-    RAW_SCIENCE DataFrameType
 
-    MASTER_BIAS  DataFrameType(detector)
-    MASTER_DARK  DataFrameType(detector, exposure)
-    MASTER_FLAT  DataFrameType(detector, grism)
-    MASTER_ILLUM DataFrameType(detector, grism)
+class GeometricTrace(object):
+    def __init__(self, fibid, boxid, start, stop, fitparms=None):
+        self.fibid = fibid
+        self.boxid = boxid
+        self.start = start
+        self.stop = stop
+        self.fitparms = fitparms if fitparms is not None else []
 
-    POINTING DataFrameType
-    MOSAIC DataFrameType
-
-'''
-
-import yaml
-
-from numina.core import DataFrameType, DataProductType
-from numina.core.products import DataProductTag
+    def __getstate__(self):
+        return self.__dict__
 
 
-class MEGARAProductFrame(DataFrameType, DataProductTag):
-    pass
+class TraceMap(object):
+    def __init__(self, instrument):
+        import uuid
+
+        self.instrument = instrument
+        self.tags = {}
+        self.uuid = uuid.uuid1().hex
+        self.tracelist = []
+
+    def __getstate__(self):
+        st = {}
+        st['tracelist'] = [t.__getstate__() for t in self.tracelist]
+        for key in ['instrument', 'tags', 'uuid']:
+            st[key] = self.__dict__[key]
+        return st
+
+    def __setstate__(self, state):
+        self.instrument = state['instrument']
+        self.tags = state['tags']
+        self.uuid = state['uuid']
+        self.tracelist = [GeometricTrace(**trace) for trace in state['tracelist']]
+
+        return self
 
 
-# class MEGARAProcessedFrame(DataFrameType):
-#     """A processed image not to be stored"""
-#     pass
 
 
-class MasterBias(MEGARAProductFrame):
-    pass
 
 
-class MasterTwilightFlat(MEGARAProductFrame):
-    pass
-
-class MasterDark(MEGARAProductFrame):
-    pass
-
-
-class MasterFiberFlat(MEGARAProductFrame):
-    pass
-
-
-class MasterSlitFlat(MEGARAProductFrame):
-    pass
-
-
-class MasterFiberFlatFrame(MEGARAProductFrame):
-    pass
-
-
-class MasterBPM(MEGARAProductFrame):
-    pass
-
-
-class MasterSensitivity(MEGARAProductFrame):
-    pass
-
-
-class TraceMap(DataProductType):
-    def __init__(self, default=None):
-        super(TraceMap, self).__init__(ptype=dict, default=default)
-
-    def _datatype_dump(self, obj, where):
-        filename = where.destination + '.yaml'
-
-        with open(filename, 'w') as fd:
-            yaml.dump(obj, fd)
-
-        return filename
-
-    def _datatype_load(self, obj):
-        try:
-            with open(obj, 'r') as fd:
-                traces = yaml.load(fd)
-        except IOError as e:
-            raise e
-        return traces
-
-
-class MasterWeights(DataProductType):
-    def __init__(self, default=None):
-        super(MasterWeights, self).__init__(ptype=dict, default=default)
-
-    def _datatype_dump(self, obj, where):
-        import shutil
-
-        filename = where.destination + '.tar'
-
-        shutil.copy(obj, filename)
-        shutil.rmtree(obj.split(filename)[0])
-        return filename
-
-    def _datatype_load(self, obj):
-        try:
-            import tarfile
-            return tarfile.open(obj, 'r')
-        except IOError as e:
-            raise e
-
-
-class JSONstorage(DataProductType):
-    def __init__(self, default=None):
-        super(JSONstorage, self).__init__(ptype=dict, default=default)
-
-    def _datatype_dump(self, obj, where):
-        import json
-        filename = where.destination + '.json'
-
-        with open(filename, 'w') as fd:
-            fd.write(json.dumps(obj, sort_keys=True, indent=2,
-                                separators=(',', ': ')))
-
-        return filename
-
-    def _datatype_load(self, obj):
-        import json
-        try:
-            with open(obj, 'r') as fd:
-                data = json.load(fd)
-        except IOError as e:
-            raise e
-        return data
-
-
-class WavelengthCalibration(JSONstorage):
-    pass
-
-
-class LCBCalibration(JSONstorage):
-    pass

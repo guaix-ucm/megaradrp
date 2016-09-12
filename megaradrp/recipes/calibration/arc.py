@@ -39,7 +39,7 @@ from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 from skimage.feature import peak_local_max
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import TraceMap, WavelengthCalibration
+from megaradrp.types import TraceMap, WavelengthCalibration
 from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.requirements import MasterDarkRequirement
 from megaradrp.core.processing import apextract_tracemap_2
@@ -96,10 +96,10 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         parameters = self.get_parameters(rinput)
         reduced = self.bias_process_common(rinput.obresult, parameters)
 
-        _logger.info('extract fibers, %i', len(rinput.tracemap))
+        _logger.info('extract fibers, %i', len(rinput.tracemap.tracelist))
         # List of nonextracted fiberids
-        fibids_not_traced = [trace['fibid'] for trace in rinput.tracemap if
-                             not trace['fitparms']]
+        fibids_not_traced = [trace.fibid for trace in rinput.tracemap.tracelist if
+                             not trace.fitparms]
         _logger.info('not traced fibers, %i', len(fibids_not_traced))
 
         # rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
@@ -149,7 +149,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         import numina.array.fwhm as fmod
         # Extract the polynomials
         # FIXME: a little hackish
-        pols = [numpy.poly1d(t['fitparms']) for t in tracemap]
+        pols = [numpy.poly1d(t.fitparms) for t in tracemap.tracelist]
 
         nwinwidth = 5
         lwidth = 20

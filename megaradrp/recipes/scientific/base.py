@@ -27,8 +27,8 @@ from numina.core.requirements import ObservationResultRequirement, Requirement
 # from numina.flow import SerialFlow
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import MasterFiberFlat, WavelengthCalibration
-from megaradrp.products import MasterWeights, TraceMap
+from megaradrp.types import MasterFiberFlat, WavelengthCalibration
+from megaradrp.types import MasterWeights, TraceMap
 from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.requirements import MasterDarkRequirement, MasterFiberFlatRequirement
 from megaradrp.requirements import MasterSlitFlatRequirement, MasterTwilightRequirement

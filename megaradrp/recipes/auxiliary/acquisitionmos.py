@@ -28,7 +28,7 @@ import re
 
 from megaradrp.recipes.scientific.base import ImageRecipe
 from megaradrp.recipes.scientific.lcbmap import Grid
-from megaradrp.products import LCBCalibration
+from megaradrp.types import LCBCalibration
 
 _logger = logging.getLogger('numina.recipes.megara')
 

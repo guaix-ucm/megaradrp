@@ -19,8 +19,8 @@ import os.path
 from megaradrp.core.recipe import MegaraBaseRecipe
 from numina.core import Product, Requirement
 from megaradrp.requirements import MasterFiberFlatFrameRequirement, MasterSlitFlatRequirement, MasterBiasRequirement, MasterDarkRequirement
-from megaradrp.products import TraceMap
-from megaradrp.products import MasterWeights
+from megaradrp.types import TraceMap
+from megaradrp.types import MasterWeights
 # matplotlib.use('agg', warn=True)
 from numina.core.requirements import ObservationResultRequirement
 from astropy.io import fits

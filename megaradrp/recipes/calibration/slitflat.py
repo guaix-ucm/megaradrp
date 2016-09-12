@@ -24,7 +24,7 @@ import numpy as np
 from astropy.io import fits
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import MasterSlitFlat
+from megaradrp.types import MasterSlitFlat
 from megaradrp.requirements import MasterBiasRequirement, MasterDarkRequirement
 from numina.core import Product, Parameter
 from scipy.ndimage.filters import median_filter
