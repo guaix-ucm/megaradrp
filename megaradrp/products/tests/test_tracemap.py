@@ -18,7 +18,6 @@
 #
 
 
-import megaradrp.types
 import megaradrp.products
 from tempfile import NamedTemporaryFile
 import pytest
@@ -64,7 +63,7 @@ def test_setstate_traceMap():
 
 @pytest.mark.xfail
 def test_fail_traceMap():
-    my_obj = megaradrp.types.TraceMap()
+    my_obj = megaradrp.products.TraceMap()
     my_obj._datatype_load('')
 
 
@@ -76,7 +75,7 @@ def test_load_traceMap():
     with open(my_file.name, 'w') as fd:
         yaml.dump(state, fd)
 
-    my_obj = megaradrp.types.TraceMap()
+    my_obj = megaradrp.products.TraceMap()
     my_open_file = my_obj._datatype_load(my_file.name)
 
     assert (my_open_file.instrument == state['instrument'])
@@ -93,7 +92,7 @@ def test_dump_traceMap(benchmark=None):
 
     data, state = create_test_tracemap()
 
-    my_obj = megaradrp.types.TraceMap()
+    my_obj = megaradrp.products.TraceMap()
     my_file = NamedTemporaryFile()
     work_env = Aux(my_file.name)
     my_open_file = my_obj._datatype_dump(data, work_env)

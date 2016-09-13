@@ -22,6 +22,7 @@
 from numina.core import Requirement
 
 import megaradrp.types
+import megaradrp.products
 
 
 class MasterBiasRequirement(Requirement):
@@ -65,6 +66,7 @@ class MasterSlitFlatRequirement(Requirement):
                              optional=optional
                              )
 
+
 class MasterFiberFlatFrameRequirement(Requirement):
     def __init__(self):
         super(MasterFiberFlatFrameRequirement,
@@ -80,4 +82,4 @@ class MasterTwilightRequirement(Requirement):
 class MasterTraceMapRequirement(Requirement):
     def __init__(self):
         super(MasterTraceMapRequirement,
-              self).__init__(megaradrp.types.TraceMap, 'Trace information of the Apertures')
+              self).__init__(megaradrp.products.TraceMap, 'Trace information of the Apertures')

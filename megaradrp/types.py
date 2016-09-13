@@ -36,12 +36,9 @@
 
 '''
 
-import yaml
-
 from numina.core import DataFrameType, DataProductType
 from numina.core.products import DataProductTag
 
-import megaradrp.products as megprods
 
 class MEGARAProductFrame(DataFrameType, DataProductTag):
     pass
@@ -81,30 +78,6 @@ class MasterBPM(MEGARAProductFrame):
 
 class MasterSensitivity(MEGARAProductFrame):
     pass
-
-
-class TraceMap(DataProductType):
-    def __init__(self, default=None):
-        super(TraceMap, self).__init__(ptype=megprods.TraceMap, default=default)
-
-    def _datatype_dump(self, obj, where):
-        filename = where.destination + '.yaml'
-
-        with open(filename, 'w') as fd:
-            yaml.dump(obj.__getstate__(), fd)
-
-        return filename
-
-    def _datatype_load(self, obj):
-
-        try:
-            with open(obj, 'r') as fd:
-                traces_dict = yaml.load(fd)
-        except IOError as e:
-            raise e
-        traces = megprods.TraceMap(instrument=traces_dict['instrument'])
-        traces.__setstate__(traces_dict)
-        return traces
 
 
 class MasterWeights(DataProductType):

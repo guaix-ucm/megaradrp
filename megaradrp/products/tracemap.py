@@ -19,6 +19,12 @@
 
 """Products of the Megara Pipeline"""
 
+import uuid
+import yaml
+
+import numina.core.types
+import numina.core.products
+
 
 class GeometricTrace(object):
     def __init__(self, fibid, boxid, start, stop, fitparms=None):
@@ -32,9 +38,9 @@ class GeometricTrace(object):
         return self.__dict__
 
 
-class TraceMap(object):
-    def __init__(self, instrument):
-        import uuid
+class TraceMap(numina.core.types.AutoDataType):
+    def __init__(self, instrument='unknown'):
+        super(TraceMap, self).__init__()
 
         self.instrument = instrument
         self.tags = {}
@@ -56,8 +62,23 @@ class TraceMap(object):
 
         return self
 
+    @classmethod
+    def _datatype_dump(cls, obj, where):
+        filename = where.destination + '.yaml'
 
+        with open(filename, 'w') as fd:
+            yaml.dump(obj.__getstate__(), fd)
 
+        return filename
 
+    @classmethod
+    def _datatype_load(cls, obj):
 
-
+        try:
+            with open(obj, 'r') as fd:
+                traces_dict = yaml.load(fd)
+        except IOError as e:
+            raise e
+        traces = TraceMap(instrument=traces_dict['instrument'])
+        traces.__setstate__(traces_dict)
+        return traces
