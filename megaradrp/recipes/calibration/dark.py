@@ -23,7 +23,7 @@ from numina.core import Product
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement
-from megaradrp.products import MasterDark
+from megaradrp.types import MasterDark
 
 
 class DarkRecipe(MegaraBaseRecipe):

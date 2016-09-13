@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -29,10 +29,9 @@ from numina.core import Product, Requirement
 from numina.flow import SerialFlow
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import MasterFiberFlat
-from megaradrp.products import WavelengthCalibration, MasterWeights
-from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
-from megaradrp.requirements import MasterDarkRequirement, MasterSlitFlatRequirement
+from megaradrp.types import MasterFiberFlat
+from megaradrp.types import WavelengthCalibration, MasterWeights
+import megaradrp.requirements as reqs
 from numina.core.products import DataFrameType
 from megaradrp.processing.weights import WeightsCorrector
 
@@ -43,10 +42,10 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     """Process FIBER_FLAT images and create MASTER_FIBER_FLAT."""
 
     # Requirements
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_bpm = MasterBPMRequirement()
-    master_slitflat = MasterSlitFlatRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_bpm = reqs.MasterBPMRequirement()
+    master_slitflat = reqs.MasterSlitFlatRequirement()
     wlcalib = Requirement(WavelengthCalibration, 'Wavelength calibration table')
     master_weights = Requirement(MasterWeights, 'Set of files')
     # Products

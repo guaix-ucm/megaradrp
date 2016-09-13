@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -39,12 +39,12 @@ from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 from skimage.feature import peak_local_max
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import TraceMap, WavelengthCalibration
-from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
-from megaradrp.requirements import MasterDarkRequirement
+from megaradrp.types import TraceMap, WavelengthCalibration
+import megaradrp.requirements as reqs
 from megaradrp.core.processing import apextract_tracemap_2
 
 _logger = logging.getLogger('numina.recipes.megara')
+
 
 vph_thr = {'science':{'LR-I':{'min_distance':10,
                               'threshold':0.02},
@@ -71,15 +71,16 @@ vph_thr = {'science':{'LR-I':{'min_distance':10,
                   },
 }
 
+
 class ArcCalibrationRecipe(MegaraBaseRecipe):
     """Process ARC images and create WL_CALIBRATION."""
 
     # Requirements
     obresult = ObservationResultRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    # master_bpm = MasterBPMRequirement()
-    tracemap = Requirement(TraceMap, 'Trace information of the Apertures')
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    # master_bpm = reqs.MasterBPMRequirement()
+    tracemap = reqs.MasterTraceMapRequirement()
     lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
     polynomial_degree = Parameter(5, 'Polynomial degree of arc calibration')
     # Products
@@ -96,10 +97,10 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         parameters = self.get_parameters(rinput)
         reduced = self.bias_process_common(rinput.obresult, parameters)
 
-        _logger.info('extract fibers, %i', len(rinput.tracemap))
+        _logger.info('extract fibers, %i', len(rinput.tracemap.tracelist))
         # List of nonextracted fiberids
-        fibids_not_traced = [trace['fibid'] for trace in rinput.tracemap if
-                             not trace['fitparms']]
+        fibids_not_traced = [trace.fibid for trace in rinput.tracemap.tracelist if
+                             not trace.fitparms]
         _logger.info('not traced fibers, %i', len(fibids_not_traced))
 
         # rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
@@ -149,7 +150,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         import numina.array.fwhm as fmod
         # Extract the polynomials
         # FIXME: a little hackish
-        pols = [numpy.poly1d(t['fitparms']) for t in tracemap]
+        pols = [numpy.poly1d(t.fitparms) for t in tracemap.tracelist]
 
         nwinwidth = 5
         lwidth = 20

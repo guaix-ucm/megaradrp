@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -123,9 +123,9 @@ def apextract_tracemap_2(data, tracemap):
     """
 
     existing = [None]
-    for t in tracemap:
-        if t['fitparms']:
-            t['pol'] = np.poly1d(t['fitparms'])
+    for t in tracemap.tracelist:
+        if t.fitparms:
+            t.pol = np.poly1d(t.fitparms)
             existing.append(t)
 
     existing.append(None)
@@ -138,26 +138,26 @@ def apextract_tracemap_2(data, tracemap):
         if t1 is None:
             d21 = 100
         else:
-            d21 = (t2['fibid'] - t1['fibid']) + (t2['boxid'] - t1['boxid'])
+            d21 = (t2.fibid - t1.fibid) + (t2.boxid - t1.boxid)
         if t3 is None:
             d32 = 100
         else:
-            d32 = (t3['fibid'] - t2['fibid']) + (t3['boxid'] - t2['boxid'])
+            d32 = (t3.fibid - t2.fibid) + (t3.boxid - t2.boxid)
 
         # Right border
         if d32 == 1:
-            pix_32 = 0.5 * (t2['pol'] + t3['pol'])
+            pix_32 = 0.5 * (t2.pol + t3.pol)
         elif d32 == 2:
-            pix_32 = 0.5 * (t2['pol'] + t3['pol'])
-            pix_32 = 0.5 * (pix_32 + t2['pol'])
+            pix_32 = 0.5 * (t2.pol + t3.pol)
+            pix_32 = 0.5 * (pix_32 + t2.pol)
         elif d32 > 2:
             pix_32 = None
 
         if d21 == 1:
-            pix_21 = 0.5 * (t2['pol'] + t1['pol'])
+            pix_21 = 0.5 * (t2.pol + t1.pol)
         elif d21 == 2:
-            pix_21 = 0.5 * (t2['pol'] + t1['pol'])
-            pix_21 = 0.5 * (pix_21 + t2['pol'])
+            pix_21 = 0.5 * (t2.pol + t1.pol)
+            pix_21 = 0.5 * (pix_21 + t2.pol)
         elif d21 > 2:
             pix_21 = None
 
@@ -166,13 +166,13 @@ def apextract_tracemap_2(data, tracemap):
 
         if pix_32 is None:
             # Recompute pix32 using pix_21
-            pix_32 = t2['pol'] + (t2['pol'] - pix_21)
+            pix_32 = t2.pol + (t2.pol - pix_21)
 
         if pix_21 is None:
             # Recompute pix21 using pix_32
-            pix_21 = t2['pol'] - (pix_32 - t2['pol'])
+            pix_21 = t2.pol - (pix_32 - t2.pol)
 
-        borders.append((t2['fibid'], pix_21, pix_32))
+        borders.append((t2.fibid, pix_21, pix_32))
 
     rss = extract_simple_rss2(data, borders)
 
@@ -216,7 +216,7 @@ def apextract_tracemap(data, tracemap):
     
     # FIXME: a little hackish
     
-    pols = [np.poly1d(t['fitparms']) for t in tracemap]
+    pols = [np.poly1d(t.fitparms) for t in tracemap.tracelist]
 
     borders = []
 

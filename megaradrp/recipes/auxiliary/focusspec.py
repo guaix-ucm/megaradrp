@@ -40,8 +40,8 @@ import astropy.io.fits as fits
 
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import TraceMap, WavelengthCalibration,JSONstorage
-from megaradrp.requirements import MasterBiasRequirement
+from megaradrp.types import WavelengthCalibration, JSONstorage
+import megaradrp.requirements as reqs
 from megaradrp.core.processing import apextract_tracemap
 
 _logger = logging.getLogger('numina.recipes.megara')
@@ -52,8 +52,8 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
 
     # Requirements
     obresult = ObservationResultRequirement()
-    master_bias = MasterBiasRequirement()
-    tracemap = Requirement(TraceMap, 'Trace information of the Apertures')
+    master_bias = reqs.MasterBiasRequirement()
+    tracemap = reqs.MasterTraceMapRequirement()
     lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
     polynomial_degree = Parameter(2, 'Polynomial degree of arc calibration')
     wlcalib = Requirement(WavelengthCalibration,

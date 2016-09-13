@@ -25,7 +25,7 @@ import numpy as np
 from megaradrp.recipes.scientific.lcbmap import Grid
 from numina.core import Product
 from numina.core.products import ArrayType
-from megaradrp.products import LCBCalibration
+from megaradrp.types import LCBCalibration
 import re
 
 

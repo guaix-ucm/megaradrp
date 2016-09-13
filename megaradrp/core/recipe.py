@@ -38,14 +38,13 @@ from megaradrp.processing.fiberflat import FiberFlatCorrector
 from megaradrp.processing.datamodel import MegaraDataModel
 from megaradrp.processing.twilight import TwilightCorrector
 
-_logger = logging.getLogger('numina.recipes.megara')
-
 
 class MegaraBaseRecipe(BaseRecipe):
     """Base clase for all MEGARA Recipes"""
 
     obresult = ObservationResultRequirement()
     qc = Product(QualityControlProduct, dest='qc')
+    logger = logging.getLogger('numina.recipes.megara')
 
     def __init__(self, version):
         self.__flow = {'ArcCalibrationRecipe': [OverscanCorrector, TrimImage,
@@ -151,7 +150,7 @@ class MegaraBaseRecipe(BaseRecipe):
             basicflow = SerialFlow(flow)
 
         except Exception as e:
-            _logger.error(e)
+            self.logger.error(e)
             raise (e)
         del flow
         return basicflow
@@ -171,7 +170,10 @@ class MegaraBaseRecipe(BaseRecipe):
         reduced = fits.HDUList(hdu + [varhdu, num])
         return reduced
 
-    def hdu_creation(self, obresult, params={}):
+    def hdu_creation(self, obresult, params=None):
+
+        if params is None:
+            params = {}
 
         basicflow = self.__generate_flow(params, obresult.configuration.values)
         cdata = []
@@ -183,7 +185,7 @@ class MegaraBaseRecipe(BaseRecipe):
                 hdulist = basicflow(hdulist)
                 cdata.append(hdulist)
 
-            _logger.info('stacking %d images using median', len(cdata))
+            self.logger.info('stacking %d images using median', len(cdata))
 
             data = combine.median([d[0].data for d in cdata], dtype='float32')
             template_header = cdata[0][0].header
@@ -265,7 +267,7 @@ class MegaraBaseRecipe(BaseRecipe):
                    data]
         return np.array(wlcalib)
 
-    def resample_rss_flux(self, rss_old, wcalib, indexes=[]):
+    def resample_rss_flux(self, rss_old, wcalib, indexes=None):
         """
 
         :param rss_old: rss image
@@ -276,6 +278,9 @@ class MegaraBaseRecipe(BaseRecipe):
         import math
         from numpy.polynomial.polynomial import polyval
         from numina.array.interpolation import SteffenInterpolator
+
+        if indexes is None:
+            indexes = []
 
         nfibers = rss_old.shape[0]
         nsamples = rss_old.shape[1]
@@ -348,7 +353,7 @@ class MegaraBaseRecipe(BaseRecipe):
 
     @classmethod
     def types_getter(cls):
-        from megaradrp.products import MasterBias, MasterDark, MasterBPM, MasterSlitFlat
+        from megaradrp.types import MasterBias, MasterDark, MasterBPM, MasterSlitFlat
         imgtypes = [None, MasterBPM, MasterBias, MasterDark, MasterSlitFlat]
         getters = [[get_corrector_o, get_corrector_t], get_corrector_p, get_corrector_bias, get_corrector_dark, get_corrector_sf]
         return imgtypes, getters
@@ -388,12 +393,12 @@ class MegaraBaseRecipe(BaseRecipe):
         #if emirdrp.ext.gtc.RUN_IN_GTC:
         #    _logger.debug('running in GTC environment')
         #else:
-        _logger.debug('running outside of GTC environment')
+        cls.logger.debug('running outside of GTC environment')
         datamodel = MegaraDataModel()
         meta = datamodel.gather_info(rinput)
-        _logger.debug('obresult info')
+        cls.logger.debug('obresult info')
         for entry in meta['obresult']:
-            _logger.debug('frame info is %s', entry)
+            cls.logger.debug('frame info is %s', entry)
         correctors = [getter(rinput, meta, ins) for getter in getters]
 
         flow = SerialFlow(correctors)
@@ -408,6 +413,7 @@ class MegaraBaseRecipe(BaseRecipe):
 
 
 def get_corrector_p(rinput, meta, ins):
+    _logger = logging.getLogger('numina.recipes.megara')
     bpm_info = meta.get('master_bpm')
     if bpm_info is not None:
         with rinput.master_bpm.open() as hdul:
@@ -423,7 +429,7 @@ def get_corrector_p(rinput, meta, ins):
 
 
 def get_corrector_super(rinput, meta, key, correctorclass, datamodel):
-
+    _logger = logging.getLogger('numina.recipes.megara')
     info = meta.get(key)
     _logger.debug('datamodel is %s', datamodel)
     req = getattr(rinput, key)
@@ -456,6 +462,7 @@ def get_corrector_dark(rinput, meta, ins):
 
 
 def get_corrector_sf(rinput, meta, ins):
+    _logger = logging.getLogger('numina.recipes.megara')
     key = 'master_slit_flat'
     info = meta.get(key)
     if info is not None:

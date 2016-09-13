@@ -26,7 +26,7 @@ from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import  MasterBPM
+from megaradrp.types import  MasterBPM
 from megaradrp.requirements import MasterBiasRequirement
 
 

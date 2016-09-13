@@ -25,7 +25,7 @@ from numina.core import Product, RecipeError
 
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import MasterBias
+from megaradrp.types import MasterBias
 from megaradrp.requirements import MasterBPMRequirement
 
 _logger = logging.getLogger('numina.recipes.megara')

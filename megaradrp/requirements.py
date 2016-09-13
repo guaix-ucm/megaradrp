@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -21,14 +21,14 @@
 
 from numina.core import Requirement
 
-from .products import MasterBias, MasterDark, MasterFiberFlat, MasterBPM, MasterSlitFlat, MasterFiberFlatFrame
-from .products import TraceMap
+import megaradrp.types
+import megaradrp.products
 
 
 class MasterBiasRequirement(Requirement):
     def __init__(self, optional=False):
         super(MasterBiasRequirement,
-              self).__init__(MasterBias,
+              self).__init__(megaradrp.types.MasterBias,
                              'Master BIAS image',
                              optional=optional
                              )
@@ -37,7 +37,7 @@ class MasterBiasRequirement(Requirement):
 class MasterBPMRequirement(Requirement):
     def __init__(self, optional=True):
         super(MasterBPMRequirement,
-              self).__init__(MasterBPM,
+              self).__init__(megaradrp.types.MasterBPM,
                              'Master Bad Pixel Mask',
                              optional=optional
                              )
@@ -46,14 +46,14 @@ class MasterBPMRequirement(Requirement):
 class MasterDarkRequirement(Requirement):
     def __init__(self, optional=True):
         super(MasterDarkRequirement,
-              self).__init__(MasterDark, 'Master DARK image',
+              self).__init__(megaradrp.types.MasterDark, 'Master DARK image',
                              optional=optional)
 
 
 class MasterFiberFlatRequirement(Requirement):
     def __init__(self):
         super(MasterFiberFlatRequirement,
-              self).__init__(MasterFiberFlat,
+              self).__init__(megaradrp.types.MasterFiberFlat,
                              'Master fiber flat calibration'
                              )
 
@@ -61,24 +61,25 @@ class MasterFiberFlatRequirement(Requirement):
 class MasterSlitFlatRequirement(Requirement):
     def __init__(self, optional=True):
         super(MasterSlitFlatRequirement,
-              self).__init__(MasterSlitFlat,
+              self).__init__(megaradrp.types.MasterSlitFlat,
                              'Master slit flat calibration',
                              optional=optional
                              )
 
+
 class MasterFiberFlatFrameRequirement(Requirement):
     def __init__(self):
         super(MasterFiberFlatFrameRequirement,
-              self).__init__(MasterFiberFlatFrame,'Master fiber flat frame')
+              self).__init__(megaradrp.types.MasterFiberFlatFrame,'Master fiber flat frame')
 
 
 class MasterTwilightRequirement(Requirement):
     def __init__(self, optional=True):
         super(MasterTwilightRequirement,
-              self).__init__(MasterSlitFlat,'Master slit flat calibration')
+              self).__init__(megaradrp.types.MasterSlitFlat,'Master slit flat calibration')
 
 
 class MasterTraceMapRequirement(Requirement):
     def __init__(self):
         super(MasterTraceMapRequirement,
-              self).__init__(TraceMap, 'Trace information of the Apertures')
+              self).__init__(megaradrp.products.TraceMap, 'Trace information of the Apertures')

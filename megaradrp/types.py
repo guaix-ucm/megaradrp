@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -35,8 +35,6 @@
     MOSAIC DataFrameType
 
 '''
-
-import yaml
 
 from numina.core import DataFrameType, DataProductType
 from numina.core.products import DataProductTag
@@ -80,27 +78,6 @@ class MasterBPM(MEGARAProductFrame):
 
 class MasterSensitivity(MEGARAProductFrame):
     pass
-
-
-class TraceMap(DataProductType):
-    def __init__(self, default=None):
-        super(TraceMap, self).__init__(ptype=dict, default=default)
-
-    def _datatype_dump(self, obj, where):
-        filename = where.destination + '.yaml'
-
-        with open(filename, 'w') as fd:
-            yaml.dump(obj, fd)
-
-        return filename
-
-    def _datatype_load(self, obj):
-        try:
-            with open(obj, 'r') as fd:
-                traces = yaml.load(fd)
-        except IOError as e:
-            raise e
-        return traces
 
 
 class MasterWeights(DataProductType):

@@ -24,8 +24,8 @@ import numpy as np
 from astropy.io import fits
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import MasterSlitFlat
-from megaradrp.requirements import MasterBiasRequirement, MasterDarkRequirement
+from megaradrp.types import MasterSlitFlat
+import megaradrp.requirements as reqs
 from numina.core import Product, Parameter
 from scipy.ndimage.filters import median_filter
 from scipy.signal import savgol_filter
@@ -36,8 +36,8 @@ class SlitFlatRecipe(MegaraBaseRecipe):
     """Process SLIT_FLAT images and create MASTER_SLIT_FLAT."""
 
     # Requirements
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
 
     window_length_x = Parameter(301, 'Savitzky-Golay length of the filter window OX')
     window_length_y = Parameter(31, 'Savitzky-Golay length of the filter window OY')

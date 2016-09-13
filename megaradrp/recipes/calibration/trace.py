@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -29,11 +29,11 @@ from numina.array.trace.traces import trace
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
 
-from megaradrp.products import MasterFiberFlatFrame, TraceMap
+from megaradrp.types import MasterFiberFlatFrame, TraceMap
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
-from megaradrp.requirements import MasterDarkRequirement
+import megaradrp.requirements as reqs
 from megaradrp.trace.traces import init_traces_ex
+import megaradrp.products
 
 from skimage.filters import threshold_otsu
 
@@ -47,12 +47,13 @@ vph_thr = {'LR-I': 0.27,
            'LR-U': 0.02,
            }
 
+
 class TraceMapRecipe(MegaraBaseRecipe):
 
     obresult = ObservationResultRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_bpm = MasterBPMRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_bpm = reqs.MasterBPMRequirement()
 
     fiberflat_frame = Product(MasterFiberFlatFrame)
     master_traces = Product(TraceMap)
@@ -94,7 +95,9 @@ class TraceMapRecipe(MegaraBaseRecipe):
         else:
             image2 = data
 
-        tracelist = []
+        final = megaradrp.products.TraceMap(instrument=rinput.obresult.instrument)
+        final.tags = rinput.obresult.tags
+
         _logger.info('trace peaks')
         for dtrace in central_peaks.values():
             # FIXME, for traces, the background must be local, the background
@@ -124,12 +127,17 @@ class TraceMapRecipe(MegaraBaseRecipe):
                 start = cstart
                 stop = cstart
 
-            tracelist.append({'fibid': dtrace.fibid, 'boxid': dtrace.boxid,
-                              'start':int(start), 'stop':int(stop),
-                              'fitparms': pfit.tolist()})
+            this_trace = megaradrp.products.GeometricTrace(
+                fibid=dtrace.fibid,
+                boxid=dtrace.boxid,
+                start=int(start),
+                stop=int(stop),
+                fitparms=pfit.tolist()
+            )
+            final.tracelist.append(this_trace)
 
         return self.create_result(fiberflat_frame=reduced,
-                                  master_traces=tracelist)
+                                  master_traces=final)
 
 
 def estimate_background(image, center, hs, boxref):

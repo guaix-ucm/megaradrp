@@ -192,11 +192,11 @@ pipelines:
       MEGARA_EXTINCTION_STAR: megaradrp.recipes.scientific.extinctionstar.ExtinctionStarRecipe
       MEGARA_SENSITIVITY_STAR: megaradrp.recipes.scientific.sensivitystar.SensivityStarRecipe
 products:
-- name: megaradrp.products.TraceMap
+- name: megaradrp.types.TraceMap
   alias: TraceMap
-- name: megaradrp.products.MasterFiberFlat
+- name: megaradrp.types.MasterFiberFlat
   alias: MasterFiberFlat
-- name: megaradrp.products.MasterSlitFlat
+- name: megaradrp.types.MasterSlitFlat
   alias: MasterSlitFlat
-- name: megaradrp.products.MasterSensitivity
+- name: megaradrp.types.MasterSensitivity
   alias: MasterSensitivity
