@@ -18,14 +18,12 @@ import os.path
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from numina.core import Product, Requirement
-from megaradrp.requirements import MasterFiberFlatFrameRequirement, MasterSlitFlatRequirement, MasterBiasRequirement, MasterDarkRequirement
-from megaradrp.types import TraceMap
+import megaradrp.requirements as reqs
 from megaradrp.types import MasterWeights
 # matplotlib.use('agg', warn=True)
 from numina.core.requirements import ObservationResultRequirement
 from astropy.io import fits
 from astropy.modeling import fitting
-from astropy.modeling.models import custom_model_1d
 from scipy.stats import norm
 from astropy.modeling.models import custom_model
 
@@ -52,11 +50,11 @@ M_SQRT_2_PI = math.sqrt(2 * math.pi)
 
 class WeightsRecipe(MegaraBaseRecipe):
     # Requirements
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_slitflat = MasterSlitFlatRequirement()
-    master_fiberflat_frame = MasterFiberFlatFrameRequirement()
-    tracemap = Requirement(TraceMap, 'Trace information of the Apertures')
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_slitflat = reqs.MasterSlitFlatRequirement()
+    master_fiberflat_frame = reqs.MasterFiberFlatFrameRequirement()
+    tracemap = reqs.MasterTraceMapRequirement()
 
     # Products
     master_weights = Product(MasterWeights)

@@ -29,9 +29,7 @@ from numina.core.requirements import ObservationResultRequirement, Requirement
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.types import MasterFiberFlat, WavelengthCalibration
 from megaradrp.types import MasterWeights, TraceMap
-from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
-from megaradrp.requirements import MasterDarkRequirement, MasterFiberFlatRequirement
-from megaradrp.requirements import MasterSlitFlatRequirement, MasterTwilightRequirement
+import megaradrp.requirements as reqs
 # from megaradrp.processing.fiberflat import FiberFlatCorrector
 # from megaradrp.processing.twilight import TwilightCorrector
 # from megaradrp.processing.weights import WeightsCorrector
@@ -46,14 +44,14 @@ class ImageRecipe(MegaraBaseRecipe):
 
     # Requirements  
     obresult = ObservationResultRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_bpm = MasterBPMRequirement()
-    master_slitflat = MasterSlitFlatRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_bpm = reqs.MasterBPMRequirement()
+    master_slitflat = reqs.MasterSlitFlatRequirement()
     wlcalib = Requirement(WavelengthCalibration, 'Wavelength calibration table')
     # master_weights = Requirement(MasterWeights, 'Set of files')
-    master_fiberflat = MasterFiberFlatRequirement()
-    master_twilight = MasterTwilightRequirement()
+    master_fiberflat = reqs.MasterFiberFlatRequirement()
+    master_twilight = reqs.MasterTwilightRequirement()
     tracemap = Requirement(TraceMap, 'Trace information of the Apertures')
 
     def __init__(self):

@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -40,11 +40,11 @@ from skimage.feature import peak_local_max
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.types import TraceMap, WavelengthCalibration
-from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
-from megaradrp.requirements import MasterDarkRequirement
+import megaradrp.requirements as reqs
 from megaradrp.core.processing import apextract_tracemap_2
 
 _logger = logging.getLogger('numina.recipes.megara')
+
 
 vph_thr = {'science':{'LR-I':{'min_distance':10,
                               'threshold':0.02},
@@ -71,15 +71,16 @@ vph_thr = {'science':{'LR-I':{'min_distance':10,
                   },
 }
 
+
 class ArcCalibrationRecipe(MegaraBaseRecipe):
     """Process ARC images and create WL_CALIBRATION."""
 
     # Requirements
     obresult = ObservationResultRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    # master_bpm = MasterBPMRequirement()
-    tracemap = Requirement(TraceMap, 'Trace information of the Apertures')
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    # master_bpm = reqs.MasterBPMRequirement()
+    tracemap = reqs.MasterTraceMapRequirement()
     lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
     polynomial_degree = Parameter(5, 'Polynomial degree of arc calibration')
     # Products

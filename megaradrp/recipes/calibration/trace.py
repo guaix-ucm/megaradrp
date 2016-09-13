@@ -31,8 +31,7 @@ from numina.core.requirements import ObservationResultRequirement
 
 from megaradrp.types import MasterFiberFlatFrame, TraceMap
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
-from megaradrp.requirements import MasterDarkRequirement
+import megaradrp.requirements as reqs
 from megaradrp.trace.traces import init_traces_ex
 import megaradrp.products
 
@@ -52,9 +51,9 @@ vph_thr = {'LR-I': 0.27,
 class TraceMapRecipe(MegaraBaseRecipe):
 
     obresult = ObservationResultRequirement()
-    master_bias = MasterBiasRequirement()
-    master_dark = MasterDarkRequirement()
-    master_bpm = MasterBPMRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_bpm = reqs.MasterBPMRequirement()
 
     fiberflat_frame = Product(MasterFiberFlatFrame)
     master_traces = Product(TraceMap)

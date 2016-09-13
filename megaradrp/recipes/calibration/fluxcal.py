@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -29,19 +29,18 @@ from numina.core import Product, Requirement
 from numina.core.requirements import ObservationResultRequirement
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.requirements import MasterBiasRequirement
-from megaradrp.requirements import MasterFiberFlatRequirement
+import megaradrp.requirements as reqs
 from megaradrp.types import MasterFiberFlat
-from megaradrp.types import TraceMap, MasterSensitivity
+from megaradrp.types import MasterSensitivity
 
 _logger = logging.getLogger('numina.recipes.megara')
 
 
 class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
     obresult = ObservationResultRequirement()
-    master_bias = MasterBiasRequirement()
-    master_fiberflat = MasterFiberFlatRequirement()
-    traces = Requirement(TraceMap, 'Trace information of the Apertures')
+    master_bias = reqs.MasterBiasRequirement()
+    master_fiberflat = reqs.MasterFiberFlatRequirement()
+    traces = reqs.MasterTraceMapRequirement()
     reference_spectrum = Requirement(MasterFiberFlat, 'Reference spectrum')
 
     calibration = Product(MasterSensitivity)
