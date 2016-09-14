@@ -76,9 +76,10 @@ class TraceMap(numina.core.types.AutoDataType):
 
         try:
             with open(obj, 'r') as fd:
-                traces_dict = yaml.load(fd)
+                state = yaml.load(fd)
         except IOError as e:
             raise e
-        traces = TraceMap(instrument=traces_dict['instrument'])
-        traces.__setstate__(traces_dict)
-        return traces
+
+        result = cls.__new__(cls)
+        result.__setstate__(state=state)
+        return result
