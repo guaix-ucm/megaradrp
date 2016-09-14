@@ -19,6 +19,7 @@ setup(name='megaradrp',
          'astropy >= 1.0',
          'scipy',
          'numina >= 0.14',
+         'scikit-image',
          ],
       zip_safe=False,
       entry_points = {
