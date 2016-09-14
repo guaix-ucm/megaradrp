@@ -32,10 +32,10 @@ from scipy.interpolate import interp1d
 from numina.core import Requirement, Product, Parameter, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import LinesCatalog
-from numina.array.wavecal.arccalibration import arccalibration_direct
-from numina.array.wavecal.arccalibration import fit_solution
-from numina.array.wavecal.arccalibration import gen_triplets_master
-from numina.array.wavecal.statsummary import sigmaG
+from numina.array.wavecalib.arccalibration import arccalibration_direct
+from numina.array.wavecalib.arccalibration import fit_list_of_wvfeatures
+from numina.array.wavecalib.arccalibration import gen_triplets_master
+from numina.array.wavecalib.arccalibration import robust_std
 from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 from skimage.feature import peak_local_max
 
@@ -226,12 +226,13 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         # limit = 0 #LR-V sci
 
         limit = 0  # LR-R
+        dict_of_solution_wv = {}
 
         # FIXME: hardcoded
         flux_limit = 600000
 
         for idx, row in enumerate(rss):
-            solution = []
+
             fibid = idx + 1
             if idx==1:
                 numpy.savetxt('fiber1.txt', row)
@@ -273,54 +274,64 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 # This comes from Nico's code, so probably pixels
                 # will start in 1
                 naxis1 = row.shape[0]
+                crpix1 = 1.0
                 xchannel = numpy.arange(1, naxis1 + 1)
 
                 finterp_channel = interp1d(range(xchannel.size), xchannel,
-                                           kind='linear')
+                                           kind='linear',
+                                           bounds_error=False,
+                                           fill_value=0.0)
                 xpeaks_refined = finterp_channel(ipeaks_float)
                 lista_xpeaks_refined.append(xpeaks_refined)
                 wv_ini_search = int(
-                    lines_catalog[0][0] - 200)  # initially: 3500
+                    lines_catalog[0][0] - 1000)  # initially: 3500
                 wv_end_search = int(
-                    lines_catalog[-1][0] + 200)  # initially: 4500
+                    lines_catalog[-1][0] + 1000)  # initially: 4500
 
                 try:
 
                     _logger.info('wv_ini_search %s', wv_ini_search)
                     _logger.info('wv_end_search %s', wv_end_search)
 
-                    solution = arccalibration_direct(wv_master,
-                                                     ntriplets_master,
-                                                     ratios_master_sorted,
-                                                     triplets_master_sorted_list,
-                                                     xpeaks_refined,
-                                                     naxis1,
-                                                     wv_ini_search=wv_ini_search,
-                                                     wv_end_search=wv_end_search,
-                                                     error_xpos_arc=2.3, # initially: 2.0
-                                                     times_sigma_r=3.0,
-                                                     frac_triplets_for_sum=0.50,
-                                                     times_sigma_theil_sen=10.0,
-                                                     poly_degree_wfit=poldeg,
-                                                     times_sigma_polfilt=10.0,
-                                                     times_sigma_inclusion=5.0)
+                    list_of_wvfeatures = arccalibration_direct(
+                        wv_master,
+                        ntriplets_master,
+                        ratios_master_sorted,
+                        triplets_master_sorted_list,
+                        xpeaks_refined,
+                        naxis1,
+                        crpix1=crpix1,
+                        wv_ini_search=wv_ini_search,
+                        wv_end_search=wv_end_search,
+                        error_xpos_arc=2.3, # initially: 2.0
+                        times_sigma_r=3.0,
+                        frac_triplets_for_sum=0.50,
+                        times_sigma_theil_sen=10.0,
+                        poly_degree_wfit=poldeg,
+                        times_sigma_polfilt=10.0,
+                        times_sigma_cook=10.0,
+                        times_sigma_inclusion=5.0
+                    )
 
                     _logger.info('Solution for row %d completed', idx)
                     _logger.info('Fitting solution for row %d', idx)
-                    numpy_array_with_coeff, crval1_approx, cdelt1_approx = \
-                        fit_solution(wv_master,
-                                     xpeaks_refined,
-                                     solution,
-                                     poly_degree_wfit=poldeg,
-                                     weighted=False)
+                    solution_wv = fit_list_of_wvfeatures(
+                            list_of_wvfeatures,
+                            naxis1_arc=naxis1,
+                            crpix1=crpix1,
+                            poly_degree_wfit=poldeg,
+                            weighted=False,
+                            debugplot=0,
+                            plot_title=None
+                        )
 
-                    _logger.info('approximate crval1, cdelt1: %f %f',
-                                 crval1_approx,
-                                 cdelt1_approx)
+                    _logger.info('linear crval1, cdelt1: %f %f',
+                                 solution_wv.crval1_linear,
+                                 solution_wv.cdelt1_linear)
 
                     _logger.info('fitted coefficients %s',
-                                 numpy_array_with_coeff)
-                    coeff_table[idx] = numpy_array_with_coeff
+                                 solution_wv.coeff)
+                    coeff_table[idx] = solution_wv.coeff
 
                     # if True:
                     #     plt.title('fibid %d' % fibid)
@@ -347,21 +358,23 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         plt.show()
                     error_contador += 1
 
+                dict_of_solution_wv[fibid] = solution_wv
             else:
                 _logger.info('skipping row %d, fibid %d, not extracted', idx,
                              fibid)
                 missing_fib += 1
                 lista_xpeaks_refined.append(numpy.array([]))
 
-            lista_solution.append(solution)
             # coeff_table[idx] = numpy_array_with_coeff
         _logger.info('Errors in fitting: %s', error_contador)
         _logger.info('Missing fibers: %s', missing_fib)
         lines_rss_fwhm = self.run_on_image(rss, tracemap, threshold,
                                            min_distance, limit)
-        data_wlcalib = self.generateJSON(coeff_table, lista_solution,
-                                         lista_xpeaks_refined, poldeg,
-                                         lines_catalog, lines_rss_fwhm)
+        # data_wlcalib = self.generateJSON(coeff_table, dict_of_solution_wv,
+        #                                  lista_xpeaks_refined, poldeg,
+        #                                  lines_catalog, lines_rss_fwhm)
+        data_wlcalib = WavelengthCalibration(instrument='MEGARA')
+        data_wlcalib.wvlist = dict_of_solution_wv
 
         _logger.info('Generating fwhm_image...')
         image = self.generate_image(lines_rss_fwhm)
@@ -391,7 +404,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         for idx, row in enumerate(rss):
             _logger.info('Starting row %d', idx)
             # find peaks (initial search providing integer numbers)
-            threshold = numpy.median(row) + times_sigma * sigmaG(row)
+            threshold = numpy.median(row) + times_sigma * robust_std(row)
 
             ipeaks_int = find_peaks_indexes(row, nwinwidth, threshold)
             ipeaks_float = refine_peaks(row, ipeaks_int, nwinwidth)[0]
@@ -412,29 +425,33 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                        kind='linear')
             xpeaks_refined = finterp_channel(ipeaks_float)
             lista_xpeaks_refined.append(xpeaks_refined)
-            wv_ini_search = int(lines_catalog[0][0] - 200)  # initially: 3500
-            wv_end_search = int(lines_catalog[-1][0] + 200)  # initially: 4500
+            wv_ini_search = int(lines_catalog[0][0] - 1000)  # initially: 3500
+            wv_end_search = int(lines_catalog[-1][0] + 1000)  # initially: 4500
 
             _logger.info('wv_ini_search %s', wv_ini_search)
             _logger.info('wv_end_search %s', wv_end_search)
 
             try:
-                solution = arccalibration_direct(wv_master,
-                                                 ntriplets_master,
-                                                 ratios_master_sorted,
-                                                 triplets_master_sorted_list,
-                                                 xpeaks_refined,
-                                                 naxis1,
-                                                 wv_ini_search=wv_ini_search,
-                                                 wv_end_search=wv_end_search,
-                                                 error_xpos_arc=0.3,
-                                                 # initially: 2.0
-                                                 times_sigma_r=3.0,
-                                                 frac_triplets_for_sum=0.50,
-                                                 times_sigma_theil_sen=10.0,
-                                                 poly_degree_wfit=poldeg,
-                                                 times_sigma_polfilt=10.0,
-                                                 times_sigma_inclusion=5.0)
+                list_of_wvfeatures = arccalibration_direct(
+                    wv_master,
+                    ntriplets_master,
+                    ratios_master_sorted,
+                    triplets_master_sorted_list,
+                    xpeaks_refined,
+                    naxis1,
+                    crpix1=1.0,
+                    wv_ini_search=wv_ini_search,
+                    wv_end_search=wv_end_search,
+                    error_xpos_arc=0.3,
+                    # initially: 2.0
+                    times_sigma_r=3.0,
+                    frac_triplets_for_sum=0.50,
+                    times_sigma_theil_sen=10.0,
+                    poly_degree_wfit=poldeg,
+                    times_sigma_polfilt=10.0,
+                    times_sigma_cook=10.0,
+                    times_sigma_inclusion=5.0
+                )
 
                 _logger.info('Solution for row %d completed', idx)
                 _logger.info('Fitting solution for row %d', idx)
@@ -477,7 +494,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 final = ind
         return final
 
-    def generateJSON(self, coeff_table, lista_solution,
+    def generateJSON(self, coeff_table, list_of_solution_wv,
                      lista_xpeaks_refined, poldeg, lines_catalog,
                      lines_rss_fwhm):
         '''
@@ -496,27 +513,19 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         for ind, xpeaks in enumerate(lista_xpeaks_refined):
             features = []
             try:
-                if numpy.any(xpeaks) and lista_solution[ind] and len(
-                        lista_solution[ind]) == len(xpeaks):
+                if numpy.any(xpeaks) and (list_of_solution_wv[ind] is not None) and len(
+                        list_of_solution_wv[ind]) == len(xpeaks):
                     res = polyval(xpeaks, coeff_table[ind])
                     # _logger.info('indice: %s', ind)
 
                     if numpy.any(res):
                         for aux, elem in enumerate(xpeaks):
                             if len(lines_rss_fwhm[ind]) > aux:
-                                line = self.findReferenceLine(lines_catalog, res[aux])
-
                                 feature = {'xpos': xpeaks[aux],
                                            'wavelength': res[aux],
-                                           # 'reference': lines_catalog[aux][0],
-                                           'reference': 'Not in catalog' if line=='None' else lines_catalog[line][0],
                                            'flux': lines_rss_fwhm[ind][aux][3],
-                                           'category':
-                                               lista_solution[ind][aux][
-                                                   'type'],
                                            'fwhm': lines_rss_fwhm[ind][aux][2],
-                                           'ypos': lines_rss_fwhm[ind][aux][
-                                                       1] + 1}
+                                           'ypos': lines_rss_fwhm[ind][aux][1] + 1}
 
                                 features.append(feature)
             except:
