@@ -83,3 +83,7 @@ class TraceMap(numina.core.types.AutoDataType):
         result = cls.__new__(cls)
         result.__setstate__(state=state)
         return result
+
+    @property
+    def default(self):
+        return None
