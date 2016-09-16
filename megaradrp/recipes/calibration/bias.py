@@ -56,8 +56,6 @@ class BiasRecipe(MegaraBaseRecipe):
         hdr['IMGTYP'] = ('BIAS', 'Image type')
         hdr['NUMTYP'] = ('MASTER_BIAS', 'Data product type')
         hdr['CCDMEAN'] = data[0].mean()
-        # delete FILENAME
-        del hdr['FILENAME']
 
         varhdu = fits.ImageHDU(data[1], name='VARIANCE')
         num = fits.ImageHDU(data[2], name='MAP')

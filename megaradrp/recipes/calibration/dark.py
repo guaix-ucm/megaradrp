@@ -51,7 +51,6 @@ class DarkRecipe(MegaraBaseRecipe):
             pass
 
         hdr = hdu[0].header
-        del hdr['FILENAME']
 
         result = self.create_result(master_dark=hdu)
         return result
