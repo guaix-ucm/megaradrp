@@ -32,8 +32,10 @@ from numina.core.products import DataFrameType
 from megaradrp.core.processing import apextract_weights, apextract_tracemap
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement
-from megaradrp.types import WavelengthCalibration, MasterWeights
-from megaradrp.types import TraceMap, MasterTwilightFlat
+from megaradrp.products import WavelengthCalibration
+from megaradrp.products import TraceMap
+from megaradrp.types import MasterWeights
+from megaradrp.types import MasterTwilightFlat
 
 
 _logger = logging.getLogger('numina.recipes.megara')

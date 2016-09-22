@@ -28,7 +28,8 @@ from numina.array.trace.traces import trace
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
 
-from megaradrp.types import MasterFiberFlatFrame, TraceMap
+from megaradrp.types import MasterFiberFlatFrame
+from megaradrp.products import TraceMap
 from megaradrp.core.recipe import MegaraBaseRecipe
 import megaradrp.requirements as reqs
 from megaradrp.trace.traces import init_traces_ex

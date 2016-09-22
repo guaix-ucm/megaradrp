@@ -30,7 +30,8 @@ from numina.flow import SerialFlow
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.types import MasterFiberFlat
-from megaradrp.types import WavelengthCalibration, MasterWeights
+from megaradrp.types import MasterWeights
+from megaradrp.products import WavelengthCalibration
 import megaradrp.requirements as reqs
 from numina.core.products import DataFrameType
 from megaradrp.processing.weights import WeightsCorrector

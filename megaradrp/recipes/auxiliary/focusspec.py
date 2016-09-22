@@ -33,7 +33,7 @@ from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import LinesCatalog
 import numina.array.utils
 import numina.array.fwhm as fmod
-from numina.array.wavecal.statsummary import sigmaG
+from numina.array.stats import robust_std as sigmaG
 from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 from numina.flow.processing import BiasCorrector
 from numina.flow import SerialFlow
@@ -41,7 +41,8 @@ import astropy.io.fits as fits
 
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.types import WavelengthCalibration, JSONstorage
+from megaradrp.products import WavelengthCalibration
+from megaradrp.types import JSONstorage
 import megaradrp.requirements as reqs
 from megaradrp.core.processing import apextract_tracemap
 
