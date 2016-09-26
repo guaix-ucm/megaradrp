@@ -23,68 +23,71 @@
 from __future__ import division
 #
 import logging
+import datetime
+import uuid
 
-import numpy
 from astropy.io import fits
-
 from numina.array import combine
 
+import megaradrp.processing.datamodel
 
-_logger = logging.getLogger('numina.recipes.megara')
-
-
-def basic_processing(rinput, flow):
-
-    cdata = []
-
-    _logger.info('processing input images')
-    for frame in rinput.obresult.images:
-        hdulist = frame.open()
-        fname = hdulist.filename()
-        if fname:
-            _logger.info('input is %s', fname)
-        else:
-            _logger.info('input is %s', hdulist)
-
-        final = flow(hdulist)
-        _logger.debug('output is input: %s', final is hdulist)
-
-        cdata.append(final)
-
-    return cdata
 
 
 def basic_processing_with_combination(rinput, flow,
                                       method=combine.mean,
-                                      errors=True):
+                                      errors=True,
+                                      prolog=None):
+    return basic_processing_with_combination_frames(rinput.obresult.frames,
+                                                    flow, method=method,
+                                                    errors=errors,
+                                                    prolog=prolog)
+
+
+def basic_processing_with_combination_frames(frames,
+                                             flow,
+                                             method=combine.mean,
+                                             errors=True,
+                                             prolog=None
+                                             ):
+
+    _logger = logging.getLogger(__name__)
     odata = []
     cdata = []
+
+
+    datamodel = megaradrp.processing.datamodel.MegaraDataModel()
     try:
         _logger.info('processing input images')
-        for frame in rinput.obresult.images:
+        for frame in frames:
             hdulist = frame.open()
-            fname = hdulist.filename()
-            if fname:
-                _logger.info('input is %s', fname)
-            else:
-                _logger.info('input is %s', hdulist)
-
+            fname = datamodel.get_imgid(hdulist)
+            _logger.info('input is %s', fname)
             final = flow(hdulist)
             _logger.debug('output is input: %s', final is hdulist)
-
             cdata.append(final)
-
             # Files to be closed at the end
             odata.append(hdulist)
             if final is not hdulist:
                 odata.append(final)
 
         base_header = cdata[0][0].header.copy()
-        _logger.info("stacking %d images using '%s'", len(cdata), method.func_name)
+        cnum = len(cdata)
+        _logger.info("stacking %d images using '%s'", cnum, method.__name__)
         data = method([d[0].data for d in cdata], dtype='float32')
         hdu = fits.PrimaryHDU(data[0], header=base_header)
         _logger.debug('update result header')
-        hdu.header['history'] = "Combined %d images using '%s'" % (len(cdata), method.func_name)
+        if prolog:
+            _logger.debug('write prolog')
+            hdu.header['history'] = prolog
+        hdu.header['history'] = "Combined %d images using '%s'" % (cnum, method.__name__)
+        hdu.header['history'] = 'Combination time {}'.format(datetime.datetime.utcnow().isoformat())
+        for img in cdata:
+            hdu.header['history'] = "Image {}".format(datamodel.get_imgid(img))
+        prevnum = base_header.get('NUM-NCOM', 1)
+        hdu.header['NUM-NCOM'] = prevnum * cnum
+        hdu.header['UUID'] = uuid.uuid1().hex
+        # Headers of last image
+#        hdu.header['TSUTC2'] = cdata[-1][0].header['TSUTC2']
         if errors:
             varhdu = fits.ImageHDU(data[1], name='VARIANCE')
             num = fits.ImageHDU(data[2], name='MAP')

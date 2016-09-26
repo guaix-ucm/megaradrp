@@ -20,10 +20,12 @@
 """Dark current calibration Recipe for Megara"""
 
 from numina.core import Product
+from numina.array import combine
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement
 from megaradrp.types import MasterDark
+from megaradrp.processing.combine import basic_processing_with_combination
 
 
 class DarkRecipe(MegaraBaseRecipe):
@@ -37,20 +39,12 @@ class DarkRecipe(MegaraBaseRecipe):
     def __init__(self):
         super(DarkRecipe, self).__init__(version="0.1.0")
 
-
     def run(self, rinput):
 
-        with rinput.master_bias.open() as hdul:
-            mbias = hdul[0].data.copy()
+        flow = self.init_filters(rinput, rinput.obresult.configuration.values)
+        hdulist = basic_processing_with_combination(rinput, flow, method=combine.median)
+        hdr = hdulist[0].header
+        self.set_base_headers(hdr)
 
-        hdu, data = self.hdu_creation(rinput.obresult, {'biasmap':mbias})
-
-        try:
-            hdu[0].data = hdu[0].data / hdu[0].header['EXPTIME']
-        except:
-            pass
-
-        hdr = hdu[0].header
-
-        result = self.create_result(master_dark=hdu)
+        result = self.create_result(master_dark=hdulist)
         return result

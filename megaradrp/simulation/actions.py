@@ -65,7 +65,11 @@ def simulate_dark_fits(factory, instrument, exposure, repeat=1):
     for i in range(repeat):
         detector.expose(time=exposure)
         final = detector.readout()
-        fitsfile = factory.create_from_instrument(mode='dark', instrument=detector, data=final, name='dark_%s.fits'%i)
+        fitsfile = factory.create_from_instrument(mode='MEGARA_DARK_IMAGE',
+                                                  instrument=detector,
+                                                  data=final,
+                                                  name='dark_%s.fits'%i
+                                                  )
 
         yield fitsfile
 
