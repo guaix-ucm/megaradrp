@@ -100,7 +100,7 @@ class DetectorBase(HWDevice):
 
     def expose(self, source=0.0, time=0.0):
         self._time_last = time
-        self._det += (source + self.dark) * time
+        self._det += (self.qe * source + self.dark) * time
 
     def reset(self):
         """Reset the detector."""
@@ -110,7 +110,7 @@ class DetectorBase(HWDevice):
         return x
 
     def simulate_poisson_variate(self):
-        elec_mean = self.qe * self._det
+        elec_mean = self._det
         elec = numpy.random.poisson(elec_mean)
         return elec
 
