@@ -38,7 +38,8 @@ class GeometricTrace(object):
         return self.__dict__
 
 
-class TraceMap(numina.core.types.AutoDataType):
+class TraceMap(numina.core.products.DataProductTag,
+               numina.core.types.AutoDataType):
     def __init__(self, instrument='unknown'):
         super(TraceMap, self).__init__()
 

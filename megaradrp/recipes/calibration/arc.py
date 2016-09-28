@@ -206,9 +206,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         limit = 0  # LR-R
         dict_of_solution_wv = {}
 
-        # FIXME: hardcoded
-        flux_limit = 600000
-
         for idx, row in enumerate(rss):
 
             fibid = idx + 1
@@ -227,14 +224,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
                 self.logger.info('Starting row %d, fibid %d', idx, fibid)
                 # find peaks (initial search providing integer numbers)
-                ipeaks_int1 = peak_local_max(row, threshold_rel=threshold,
+                ipeaks_int = peak_local_max(row, threshold_rel=threshold,
                                              min_distance=min_distance)[:, 0]
-                # filter by flux
-                self.logger.info('Filtering peaks over %5.0f', flux_limit)
-                ipeaks_vals = row[ipeaks_int1]
-                mask = ipeaks_vals < flux_limit
-                ipeaks_int = ipeaks_int1[mask]
-                self.logger.debug('LEN (ipeaks_int): %s', len(ipeaks_int))
                 self.logger.debug('ipeaks_int: %s', ipeaks_int)
                 ipeaks_float = refine_peaks(row, ipeaks_int, nwinwidth)[0]
 
@@ -354,7 +345,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         #                                  lines_catalog, lines_rss_fwhm)
 
         self.logger.info('Generating fwhm_image...')
-        image = self.generate_image(lines_rss_fwhm)
+        # image = self.generate_image(lines_rss_fwhm)
+        image = numpy.zeros((10,10))
         fwhm_image = fits.PrimaryHDU(image)
         fwhm_image = fits.HDUList([fwhm_image])
 

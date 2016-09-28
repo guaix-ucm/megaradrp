@@ -25,10 +25,12 @@ import uuid
 import yaml
 
 import numina.core.types
+import numina.core.products
 from numina.array.wavecalib.arccalibration import SolutionArcCalibration
 
 
-class WavelengthCalibration(numina.core.types.AutoDataType):
+class WavelengthCalibration(numina.core.products.DataProductTag,
+                            numina.core.types.AutoDataType):
     def __init__(self, instrument='unknown'):
         super(WavelengthCalibration, self).__init__()
 
