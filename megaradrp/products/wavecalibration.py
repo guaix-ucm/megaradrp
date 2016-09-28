@@ -23,6 +23,7 @@
 import uuid
 
 import yaml
+import json
 
 import numina.core.types
 import numina.core.products
@@ -59,8 +60,10 @@ class WavelengthCalibration(numina.core.products.DataProductTag,
     def _datatype_dump(cls, obj, where):
         filename = where.destination + '.yaml'
 
+        with open('xxx.txt', 'w') as fd:
+            fd.write(str(obj.__getstate__()))
         with open(filename, 'w') as fd:
-            yaml.dump(obj.__getstate__(), fd)
+            json.dump(obj.__getstate__(), fd, indent=4, sort_keys=True)
 
         return filename
 

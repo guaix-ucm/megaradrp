@@ -335,8 +335,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             # coeff_table[idx] = numpy_array_with_coeff
         self.logger.info('Errors in fitting: %s', error_contador)
         self.logger.info('Missing fibers: %s', missing_fib)
-        lines_rss_fwhm = self.run_on_image(rss, tracemap, threshold,
-                                           min_distance, limit)
+        # lines_rss_fwhm = self.run_on_image(rss, tracemap, threshold,
+        #                                    min_distance, limit)
 
         data_wlcalib = WavelengthCalibration(instrument='MEGARA')
         data_wlcalib.wvlist = dict_of_solution_wv
