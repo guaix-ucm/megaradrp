@@ -29,31 +29,39 @@ import numina.core.types
 import numina.core.products
 from numina.array.wavecalib.arccalibration import SolutionArcCalibration
 
-
-class WavelengthCalibration(numina.core.products.DataProductTag,
-                            numina.core.types.AutoDataType):
+class BaseStructuredCalibration(numina.core.products.DataProductTag,
+                                numina.core.types.AutoDataType):
     def __init__(self, instrument='unknown'):
-        super(WavelengthCalibration, self).__init__()
-
+        super(BaseStructuredCalibration, self).__init__()
         self.instrument = instrument
         self.tags = {}
         self.uuid = uuid.uuid1().hex
-        self.wvlist = {}
 
     def __getstate__(self):
         st = {}
-        st['wvlist'] = {key: val.__getstate__()
-                        for (key, val) in self.wvlist.items()}
         for key in ['instrument', 'tags', 'uuid']:
             st[key] = self.__dict__[key]
+        return st
+
+
+class WavelengthCalibration(BaseStructuredCalibration):
+    def __init__(self, instrument='unknown'):
+        super(WavelengthCalibration, self).__init__()
+        self.contents = {}
+
+    def __getstate__(self):
+        st = {}
+        st['contents'] = {key: val.__getstate__()
+                        for (key, val) in self.contents.items()}
+        st.update(BaseStructuredCalibration.__getstate__(self))
         return st
 
     def __setstate__(self, state):
         self.instrument = state['instrument']
         self.tags = state['tags']
         self.uuid = state['uuid']
-        self.wvlist = {key: SolutionArcCalibration(**val)
-                       for (key, val) in state['wvlist'].items()}
+        self.contents = {key: SolutionArcCalibration(**val)
+                              for (key, val) in state['contents'].items()}
         return self
 
     @classmethod
