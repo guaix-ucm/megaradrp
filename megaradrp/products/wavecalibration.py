@@ -29,6 +29,7 @@ import numina.core.types
 import numina.core.products
 from numina.array.wavecalib.arccalibration import SolutionArcCalibration
 
+
 class BaseStructuredCalibration(numina.core.products.DataProductTag,
                                 numina.core.types.AutoDataType):
     def __init__(self, instrument='unknown'):
@@ -46,7 +47,7 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
 
 class WavelengthCalibration(BaseStructuredCalibration):
     def __init__(self, instrument='unknown'):
-        super(WavelengthCalibration, self).__init__()
+        super(WavelengthCalibration, self).__init__(instrument)
         self.contents = {}
 
     def __getstate__(self):
@@ -60,18 +61,19 @@ class WavelengthCalibration(BaseStructuredCalibration):
         self.instrument = state['instrument']
         self.tags = state['tags']
         self.uuid = state['uuid']
-        self.contents = {key: SolutionArcCalibration(**val)
-                              for (key, val) in state['contents'].items()}
+        self.contents = {}
+        for (key, val) in state['contents'].items():
+            new = SolutionArcCalibration.__new__(SolutionArcCalibration)
+            new.__setstate__(val)
+            self.contents[key] = new
         return self
 
     @classmethod
     def _datatype_dump(cls, obj, where):
         filename = where.destination + '.yaml'
 
-        with open('xxx.txt', 'w') as fd:
-            fd.write(str(obj.__getstate__()))
         with open(filename, 'w') as fd:
-            json.dump(obj.__getstate__(), fd, indent=4, sort_keys=True)
+            yaml.dump(obj.__getstate__(), fd)
 
         return filename
 
