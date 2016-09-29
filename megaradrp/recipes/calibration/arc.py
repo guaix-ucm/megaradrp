@@ -295,8 +295,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         )
 
                     self.logger.info('linear crval1, cdelt1: %f %f',
-                                     solution_wv.crval1_linear,
-                                     solution_wv.cdelt1_linear)
+                                     solution_wv.cr_linear.crval,
+                                     solution_wv.cr_linear.cdelt)
 
                     self.logger.info('fitted coefficients %s',
                                      solution_wv.coeff)
@@ -339,7 +339,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         #                                    min_distance, limit)
 
         data_wlcalib = WavelengthCalibration(instrument='MEGARA')
-        data_wlcalib.wvlist = dict_of_solution_wv
+        data_wlcalib.contents = dict_of_solution_wv
         # data_wlcalib = self.generateJSON(coeff_table, dict_of_solution_wv,
         #                                  lista_xpeaks_refined, poldeg,
         #                                  lines_catalog, lines_rss_fwhm)

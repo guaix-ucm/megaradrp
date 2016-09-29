@@ -23,7 +23,6 @@
 import uuid
 
 import yaml
-import json
 
 import numina.core.types
 import numina.core.products
@@ -52,9 +51,9 @@ class WavelengthCalibration(BaseStructuredCalibration):
 
     def __getstate__(self):
         st = {}
+        st.update(BaseStructuredCalibration.__getstate__(self))
         st['contents'] = {key: val.__getstate__()
                         for (key, val) in self.contents.items()}
-        st.update(BaseStructuredCalibration.__getstate__(self))
         return st
 
     def __setstate__(self, state):
