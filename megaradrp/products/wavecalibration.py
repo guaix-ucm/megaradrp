@@ -20,28 +20,9 @@
 """Products of the Megara Pipeline: Wavelength  Calibration"""
 
 
-import uuid
-
-import yaml
-
-import numina.core.types
-import numina.core.products
 from numina.array.wavecalib.arccalibration import SolutionArcCalibration
 
-
-class BaseStructuredCalibration(numina.core.products.DataProductTag,
-                                numina.core.types.AutoDataType):
-    def __init__(self, instrument='unknown'):
-        super(BaseStructuredCalibration, self).__init__()
-        self.instrument = instrument
-        self.tags = {}
-        self.uuid = uuid.uuid1().hex
-
-    def __getstate__(self):
-        st = {}
-        for key in ['instrument', 'tags', 'uuid']:
-            st[key] = self.__dict__[key]
-        return st
+from .structured import BaseStructuredCalibration
 
 
 class WavelengthCalibration(BaseStructuredCalibration):
@@ -50,45 +31,16 @@ class WavelengthCalibration(BaseStructuredCalibration):
         self.contents = {}
 
     def __getstate__(self):
-        st = {}
-        st.update(BaseStructuredCalibration.__getstate__(self))
+        st = super(WavelengthCalibration, self).__getstate__()
         st['contents'] = {key: val.__getstate__()
                         for (key, val) in self.contents.items()}
         return st
 
     def __setstate__(self, state):
-        self.instrument = state['instrument']
-        self.tags = state['tags']
-        self.uuid = state['uuid']
+        super(WavelengthCalibration, self).__setstate__(state)
         self.contents = {}
         for (key, val) in state['contents'].items():
             new = SolutionArcCalibration.__new__(SolutionArcCalibration)
             new.__setstate__(val)
             self.contents[key] = new
         return self
-
-    @classmethod
-    def _datatype_dump(cls, obj, where):
-        filename = where.destination + '.yaml'
-
-        with open(filename, 'w') as fd:
-            yaml.dump(obj.__getstate__(), fd)
-
-        return filename
-
-    @classmethod
-    def _datatype_load(cls, obj):
-
-        try:
-            with open(obj, 'r') as fd:
-                state = yaml.load(fd)
-        except IOError as e:
-            raise e
-
-        result = cls.__new__(cls)
-        result.__setstate__(state=state)
-        return result
-
-    @property
-    def default(self):
-        return None

@@ -19,11 +19,8 @@
 
 """Products of the Megara Pipeline"""
 
-import uuid
-import yaml
 
-import numina.core.types
-import numina.core.products
+from .structured import BaseStructuredCalibration
 
 
 class GeometricTrace(object):
@@ -38,53 +35,19 @@ class GeometricTrace(object):
         return self.__dict__
 
 
-class TraceMap(numina.core.products.DataProductTag,
-               numina.core.types.AutoDataType):
+class TraceMap(BaseStructuredCalibration):
     def __init__(self, instrument='unknown'):
-        super(TraceMap, self).__init__()
+        super(TraceMap, self).__init__(instrument)
 
-        self.instrument = instrument
-        self.tags = {}
-        self.uuid = uuid.uuid1().hex
         self.tracelist = []
 
     def __getstate__(self):
-        st = {}
+        st = super(TraceMap, self).__getstate__()
         st['tracelist'] = [t.__getstate__() for t in self.tracelist]
-        for key in ['instrument', 'tags', 'uuid']:
-            st[key] = self.__dict__[key]
         return st
 
     def __setstate__(self, state):
-        self.instrument = state['instrument']
-        self.tags = state['tags']
-        self.uuid = state['uuid']
+        super(TraceMap, self).__setstate__(state)
         self.tracelist = [GeometricTrace(**trace) for trace in state['tracelist']]
 
         return self
-
-    @classmethod
-    def _datatype_dump(cls, obj, where):
-        filename = where.destination + '.yaml'
-
-        with open(filename, 'w') as fd:
-            yaml.dump(obj.__getstate__(), fd)
-
-        return filename
-
-    @classmethod
-    def _datatype_load(cls, obj):
-
-        try:
-            with open(obj, 'r') as fd:
-                state = yaml.load(fd)
-        except IOError as e:
-            raise e
-
-        result = cls.__new__(cls)
-        result.__setstate__(state=state)
-        return result
-
-    @property
-    def default(self):
-        return None
