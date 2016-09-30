@@ -101,8 +101,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         self.logger.info('extracted %i fibers', rssdata.shape[0])
 
-        fits.writeto('rss.fits', rssdata, clobber=True)
-
         # Skip any other inputs for the moment
         # data_wlcalib, fwhm_image = self.calibrate_wl(rssdata, rinput.lines_catalog,
         #                                  rinput.polynomial_degree, rinput.tracemap)
@@ -333,27 +331,17 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         solutions = aux
         ##################################################################
 
-        # l is total number of lines
-        nlines = sum(len(solution.features) for solution in solutions.values())
-        final = numpy.zeros((nlines, 3))
-        l = 0
+        final = []
         for solution in solutions.values():
             for feature in solution.features:
-                final[l, :] = [feature.xpos, feature.ypos, feature.fwhm]
-                l += 1
-        # Alternative, use list and transform to ndarray at the end
-        final2 = []
-        for solution in solutions.values():
-            for feature in solution.features:
-                final2.append([feature.xpos, feature.ypos, feature.fwhm])
-        final2 = numpy.asarray(final2)
-
-        assert final2.shape == final.shape
+                final.append([feature.xpos, feature.ypos, feature.fwhm])
+        final = numpy.asarray(final)
 
         voronoi_points = numpy.array(final[:, [0, 1]])
+
+        # Cartesian product of X, Y
         x = numpy.arange(2048 * 2)
         y = numpy.arange(2056 * 2)
-
         test_points = numpy.transpose(
             [numpy.tile(x, len(y)), numpy.repeat(y, len(x))])
 
