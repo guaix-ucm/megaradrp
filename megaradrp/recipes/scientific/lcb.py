@@ -20,11 +20,22 @@
 """Calibration Recipes for Megara"""
 
 
+from astropy.io import fits
 import numpy
 from numina.core import Product
 
 from megaradrp.recipes.scientific.base import ImageRecipe
 from megaradrp.types import MasterFiberFlat
+
+LCB_NFIBERS = 623
+
+# FIXME: hardcoded numbers
+vph_thr = {'default': {'LR-I':{'crval': 7140.0,
+                              'cdelt': 0.37,
+                              'crpix': 1.0,
+                              'npix': 4300},
+                      },
+}
 
 
 class LCBImageRecipe(ImageRecipe):
@@ -43,25 +54,28 @@ class LCBImageRecipe(ImageRecipe):
 
         reduced, rss_data = super(LCBImageRecipe,self).run(rinput)
 
-        # Take a look at == []
-        indices = []
-        wlcalib = []
-        for key, val in rinput.wlcalib.contents.items():
-            if val.coeff:
-                wlcalib.append(val.coeff)
-                if len(indices)==0:
-                    indices.append(0)
-                else:
-                    indices.append(indices[-1])
-            else:
-                indices.append(indices[-1]+1)
-        wlcalib_aux = numpy.asarray(wlcalib)
-        #final, wcsdata = self.resample_rss_flux(rss, wlcalib_aux, indices)
-        final, wcsdata = self.resample_rss_flux(rss_data.data, wlcalib_aux, indices)
+        rss_data.data = numpy.fliplr(rss_data.data)
+        current_vph = rinput.obresult.tags['vph']
+        if current_vph not in vph_thr['default']:
+            raise ValueError('grism ' + current_vph + ' is not defined in ' +
+                             'vph_thr dictionary')
+        wvpar_dict = vph_thr['default'][current_vph]
 
-        #
-        import astropy.io.fits as fits
-        rss = fits.PrimaryHDU(data=final)
-        #
+        wlcalib = []
+        for fidx in range(1, LCB_NFIBERS + 1):
+            if fidx in rinput.wlcalib.contents:
+                wlcalib.append(rinput.wlcalib.contents[fidx].coeff)
+            else:
+                # FIXME: polynomial degree forced to be 5
+                wlcalib.append(numpy.array([0., 1., 0., 0., 0., 0.]))
+
+        wlcalib_aux = numpy.asarray(wlcalib)
+        final, wcsdata = self.resample_rss_flux(rss_data.data,
+                                                wlcalib_aux, wvpar_dict)
+
+        rss = fits.PrimaryHDU(data=final.astype(numpy.float32),
+                              header=rss_data.header)
+        self.add_wcs(rss.header, wvpar_dict['crval'], wvpar_dict['cdelt'],
+                     wvpar_dict['crpix'])
 
         return self.create_result(final=rss, target=reduced, sky=reduced)

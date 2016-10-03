@@ -269,47 +269,55 @@ class MegaraBaseRecipe(BaseRecipe):
                    data]
         return np.array(wlcalib)
 
-    def resample_rss_flux(self, rss_old, wcalib, indexes=None):
+    def resample_rss_flux(self, rss_old, wcalib, wvpar_dict):
         """
 
         :param rss_old: rss image
         :param wcalib: ndarray of the coefficients
-        :param indexes: is an array to take into account that some wlcalib might not be done
+        :param wvpar_dict: dictionary containing wavelength calibration parameters
         :return:
         """
         import math
         from numpy.polynomial.polynomial import polyval
         from numina.array.interpolation import SteffenInterpolator
 
-        if indexes is None:
-            indexes = []
-
         nfibers = rss_old.shape[0]
         nsamples = rss_old.shape[1]
-        print nfibers, nsamples
-        z = [0, nsamples - 1]
-        res = polyval(z, wcalib.T)
-        print res
-        all_delt = (res[:, 1] - res[:, 0]) / nsamples
-        print all_delt.max(), all_delt.min(), np.median(all_delt)
 
-        delts = all_delt.min()
-        delts = np.median(all_delt)
-        print 'median of delts', delts
+        # print nfibers, nsamples
+        # z = [0, nsamples - 1]
+        # res = polyval(z, wcalib.T)
+        # print res
+        # all_delt = (res[:, 1] - res[:, 0]) / nsamples
+        # print all_delt.max(), all_delt.min(), np.median(all_delt)
+        #
+        # delts = all_delt.min()
+        # delts = np.median(all_delt)
+        # delts = 0.37
+        # print 'median of delts', delts
+        #
+        # # first pixel is
+        # wl_min = res[:, 0].min()
+        # wl_min = 7140.0 #res[:, 0].min()
+        # # last pixel is
+        # wl_max = res[:, 1].max()
+        # wl_max = 8730.63
+        # print 'pixel range', wl_min, wl_max
+        #
+        # npix = int(math.ceil((wl_max - wl_min) / delts))
 
-        # first pixel is
-        wl_min = res[:, 0].min()
-        wl_min = 7160.0 #res[:, 0].min()
-        # last pixel is
-        wl_max = res[:, 1].max()
-        wl_max = 8670
-        print 'pixel range', wl_min, wl_max
+        npix = wvpar_dict['npix']
+        delts = wvpar_dict['cdelt']
+        wl_min = wvpar_dict['crval']
+        crpix = wvpar_dict['crpix']
 
-        npix = int(math.ceil((wl_max - wl_min) / delts))
+        wl_max = wl_min + (npix - crpix) * delts
+
         new_x = np.arange(npix)
         new_wl = wl_min + delts * new_x
 
         old_x_borders = np.arange(-0.5, nsamples)
+        old_x_borders += crpix  # following FITS criterium
         old_wl_borders = polyval(old_x_borders, wcalib.T)
 
         new_borders = self.map_borders(new_wl)
@@ -318,20 +326,14 @@ class MegaraBaseRecipe(BaseRecipe):
         accum_flux[:, 1:] = np.cumsum(rss_old, axis=1)
         accum_flux[:, 0] = 0.0
         rss_resampled = np.zeros((nfibers, npix))
-        print indexes
-        for idx in range(nfibers):
+
+        for idx  in range(nfibers):
             # We need a monotonic interpolator
             # linear would work, we use a cubic interpolator
-        #    if len(indexes)==0:
-            try:
-                if True:
-                    interpolator = SteffenInterpolator(old_wl_borders[idx],accum_flux[idx],extrapolate='border')
-            #    else:
-            #        interpolator = SteffenInterpolator(old_wl_borders[idx-indexes[idx]],accum_flux[idx],extrapolate='border')
-                fl_borders = interpolator(new_borders)
-                rss_resampled[idx] = fl_borders[1:] - fl_borders[:-1]
-            except IndexError:
-                pass
+            interpolator = SteffenInterpolator(old_wl_borders[idx],accum_flux[idx], extrapolate='border')
+            fl_borders = interpolator(new_borders)
+            rss_resampled[idx] = fl_borders[1:] - fl_borders[:-1]
+
         return rss_resampled, (wl_min, wl_max, delts)
 
     def map_borders(self, wls):
@@ -346,8 +348,8 @@ class MegaraBaseRecipe(BaseRecipe):
         all_borders[-1] = 2 * wls[-1] - midpt_wl[-1]
         return all_borders
 
-    def add_wcs(self, hdr, wlr0, delt):
-        hdr['CRPIX1'] = 1
+    def add_wcs(self, hdr, wlr0, delt, crpix=1.0):
+        hdr['CRPIX1'] = crpix
         hdr['CRVAL1'] = wlr0
         hdr['CDELT1'] = delt
         hdr['CTYPE1'] = 'WAVELENGTH'
