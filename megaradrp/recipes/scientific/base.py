@@ -19,7 +19,7 @@
 
 '''Calibration Recipes for Megara'''
 
-import logging
+
 from astropy.io import fits
 import numpy as np
 from numina.core import Product
@@ -36,9 +36,6 @@ import megaradrp.requirements as reqs
 # from megaradrp.processing.twilight import TwilightCorrector
 # from megaradrp.processing.weights import WeightsCorrector
 from megaradrp.core.processing import apextract_tracemap_2
-
-
-_logger = logging.getLogger('numina.recipes.megara')
 
 
 class ImageRecipe(MegaraBaseRecipe):
@@ -65,8 +62,10 @@ class ImageRecipe(MegaraBaseRecipe):
         reduced = self.bias_process_common(rinput.obresult, parameters)
         rssdata = apextract_tracemap_2(reduced[0].data, rinput.tracemap)
 
-        return reduced, rssdata
+        hdu_r = reduced
+        hdu_rs = fits.PrimaryHDU(rssdata)
 
+        return hdu_r, hdu_rs
 
     def get_wcallib(self, lambda1, lambda2, fibras, traces, rss, neigh_info, grid):
 
@@ -105,34 +104,33 @@ class ImageRecipe(MegaraBaseRecipe):
         centroid_y = np.sum(centroid_y, axis=0)
 
         sumatotal = np.sum(sumaparcial, axis=0)
-        _logger.info( "total sum: %s", sumatotal)
+        self.logger.info( "total sum: %s", sumatotal)
 
         second_order = []
         aux = np.sum(np.multiply(suma,(neigh_info[:,2] - np.mean(neigh_info[:,2]))**2),axis=0)
         second_order.append(np.divide(aux ,np.sum(suma, axis=0)))
-        _logger.info("Second order momentum X: %s", second_order[0])
+        self.logger.info("Second order momentum X: %s", second_order[0])
 
         aux = np.sum(np.multiply(suma,(neigh_info[:,3] - np.mean(neigh_info[:,3]))**2),axis=0)
         second_order.append(np.divide(aux ,np.sum(suma, axis=0)))
-        _logger.info("Second order momentum Y: %s", second_order[1])
+        self.logger.info("Second order momentum Y: %s", second_order[1])
 
         aux = np.multiply(neigh_info[:,3] - np.mean(neigh_info[:,3]),neigh_info[:,2] - np.mean(neigh_info[:,2]))
         aux = np.sum(np.multiply(aux,suma))
         cov = np.divide(aux ,np.sum(suma, axis=0))
-        _logger.info("Cov X,Y: %s", cov)
+        self.logger.info("Cov X,Y: %s", cov)
 
         centroid_x = np.divide(centroid_x, sumatotal)
-        _logger.info( "centroid_x: %s", centroid_x)
+        self.logger.info( "centroid_x: %s", centroid_x)
 
         centroid_y = np.divide(centroid_y, sumatotal)
-        _logger.info("centroid_y: %s", centroid_y)
+        self.logger.info("centroid_y: %s", centroid_y)
 
         centroid = [centroid_x, centroid_y]
 
         peak = np.sum(final[grid.get_fiber(centroid),lambda1:lambda2],axis=0)
 
         return centroid, sky, peak, second_order, cov
-
 
     def generate_solution(self, points, centroid, sky, fiber, peaks, second_order, cova):
         result = []
@@ -145,7 +143,7 @@ class ImageRecipe(MegaraBaseRecipe):
         '''
         '''
 
-        _logger.info('start JSON generation')
+        self.logger.info('start JSON generation')
 
         result = []
         for cont, value in enumerate(points):
@@ -160,6 +158,6 @@ class ImageRecipe(MegaraBaseRecipe):
             }
             result.append(obj)
 
-        _logger.info('end JSON generation')
+        self.logger.info('end JSON generation')
 
         return result

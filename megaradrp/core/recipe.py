@@ -91,6 +91,12 @@ class MegaraBaseRecipe(BaseRecipe):
                                                        DarkCorrector,
                                                        ApertureExtractor,
                                                        FiberFlatCorrector],
+                       'LCBImageRecipe': [OverscanCorrector, TrimImage,
+                                          BiasCorrector, BadPixelCorrector,
+                                          DarkCorrector, SlitFlatCorrector],
+                                          # WeightsCorrector,
+                                          # FiberFlatCorrector,
+                                          # TwilightCorrector],
                        }
         super(MegaraBaseRecipe, self).__init__(version=version)
 
@@ -280,16 +286,24 @@ class MegaraBaseRecipe(BaseRecipe):
 
         nfibers = rss_old.shape[0]
         nsamples = rss_old.shape[1]
+        print nfibers, nsamples
         z = [0, nsamples - 1]
         res = polyval(z, wcalib.T)
+        print res
         all_delt = (res[:, 1] - res[:, 0]) / nsamples
+        print all_delt.max(), all_delt.min(), np.median(all_delt)
 
         delts = all_delt.min()
+        delts = np.median(all_delt)
+        print 'median of delts', delts
 
         # first pixel is
         wl_min = res[:, 0].min()
+        wl_min = 7160.0 #res[:, 0].min()
         # last pixel is
         wl_max = res[:, 1].max()
+        wl_max = 8670
+        print 'pixel range', wl_min, wl_max
 
         npix = int(math.ceil((wl_max - wl_min) / delts))
         new_x = np.arange(npix)
@@ -304,15 +318,20 @@ class MegaraBaseRecipe(BaseRecipe):
         accum_flux[:, 1:] = np.cumsum(rss_old, axis=1)
         accum_flux[:, 0] = 0.0
         rss_resampled = np.zeros((nfibers, npix))
+        print indexes
         for idx in range(nfibers):
             # We need a monotonic interpolator
             # linear would work, we use a cubic interpolator
-            if len(indexes)==0:
-                interpolator = SteffenInterpolator(old_wl_borders[idx],accum_flux[idx],extrapolate='border')
-            else:
-                interpolator = SteffenInterpolator(old_wl_borders[idx-indexes[idx]],accum_flux[idx],extrapolate='border')
-            fl_borders = interpolator(new_borders)
-            rss_resampled[idx] = fl_borders[1:] - fl_borders[:-1]
+        #    if len(indexes)==0:
+            try:
+                if True:
+                    interpolator = SteffenInterpolator(old_wl_borders[idx],accum_flux[idx],extrapolate='border')
+            #    else:
+            #        interpolator = SteffenInterpolator(old_wl_borders[idx-indexes[idx]],accum_flux[idx],extrapolate='border')
+                fl_borders = interpolator(new_borders)
+                rss_resampled[idx] = fl_borders[1:] - fl_borders[:-1]
+            except IndexError:
+                pass
         return rss_resampled, (wl_min, wl_max, delts)
 
     def map_borders(self, wls):
