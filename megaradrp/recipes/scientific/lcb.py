@@ -19,31 +19,23 @@
 
 """Calibration Recipes for Megara"""
 
-
-from astropy.io import fits
 import numpy
 from numina.core import Product
 
+from megaradrp.processing.datamodel import MegaraDataModel
 from megaradrp.recipes.scientific.base import ImageRecipe
 from megaradrp.types import MasterFiberFlat
-
-LCB_NFIBERS = 623
-
-# FIXME: hardcoded numbers
-vph_thr = {'default': {'LR-I':{'crval': 7140.0,
-                              'cdelt': 0.37,
-                              'crpix': 1.0,
-                              'npix': 4300},
-                      },
-}
+from megaradrp.processing.wavecalibration import WavelengthCalibrator
 
 
 class LCBImageRecipe(ImageRecipe):
     """Process LCB images."""
 
     final = Product(MasterFiberFlat)
-    target = Product(MasterFiberFlat)
-    sky = Product(MasterFiberFlat)
+    reduced = Product(MasterFiberFlat)
+    rss = Product(MasterFiberFlat)
+    #target = Product(MasterFiberFlat)
+    # sky = Product(MasterFiberFlat)
 
     def __init__(self):
         super(LCBImageRecipe, self).__init__()
@@ -54,28 +46,20 @@ class LCBImageRecipe(ImageRecipe):
 
         reduced, rss_data = super(LCBImageRecipe,self).run(rinput)
 
-        rss_data.data = numpy.fliplr(rss_data.data)
-        current_vph = rinput.obresult.tags['vph']
-        if current_vph not in vph_thr['default']:
-            raise ValueError('grism ' + current_vph + ' is not defined in ' +
-                             'vph_thr dictionary')
-        wvpar_dict = vph_thr['default'][current_vph]
+        # FIXME: Flip L-R image before calibrating WL
+        # Eventually this should not be necessary
 
-        wlcalib = []
-        for fidx in range(1, LCB_NFIBERS + 1):
-            if fidx in rinput.wlcalib.contents:
-                wlcalib.append(rinput.wlcalib.contents[fidx].coeff)
-            else:
-                # FIXME: polynomial degree forced to be 5
-                wlcalib.append(numpy.array([0., 1., 0., 0., 0., 0.]))
+        self.logger.debug('Flip RSS left-rigtht, before WL calibration')
+        rss_data[0].data = numpy.fliplr(rss_data[0].data)
 
-        wlcalib_aux = numpy.asarray(wlcalib)
-        final, wcsdata = self.resample_rss_flux(rss_data.data,
-                                                wlcalib_aux, wvpar_dict)
+        datamodel = MegaraDataModel()
+        calibrator = WavelengthCalibrator(rinput.wlcalib, datamodel)
 
-        rss = fits.PrimaryHDU(data=final.astype(numpy.float32),
-                              header=rss_data.header)
-        self.add_wcs(rss.header, wvpar_dict['crval'], wvpar_dict['cdelt'],
-                     wvpar_dict['crpix'])
+        rss_wl = calibrator(rss_data)
 
-        return self.create_result(final=rss, target=reduced, sky=reduced)
+        return self.create_result(
+            final=rss_wl,
+            reduced=reduced,
+            rss=rss_data
+        )
+        # return self.create_result(final=rss, target=reduced, sky=reduced)

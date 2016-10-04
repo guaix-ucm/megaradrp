@@ -59,13 +59,13 @@ class ImageRecipe(MegaraBaseRecipe):
     def run(self, rinput):
 
         parameters = self.get_parameters(rinput)
-        reduced = self.bias_process_common(rinput.obresult, parameters)
-        rssdata = apextract_tracemap_2(reduced[0].data, rinput.tracemap)
+        reduced2d = self.bias_process_common(rinput.obresult, parameters)
+        rssdata = apextract_tracemap_2(reduced2d[0].data, rinput.tracemap)
 
-        hdu_r = reduced
-        hdu_rs = fits.PrimaryHDU(rssdata)
+        hdu_rs = fits.PrimaryHDU(rssdata, header=reduced2d[0].header)
+        hdu_final = fits.HDUList([hdu_rs])
 
-        return hdu_r, hdu_rs
+        return reduced2d, hdu_final
 
     def get_wcallib(self, lambda1, lambda2, fibras, traces, rss, neigh_info, grid):
 

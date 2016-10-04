@@ -40,6 +40,7 @@ from skimage.feature import peak_local_max
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import WavelengthCalibration
+from megaradrp.products.wavecalibration import FiberSolutionArcCalibration
 import megaradrp.requirements as reqs
 from megaradrp.core.processing import apextract_tracemap_2
 
@@ -121,6 +122,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                                      threshold=threshold,
                                                      min_distance=min_distance)
 
+        data_wlcalib.tags = rinput.obresult.tags
         # WL calibration goes here
         return self.create_result(arc_image=reduced, arc_rss=rss,
                                   master_wlcalib=data_wlcalib,
@@ -140,7 +142,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                      times_sigma=50.0, skiptraces=None, threshold=0.27,
                      min_distance=30):
 
-        lista_xpeaks_refined = []
         if skiptraces is None:
             skiptraces = []
         wv_master = lines_catalog[:, 0]
@@ -154,8 +155,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         # FIXME: make trace map use new polynomials instead of poly1d
         trace_pols = [numpy.poly1d(t.fitparms) for t in tracemap.tracelist]
 
-
-        dict_of_solution_wv = {}
+        data_wlcalib = WavelengthCalibration(instrument='MEGARA')
 
         for idx, row in enumerate(rss):
 
@@ -199,7 +199,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                            bounds_error=False,
                                            fill_value=0.0)
                 xpeaks_refined = finterp_channel(ipeaks_float)
-                lista_xpeaks_refined.append(xpeaks_refined)
+
                 wv_ini_search = int(
                     lines_catalog[0][0] - 1000)  # initially: 3500
                 wv_end_search = int(
@@ -270,8 +270,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         feature.flux = peak
                         feature.fwhm = fwhm
 
-                    # coeff_table[idx] = solution_wv.coeff
-
                     # if True:
                     #     plt.title('fibid %d' % fibid)
                     #     plt.plot(row)
@@ -280,12 +278,14 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     #     plt.legend()
                     #     plt.show()
 
-                    dict_of_solution_wv[fibid] = solution_wv
+                    data_wlcalib.contents[fibid] = FiberSolutionArcCalibration(fibid, solution_wv)
 
                 except (ValueError, TypeError, IndexError) as error:
                     self.logger.error("%s", error)
                     self.logger.error('error in row %d, fibid %d', idx, fibid)
                     traceback.print_exc()
+                    data_wlcalib.error_fitting.append(fibid)
+
                     if False:
                         import matplotlib.pyplot as plt
                         plt.title('fibid %d' % fibid)
@@ -301,22 +301,19 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             else:
                 self.logger.info('skipping row %d, fibid %d, not extracted', idx, fibid)
                 missing_fib += 1
-                lista_xpeaks_refined.append(numpy.array([]))
+                data_wlcalib.missing_fibers.append(fibid)
 
-            # coeff_table[idx] = numpy_array_with_coeff
         self.logger.info('Errors in fitting: %s', error_contador)
         self.logger.info('Missing fibers: %s', missing_fib)
 
         self.logger.info('Generating fwhm_image...')
-        image = self.generate_fwhm_image(dict_of_solution_wv)
+        image = self.generate_fwhm_image(data_wlcalib.contents)
         fwhm_image = fits.PrimaryHDU(image)
-        fwhm_image = fits.HDUList([fwhm_image])
+        fwhm_hdulist = fits.HDUList([fwhm_image])
 
-        data_wlcalib = WavelengthCalibration(instrument='MEGARA')
-        data_wlcalib.contents = dict_of_solution_wv
         self.logger.info('End arc calibration')
 
-        return data_wlcalib, fwhm_image
+        return data_wlcalib, fwhm_hdulist
 
     def generate_fwhm_image(self, solutions):
         from scipy.spatial import cKDTree
@@ -332,8 +329,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         ##################################################################
 
         final = []
-        for solution in solutions.values():
-            for feature in solution.features:
+        for fibercalib in solutions.values():
+            for feature in fibercalib.solution.features:
                 final.append([feature.xpos, feature.ypos, feature.fwhm])
         final = numpy.asarray(final)
 
