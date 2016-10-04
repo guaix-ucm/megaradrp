@@ -40,6 +40,7 @@ from skimage.feature import peak_local_max
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import WavelengthCalibration
+from megaradrp.products.wavecalibration import FiberSolutionArcCalibration
 import megaradrp.requirements as reqs
 from megaradrp.core.processing import apextract_tracemap_2
 
@@ -101,8 +102,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         self.logger.info('extracted %i fibers', rssdata.shape[0])
 
-        fits.writeto('rss.fits', rssdata, clobber=True)
-
         # Skip any other inputs for the moment
         # data_wlcalib, fwhm_image = self.calibrate_wl(rssdata, rinput.lines_catalog,
         #                                  rinput.polynomial_degree, rinput.tracemap)
@@ -123,118 +122,58 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                                      threshold=threshold,
                                                      min_distance=min_distance)
 
+        data_wlcalib.tags = rinput.obresult.tags
         # WL calibration goes here
         return self.create_result(arc_image=reduced, arc_rss=rss,
                                   master_wlcalib=data_wlcalib,
                                   fwhm_image=fwhm_image)
 
-    def run_on_image(self, rssdata, tracemap, threshold_rel, min_distance,
-                     limit):
+    def calc_fwhm_of_line(self, row, peak_int, lwidth=20):
         '''
-        Extract spectra, find peaks and compute FWHM.
+        Compute FWHM of lines in spectra
         '''
         import numina.array.fwhm as fmod
-        # Extract the polynomials
-        # FIXME: a little hackish
-        pols = [numpy.poly1d(t.fitparms) for t in tracemap.tracelist]
 
-        nwinwidth = 5
-        lwidth = 20
-        fpeaks = {}
-        for idx in range(0, len(rssdata)):
-            # sampling every 10 fibers...
-            row = rssdata[idx, :]
-            if numpy.any(row):
-                the_pol = pols[idx]
-                # find peaks
-                trend = detrend(row)
-                fibdata_detrend = row - trend
-                if limit:
-                    row = fibdata_detrend[:limit]
-                else:
-                    row = fibdata_detrend
-
-                self.logger.info('detect peaks in row %d', idx)
-                # find peaks (initial search providing integer numbers)
-                ipeaks_int = peak_local_max(row, threshold_rel=threshold_rel,
-                                            min_distance=min_distance)[:, 0]
-
-                ipeaks_float = refine_peaks(row, ipeaks_int, nwinwidth)[0]
-
-                fpeaks[idx] = []
-                try:
-                    for peak, peak_f in zip(ipeaks_int, ipeaks_float):
-                        qslit = row[peak - lwidth:peak + lwidth]
-                        peak_val, fwhm = fmod.compute_fwhm_1d_simple(qslit,
-                                                                     lwidth)
-                        peak_on_trace = the_pol(peak)
-                        fpeaks[idx].append(
-                            (peak_f, peak_on_trace, fwhm, peak_val))
-                except:
-                    fpeaks[idx] = []
-                    # _logger.debug('found %d peaks in fiber %d', len(fpeaks[idx]),idx)
-            else:
-                fpeaks[idx] = []
-        return fpeaks
+        # FIXME: this could wrap around the image
+        qslit = row[peak_int - lwidth:peak_int + lwidth]
+        return fmod.compute_fwhm_1d_simple(qslit, lwidth)
 
     def calibrate_wl(self, rss, lines_catalog, poldeg, tracemap,
                      times_sigma=50.0, skiptraces=None, threshold=0.27,
                      min_distance=30):
-        #
-        # read master table (TBM) and generate auxiliary parameters (valid for
-        # all the slits) for the wavelength calibration
-        lista_solution = []
-        lista_xpeaks_refined = []
+
         if skiptraces is None:
             skiptraces = []
         wv_master = lines_catalog[:, 0]
         ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
             gen_triplets_master(wv_master)
-        # FIXME: this depends on the spectral and dispersion axes
-        nspec = rss.shape[0]
-        coeff_table = numpy.zeros((nspec, poldeg + 1))
-        # Loop over rows in RSS
+
         nwinwidth = 5
         error_contador = 0
         missing_fib = 0
 
-        # # limit = 1900 #LR-Z
-        # # limit = 2800 #LR-Z sci
-        # # limit = 1900 #LR-V eng ThrNe
-        # limit = 0 #LR-V sci
+        # FIXME: make trace map use new polynomials instead of poly1d
+        trace_pols = [numpy.poly1d(t.fitparms) for t in tracemap.tracelist]
 
-        limit = 0  # LR-R
-        dict_of_solution_wv = {}
-
-        # FIXME: hardcoded
-        flux_limit = 600000
+        data_wlcalib = WavelengthCalibration(instrument='MEGARA')
 
         for idx, row in enumerate(rss):
 
             fibid = idx + 1
-            if idx==1:
-                numpy.savetxt('fiber1.txt', row)
+
             if fibid not in skiptraces and numpy.any(row):
 
                 trend = detrend(row)
                 fibdata_detrend = row - trend
                 # A fix for LR-V Jun 2016 test images
                 # that only have lines there
-                if limit:
-                    row = fibdata_detrend[:limit]  # LR-Z
-                else:
-                    row = fibdata_detrend
+
+                row = fibdata_detrend
 
                 self.logger.info('Starting row %d, fibid %d', idx, fibid)
                 # find peaks (initial search providing integer numbers)
-                ipeaks_int1 = peak_local_max(row, threshold_rel=threshold,
+                ipeaks_int = peak_local_max(row, threshold_rel=threshold,
                                              min_distance=min_distance)[:, 0]
-                # filter by flux
-                self.logger.info('Filtering peaks over %5.0f', flux_limit)
-                ipeaks_vals = row[ipeaks_int1]
-                mask = ipeaks_vals < flux_limit
-                ipeaks_int = ipeaks_int1[mask]
-                self.logger.debug('LEN (ipeaks_int): %s', len(ipeaks_int))
                 self.logger.debug('ipeaks_int: %s', ipeaks_int)
                 ipeaks_float = refine_peaks(row, ipeaks_int, nwinwidth)[0]
 
@@ -260,7 +199,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                            bounds_error=False,
                                            fill_value=0.0)
                 xpeaks_refined = finterp_channel(ipeaks_float)
-                lista_xpeaks_refined.append(xpeaks_refined)
+
                 wv_ini_search = int(
                     lines_catalog[0][0] - 1000)  # initially: 3500
                 wv_end_search = int(
@@ -304,12 +243,32 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         )
 
                     self.logger.info('linear crval1, cdelt1: %f %f',
-                                     solution_wv.crval1_linear,
-                                     solution_wv.cdelt1_linear)
+                                     solution_wv.cr_linear.crval,
+                                     solution_wv.cr_linear.cdelt)
 
                     self.logger.info('fitted coefficients %s',
                                      solution_wv.coeff)
-                    coeff_table[idx] = solution_wv.coeff
+
+
+                    trace_pol = trace_pols[idx]
+                    # Update feature with measurements of Y coord in original image
+                    # Peak and FWHM in RSS
+                    for feature in solution_wv.features:
+                        # Compute Y
+                        feature.ypos = trace_pol(feature.xpos)
+                        # FIXME: check here FITS vs PYTHON coordinates, etc
+                        peak_int = int(feature.xpos)
+                        try:
+                            peak, fwhm = self.calc_fwhm_of_line(row, peak_int, lwidth=20)
+                        except Exception as error:
+                            self.logger.error("%s", error)
+                            self.logger.error('error in feature %s', feature)
+                            # workaround
+                            peak = row[peak_int]
+                            fwhm = 0.0
+                        # I would call this peak instead...
+                        feature.flux = peak
+                        feature.fwhm = fwhm
 
                     # if True:
                     #     plt.title('fibid %d' % fibid)
@@ -318,12 +277,15 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     #     # # plt.plot(ipeaks_int2, row[ipeaks_int2],'gs', alpha=.5 , ms=10)
                     #     plt.legend()
                     #     plt.show()
-                    dict_of_solution_wv[fibid] = solution_wv
+
+                    data_wlcalib.contents[fibid] = FiberSolutionArcCalibration(fibid, solution_wv)
 
                 except (ValueError, TypeError, IndexError) as error:
                     self.logger.error("%s", error)
                     self.logger.error('error in row %d, fibid %d', idx, fibid)
                     traceback.print_exc()
+                    data_wlcalib.error_fitting.append(fibid)
+
                     if False:
                         import matplotlib.pyplot as plt
                         plt.title('fibid %d' % fibid)
@@ -339,109 +301,44 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             else:
                 self.logger.info('skipping row %d, fibid %d, not extracted', idx, fibid)
                 missing_fib += 1
-                lista_xpeaks_refined.append(numpy.array([]))
+                data_wlcalib.missing_fibers.append(fibid)
 
-            # coeff_table[idx] = numpy_array_with_coeff
         self.logger.info('Errors in fitting: %s', error_contador)
         self.logger.info('Missing fibers: %s', missing_fib)
-        lines_rss_fwhm = self.run_on_image(rss, tracemap, threshold,
-                                           min_distance, limit)
-
-        data_wlcalib = WavelengthCalibration(instrument='MEGARA')
-        data_wlcalib.wvlist = dict_of_solution_wv
-        # data_wlcalib = self.generateJSON(coeff_table, dict_of_solution_wv,
-        #                                  lista_xpeaks_refined, poldeg,
-        #                                  lines_catalog, lines_rss_fwhm)
 
         self.logger.info('Generating fwhm_image...')
-        image = self.generate_image(lines_rss_fwhm)
+        image = self.generate_fwhm_image(data_wlcalib.contents)
         fwhm_image = fits.PrimaryHDU(image)
-        fwhm_image = fits.HDUList([fwhm_image])
+        fwhm_hdulist = fits.HDUList([fwhm_image])
 
         self.logger.info('End arc calibration')
 
-        return data_wlcalib, fwhm_image
+        return data_wlcalib, fwhm_hdulist
 
-    def generateJSON(self, coeff_table, list_of_solution_wv,
-                     lista_xpeaks_refined, poldeg, lines_catalog,
-                     lines_rss_fwhm):
-        '''
-            Final format of the features field is:{
-                  "features": [[<x_position>,
-                                calculated_wavelength,
-                                <original_lambda>,
-                                <original_flux>
-                                ]]
-        '''
-
-        from numpy.polynomial.polynomial import polyval
-        self.logger.info('start JSON generation')
-        result = []
-
-        for ind, xpeaks in enumerate(lista_xpeaks_refined):
-            features = []
-            try:
-                if numpy.any(xpeaks) and (list_of_solution_wv[ind] is not None) and len(
-                        list_of_solution_wv[ind]) == len(xpeaks):
-                    res = polyval(xpeaks, coeff_table[ind])
-                    # _logger.info('indice: %s', ind)
-
-                    if numpy.any(res):
-                        for aux, elem in enumerate(xpeaks):
-                            if len(lines_rss_fwhm[ind]) > aux:
-                                feature = {'xpos': xpeaks[aux],
-                                           'wavelength': res[aux],
-                                           'flux': lines_rss_fwhm[ind][aux][3],
-                                           'fwhm': lines_rss_fwhm[ind][aux][2],
-                                           'ypos': lines_rss_fwhm[ind][aux][1] + 1}
-
-                                features.append(feature)
-            except:
-                features = []
-
-            function = {
-                'method': 'least squares',
-                'order': poldeg,
-                'coefficients': coeff_table[ind].tolist() if numpy.any(
-                    coeff_table[ind]) else []
-            }
-
-            record = {}
-            record['aperture'] = {'id': ind + 1,
-                                  'features': features,
-                                  'function': function}
-            result.append(record)
-
-        self.logger.info('end JSON generation')
-
-        return result
-
-    def generate_image(self, lines_rss_fwhm):
+    def generate_fwhm_image(self, solutions):
         from scipy.spatial import cKDTree
 
         # Each 10 fibers. Comment this to iterate over all fibers instead.
         ##################################################################
         aux = {}
-        for key, value in lines_rss_fwhm.items():
+        for key, value in solutions.items():
             if int(key) % 10 == 0:
                 aux[key] = value
 
-        lines_rss_fwhm = aux
+        solutions = aux
         ##################################################################
 
-        l = sum(len(value) for key, value in lines_rss_fwhm.items())
-
-        final = numpy.zeros((l, 3))
-        l = 0
-        for key, value in lines_rss_fwhm.items():
-            for j in range(len(lines_rss_fwhm[key])):
-                final[l, :] = lines_rss_fwhm[key][j][:-1]
-                l += 1
+        final = []
+        for fibercalib in solutions.values():
+            for feature in fibercalib.solution.features:
+                final.append([feature.xpos, feature.ypos, feature.fwhm])
+        final = numpy.asarray(final)
 
         voronoi_points = numpy.array(final[:, [0, 1]])
+
+        # Cartesian product of X, Y
         x = numpy.arange(2048 * 2)
         y = numpy.arange(2056 * 2)
-
         test_points = numpy.transpose(
             [numpy.tile(x, len(y)), numpy.repeat(y, len(x))])
 
@@ -449,7 +346,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         test_point_dist, test_point_regions = voronoi_kdtree.query(test_points,
                                                                    k=1)
-        final_image = test_point_regions.reshape((4112, 4096)).astype(
-            'float64')
+        final_image = test_point_regions.reshape((4112, 4096)).astype('float64')
         final_image[:, :] = final[final_image[:, :].astype('int64'), 2]
         return (final_image)

@@ -1,3 +1,3 @@
 
-from .tracemap import TraceMap
+from .tracemap import TraceMap, GeometricTrace
 from .wavecalibration import WavelengthCalibration

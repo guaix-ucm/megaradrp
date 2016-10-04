@@ -19,25 +19,47 @@
 
 """Calibration Recipes for Megara"""
 
+import numpy
+from numina.core import Product
 
-import logging
-
+from megaradrp.processing.datamodel import MegaraDataModel
 from megaradrp.recipes.scientific.base import ImageRecipe
-
-
-_logger = logging.getLogger('numina.recipes.megara')
+from megaradrp.types import MasterFiberFlat
+from megaradrp.processing.wavecalibration import WavelengthCalibrator
 
 
 class LCBImageRecipe(ImageRecipe):
     """Process LCB images."""
+
+    final = Product(MasterFiberFlat)
+    reduced = Product(MasterFiberFlat)
+    rss = Product(MasterFiberFlat)
+    #target = Product(MasterFiberFlat)
+    # sky = Product(MasterFiberFlat)
 
     def __init__(self):
         super(LCBImageRecipe, self).__init__()
 
     def run(self, rinput):
 
-        _logger.info('starting LCB reduction')
+        self.logger.info('starting LCB reduction')
 
-        result = super(LCBImageRecipe,self).run(rinput)
+        reduced, rss_data = super(LCBImageRecipe,self).run(rinput)
 
-        return self.create_result(final=result[0], target=result[1], sky=result[2])
+        # FIXME: Flip L-R image before calibrating WL
+        # Eventually this should not be necessary
+
+        self.logger.debug('Flip RSS left-rigtht, before WL calibration')
+        rss_data[0].data = numpy.fliplr(rss_data[0].data)
+
+        datamodel = MegaraDataModel()
+        calibrator = WavelengthCalibrator(rinput.wlcalib, datamodel)
+
+        rss_wl = calibrator(rss_data)
+
+        return self.create_result(
+            final=rss_wl,
+            reduced=reduced,
+            rss=rss_data
+        )
+        # return self.create_result(final=rss, target=reduced, sky=reduced)

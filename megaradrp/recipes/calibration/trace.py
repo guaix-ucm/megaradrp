@@ -30,6 +30,7 @@ from numina.core.requirements import ObservationResultRequirement
 
 from megaradrp.types import MasterFiberFlatFrame
 from megaradrp.products import TraceMap
+from megaradrp.products.tracemap import GeometricTrace
 from megaradrp.core.recipe import MegaraBaseRecipe
 import megaradrp.requirements as reqs
 from megaradrp.trace.traces import init_traces_ex
@@ -135,7 +136,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
                 start = cstart
                 stop = cstart
 
-            this_trace = megaradrp.products.GeometricTrace(
+            this_trace = GeometricTrace(
                 fibid=dtrace.fibid,
                 boxid=dtrace.boxid,
                 start=int(start),
