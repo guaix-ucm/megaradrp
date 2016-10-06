@@ -85,9 +85,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         parameters = self.get_parameters(rinput)
         reduced = self.bias_process_common(rinput.obresult, parameters)
 
-        self.logger.info('extract fibers, %i', len(rinput.tracemap.tracelist))
+        self.logger.info('extract fibers, %i', len(rinput.tracemap.contents))
         # List of nonextracted fiberids
-        fibids_not_traced = [trace.fibid for trace in rinput.tracemap.tracelist if
+        fibids_not_traced = [trace.fibid for trace in rinput.tracemap.contents if
                              not trace.fitparms]
         self.logger.info('not traced fibers, %i', len(fibids_not_traced))
 
@@ -153,7 +153,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         missing_fib = 0
 
         # FIXME: make trace map use new polynomials instead of poly1d
-        trace_pols = [numpy.poly1d(t.fitparms) for t in tracemap.tracelist]
+        trace_pols = [numpy.poly1d(t.fitparms) for t in tracemap.contents]
 
         data_wlcalib = WavelengthCalibration(instrument='MEGARA')
 

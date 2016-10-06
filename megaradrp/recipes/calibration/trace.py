@@ -143,7 +143,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
                 stop=int(stop),
                 fitparms=pfit.tolist()
             )
-            final.tracelist.append(this_trace)
+            final.contents.append(this_trace)
 
         return self.create_result(fiberflat_frame=reduced,
                                   master_traces=final)

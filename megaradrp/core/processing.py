@@ -123,7 +123,7 @@ def apextract_tracemap_2(data, tracemap):
     """
 
     existing = [None]
-    for t in tracemap.tracelist:
+    for t in tracemap.contents:
         if t.fitparms:
             t.pol = np.poly1d(t.fitparms)
             existing.append(t)
@@ -216,7 +216,7 @@ def apextract_tracemap(data, tracemap):
     
     # FIXME: a little hackish
     
-    pols = [np.poly1d(t.fitparms) for t in tracemap.tracelist]
+    pols = [np.poly1d(t.fitparms) for t in tracemap.contents]
 
     borders = []
 

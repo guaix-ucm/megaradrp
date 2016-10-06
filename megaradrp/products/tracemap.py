@@ -38,16 +38,15 @@ class GeometricTrace(object):
 class TraceMap(BaseStructuredCalibration):
     def __init__(self, instrument='unknown'):
         super(TraceMap, self).__init__(instrument)
-
-        self.tracelist = []
+        self.contents = []
 
     def __getstate__(self):
         st = super(TraceMap, self).__getstate__()
-        st['tracelist'] = [t.__getstate__() for t in self.tracelist]
+        st['contents'] = [t.__getstate__() for t in self.contents]
         return st
 
     def __setstate__(self, state):
         super(TraceMap, self).__setstate__(state)
-        self.tracelist = [GeometricTrace(**trace) for trace in state['tracelist']]
+        self.contents = [GeometricTrace(**trace) for trace in state['contents']]
 
         return self

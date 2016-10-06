@@ -21,7 +21,7 @@
 import megaradrp.products
 from tempfile import NamedTemporaryFile
 import pytest
-import yaml
+import json
 
 
 def create_test_tracemap():
@@ -35,7 +35,10 @@ def create_test_tracemap():
     state = dict(instrument=instrument,
                  tags=tags,
                  uuid=uuid,
-                 tracelist=[]
+                 error_fitting=[],
+                 missing_fibers=[],
+                 total_fibers=623,
+                 contents=[]
                  )
 
     return data, state
@@ -58,7 +61,7 @@ def test_setstate_traceMap():
     assert (state['instrument'] == result.instrument)
     assert (state['tags'] == result.tags)
     assert (state['uuid'] == result.uuid)
-    assert (state['tracelist'] == result.tracelist)
+    assert (state['contents'] == result.contents)
 
 
 @pytest.mark.xfail
@@ -73,7 +76,7 @@ def test_load_traceMap():
     my_file = NamedTemporaryFile()
 
     with open(my_file.name, 'w') as fd:
-        yaml.dump(state, fd)
+        json.dump(state, fd)
 
     my_obj = megaradrp.products.TraceMap()
     my_open_file = my_obj._datatype_load(my_file.name)
@@ -81,7 +84,7 @@ def test_load_traceMap():
     assert (my_open_file.instrument == state['instrument'])
     assert (my_open_file.tags == state['tags'])
     assert (my_open_file.uuid == state['uuid'])
-    assert (my_open_file.tracelist == state['tracelist'])
+    assert (my_open_file.contents == state['contents'])
 
 
 def test_dump_traceMap(benchmark=None):
@@ -98,7 +101,7 @@ def test_dump_traceMap(benchmark=None):
     my_open_file = my_obj._datatype_dump(data, work_env)
 
     with open(my_open_file, 'r') as fd:
-        traces = yaml.load(fd)
+        traces = json.load(fd)
 
     assert (traces == state)
 
