@@ -5,7 +5,7 @@ import numpy
 
 
 setup(name='megaradrp',
-      version='0.6.dev0',
+      version='0.6.dev1',
       author='Sergio Pascual',
       author_email='sergiopr@fis.ucm.es',
       include_dirs = [numpy.get_include()],
