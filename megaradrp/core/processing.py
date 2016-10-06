@@ -18,15 +18,16 @@
 #
 
 from __future__ import print_function
-import numpy as np
 
+import numpy
+import numpy.polynomial.polynomial as nppol
 from astropy.io import fits
 from numina.array.trace.extract import extract_simple_rss
 
 _direc = ['normal', 'mirror']
 
 
-def trimOut(data, direction='normal', out='trimmed.fits', confFile={}):
+def trimOut(img, direction='normal', out='trimmed.fits', confFile={}):
     '''
 
     :param data: original data to be trimmed. Can be either a string <path>, an ImageHDU or a numpy array
@@ -36,18 +37,18 @@ def trimOut(data, direction='normal', out='trimmed.fits', confFile={}):
     :return:
     '''
 
-    if issubclass(str,type(data)):
-        with fits.open(data) as hdul:
+    if issubclass(str, type(img)):
+        with fits.open(img) as hdul:
             hdu = trim_and_o_array(hdul[0].data, direction=direction, confFile=confFile)
             fits.writeto(out, hdu, clobber=True)
 
-    elif isinstance(data,fits.PrimaryHDU):
-        finaldata = trim_and_o_array(data.data, direction=direction, confFile=confFile)
-        data.data = finaldata
-        return data
+    elif isinstance(img, fits.PrimaryHDU):
+        finaldata = trim_and_o_array(img.data, direction=direction, confFile=confFile)
+        img.data = finaldata
+        return img
 
-    elif isinstance(data,np.ndarray):
-        return trim_and_o_array(data, direction=direction, confFile=confFile)
+    elif isinstance(img, numpy.ndarray):
+        return trim_and_o_array(img, direction=direction, confFile=confFile)
 
 
 def trim_and_o_array(array, direction='normal', confFile={}):
@@ -59,7 +60,7 @@ def trim_and_o_array(array, direction='normal', confFile={}):
     if direction == 'normal':
         direcfun = lambda x: x
     else:
-        direcfun = np.fliplr
+        direcfun = numpy.fliplr
 
     trim1 = get_conf_value(confFile, 'trim1')
     trim2 = get_conf_value(confFile, 'trim2')
@@ -82,7 +83,7 @@ def trim_and_o_array(array, direction='normal', confFile={}):
     trim2[1][0] /= bng[1]
     trim2[1][1] /= bng[1]
 
-    finaldata = np.empty((nr2, nc2), dtype='float32')
+    finaldata = numpy.empty((nr2, nc2), dtype='float32')
 
     finY = trim1[0][1] + trim2[0][0]
     finaldata[:nr, :] = direcfun(array[:trim1[0][1], trim1[1][0]:trim1[1][1]])
@@ -105,7 +106,7 @@ def get_conf_value(confFile, key=''):
 
 def apextract(data, trace):
     """Extract apertures."""
-    rss = np.empty((trace.shape[0], data.shape[1]), dtype='float32')
+    rss = numpy.empty((trace.shape[0], data.shape[1]), dtype='float32')
     for idx, r in enumerate(trace):
         l = r[0]
         r = r[2] + 1
@@ -125,7 +126,7 @@ def apextract_tracemap_2(data, tracemap):
     existing = [None]
     for t in tracemap.contents:
         if t.fitparms:
-            t.pol = np.poly1d(t.fitparms)
+            t.pol = nppol.Polynomial(t.fitparms)
             existing.append(t)
 
     existing.append(None)
@@ -216,7 +217,7 @@ def apextract_tracemap(data, tracemap):
     
     # FIXME: a little hackish
     
-    pols = [np.poly1d(t.fitparms) for t in tracemap.contents]
+    pols = [nppol.Polynomial(t.fitparms) for t in tracemap.contents]
 
     borders = []
 
@@ -235,7 +236,8 @@ def apextract_tracemap(data, tracemap):
             pix_12 = 0.5 * (pols[idx] + pols[idx+1])
             borders.append((pix_01, pix_12))
         else:
-            borders.append((np.poly1d(0),np.poly1d(0)))
+            empty = nppol.Polynomial([0.0])
+            borders.append((empty, empty))
         # else:
         #     if pols[idx].order==0:
         #         borders.append((pix_01, pols[idx+1]))
@@ -250,7 +252,7 @@ def apextract_tracemap(data, tracemap):
 
     borders.append((pix_01, pix_12))
 
-    out = np.zeros((len(pols), data.shape[1]), dtype='float')
+    out = numpy.zeros((len(pols), data.shape[1]), dtype='float')
 
     rss = extract_simple_rss(data, borders, out=out)
 
@@ -287,7 +289,7 @@ def apextract_weights(data, weights, size=4096):
                                 args=(data[:,ite], results[ite])) for ite in range(size)]
     extracted_w = [p.get() for p in extracted_w]
 
-    return np.array(extracted_w)
+    return numpy.array(extracted_w)
 
 
 def load_files_paralell(col, path):
@@ -299,7 +301,7 @@ def load_files_paralell(col, path):
     from scipy.sparse import csr_matrix
 
     filename = '%s/%s.npz' % (path, col)
-    loader = np.load(filename)
+    loader = numpy.load(filename)
     return csr_matrix(
         (loader['data'], loader['indices'], loader['indptr']),
         shape=loader['shape'])

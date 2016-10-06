@@ -21,10 +21,11 @@
 
 from __future__ import division, print_function
 
-import logging
 
 import numpy
+import numpy.polynomial.polynomial as nppol
 from scipy.spatial import cKDTree
+import astropy.io.fits as fits
 from numina.core import Requirement, Parameter
 from numina.core.dataholders import Product
 from numina.core import DataFrameType
@@ -37,7 +38,7 @@ from numina.array.stats import robust_std as sigmaG
 from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 from numina.flow.processing import BiasCorrector
 from numina.flow import SerialFlow
-import astropy.io.fits as fits
+
 
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
 from megaradrp.core.recipe import MegaraBaseRecipe
@@ -46,7 +47,6 @@ from megaradrp.types import JSONstorage
 import megaradrp.requirements as reqs
 from megaradrp.core.processing import apextract_tracemap
 
-_logger = logging.getLogger('numina.recipes.megara')
 
 vph_thr = {'default':{'LR-I':{'min_distance':10,
                               'threshold':0.02},
@@ -102,7 +102,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
 
     def run(self, rinput):
         # Basic processing
-        _logger.info('start focus spectrograph')
+        self.logger.info('start focus spectrograph')
         flow = self.create_flow(rinput.master_bias,
                                 rinput.obresult.configuration.values)
 
@@ -118,41 +118,41 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
             vph_name = hdulist[0].header['VPH']
             focci.append(focus_val)
 
-            _logger.info('processing frame %s', frame)
+            self.logger.info('processing frame %s', frame)
             hdulist = flow(hdulist)
-            _logger.info('extract fibers')
+            self.logger.info('extract fibers')
             rssdata = apextract_tracemap(hdulist[0].data, rinput.tracemap)
-            _logger.info('find lines and compute FWHM')
+            self.logger.info('find lines and compute FWHM')
             lines_rss_fwhm = self.run_on_image(rssdata, rinput.tracemap, vph_name)
 
             ever.append(lines_rss_fwhm)
 
-        _logger.info('pair lines in images')
+        self.logger.info('pair lines in images')
         line_fibers = self.filter_lines(ever)
 
         focus_wavelength = self.generateJSON(ever,
                                              self.get_wlcalib(rinput.wlcalib),
                                              rinput.obresult.images)
 
-        _logger.info('fit FWHM of lines')
+        self.logger.info('fit FWHM of lines')
         final = self.reorder_and_fit(line_fibers, focci)
 
         focus_median = numpy.median(final[:, 2])
-        _logger.info('median focus value is %5.2f', focus_median)
+        self.logger.info('median focus value is %5.2f', focus_median)
 
-        _logger.info('generate focus image')
+        self.logger.info('generate focus image')
         image = self.generate_image(final)
         hdu = fits.PrimaryHDU(image)
         hdulist = fits.HDUList([hdu])
 
-        _logger.info('end focus spectrograph')
+        self.logger.info('end focus spectrograph')
         return self.create_result(focus_table=final, focus_image=hdulist,
                                   focus_wavelength=focus_wavelength)
 
     def generateJSON(self, data, wlcalib, original_images):
         from numpy.polynomial.polynomial import polyval
 
-        _logger.info('start JSON generation')
+        self.logger.info('start JSON generation')
 
         result = {}
         counter = 0
@@ -168,10 +168,10 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                         result[name][fiber].append(
                             [arco[0], arco[1], arco[2], res])
                     except:
-                        _logger.error('Error in JSON generation. Check later...')
+                        self.logger.error('Error in JSON generation. Check later...')
             counter += 1
 
-        _logger.info('end JSON generation')
+        self.logger.info('end JSON generation')
 
         return result
 
@@ -199,8 +199,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         # Extract the polynomials
         # FIXME: a little hackish
         valid_traces = get_valid_traces(tracemap)
-        pols = [numpy.poly1d(t['fitparms']) for t in tracemap]
-
+        pols = [nppol.Polynomial(t.fitparms) for t in tracemap.contents]
         vph_t = vph_thr['default']
         this_val = vph_t.get(current_vph)
         if this_val:
@@ -226,12 +225,12 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
 
             ipeaks_int1 = find_peaks_indexes(row, nwinwidth, threshold)
             # filter by flux
-            _logger.info('Filtering peaks over %5.0f', flux_limit)
+            self.logger.info('Filtering peaks over %5.0f', flux_limit)
             ipeaks_vals = row[ipeaks_int1]
             mask = ipeaks_vals < flux_limit
             ipeaks_int = ipeaks_int1[mask]
-            _logger.debug('LEN (ipeaks_int): %s', len(ipeaks_int))
-            _logger.debug('ipeaks_int: %s', ipeaks_int)
+            self.logger.debug('LEN (ipeaks_int): %s', len(ipeaks_int))
+            self.logger.debug('ipeaks_int: %s', ipeaks_int)
             ipeaks_float = refine_peaks(row, ipeaks_int, nwinwidth)[0]
 
             # self.pintarGrafica(refine_peaks(row, ipeaks_int, nwinwidth)[0] - refinePeaks_spectrum(row, ipeaks_int, nwinwidth))
@@ -246,10 +245,10 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                     peak_on_trace = the_pol(peak)
                     fpeaks[idx].append((peak_f, peak_on_trace, fwhm))
                 except ValueError as error:
-                    _logger.warning('Error %s computing FWHM in fiber %d', error, idx + 1)
+                    self.logger.warning('Error %s computing FWHM in fiber %d', error, idx + 1)
                 except IndexError as error:
-                    _logger.warning('Error %s computing FWHM in fiber %d', error, idx + 1)
-            _logger.debug('found %d peaks in fiber %d', len(fpeaks[idx]), idx)
+                    self.logger.warning('Error %s computing FWHM in fiber %d', error, idx + 1)
+            self.logger.debug('found %d peaks in fiber %d', len(fpeaks[idx]), idx)
         return fpeaks
 
     def pintarGrafica(self, diferencia_final):
@@ -278,18 +277,18 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         ntotal = len(data)
         center = ntotal // 2
         base = data[center]
-        _logger.debug('use image #%d as reference', center)
+        self.logger.debug('use image #%d as reference', center)
         line_fibers = {}
         maxdis = 2.0
-        _logger.debug('matching lines up to %3.1f pixels', maxdis)
+        self.logger.debug('matching lines up to %3.1f pixels', maxdis)
         for fiberid in base:
-            _logger.debug('Using %d fiber in reference image', fiberid)
+            self.logger.debug('Using %d fiber in reference image', fiberid)
             ref = numpy.array(base[fiberid])
             if ref.size == 0:
-                _logger.debug('Reference fiber has no lines, skip')
+                self.logger.debug('Reference fiber has no lines, skip')
                 continue
 
-            _logger.debug('Positions are %s', ref)
+            self.logger.debug('Positions are %s', ref)
             outref = len(ref)
             savelines = {}
             line_fibers[fiberid] = savelines
@@ -297,7 +296,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                 savelines[i] = {}
                 savelines[i]['basedata'] = {}
                 savelines[i]['centers'] = []
-            _logger.debug('Create kd-tree in fiber %d', fiberid)
+            self.logger.debug('Create kd-tree in fiber %d', fiberid)
             kdtree = cKDTree(ref[:, :2])
             for i in range(ntotal):
                 if i == center:
@@ -306,14 +305,14 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                             ref[j, :2])
                         savelines[j]['centers'].append(ref[j, 2])
                     continue
-                _logger.debug('Matching lines in fiber %d in image # %d', fiberid, i)
+                self.logger.debug('Matching lines in fiber %d in image # %d', fiberid, i)
                 comp = numpy.array(data[i][fiberid])
 
                 if comp.size == 0:
-                    _logger.debug('No lines in fiber %d in image # %d', fiberid, i)
+                    self.logger.debug('No lines in fiber %d in image # %d', fiberid, i)
                     continue
                 else:
-                    _logger.debug('Using %d lines in fiber %d in image # %d', comp.size, fiberid, i)
+                    self.logger.debug('Using %d lines in fiber %d in image # %d', comp.size, fiberid, i)
 
                 qdis, qidx = kdtree.query(comp[:, :2],
                                           distance_upper_bound=maxdis)
@@ -328,7 +327,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                     remove_groups.append(ir)
 
             for ir in remove_groups:
-                _logger.debug('remove group of lines %d in fiber %d', ir,
+                self.logger.debug('remove group of lines %d in fiber %d', ir,
                               fiberid)
                 del savelines[ir]
 
@@ -339,10 +338,10 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
 
         l = sum(len(value) for key, value in line_fibers.items())
 
-        _logger.debug('there are %d groups of lines to fit', l)
+        self.logger.debug('there are %d groups of lines to fit', l)
         ally = numpy.zeros((len(focii), l))
         final = numpy.zeros((l, 3))
-        _logger.debug('focci are %s', focii)
+        self.logger.debug('focci are %s', focii)
         l = 0
         for i in line_fibers:
             for j in line_fibers[i]:
@@ -350,9 +349,9 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                 final[l, :2] = line_fibers[i][j]['basedata']['coordinates']
                 l += 1
 
-        _logger.debug('line widths are %s', ally)
+        self.logger.debug('line widths are %s', ally)
         res = numpy.polyfit(focii, ally, deg=2)
-        _logger.debug('fitting to deg 2 polynomial, done')
+        self.logger.debug('fitting to deg 2 polynomial, done')
         best = -res[1] / (2 * res[0])
         final[:, 2] = best
 

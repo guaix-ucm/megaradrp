@@ -21,12 +21,12 @@
 
 from __future__ import division, print_function
 
-import logging
 import numpy
-
+import numpy.polynomial.polynomial as nppol
 from numina.array.trace.traces import trace
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
+from skimage.filters import threshold_otsu
 
 from megaradrp.types import MasterFiberFlatFrame
 from megaradrp.products import TraceMap
@@ -36,9 +36,6 @@ import megaradrp.requirements as reqs
 from megaradrp.trace.traces import init_traces_ex
 import megaradrp.products
 
-from skimage.filters import threshold_otsu
-
-_logger = logging.getLogger('numina.recipes.megara')
 
 # FIXME: hardcoded numbers
 vph_thr = {'LR-I': 0.27,
@@ -80,25 +77,31 @@ class TraceMapRecipe(MegaraBaseRecipe):
         poldeg = 5
         maxdis1 = 2.0
 
-        _logger.info('estimate background in column %i', cstart)
+        self.logger.info('estimate background in column %i', cstart)
         background = estimate_background(data, center=cstart, hs=hs, boxref=box_borders)
-        _logger.info('background level is %f', background)
+        self.logger.info('background level is %f', background)
 
         if current_vph in vph_thr:
             threshold = vph_thr[current_vph]
-            _logger.info('rel threshold for %s is %4.2f', current_vph, threshold)
+            self.logger.info('rel threshold for %s is %4.2f', current_vph, threshold)
         else:
             threshold = 0.3
-            _logger.info('rel threshold not defined for %s, using %4.2f', current_vph, threshold)
+            self.logger.info('rel threshold not defined for %s, using %4.2f', current_vph, threshold)
 
-        _logger.info('find peaks in column %i', cstart)
+        self.logger.info('find peaks in column %i', cstart)
 
-
-        central_peaks = init_traces_ex(data, center=cstart, hs=hs, box_borders=box_borders, tol=1.63, threshold=threshold)
+        central_peaks = init_traces_ex(
+            data,
+            center=cstart,
+            hs=hs,
+            box_borders=box_borders,
+            tol=1.63,
+            threshold=threshold
+        )
 
         # The byteswapping is required by the cython module
         if data.dtype.byteorder != '=':
-            _logger.debug('byteswapping image')
+            self.logger.debug('byteswapping image')
             image2 = data.byteswap().newbyteorder()
         else:
             image2 = data
@@ -106,10 +109,10 @@ class TraceMapRecipe(MegaraBaseRecipe):
         final = megaradrp.products.TraceMap(instrument=rinput.obresult.instrument)
         final.tags = rinput.obresult.tags
 
-        _logger.info('trace peaks')
+        self.logger.info('trace peaks')
         for dtrace in central_peaks.values():
-            # FIXME, for traces, the background must be local, the background
-            # in the center is not always good
+            # FIXME, for traces, the background must be local
+            # the background in the center is not always good
             local_trace_background = 300 # background
             if dtrace.start:
                 mm = trace(image2, x=cstart, y=dtrace.start[1], step=step1,
@@ -123,11 +126,11 @@ class TraceMapRecipe(MegaraBaseRecipe):
                     plt.savefig('trace-xz-%d.png' % dtrace.fibid)
                     plt.close()
                 if len(mm) < poldeg + 1:
-                    _logger.warning('in fibid %d, only %d points to fit pol of degree %d',
-                                    dtrace.fibid, len(mm), poldeg)
+                    self.logger.warning('in fibid %d, only %d points to fit pol of degree %d',
+                                        dtrace.fibid, len(mm), poldeg)
                     pfit = numpy.array([])
                 else:
-                    pfit = numpy.polyfit(mm[:,0], mm[:,1], deg=poldeg)
+                    pfit = nppol.polyfit(mm[:, 0], mm[:, 1], deg=poldeg)
 
                 start = mm[0, 0]
                 stop = mm[-1,0]

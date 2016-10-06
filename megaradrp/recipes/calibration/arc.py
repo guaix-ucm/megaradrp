@@ -24,6 +24,7 @@ from __future__ import division, print_function
 import traceback
 
 import numpy
+import numpy.polynomial.polynomial as nppol
 from astropy.io import fits
 from scipy.interpolate import interp1d
 
@@ -152,8 +153,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         error_contador = 0
         missing_fib = 0
 
-        # FIXME: make trace map use new polynomials instead of poly1d
-        trace_pols = [numpy.poly1d(t.fitparms) for t in tracemap.contents]
+        trace_pols = [nppol.Polynomial(t.fitparms) for t in tracemap.contents]
 
         data_wlcalib = WavelengthCalibration(instrument='MEGARA')
 

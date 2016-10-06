@@ -19,9 +19,8 @@
 
 """Calibration Recipes for Megara"""
 
-import logging
 
-import numpy
+import numpy.polynomial.polynomial as nppol
 from scipy.interpolate import interp1d
 from astropy.io import fits
 from astropy import wcs
@@ -32,8 +31,6 @@ from megaradrp.core.recipe import MegaraBaseRecipe
 import megaradrp.requirements as reqs
 from megaradrp.types import MasterFiberFlat
 from megaradrp.types import MasterSensitivity
-
-_logger = logging.getLogger('numina.recipes.megara')
 
 
 class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
@@ -50,7 +47,7 @@ class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
         super(PseudoFluxCalibrationRecipe, self).__init__(version="0.1.0")
 
     def run(self, rinput):
-        _logger.info('starting pseudo flux calibration')
+        self.logger.info('starting pseudo flux calibration')
 
         parameters = self.get_parameters(rinput)
         reduced = self.bias_process_common(rinput.obresult, parameters)
@@ -59,13 +56,13 @@ class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
 
         # FIXME: hardcoded calibration
         # Polynomial that translates pixels to wl
-        _logger.warning('using hardcoded LR-U spectral calibration')
+        self.logger.warning('using hardcoded LR-U spectral calibration')
         wlcal = [7.12175997e-10, -9.36387541e-06, 2.13624855e-01,
                  3.64665269e+03]
-        plin = numpy.poly1d(wlcal)
+        plin = nppol.Polynomial(wlcal[::-1])
         wl_n_r = plin(range(1, reduced[0].data.shape[1] + 1))  # Non-regular WL
 
-        _logger.info('resampling reference spectrum')
+        self.logger.info('resampling reference spectrum')
 
         with rinput.reference_spectrum.open() as hdul:
             # Needs resampling
@@ -85,7 +82,7 @@ class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
         header_list = self.getHeaderList([reduced, rinput.obresult.images[0].open()])
         hdu_sens = fits.HDUList([hdu_sens] + header_list)
 
-        _logger.info('pseudo flux calibration reduction ended')
+        self.logger.info('pseudo flux calibration reduction ended')
 
         result = self.create_result(calibration=hdu_sens,
                                     calibration_rss=reduced)
