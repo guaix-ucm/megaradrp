@@ -19,7 +19,7 @@
 
 """Products of the Megara Pipeline: Wavelength  Calibration"""
 
-import yaml
+import json
 import uuid
 
 import numina.core.types
@@ -33,11 +33,26 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
         self.instrument = instrument
         self.tags = {}
         self.uuid = uuid.uuid1().hex
+        self.total_fibers = 623
+        self.missing_fibers = []
+        self.error_fitting = []
+
+    @property
+    def calibid(self):
+        return 'uuid:{}'.format(self.uuid)
+
+    @property
+    def default(self):
+        return None
+
 
     def __getstate__(self):
         st = {}
         for key in ['instrument', 'tags', 'uuid']:
             st[key] = self.__dict__[key]
+        st['total_fibers'] = self.total_fibers
+        st['missing_fibers'] = self.missing_fibers
+        st['error_fitting'] = self.error_fitting
         return st
 
     def __setstate__(self, state):
@@ -45,12 +60,16 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
         self.tags = state['tags']
         self.uuid = state['uuid']
 
+        for key in state:
+            if key not in ['contents']:
+                setattr(self, key, state[key])
+
     @classmethod
     def _datatype_dump(cls, obj, where):
-        filename = where.destination + '.yaml'
+        filename = where.destination + '.json'
 
         with open(filename, 'w') as fd:
-            yaml.dump(obj.__getstate__(), fd)
+            json.dump(obj.__getstate__(), fd, indent=2)
 
         return filename
 
@@ -58,7 +77,7 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
     def _datatype_load(cls, obj):
         try:
             with open(obj, 'r') as fd:
-                state = yaml.load(fd)
+                state = json.load(fd)
         except IOError as e:
             raise e
 
@@ -66,6 +85,3 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
         result.__setstate__(state=state)
         return result
 
-    @property
-    def default(self):
-        return None
