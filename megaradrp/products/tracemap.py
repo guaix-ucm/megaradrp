@@ -31,6 +31,8 @@ class GeometricTrace(object):
         self.start = start
         self.stop = stop
         self.fitparms = fitparms if fitparms is not None else []
+        self.polynomial = None
+        # Update polynomial
         self._set_polynomial(fitparms)
 
     def __getstate__(self):

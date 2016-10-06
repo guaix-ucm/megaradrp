@@ -16,7 +16,6 @@ import numpy as np
 import os
 import os.path
 
-import numpy.polynomial.polynomial as nppol
 from megaradrp.core.recipe import MegaraBaseRecipe
 from numina.core import Product, Requirement
 import megaradrp.requirements as reqs
@@ -302,7 +301,7 @@ class WeightsRecipe(MegaraBaseRecipe):
         parameters = self.get_parameters(rinput)
         data2 = self.bias_process_common(rinput.obresult, parameters)
 
-        pols2 = [nppol.Polynomial(t.fitparms) for t in rinput.tracemap.contents]
+        pols2 = [t.polynomial for t in rinput.tracemap.contents]
 
         nrows = data2[0].shape[0]  # 4112
         total_number = data2[0].shape[1]

@@ -126,7 +126,6 @@ def apextract_tracemap_2(data, tracemap):
     existing = [None]
     for t in tracemap.contents:
         if t.fitparms:
-            t.pol = nppol.Polynomial(t.fitparms)
             existing.append(t)
 
     existing.append(None)
@@ -147,18 +146,18 @@ def apextract_tracemap_2(data, tracemap):
 
         # Right border
         if d32 == 1:
-            pix_32 = 0.5 * (t2.pol + t3.pol)
+            pix_32 = 0.5 * (t2.polynomial + t3.polynomial)
         elif d32 == 2:
-            pix_32 = 0.5 * (t2.pol + t3.pol)
-            pix_32 = 0.5 * (pix_32 + t2.pol)
+            pix_32 = 0.5 * (t2.polynomial + t3.polynomial)
+            pix_32 = 0.5 * (pix_32 + t2.polynomial)
         elif d32 > 2:
             pix_32 = None
 
         if d21 == 1:
-            pix_21 = 0.5 * (t2.pol + t1.pol)
+            pix_21 = 0.5 * (t2.polynomial + t1.polynomial)
         elif d21 == 2:
-            pix_21 = 0.5 * (t2.pol + t1.pol)
-            pix_21 = 0.5 * (pix_21 + t2.pol)
+            pix_21 = 0.5 * (t2.polynomial + t1.polynomial)
+            pix_21 = 0.5 * (pix_21 + t2.polynomial)
         elif d21 > 2:
             pix_21 = None
 
@@ -167,11 +166,11 @@ def apextract_tracemap_2(data, tracemap):
 
         if pix_32 is None:
             # Recompute pix32 using pix_21
-            pix_32 = t2.pol + (t2.pol - pix_21)
+            pix_32 = t2.polynomial + (t2.polynomial - pix_21)
 
         if pix_21 is None:
             # Recompute pix21 using pix_32
-            pix_21 = t2.pol - (pix_32 - t2.pol)
+            pix_21 = t2.polynomial - (pix_32 - t2.polynomial)
 
         borders.append((t2.fibid, pix_21, pix_32))
 
@@ -214,10 +213,8 @@ def extract_simple_rss2(arr, borders2, axis=0, out=None):
 
 def apextract_tracemap(data, tracemap):
     """Extract apertures using a tracemap."""
-    
-    # FIXME: a little hackish
-    
-    pols = [nppol.Polynomial(t.fitparms) for t in tracemap.contents]
+
+    pols = [t.polynomial for t in tracemap.contents]
 
     borders = []
 

@@ -23,7 +23,6 @@ from __future__ import division, print_function
 
 
 import numpy
-import numpy.polynomial.polynomial as nppol
 from scipy.spatial import cKDTree
 import astropy.io.fits as fits
 from numina.core import Requirement, Parameter
@@ -199,7 +198,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         # Extract the polynomials
         # FIXME: a little hackish
         valid_traces = get_valid_traces(tracemap)
-        pols = [nppol.Polynomial(t.fitparms) for t in tracemap.contents]
+        pols = [t.polynomial for t in tracemap.contents]
         vph_t = vph_thr['default']
         this_val = vph_t.get(current_vph)
         if this_val:
