@@ -267,7 +267,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                             peak = row[peak_int]
                             fwhm = 0.0
                         # I would call this peak instead...
-                        feature.flux = peak
+                        feature.peak = peak
                         feature.fwhm = fwhm
 
                     # if True:
