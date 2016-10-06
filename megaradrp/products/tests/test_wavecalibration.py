@@ -21,9 +21,10 @@
 import megaradrp.products
 from tempfile import NamedTemporaryFile
 import pytest
-import yaml
+import json
 
 from numina.array.wavecalib.arccalibration import SolutionArcCalibration, WavecalFeature, CrLinear
+import megaradrp.products.wavecalibration as wc
 
 
 # FIXME: copied from numina, this should be a fixture
@@ -41,37 +42,56 @@ def create_solution(orig):
     return mm
 
 
-orig = {'cr_linear': {'cdelt': 3.0, 'crmax': 4600, 'crmin': 2300, 'crpix': 1200,
-                          'crval': 12},
-            'features': [
-        {'category': 'A', 'xpos': 100, 'wv': 3210, 'line_ok': True, 'ypos': 0, 'flux': 0, 'funcost': 12.0, 'fwhm': 0,
+orig = {
+    'cr_linear': {
+        'cdelt': 3.0, 'crmax': 4600, 'crmin': 2300, 'crpix': 1200, 'crval': 12},
+    'features': [
+        {'category': 'A', 'xpos': 100, 'reference': 3210, 'wavelength':1, 'line_ok': True, 'ypos': 0, 'flux': 0, 'funcost': 12.0, 'fwhm': 0,
          'lineid': 1},
-        {'category': 'A', 'xpos': 150, 'wv': 3310, 'line_ok': True, 'ypos': 0, 'flux': 0, 'funcost': 12.0, 'fwhm': 0,
+        {'category': 'A', 'xpos': 150, 'reference': 3310, 'wavelength': 2, 'line_ok': True, 'ypos': 0, 'flux': 0, 'funcost': 12.0, 'fwhm': 0,
          'lineid': 2},
-        {'category': 'C', 'xpos': 250, 'wv': 3410, 'line_ok': True, 'ypos': 0, 'flux': 0, 'funcost': 13.0, 'fwhm': 0,
-         'lineid': 3}], 'wavelength': [11.0, 16.0, 26.0], 'coeff': [1.0, 0.1], 'residual_std': 1.0}
+        {'category': 'C', 'xpos': 250, 'reference': 3410, 'wavelength': 3, 'line_ok': True, 'ypos': 0, 'flux': 0, 'funcost': 13.0, 'fwhm': 0,
+         'lineid': 3}],
+    'coeff': [1.0, 0.1],
+    'residual_std': 1.0,
+
+}
 
 
 def create_test_wavecalib():
     instrument = 'TEST1'
-    tags = {}
+    tags = {'insmode': 'LCB', 'vph': 'LR-I'}
     uuid = '123456789'
     data = megaradrp.products.WavelengthCalibration(instrument=instrument)
     data.tags = tags
     data.uuid = uuid
-
+    data.error_fitting =  []
+    data.missing_fibers = []
+    data.total_fibers = 623
     contents = {}
+
     for key in range(10):
-        data.contents[key] = create_solution(orig)
-        contents[key] = data.contents[key].__getstate__()
+        fibid = key + 1
+        solution = create_solution(orig)
+        fibersolution = wc.FiberSolutionArcCalibration(fibid, solution)
+        fibidstr = str(fibid)
+        data.contents[fibidstr] = fibersolution
+        contents[fibidstr] = data.contents[fibidstr].__getstate__()
 
     for key in range(100, 101):
-        data.contents[key] = create_solution(orig)
-        contents[key] = data.contents[key].__getstate__()
+        fibid = key + 1
+        solution = create_solution(orig)
+        fibersolution = wc.FiberSolutionArcCalibration(fibid, solution)
+        fibidstr = str(fibid)
+        data.contents[fibidstr] = fibersolution
+        contents[fibidstr] = data.contents[fibidstr].__getstate__()
 
     state = dict(instrument=instrument,
                  tags=tags,
                  uuid=uuid,
+                 total_fibers=623,
+                 missing_fibers=[],
+                 error_fitting=[],
                  contents=contents
                  )
     return data, state
@@ -109,7 +129,7 @@ def test_load_wavecalib():
     my_file = NamedTemporaryFile()
 
     with open(my_file.name, 'w') as fd:
-        yaml.dump(state, fd)
+        json.dump(state, fd)
 
     my_obj = megaradrp.products.WavelengthCalibration()
     my_open_file = my_obj._datatype_load(my_file.name)
@@ -135,7 +155,7 @@ def test_dump_wavecalib():
     my_open_file = my_obj._datatype_dump(data, work_env)
 
     with open(my_open_file, 'r') as fd:
-        traces = yaml.load(fd)
+        traces = json.load(fd)
 
     assert (traces == state)
 

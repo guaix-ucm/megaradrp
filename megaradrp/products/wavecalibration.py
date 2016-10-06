@@ -37,7 +37,7 @@ class FiberSolutionArcCalibration(object):
         }
 
     def __setstate__(self, state):
-        self.state = state['fibid']
+        self.fibid = state['fibid']
         new = SolutionArcCalibration.__new__(SolutionArcCalibration)
         new.__setstate__(state['solution'])
         self.solution = new
