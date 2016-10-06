@@ -19,6 +19,7 @@
 
 """Products of the Megara Pipeline"""
 
+import numpy.polynomial.polynomial as nppol
 
 from .structured import BaseStructuredCalibration
 
@@ -30,9 +31,23 @@ class GeometricTrace(object):
         self.start = start
         self.stop = stop
         self.fitparms = fitparms if fitparms is not None else []
+        self._set_polynomial(fitparms)
 
     def __getstate__(self):
-        return self.__dict__
+        state = self.__dict__.copy()
+        del state['polynomial']
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__  = state
+        self._set_polynomial(state['fitparms'])
+
+    def _set_polynomial(self, fitparms):
+        if fitparms:
+            self.polynomial = nppol.Polynomial(self.fitparms)
+        else:
+            self.polynomial = nppol.Polynomial([0.0])
+
 
 
 class TraceMap(BaseStructuredCalibration):

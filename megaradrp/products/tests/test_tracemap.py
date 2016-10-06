@@ -18,10 +18,15 @@
 #
 
 
-import megaradrp.products
 from tempfile import NamedTemporaryFile
-import pytest
 import json
+
+import pytest
+import numpy
+import numpy.polynomial.polynomial as nppol
+
+import megaradrp.products
+import megaradrp.products.tracemap as tm
 
 
 def create_test_tracemap():
@@ -42,6 +47,83 @@ def create_test_tracemap():
                  )
 
     return data, state
+
+
+state1 = {
+    'fibid': 100,
+    'boxid': 12,
+    'start': 1000,
+    'stop': 2000
+}
+
+state2 = {
+    'fibid': 100,
+    'boxid': 12,
+    'start': 1000,
+    'stop': 2000,
+    'fitparms': [1, 2, 3]
+}
+
+state3 = {
+    'fibid': 100,
+    'boxid': 12,
+    'start': 1000,
+    'stop': 2000,
+    'fitparms': []
+}
+
+@pytest.mark.parametrize("state", [state1, state2])
+def test_geotrace(state):
+
+    mm = tm.GeometricTrace(**state)
+    assert isinstance(mm.polynomial, nppol.Polynomial)
+
+    for key in state:
+        assert state[key] == getattr(mm, key)
+
+    if 'fitparms' not in state:
+        params = []
+        coeff = [0.0]
+    else:
+        params = state['fitparms']
+        coeff = params
+
+    assert mm.fitparms == params
+    assert numpy.all(mm.polynomial.coef == coeff)
+
+
+@pytest.mark.parametrize("state",[state1, state2])
+def test_getstate_geotrace(state):
+
+    mm = tm.GeometricTrace(**state)
+
+    # Expected result
+    if 'fitparms' not in state:
+        state['fitparms'] = []
+
+    newstate = mm.__getstate__()
+
+    for key in state:
+        assert state[key] == getattr(mm, key)
+
+    assert newstate == state
+
+
+@pytest.mark.parametrize("state",[state2, state3])
+def test_setstate_geotrace(state):
+    new = tm.GeometricTrace.__new__(tm.GeometricTrace)
+    new.__setstate__(state)
+
+    for key in state:
+        assert state[key] == getattr(new, key)
+
+    if state['fitparms']:
+        coeff = state['fitparms']
+    else:
+        coeff = [0.0]
+
+    assert numpy.all(new.polynomial.coef == coeff)
+    assert isinstance(new.polynomial, nppol.Polynomial)
 
 
 def test_getstate_traceMap():
