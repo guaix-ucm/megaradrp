@@ -1,3 +1,6 @@
+
+from __future__ import print_function
+
 import logging
 import numpy as np
 from scipy.spatial import KDTree
@@ -91,7 +94,7 @@ class Grid(dict):
         import pandas
         df = pandas.DataFrame(matriz) # Papel
         # df = pandas.DataFrame(matriz)
-        print df.to_string()
+        print(df.to_string())
 
     def find(self, item):
         """
