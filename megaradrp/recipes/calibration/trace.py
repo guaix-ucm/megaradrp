@@ -28,9 +28,9 @@ from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
 from skimage.filters import threshold_otsu
 
-from megaradrp.types import MasterFiberFlatFrame
 from megaradrp.products import TraceMap
 from megaradrp.products.tracemap import GeometricTrace
+from megaradrp.types import ProcessedFrame
 from megaradrp.core.recipe import MegaraBaseRecipe
 import megaradrp.requirements as reqs
 from megaradrp.trace.traces import init_traces_ex
@@ -54,7 +54,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
 
-    fiberflat_frame = Product(MasterFiberFlatFrame)
+    fiberflat_frame = Product(ProcessedFrame)
     master_traces = Product(TraceMap)
 
     def __init__(self):

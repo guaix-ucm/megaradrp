@@ -30,7 +30,7 @@ from numina.core.requirements import ObservationResultRequirement
 from megaradrp.core.recipe import MegaraBaseRecipe
 import megaradrp.requirements as reqs
 from megaradrp.types import MasterFiberFlat
-from megaradrp.types import MasterSensitivity
+from megaradrp.types import ProcessedRSS, ProcessedFrame
 
 
 class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
@@ -40,8 +40,8 @@ class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
     traces = reqs.MasterTraceMapRequirement()
     reference_spectrum = Requirement(MasterFiberFlat, 'Reference spectrum')
 
-    calibration = Product(MasterSensitivity)
-    calibration_rss = Product(MasterSensitivity)
+    calibration = Product(ProcessedFrame)
+    calibration_rss = Product(ProcessedRSS)
 
     def __init__(self):
         super(PseudoFluxCalibrationRecipe, self).__init__(version="0.1.0")

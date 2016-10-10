@@ -21,7 +21,6 @@
 
 from __future__ import division, print_function
 
-import logging
 
 from astropy.io import fits
 
@@ -33,10 +32,8 @@ from megaradrp.types import MasterFiberFlat
 from megaradrp.types import MasterWeights
 from megaradrp.products import WavelengthCalibration
 import megaradrp.requirements as reqs
-from numina.core.products import DataFrameType
+from megaradrp.types import ProcessedRSS, ProcessedFrame
 from megaradrp.processing.weights import WeightsCorrector
-
-_logger = logging.getLogger('numina.recipes.megara')
 
 
 class FiberFlatRecipe(MegaraBaseRecipe):
@@ -49,9 +46,10 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     master_slitflat = reqs.MasterSlitFlatRequirement()
     wlcalib = Requirement(WavelengthCalibration, 'Wavelength calibration table')
     master_weights = Requirement(MasterWeights, 'Set of files')
+
     # Products
-    fiberflat_frame = Product(DataFrameType)
-    rss_fiberflat = Product(DataFrameType)
+    fiberflat_frame = Product(ProcessedFrame)
+    rss_fiberflat = Product(ProcessedRSS)
     master_fiberflat = Product(MasterFiberFlat)
 
     def __init__(self):
@@ -61,17 +59,17 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         # Basic processing
         parameters = self.get_parameters(rinput)
         #rinput.obresult.configuration
-        _logger.info('process common')
+        self.logger.info('process common')
         reduced = self.bias_process_common(rinput.obresult, parameters)
 
         flow = WeightsCorrector(parameters['weights'])
         flow = SerialFlow([flow])
         hdulist = flow(reduced)
 
-        _logger.info('Starting: resample_rss_flux')
+        self.logger.info('Starting: resample_rss_flux')
         final, wcsdata = self.resample_rss_flux(hdulist[0].data, self.get_wlcalib(rinput.wlcalib))
 
-        _logger.info('Compute mean and resampling again')
+        self.logger.info('Compute mean and resampling again')
 
         mean = final[:,2000:2100].mean()
         aux = hdulist[0].data / mean
@@ -84,5 +82,9 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
         rss_fiberflat = fits.PrimaryHDU(final, header=reduced[0].header)
 
-        result = self.create_result(master_fiberflat=master_fiberflat, fiberflat_frame=reduced, rss_fiberflat=rss_fiberflat)
+        result = self.create_result(
+            master_fiberflat=master_fiberflat,
+            fiberflat_frame=reduced,
+            rss_fiberflat=rss_fiberflat
+        )
         return result

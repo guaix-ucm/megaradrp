@@ -24,18 +24,18 @@ from numina.core import Product
 
 from megaradrp.processing.datamodel import MegaraDataModel
 from megaradrp.recipes.scientific.base import ImageRecipe
-from megaradrp.types import MasterFiberFlat
 from megaradrp.processing.wavecalibration import WavelengthCalibrator
+from megaradrp.types import ProcessedRSS, ProcessedFrame
 
 
 class LCBImageRecipe(ImageRecipe):
     """Process LCB images."""
 
-    final = Product(MasterFiberFlat)
-    reduced = Product(MasterFiberFlat)
-    rss = Product(MasterFiberFlat)
-    #target = Product(MasterFiberFlat)
-    # sky = Product(MasterFiberFlat)
+    final = Product(ProcessedRSS)
+    reduced = Product(ProcessedFrame)
+    rss = Product(ProcessedRSS)
+    #target = Product(ProcessedRSS)
+    # sky = Product(ProcessedRSS)
 
     def __init__(self):
         super(LCBImageRecipe, self).__init__()

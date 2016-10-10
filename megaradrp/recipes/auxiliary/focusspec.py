@@ -42,7 +42,7 @@ from numina.flow import SerialFlow
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import WavelengthCalibration
-from megaradrp.types import JSONstorage
+from megaradrp.types import JSONstorage, ProcessedFrame
 import megaradrp.requirements as reqs
 from megaradrp.core.processing import apextract_tracemap
 
@@ -74,7 +74,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                           'Wavelength calibration table')
     # Products
     focus_table = Product(ArrayType)
-    focus_image = Product(DataFrameType)
+    focus_image = Product(ProcessedFrame)
     focus_wavelength = Product(JSONstorage)
 
     def __init__(self):
@@ -141,11 +141,11 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
 
         self.logger.info('generate focus image')
         image = self.generate_image(final)
-        hdu = fits.PrimaryHDU(image)
-        hdulist = fits.HDUList([hdu])
+        focus_image_hdu = fits.PrimaryHDU(image)
+        focus_image = fits.HDUList([focus_image_hdu])
 
         self.logger.info('end focus spectrograph')
-        return self.create_result(focus_table=final, focus_image=hdulist,
+        return self.create_result(focus_table=final, focus_image=focus_image,
                                   focus_wavelength=focus_wavelength)
 
     def generateJSON(self, data, wlcalib, original_images):
