@@ -19,40 +19,24 @@
 
 """Products of the Megara Pipeline"""
 
-'''
-    RAW_BIAS DataFrameType
-    RAW_DARK DataFrameType
-    RAW_FLAT DataFrameType
-    RAW_ILLUM DataFrameType
-    RAW_SCIENCE DataFrameType
 
-    MASTER_BIAS  DataFrameType(detector)
-    MASTER_DARK  DataFrameType(detector, exposure)
-    MASTER_FLAT  DataFrameType(detector, grism)
-    MASTER_ILLUM DataFrameType(detector, grism)
-
-    POINTING DataFrameType
-    MOSAIC DataFrameType
-
-'''
-
-import uuid
-
-import yaml
-
-import numina.core.types
-from numina.array.wavecalib.arccalibration import SolutionArcCalibration
 from numina.core import DataFrameType, DataProductType
+from numina.core.types import DataType
 from numina.core.products import DataProductTag
 
 
-class MEGARAProductFrame(DataFrameType, DataProductTag):
+class MEGARAProductFrame(DataProductTag, DataFrameType):
     pass
 
 
-# class MEGARAProcessedFrame(DataFrameType):
-#     """A processed image not to be stored"""
-#     pass
+class ProcessedFrame(DataFrameType):
+    """A processed image not to be stored"""
+    pass
+
+
+class ProcessedRSS(ProcessedFrame):
+    """A processed RSS image not to be stored"""
+    pass
 
 
 class MasterBias(MEGARAProductFrame):
@@ -107,7 +91,7 @@ class MasterWeights(DataProductType):
             raise e
 
 
-class JSONstorage(DataProductType):
+class JSONstorage(DataType):
     def __init__(self, default=None):
         super(JSONstorage, self).__init__(ptype=dict, default=default)
 
