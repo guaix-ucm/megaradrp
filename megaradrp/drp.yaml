@@ -45,7 +45,7 @@ modes:
 - name: Fiber Flat Image
   summary: Summary of Fiber Flat Image
   description: Lines and mode lines
-  key: MEGARA_FIBERFLAT_IMAGE
+  key: MEGARA_FIBER_FLAT_IMAGE
   tagger: megaradrp.taggers.tagger_base_image
 - name: Image with the fiber MOS
   summary: Summary of Fiber MOS image
@@ -75,7 +75,7 @@ modes:
 - name: Slit Flat
   summary: Slit Flat
   description: Slit Flat
-  key: MEGARA_SLITFLAT
+  key: MEGARA_SLIT_FLAT
   tagger: megaradrp.taggers.tagger_base_image
 - name: Weights
   summary: Weights
