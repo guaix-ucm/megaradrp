@@ -383,7 +383,7 @@ class MegaraBaseRecipe(BaseRecipe):
         imgtypes, getters = cls.types_getter()
         used_getters = []
         for rtype, getter in zip(imgtypes, getters):
-            print('load_getters', rtype, getter)
+            cls.logger.debug('load_getters, %s  %s', rtype, getter)
             if rtype is None:
                 # Unconditional
                 if isinstance(getter, collections.Iterable):

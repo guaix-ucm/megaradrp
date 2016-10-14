@@ -43,6 +43,15 @@ class MegaraDataModel(DataModel):
             'tstamp': ('TSTAMP', 'undefined')
         }
 
+    def get_imgid(self, img):
+        hdr = self.get_header(img)
+        if 'UUID' in hdr:
+            return 'uuid:{}'.format(hdr['UUID'])
+        elif 'DATE-OBS' in hdr:
+            return 'dateobs:{}'.format(hdr['DATE-OBS'])
+        else:
+            return super(MegaraDataModel, self).get_imgid(img)
+
     def gather_info_dframe(self, img):
         with img.open() as hdulist:
             info = self.gather_info_hdu(hdulist)

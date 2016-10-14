@@ -31,8 +31,6 @@ from numina.array.interpolation import SteffenInterpolator
 _logger = logging.getLogger(__name__)
 
 
-LCB_NFIBERS = 623
-
 # FIXME: hardcoded numbers
 vph_thr = {'default': {'LR-I':{'crval': 7140.0,
                               'cdelt': 0.37,
@@ -57,17 +55,6 @@ class WavelengthCalibrator(Corrector):
         imgid = self.get_imgid(rss)
         _logger.debug('wavelength calibration in image %s', imgid)
 
-        wlcalib = []
-        for fidx in range(1, LCB_NFIBERS + 1):
-            sfidx = str(fidx)
-            if sfidx in self.solutionwl.contents:
-                wlcalib.append(self.solutionwl.contents[sfidx].solution.coeff)
-            else:
-                # FIXME: polynomial degree forced to be 5
-                wlcalib.append(numpy.array([0., 1., 0., 0., 0., 0.]))
-
-        wlcalib_aux = numpy.asarray(wlcalib)
-
         current_vph = rss[0].header['VPH']
 
         _logger.debug('Current VPH is %s', current_vph)
@@ -78,8 +65,7 @@ class WavelengthCalibrator(Corrector):
         wvpar_dict = vph_thr['default'][current_vph]
 
         _logger.debug('Resample RSS')
-        final, wcsdata = self.resample_rss_flux(rss[0].data,
-                                                wlcalib_aux, wvpar_dict)
+        final, wcsdata = self.resample_rss_flux(rss[0].data, wvpar_dict)
 
         _logger.debug('Update headers')
         rss_wl = fits.PrimaryHDU(
@@ -95,7 +81,10 @@ class WavelengthCalibrator(Corrector):
         hdr['history'] = 'Wavelength calibration with {}'.format(self.calibid)
         hdr['history'] = 'Wavelength calibration time {}'.format(datetime.datetime.utcnow().isoformat())
 
-        return rss_wl
+        # Update other HDUs if needed
+        rss[0] = rss_wl
+
+        return rss
 
     def add_wcs(self, hdr, wlr0, delt, crpix=1.0):
         hdr['CRPIX1'] = crpix
@@ -108,39 +97,10 @@ class WavelengthCalibrator(Corrector):
         hdr['CTYPE2'] = 'PIXEL'
         return hdr
 
-    def resample_rss_flux(self, rss_old, wcalib, wvpar_dict):
-        """
-
-        :param rss_old: rss image
-        :param wcalib: ndarray of the coefficients
-        :param wvpar_dict: dictionary containing wavelength calibration parameters
-        :return:
-        """
+    def resample_rss_flux(self, rss_old, wvpar_dict):
 
         nfibers = rss_old.shape[0]
         nsamples = rss_old.shape[1]
-
-        # print nfibers, nsamples
-        # z = [0, nsamples - 1]
-        # res = polyval(z, wcalib.T)
-        # print res
-        # all_delt = (res[:, 1] - res[:, 0]) / nsamples
-        # print all_delt.max(), all_delt.min(), np.median(all_delt)
-        #
-        # delts = all_delt.min()
-        # delts = np.median(all_delt)
-        # delts = 0.37
-        # print 'median of delts', delts
-        #
-        # # first pixel is
-        # wl_min = res[:, 0].min()
-        # wl_min = 7140.0 #res[:, 0].min()
-        # # last pixel is
-        # wl_max = res[:, 1].max()
-        # wl_max = 8730.63
-        # print 'pixel range', wl_min, wl_max
-        #
-        # npix = int(math.ceil((wl_max - wl_min) / delts))
 
         npix = wvpar_dict['npix']
         delts = wvpar_dict['cdelt']
@@ -154,7 +114,7 @@ class WavelengthCalibrator(Corrector):
 
         old_x_borders = numpy.arange(-0.5, nsamples)
         old_x_borders += crpix  # following FITS criterium
-        old_wl_borders = polyval(old_x_borders, wcalib.T)
+        #old_wl_borders = polyval(old_x_borders, wcalib.T)
 
         new_borders = self.map_borders(new_wl)
 
@@ -163,11 +123,18 @@ class WavelengthCalibrator(Corrector):
         accum_flux[:, 0] = 0.0
         rss_resampled = numpy.zeros((nfibers, npix))
 
-        for idx in range(nfibers):
+        for fibsol in self.solutionwl.contents.values():
+
+            fibid = fibsol.fibid
+            idx = fibid - 1
+            coeff = fibsol.solution.coeff
+
+            old_wl_borders = polyval(old_x_borders, coeff)
+
             # We need a monotonic interpolator
             # linear would work, we use a cubic interpolator
             interpolator = SteffenInterpolator(
-                old_wl_borders[idx],
+                old_wl_borders,
                 accum_flux[idx],
                 extrapolate='border'
             )

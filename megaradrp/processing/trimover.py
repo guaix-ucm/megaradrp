@@ -134,7 +134,7 @@ class OverscanCorrector(Corrector):
         _logger.debug('average scan2 is %f', avg)
         data[self.trim2] -= avg
         hdr = img['primary'].header
-        hdr['NUM-OVPE'] = imgid
+        hdr['NUM-OVPE'] = self.calibid
         hdr['history'] = 'Overscan correction {}'.format(imgid)
         hdr['history'] = 'Overscan correction time {}'.format(datetime.datetime.utcnow().isoformat())
         hdr['history'] = 'Mean of prescan1 is %f' % p1
@@ -155,11 +155,12 @@ class TrimImage(Corrector):
         super(TrimImage, self).__init__(datamodel=datamodel, dtype=dtype)
 
     def run(self, img):
-        _logger.debug('trimming image %s', img)
         imgid = self.get_imgid(img)
+        _logger.debug('trimming image %s', imgid)
+
         img[0] = trimOut(img[0], confFile=self.confFile)
         hdr = img['primary'].header
-        hdr['NUM-TRIM'] = 'Image section'
+        hdr['NUM-TRIM'] = self.calibid
         hdr['history'] = 'Trimming correction {}'.format(imgid)
         hdr['history'] = 'Trimming correction time {}'.format(datetime.datetime.utcnow().isoformat())
 

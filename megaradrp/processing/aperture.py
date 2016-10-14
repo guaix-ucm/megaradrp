@@ -18,49 +18,36 @@
 #
 
 import logging
+import datetime
 
 from numina.flow.processing import Corrector
 
-from megaradrp.core.processing import apextract, apextract_tracemap
+from megaradrp.core.processing import apextract_tracemap_2
 
-_logger = logging.getLogger('numina.processing')
+_logger = logging.getLogger(__name__)
 
 
 class ApertureExtractor(Corrector):
     """A Node that extracts apertures."""
 
-    def __init__(self, trace, datamodel=None, dtype='float32'):
-        # if tagger is None:
-        #     tagger = TagFits_('NUM-MAE', 'MEGARA Aperture extractor')
+    def __init__(self, tracemap, datamodel=None, dtype='float32'):
+
+        self.tracemap = tracemap
 
         super(ApertureExtractor, self).__init__(datamodel=datamodel,
+                                                calibid=tracemap.uuid,
                                                 dtype=dtype)
-        self.trace = trace
 
     def run(self, img):
-        imgid = self.get_imgid(img)
-        _logger.debug('extracting apertures in image %s', imgid)
-        rss = apextract(img[0].data, self.trace)
-        img[0].data = rss
-
-        return img
-
-
-class ApertureExtractor2(Corrector):
-    """A Node that extracts apertures."""
-
-    def __init__(self, trace, datamodel=None, dtype='float32'):
-        # if tagger is None:
-        #     tagger = TagFits_('NUM-MAE', 'MEGARA Aperture extractor')
-
-        self.trace = trace
-
-        super(ApertureExtractor2, self).__init__(datamodel=datamodel,
-                                                 dtype=dtype)
-
-    def run(self, img):
+        _logger.debug('simple aperture extraction')
         imgid = self.get_imgid(img)
         _logger.debug('extracting (apextract_tracemap) in image %s', imgid)
-        rss = apextract_tracemap(img[0].data, self.trace)
-        img[0].data = rss
+        rssdata = apextract_tracemap_2(img[0].data, self.tracemap)
+        img[0].data = rssdata
+
+        hdr = img[0].header
+
+        hdr['NUM-APE'] = self.calibid
+        hdr['history'] = 'Aperture extraction with {}'.format(self.calibid)
+        hdr['history'] = 'Aperture extraction time {}'.format(datetime.datetime.utcnow().isoformat())
         return img
