@@ -25,6 +25,7 @@ import datetime
 import numpy
 from numpy.polynomial.polynomial import polyval
 from astropy.io import fits
+import numina.array.utils as u
 from numina.flow.processing import Corrector
 from numina.array.interpolation import SteffenInterpolator
 
@@ -65,13 +66,15 @@ class WavelengthCalibrator(Corrector):
         wvpar_dict = vph_thr['default'][current_vph]
 
         _logger.debug('Resample RSS')
-        final, wcsdata = self.resample_rss_flux(rss[0].data, wvpar_dict)
+        final, wcsdata, map = self.resample_rss_flux(rss[0].data, wvpar_dict)
 
         _logger.debug('Update headers')
         rss_wl = fits.PrimaryHDU(
-            data=final.astype(numpy.float32),
+            data=final.astype(self.dtype),
             header=rss[0].header
         )
+
+        rss_map = fits.ImageHDU(data=map.astype(dtype='int32'), name='WLMAP')
 
         hdr = rss_wl.header
         self.add_wcs(rss_wl.header, wvpar_dict['crval'], wvpar_dict['cdelt'],
@@ -83,7 +86,7 @@ class WavelengthCalibrator(Corrector):
 
         # Update other HDUs if needed
         rss[0] = rss_wl
-
+        rss.append(rss_map)
         return rss
 
     def add_wcs(self, hdr, wlr0, delt, crpix=1.0):
@@ -122,6 +125,7 @@ class WavelengthCalibrator(Corrector):
         accum_flux[:, 1:] = numpy.cumsum(rss_old, axis=1)
         accum_flux[:, 0] = 0.0
         rss_resampled = numpy.zeros((nfibers, npix))
+        rss_map = numpy.zeros((nfibers, npix), dtype='int')
 
         for fibsol in self.solutionwl.contents.values():
 
@@ -130,6 +134,12 @@ class WavelengthCalibrator(Corrector):
             coeff = fibsol.solution.coeff
 
             old_wl_borders = polyval(old_x_borders, coeff)
+
+            s1 = u.coor_to_pix_1d((old_wl_borders[0] - wl_min) / delts)
+            s2 = u.coor_to_pix_1d((old_wl_borders[-1] - wl_min) / delts)
+
+            s1 = max(0, min(s1, npix - 1))
+            s2 = max(0, min(s2, npix - 1))
 
             # We need a monotonic interpolator
             # linear would work, we use a cubic interpolator
@@ -140,8 +150,9 @@ class WavelengthCalibrator(Corrector):
             )
             fl_borders = interpolator(new_borders)
             rss_resampled[idx] = fl_borders[1:] - fl_borders[:-1]
+            rss_map[idx, s1:s2+1] = 1
 
-        return rss_resampled, (wl_min, wl_max, delts)
+        return rss_resampled, (wl_min, wl_max, delts), rss_map
 
     def map_borders(self, wls):
         """Compute borders of pixels for interpolation.
