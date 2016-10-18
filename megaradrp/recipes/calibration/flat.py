@@ -85,6 +85,8 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         return final_image
 
     def obtain_fiber_flat(self, rss_wl, wlcalib):
+        from scipy.signal import savgol_filter
+
         # Bad fibers, join:
         bad_fibers = wlcalib.missing_fibers
         bad_fibers.extend(wlcalib.error_fitting)
@@ -106,35 +108,30 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         valid_mask = col_mean_pos & good_idxs_mask
 
         col_good_mean = col_mean[valid_mask]
-        import matplotlib.pyplot as plt
+
         # FIXME: skip incorrect traces
         data_good = data0[valid_mask] / col_good_mean[:, numpy.newaxis]
         data_good[numpy.isnan(data_good)] = 0.0
-        plt.imshow(data_good)
-        plt.show()
-        collapse = numpy.mean(data_good, axis=0)
-        import matplotlib.pyplot as plt
-        plt.plot(collapse)
-        plt.show()
+
+        # Crappy way
+        # This extension was created by WLcalibrator
+        wlmap = rss_wl['WLMAP'].data
+        mm = numpy.sum(wlmap, axis=0)
+
         # Filter collapse to smooth it
-        # Divide each fiber in rss_wl by the smoothed spectrum
+        collapse = numpy.sum(data_good, axis=0) / mm
+        collapse_smooth = savgol_filter(collapse, 31, 3)
 
+        # Divide each fiber in rss_wl by  spectrum
         gmean = col_good_mean.mean()
-        data1 = rss_wl[0].data / collapse
+        data1 = rss_wl[0].data / collapse_smooth
         data1 /= gmean
-
-        # import matplotlib.pyplot as plt
-        # for m in data_good:
-        #     plt.plot(m, 'k.')
-        # plt.plot(collapse, 'b-')
-        # plt.show()
-        # plt.imshow(data1)
-        # plt.show()
+        # Fill values with ones to avoid NaNs
+        data2 = numpy.where(wlmap > 0, data1, 1.0)
 
         rss_wl2 = fits.HDUList([hdu.copy() for hdu in rss_wl])
-        rss_wl2[0].data = data1
+        rss_wl2[0].data = data2
         return rss_wl2
-        # self.logger.info('Compute mean and resampling again')
 
     def run(self, rinput):
 
