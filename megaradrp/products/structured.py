@@ -45,7 +45,6 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
     def default(self):
         return None
 
-
     def __getstate__(self):
         st = {}
         for key in ['instrument', 'tags', 'uuid']:
@@ -63,6 +62,10 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
         for key in state:
             if key not in ['contents']:
                 setattr(self, key, state[key])
+
+    def __str__(self):
+        sclass = type(self).__name__
+        return "{}(instrument={}, uuid={})".format(sclass, self.instrument, self.uuid)
 
     @classmethod
     def _datatype_dump(cls, obj, where):
