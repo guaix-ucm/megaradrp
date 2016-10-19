@@ -18,9 +18,10 @@
 #
 
 import logging
+import datetime
 
 from astropy.io import fits
-import numpy as np
+import numpy
 from numina.flow.processing import Corrector
 
 _logger = logging.getLogger('numina.processing')
@@ -33,11 +34,13 @@ class FiberFlatCorrector(Corrector):
 
         super(FiberFlatCorrector, self).__init__(datamodel=datamodel,
                                                  dtype=dtype)
-
         if isinstance(fiberflat, fits.HDUList):
             self.corr = fiberflat[0].data
-        elif isinstance(fiberflat, np.ndarray):
-            self.corr = fiberflat
+        elif isinstance(fiberflat, fits.ImageHDU):
+            self.corr = fiberflat.data
+        else:
+            self.corr = numpy.asarray(fiberflat)
+
         self.corrmean = self.corr.mean()
         # self.corrid = self.get_imgid(fiberflat)
 
@@ -49,6 +52,38 @@ class FiberFlatCorrector(Corrector):
         my_mask = self.corr == 0.0
         self.corr[my_mask] = 1.0
 
-        # img[0].data /= self.corr
+        img['primary'].data /= self.corr
+        hdr = img['primary'].header
 
+        self.header_update(hdr, imgid)
+
+        return img
+
+    def header_update(self, hdr, imgid):
+        hdr['NUM-FIBF'] = self.calibid
+        hdr['history'] = 'Fiber flat correction {}'.format(imgid)
+        hdr['history'] = 'Fiber flat correction time {}'.format(datetime.datetime.utcnow().isoformat())
+
+
+class Splitter(Corrector):
+    """Make a copy of its input"""
+    def __init__(self):
+        super(Splitter, self).__init__()
+        self.out = None
+
+    def run(self, img):
+        self.out = self.copy_img(img)
+        return img
+
+    def copy_img(self, img):
+        return fits.HDUList([hdu.copy() for hdu in img])
+
+
+class FlipLR(Corrector):
+    """Make a copy of its input"""
+    def __init__(self):
+        super(FlipLR, self).__init__()
+
+    def run(self, img):
+        img[0].data = numpy.fliplr(img[0].data)
         return img

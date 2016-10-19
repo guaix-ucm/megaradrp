@@ -40,22 +40,7 @@ from numina.array import combine
 from megaradrp.processing.datamodel import MegaraDataModel
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.wavecalibration import WavelengthCalibrator
-
-
-from numina.flow.processing import Corrector
-class Splitter(Corrector):
-    """Make a copy of its input"""
-    def __init__(self):
-        super(Splitter, self).__init__()
-        self.out = None
-
-    def run(self, img):
-        self.out = self.copy_img(img)
-        return img
-
-    def copy_img(self, img):
-        return fits.HDUList([hdu.copy() for hdu in img])
-
+from megaradrp.processing.fiberflat import Splitter, FlipLR
 
 class FiberFlatRecipe(MegaraBaseRecipe):
     """Process FIBER_FLAT images and create MASTER_FIBER_FLAT."""
@@ -120,6 +105,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
         # Filter collapse to smooth it
         collapse = numpy.sum(data_good, axis=0) / mm
+        # FIXME: Savitsky-Golay filter, window 31, pol degree 3
         collapse_smooth = savgol_filter(collapse, 31, 3)
 
         # Divide each fiber in rss_wl by  spectrum
@@ -129,6 +115,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         # Fill values with ones to avoid NaNs
         data2 = numpy.where(wlmap > 0, data1, 1.0)
 
+        self.logger.warning("Copy all extensions for the moment")
         rss_wl2 = fits.HDUList([hdu.copy() for hdu in rss_wl])
         rss_wl2[0].data = data2
         return rss_wl2
@@ -137,25 +124,21 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
         img = self.process_flat2d(rinput)
 
-
         datamodel = MegaraDataModel()
         splitter1 = Splitter()
         calibrator_aper = ApertureExtractor(rinput.tracemap, datamodel)
         splitter2 = Splitter()
         calibrator_wl = WavelengthCalibrator(rinput.wlcalib, datamodel)
+        flipcor = FlipLR()
 
         img = splitter1(img)
         flat2d = splitter1.out # Copy before extraction
         img = calibrator_aper(img)
         img = splitter2(img)
         rss_base = splitter2.out # A before el calibration
-
         # FIXME: Flip L-R image before calibrating WL
-        # Eventually this should not be necessary
-        import numpy
         self.logger.debug('Flip RSS left-rigtht, before WL calibration')
-        img[0].data = numpy.fliplr(img[0].data)
-
+        img = flipcor.run(img)
         # Calibrate in WL
         rss_wl = calibrator_wl(img)
 
@@ -168,4 +151,3 @@ class FiberFlatRecipe(MegaraBaseRecipe):
             fiberflat_rss=rss_base
         )
         return result
-
