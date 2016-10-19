@@ -24,18 +24,17 @@ from astropy.io import fits
 import numpy as np
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement, Requirement
-# from numina.flow import SerialFlow
+from numina.flow import SerialFlow
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.types import MasterFiberFlat
 from megaradrp.products import WavelengthCalibration
-from megaradrp.types import MasterWeights
-from megaradrp.products import TraceMap
 import megaradrp.requirements as reqs
-# from megaradrp.processing.fiberflat import FiberFlatCorrector
-# from megaradrp.processing.twilight import TwilightCorrector
-# from megaradrp.processing.weights import WeightsCorrector
-from megaradrp.core.processing import apextract_tracemap_2
+from megaradrp.processing.combine import basic_processing_with_combination
+from numina.array import combine
+from megaradrp.processing.datamodel import MegaraDataModel
+from megaradrp.processing.aperture import ApertureExtractor
+from megaradrp.processing.wavecalibration import WavelengthCalibrator
+from megaradrp.processing.fiberflat import Splitter, FlipLR, FiberFlatCorrector
 
 
 class ImageRecipe(MegaraBaseRecipe):
@@ -51,21 +50,31 @@ class ImageRecipe(MegaraBaseRecipe):
     # master_weights = Requirement(MasterWeights, 'Set of files')
     master_fiberflat = reqs.MasterFiberFlatRequirement()
     master_twilight = reqs.MasterTwilightRequirement()
-    tracemap = Requirement(TraceMap, 'Trace information of the Apertures')
+    tracemap = reqs.MasterTraceMapRequirement()
 
     def __init__(self):
         super(ImageRecipe, self).__init__(version="0.1.0")
 
-    def run(self, rinput):
+    def base_run(self, rinput):
 
-        parameters = self.get_parameters(rinput)
-        reduced2d = self.bias_process_common(rinput.obresult, parameters)
-        rssdata = apextract_tracemap_2(reduced2d[0].data, rinput.tracemap)
+        flow1 = self.init_filters(rinput, rinput.obresult.configuration.values)
+        img = basic_processing_with_combination(rinput, flow1, method=combine.median)
+        hdr = img[0].header
+        self.set_base_headers(hdr)
 
-        hdu_rs = fits.PrimaryHDU(rssdata, header=reduced2d[0].header)
-        hdu_final = fits.HDUList([hdu_rs])
+        datamodel = MegaraDataModel()
+        splitter1 = Splitter()
+        calibrator_aper = ApertureExtractor(rinput.tracemap, datamodel)
+        calibrator_wl = WavelengthCalibrator(rinput.wlcalib, datamodel)
+        flipcor = FlipLR()
+        calibrator_flat = FiberFlatCorrector(rinput.master_fiberflat.open(), datamodel)
 
-        return reduced2d, hdu_final
+        flow2 = SerialFlow([splitter1, calibrator_aper, flipcor, calibrator_wl, calibrator_flat])
+
+        reduced2d = splitter1.out
+        reduced_rss =  flow2(img)
+
+        return reduced2d, reduced_rss
 
     def get_wcallib(self, lambda1, lambda2, fibras, traces, rss, neigh_info, grid):
 

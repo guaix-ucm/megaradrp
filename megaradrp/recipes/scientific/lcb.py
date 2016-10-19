@@ -44,22 +44,10 @@ class LCBImageRecipe(ImageRecipe):
 
         self.logger.info('starting LCB reduction')
 
-        reduced, rss_data = super(LCBImageRecipe,self).run(rinput)
-
-        # FIXME: Flip L-R image before calibrating WL
-        # Eventually this should not be necessary
-
-        self.logger.debug('Flip RSS left-rigtht, before WL calibration')
-        rss_data[0].data = numpy.fliplr(rss_data[0].data)
-
-        datamodel = MegaraDataModel()
-        calibrator = WavelengthCalibrator(rinput.wlcalib, datamodel)
-
-        rss_wl = calibrator(rss_data)
+        reduced, rss_data = super(LCBImageRecipe,self).base_run(rinput)
 
         return self.create_result(
-            final=rss_wl,
+            final=rss_data,
             reduced=reduced,
             rss=rss_data
         )
-        # return self.create_result(final=rss, target=reduced, sky=reduced)
