@@ -1,28 +1,41 @@
+#
+# Copyright 2016 Universidad Complutense de Madrid
+#
+# This file is part of Megara DRP
+#
+# Megara DRP is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Megara DRP is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+
 import logging
-from numina.flow.processing import Corrector
-import numpy as np
+import datetime
 
-_logger = logging.getLogger('numina.processing')
+from .fiberflat import CommonFlatCorrector
 
-class SlitFlatCorrector(Corrector):
-    '''A Node that corrects a frame from slit flat.'''
+_logger = logging.getLogger(__name__)
 
-    def __init__(self, slitflat, datamodel=None,
+
+class SlitFlatCorrector(CommonFlatCorrector):
+    """A Node that corrects a frame from slit flat."""
+
+    def __init__(self, slitflat, datamodel=None, calibid='calibid-unknown',
                  dtype='float32'):
 
-        super(SlitFlatCorrector, self).__init__(datamodel, dtype)
+        super(SlitFlatCorrector, self).__init__(slitflat, datamodel, calibid, dtype)
+        self.flattag = 'slitflat'
 
-        self.slitflat = slitflat
-
-    def run(self, img):
-        imgid = self.get_imgid(img)
-
-        _logger.debug('correcting slit flat in %s', imgid)
-
-        # Avoid nan values when divide
-        my_mask = self.slitflat == 0.0
-        self.slitflat[my_mask] = 1.0
-
-        img[0].data /= self.slitflat
-
-        return img
+    def header_update(self, hdr, imgid):
+        hdr['NUM-SLTF'] = self.calibid
+        hdr['history'] = 'Slit flat correction {}'.format(imgid)
+        hdr['history'] = 'Slit flat correction time {}'.format(datetime.datetime.utcnow().isoformat())

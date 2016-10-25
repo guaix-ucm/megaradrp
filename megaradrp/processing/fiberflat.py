@@ -24,29 +24,30 @@ from astropy.io import fits
 import numpy
 from numina.flow.processing import Corrector
 
-_logger = logging.getLogger('numina.processing')
+_logger = logging.getLogger(__name__)
 
 
-class FiberFlatCorrector(Corrector):
-    '''A Node that corrects from fiber flat.'''
+class CommonFlatCorrector(Corrector):
+    """A Node that corrects from fiber flat."""
 
-    def __init__(self, fiberflat, datamodel=None, dtype='float32'):
+    def __init__(self, flatdata, datamodel=None, calibid='calibid-unknown', dtype='float32'):
 
-        super(FiberFlatCorrector, self).__init__(datamodel=datamodel,
+        super(CommonFlatCorrector, self).__init__(datamodel=datamodel,
+                                                 calibid=calibid,
                                                  dtype=dtype)
-        if isinstance(fiberflat, fits.HDUList):
-            self.corr = fiberflat[0].data
-        elif isinstance(fiberflat, fits.ImageHDU):
-            self.corr = fiberflat.data
+        if isinstance(flatdata, fits.HDUList):
+            self.corr = flatdata[0].data
+        elif isinstance(flatdata, fits.ImageHDU):
+            self.corr = flatdata.data
         else:
-            self.corr = numpy.asarray(fiberflat)
+            self.corr = numpy.asarray(flatdata)
 
         self.corrmean = self.corr.mean()
-        # self.corrid = self.get_imgid(fiberflat)
+        self.flattag = 'flat'
 
     def run(self, img):
         imgid = self.get_imgid(img)
-        _logger.debug('correct from fiber flat in image %s', imgid)
+        _logger.debug('correct %s in image %s', self.flattag, imgid)
 
         # Avoid nan values when divide
         my_mask = self.corr == 0.0
@@ -58,6 +59,24 @@ class FiberFlatCorrector(Corrector):
         self.header_update(hdr, imgid)
 
         return img
+
+    def header_update(self, hdr, imgid):
+        hdr['NUM-FLT'] = self.calibid
+        hdr['history'] = 'Flat correction {}'.format(imgid)
+        hdr['history'] = 'Flat correction time {}'.format(datetime.datetime.utcnow().isoformat())
+
+
+class FiberFlatCorrector(CommonFlatCorrector):
+    """A Node that corrects from fiber flat."""
+
+    def __init__(self, fiberflat, datamodel=None, calibid='calibid-unknown', dtype='float32'):
+        super(FiberFlatCorrector, self).__init__(
+            flatdata=fiberflat,
+            datamodel=datamodel,
+            calibid=calibid,
+            dtype=dtype
+        )
+        self.flattag = 'fiberflat'
 
     def header_update(self, hdr, imgid):
         hdr['NUM-FIBF'] = self.calibid

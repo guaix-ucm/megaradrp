@@ -81,12 +81,12 @@ def get_corrector_dark(rinput, meta, ins):
 
 
 def get_corrector_sf(rinput, meta, ins):
-    key = 'master_slit_flat'
+    key = 'master_slitflat'
     info = meta.get(key)
     if info is not None:
         req = getattr(rinput, key)
         with req.open() as hdul:
-            _logger.info('loading BPM')
+            _logger.info('loading slit flat')
             _logger.debug('%s image: %s', key, info)
             mbpm = hdul[0].data
             corrector = SlitFlatCorrector(mbpm, datamodel=MegaraDataModel())
