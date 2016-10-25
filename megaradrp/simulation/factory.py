@@ -90,13 +90,12 @@ class MegaraImageFactory(object):
 
     def bun_fib_mos(self, meta, hdr):
 
-
         nbundles = extractm(meta, ['MEGARA.MOS', 'nbundles'])
 
         extract(hdr, meta, ['MEGARA.MOS', 'nfibers'], 'NFIBERS')
         extract(hdr, meta, ['MEGARA.MOS', 'nbundles'], 'NBUNDLES')
+        extract(hdr, meta, ['MEGARA.MOS', 'conf_id'], 'CONFID')
         extract(hdr, meta, ['MEGARA.MOS', 'name'], 'INSMODE')
-
 
         for i in range(1, nbundles + 1):
             rbpath = 'MEGARA.MOS.RoboticPositioner_%d' % i

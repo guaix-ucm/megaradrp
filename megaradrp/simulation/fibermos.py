@@ -26,7 +26,7 @@ from .device import HWDevice
 
 class RoboticPositioner(HWDevice):
 
-    TARGET_TYPES = ['SKY', 'STAR', 'TARGET', 'UNASSIGNED']
+    TARGET_TYPES = ['SKY', 'STAR', 'TARGET', 'OBJECT', 'UNASSIGNED']
 
     def __init__(self, name, id, pos=None, parent=None):
         super(RoboticPositioner,self). __init__(name, parent)
@@ -136,6 +136,8 @@ class RoboticPositioner(HWDevice):
     def target_type(self, value):
         if value not in self.TARGET_TYPES:
             raise ValueError("Target type '{}' not in '{}'".format(value, self.TARGET_TYPES))
+        if value == 'OBJECT':
+            value == 'TARGET'
         self._target_type = value
 
     @property
@@ -161,6 +163,7 @@ class BaseFibersPlane(HWDevice):
 
         super(BaseFibersPlane, self).__init__(name, parent)
         self.fiberset = fiberset
+        self.confid_ = 1
 
     @property
     def nbundles(self):
@@ -181,6 +184,14 @@ class BaseFibersPlane(HWDevice):
     @property
     def area(self):
         return self.fiberset.area
+
+    @property
+    def conf_id(self):
+        return self.confid_
+
+    @conf_id.setter
+    def conf_id(self, value):
+        self.confid_ = value
 
     def transmission(self, wlin):
         return self.fiberset.transmission(wlin)
