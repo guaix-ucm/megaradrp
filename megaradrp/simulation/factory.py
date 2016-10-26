@@ -42,7 +42,7 @@ class MegaraImageFactory(object):
 
         extract(hdr, meta, ['MEGARA.LCB', 'nfibers'], 'NFIBERS')
         extract(hdr, meta, ['MEGARA.LCB', 'nbundles'], 'NBUNDLES')
-
+        extract(hdr, meta, ['MEGARA.LCB', 'conf_id'], 'CONFID')
         extract(hdr, meta, ['MEGARA.LCB', 'name'], 'INSMODE')
         fibers_info = extractm(meta, ['MEGARA.LCB', 'fibers'])
         # FIXME: inactive
