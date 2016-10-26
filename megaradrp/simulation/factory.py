@@ -20,6 +20,7 @@
 """Simple monocromatic simulation"""
 
 import json
+import uuid
 
 import astropy.io.fits as fits
 
@@ -152,6 +153,7 @@ class MegaraImageFactory(object):
         pheader = fits.Header(self.CARDS_P)
         pheader['FILENAME'] = name
         pheader['OBSMODE'] = control.mode
+        pheader['UUID'] = uuid.uuid4().hex
 
         # Seqs
         metacontrol = control.config_info()
