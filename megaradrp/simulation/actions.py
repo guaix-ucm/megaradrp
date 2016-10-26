@@ -119,12 +119,12 @@ class MegaraDarkSequence(Sequence):
 
 
 class MegaraLampSequence(Sequence):
-    def __init__(self, name):
-        super(MegaraLampSequence, self).__init__('MEGARA', name)
+    def __init__(self, mode):
+        super(MegaraLampSequence, self).__init__('MEGARA', mode)
 
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
-        cu = control.get('megcalib')
+        cu = control.get('ICM-MEGARA')
         instrument.shutter = 'OPEN'
         # Get active lamp
         lamp = cu.current()
@@ -218,7 +218,7 @@ class MegaraSlitFlatSequence(MegaraLampSequence):
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
         instrument.shutter = 'OPEN'
-        cu = control.get('megcalib')
+        cu = control.get('ICM-MEGARA')
 
         # Get active lamp
         lamp = cu.current()
@@ -266,12 +266,12 @@ class MegaraTwilightFlatSequence(Sequence):
 
 class MegaraFocusSequence(MegaraLampSequence):
     def __init__(self):
-        super(MegaraFocusSequence, self).__init__(name='focus_spectrograph')
+        super(MegaraFocusSequence, self).__init__(mode='focus_spectrograph')
 
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
         instrument.shutter = 'OPEN'
-        cu = control.get('megcalib')
+        cu = control.get('ICM-MEGARA')
 
         # Get active lamp
         lamp = cu.current()
@@ -357,7 +357,7 @@ class MegaraMOSImageSequence(Sequence):
 
 class MegaraMOSAcquisitionSequence(Sequence):
     def __init__(self):
-        super(MegaraMOSAcquisitionSequence, self).__init__('MEGARA', 'MEGARA_MOS_ACQUISITION')
+        super(MegaraMOSAcquisitionSequence, self).__init__('MEGARA', 'mos_acquisition')
 
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
@@ -398,7 +398,7 @@ def megara_sequences():
     seqs['focus_spectrograph'] = MegaraFocusSequence()
     seqs['lcb_image'] = MegaraLCBImageSequence()
     seqs['mos_image'] = MegaraMOSImageSequence()
-    seqs['MEGARA_MOS_ACQUISITION'] = MegaraMOSAcquisitionSequence()
+    seqs['mos_acquisition'] = MegaraMOSAcquisitionSequence()
     return seqs
 
 
