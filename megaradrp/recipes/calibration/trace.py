@@ -21,14 +21,21 @@
 
 from __future__ import division, print_function
 
+import logging
+
 import numpy
 import numpy.polynomial.polynomial as nppol
+from numina.array.peaks.peakdet import refine_peaks
 from numina.array.trace.traces import trace
-from numina.core import Product
+from numina.core import Product, Parameter
 from numina.core.requirements import ObservationResultRequirement
-from skimage.filters import threshold_otsu
 from numina.array import combine
+import numina.core.validator
+from skimage.filters import threshold_otsu
+from skimage.feature import peak_local_max
 
+from megaradrp.instrument import MEGARA_PSEUDOSLIT_BOXES
+from megaradrp.processing.datamodel import MegaraDataModel
 from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.products import TraceMap
 from megaradrp.products.tracemap import GeometricTrace
@@ -37,15 +44,10 @@ from megaradrp.core.recipe import MegaraBaseRecipe
 import megaradrp.requirements as reqs
 import megaradrp.products
 
+from megaradrp.instrument import vph_thr
 
-# FIXME: hardcoded numbers
-vph_thr = {'LR-I': 0.27,
-           'LR-R': 0.37,
-           'LR-V': 0.27,
-           'LR-Z': 0.27,
-           'LR-U': 0.02,
-           'HR-I': 0.20,
-           }
+
+_logger = logging.getLogger(__name__)
 
 
 class TraceMapRecipe(MegaraBaseRecipe):
@@ -54,41 +56,29 @@ class TraceMapRecipe(MegaraBaseRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
+    polynomial_degree = Parameter(5, 'Polynomial degree of trace fitting')
 
     fiberflat_frame = Product(ProcessedFrame)
     master_traces = Product(TraceMap)
 
     def __init__(self):
         super(TraceMapRecipe, self).__init__(version="0.1.0")
+        self.datamodel = MegaraDataModel()
 
+    @numina.core.validator.validate
     def run(self, rinput):
+        self.logger.info('start trace spectra recipe')
 
+        self.logger.info('start basic reduction')
         flow = self.init_filters(rinput, rinput.obresult.configuration.values)
         reduced = basic_processing_with_combination(rinput, flow, method=combine.median)
+        self.logger.info('end basic reduction')
 
-        final = self.search_traces(reduced, rinput.obresult)
-
-        return self.create_result(fiberflat_frame=reduced,
-                                  master_traces=final)
-
-    def search_traces(self, reduced, obresult, poldeg=5, step=2):
-
-        data = reduced[0].data
-        # For a given VPH, the position of the borders of the boxes
-        # depend on position
-        # For our current VPH
+        obresult = rinput.obresult
+        insmode = obresult.tags['insmode']
         current_vph = obresult.tags['vph']
         cstart = obresult.configuration.values['box']['boxcol']
         box_borders = obresult.configuration.values['box'][current_vph]
-
-        hs = 3
-        maxdis = 2.0
-        tol = 1.63
-        self.logger.info('search for traces')
-
-        self.logger.info('estimate background in column %i', cstart)
-        background = estimate_background(data, center=cstart, hs=hs, boxref=box_borders)
-        self.logger.info('background level is %f', background)
 
         if current_vph in vph_thr:
             threshold = vph_thr[current_vph]
@@ -97,12 +87,44 @@ class TraceMapRecipe(MegaraBaseRecipe):
             threshold = 0.3
             self.logger.info('rel threshold not defined for %s, using %4.2f', current_vph, threshold)
 
-        self.logger.info('find peaks in column %i', cstart)
+        final = megaradrp.products.TraceMap(instrument=obresult.instrument)
+        final.tags = obresult.tags
+
+        boxes = MEGARA_PSEUDOSLIT_BOXES[insmode]
+
+        contents = self.search_traces(reduced,
+                                      boxes,
+                                      box_borders,
+                                      cstart=cstart,
+                                      threshold=threshold,
+                                      poldeg=rinput.polynomial_degree
+                                      )
+
+        final.contents = contents
+        self.logger.info('end trace spectra recipe')
+        return self.create_result(fiberflat_frame=reduced,
+                                  master_traces=final)
+
+    def search_traces(self, reduced, boxes, box_borders, cstart=2000, threshold=0.3, poldeg=5, step=2):
+
+        data = reduced[0].data
+
+        hs = 3
+        tol = 1.63
+
+        self.logger.info('search for traces')
+
+        self.logger.info('estimate background in ref column %i', cstart)
+        background = estimate_background(data, center=cstart, hs=hs, boxref=box_borders)
+        self.logger.info('background level is %f', background)
+
+        self.logger.info('find peaks in reference column %i', cstart)
 
         central_peaks = init_traces(
             data,
             center=cstart,
             hs=hs,
+            boxes=boxes,
             box_borders=box_borders,
             tol=tol,
             threshold=threshold
@@ -115,11 +137,12 @@ class TraceMapRecipe(MegaraBaseRecipe):
         else:
             image2 = data
 
-        final = megaradrp.products.TraceMap(instrument=obresult.instrument)
-        final.tags = obresult.tags
+        maxdis = 2.0
 
-        self.logger.info('trace peaks')
-        for dtrace in central_peaks.values():
+        contents = []
+
+        self.logger.info('trace peaks from references')
+        for dtrace in central_peaks:
             # FIXME, for traces, the background must be local
             # the background in the center is not always good
             local_trace_background = 300  # background
@@ -159,9 +182,9 @@ class TraceMapRecipe(MegaraBaseRecipe):
                 stop=int(stop),
                 fitparms=pfit.tolist()
             )
-            final.contents.append(this_trace)
+            contents.append(this_trace)
 
-        return final
+        return contents
 
 
 def estimate_background(image, center, hs, boxref):
@@ -178,15 +201,6 @@ def estimate_background(image, center, hs, boxref):
 # FIXME: need a better place for this
 # Moved from megaradrp.trace
 
-import logging
-
-import numpy as np
-from numina.array.peaks.peakdet import refine_peaks
-from skimage.feature import peak_local_max
-from megaradrp.instrument import boxes
-
-_logger = logging.getLogger(__name__)
-
 
 class FiberTraceInfo(object):
     def __init__(self, fibid, boxid):
@@ -195,14 +209,14 @@ class FiberTraceInfo(object):
         self.start = None
 
 
-def init_traces(image, center, hs, box_borders, tol=1.5, threshold=0.37):
+def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37):
 
     cut_region = slice(center-hs, center+hs)
     cut = image[:,cut_region]
     colcut = cut.mean(axis=1)
 
     counted_fibers = 0
-    fiber_traces = {}
+    fiber_traces = []
     total_peaks = 0
     total_peaks_pos = []
 
@@ -218,11 +232,11 @@ def init_traces(image, center, hs, box_borders, tol=1.5, threshold=0.37):
         plt.show()
 
     ipeaks_float = refine_peaks(colcut, ipeaks_int, 3)[0]
-    peaks_y = np.ones((ipeaks_int.shape[0],3))
-    peaks_y[:,0] = ipeaks_int
-    peaks_y[:,1] = ipeaks_float
-    peaks_y[:,2] = colcut[ipeaks_int]
-    box_match = np.digitize(peaks_y[:, 0], box_borders)
+    peaks_y = numpy.ones((ipeaks_int.shape[0], 3))
+    peaks_y[:, 0] = ipeaks_int
+    peaks_y[:, 1] = ipeaks_float
+    peaks_y[:, 2] = colcut[ipeaks_int]
+    box_match = numpy.digitize(peaks_y[:, 0], box_borders)
 
     _logger.debug('initial pairing fibers in column %d', center)
     for box in boxes:
@@ -324,9 +338,10 @@ def init_traces(image, center, hs, box_borders, tol=1.5, threshold=0.37):
             pairs_1 = addl + pairs_1 + addr
 
         for fibid, (relfibid, match) in enumerate(pairs_1, counted_fibers):
-            fiber_traces[fibid] = FiberTraceInfo(fibid+1, box['id'])
+            fti = FiberTraceInfo(fibid + 1, box['id'])
             if match is not None:
-                fiber_traces[fibid].start = (center, thispeaks[match, 1], thispeaks[match, 2])
+                fti.start = (center, thispeaks[match, 1], thispeaks[match, 2])
+            fiber_traces.append(fti)
             # else:
             #     fiber_traces[fibid].start = (center, 0, 0)
         counted_fibers += nfibers
@@ -345,7 +360,7 @@ def init_traces(image, center, hs, box_borders, tol=1.5, threshold=0.37):
     # plt.plot(total_peaks_pos[:, 1], total_peaks_pos[:, 2], 'ro')
     # plt.show()
 
-    _logger.debug ('total found peaks: %d', total_peaks)
-    _logger.debug ('total found + recovered peaks: %d', counted_fibers)
+    _logger.debug('total found peaks: %d', total_peaks)
+    _logger.debug('total found + recovered peaks: %d', counted_fibers)
 
     return fiber_traces
