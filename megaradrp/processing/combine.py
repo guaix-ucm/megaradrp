@@ -70,7 +70,8 @@ def basic_processing_with_combination_frames(frames,
             if final is not hdulist:
                 odata.append(final)
 
-        base_header = cdata[0][0].header.copy()
+        first_image = cdata[0]
+        base_header = first_image[0].header.copy()
         cnum = len(cdata)
         _logger.info("stacking %d images using '%s'", cnum, method.__name__)
         data = method([d[0].data for d in cdata], dtype='float32')
@@ -86,14 +87,21 @@ def basic_processing_with_combination_frames(frames,
         prevnum = base_header.get('NUM-NCOM', 1)
         hdu.header['NUM-NCOM'] = prevnum * cnum
         hdu.header['UUID'] = uuid.uuid1().hex
+
+        # Copy extensions and then append 'variance' and 'map'
+        result = fits.HDUList([hdu])
+        for hdu in first_image[1:]:
+            result.append(hdu.copy())
+
         # Headers of last image
 #        hdu.header['TSUTC2'] = cdata[-1][0].header['TSUTC2']
+        # Append error extensions
         if errors:
             varhdu = fits.ImageHDU(data[1], name='VARIANCE')
+            result.append(varhdu)
             num = fits.ImageHDU(data[2], name='MAP')
-            result = fits.HDUList([hdu, varhdu, num])
-        else:
-            result = fits.HDUList([hdu])
+            result.append(num)
+
     finally:
         _logger.debug('closing images')
         for hdulist in odata:
