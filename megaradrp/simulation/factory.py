@@ -66,7 +66,7 @@ class MegaraImageFactory(object):
                     hdr[key] = "UNASSIGNED"
 
             key = "FIB%03d_B" % fibid
-            hdr[key] = fibid
+            hdr[key] = bunid
             # Coordinates
             key = "FIB%03d_D" % fibid  # DEC
             hdr[key] = 0.0000
