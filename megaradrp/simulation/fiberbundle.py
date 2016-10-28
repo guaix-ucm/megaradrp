@@ -38,6 +38,10 @@ class FiberBundle(object):
     def inactive_fibs_id(self):
         return [ch.fibid for ch in self.lf if ch.inactive]
 
+    @property
+    def active_fibs_id(self):
+        return [ch.fibid for ch in self.lf if not ch.inactive]
+
     def config_info(self):
         return {'name': self.name,
                 'nfibers': len(self.lf),
