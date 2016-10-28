@@ -36,28 +36,21 @@ from numina.array.wavecalib.arccalibration import gen_triplets_master
 from numina.array.wavecalib.arccalibration import robust_std
 from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 from numina.array.peaks.detrend import detrend
+from numina.flow import SerialFlow
+from numina.array import combine
+
 from skimage.feature import peak_local_max
 
+from megaradrp.processing.combine import basic_processing_with_combination
+from megaradrp.processing.datamodel import MegaraDataModel
+from megaradrp.processing.aperture import ApertureExtractor
+from megaradrp.processing.fiberflat import Splitter, FlipLR
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import WavelengthCalibration
 from megaradrp.products.wavecalibration import FiberSolutionArcCalibration
 import megaradrp.requirements as reqs
-from megaradrp.core.processing import apextract_tracemap_2
 
-
-# FIXME: hardcoded numbers
-vph_thr = {'default':{'LR-I':{'min_distance':10,
-                              'threshold':0.06},
-                      'LR-R':{'min_distance':10,
-                              'threshold':0.20},
-                      'LR-V': {'min_distance':30,
-                               'threshold':0.19},
-                      'LR-Z': {'min_distance':60,
-                               'threshold':0.02},
-                      'LR-U':{'min_distance':10,
-                              'threshold': 0.02,}
-                      },
-}
+from megaradrp.instrument import vph_thr_arc
 
 
 class ArcCalibrationRecipe(MegaraBaseRecipe):
@@ -81,9 +74,21 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         super(ArcCalibrationRecipe, self).__init__("0.1.0")
 
     def run(self, rinput):
-        # Basic processing
-        parameters = self.get_parameters(rinput)
-        reduced = self.bias_process_common(rinput.obresult, parameters)
+
+        flow1 = self.init_filters(rinput, rinput.obresult.configuration.values)
+        img = basic_processing_with_combination(rinput, flow1, method=combine.median)
+        hdr = img[0].header
+        self.set_base_headers(hdr)
+
+        datamodel = MegaraDataModel()
+        splitter1 = Splitter()
+        calibrator_aper = ApertureExtractor(rinput.tracemap, datamodel)
+        flipcor = FlipLR()
+
+        flow2 = SerialFlow([splitter1, calibrator_aper, flipcor])
+
+        reduced_rss = flow2(img)
+        reduced2d = splitter1.out
 
         self.logger.info('extract fibers, %i', len(rinput.tracemap.contents))
         # List of nonextracted fiberids
@@ -91,30 +96,15 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                              not trace.fitparms]
         self.logger.info('not traced fibers, %i', len(fibids_not_traced))
 
-        # rssdata = apextract_tracemap(reduced[0].data, rinput.tracemap)
-        rssdata = apextract_tracemap_2(reduced[0].data, rinput.tracemap)
-        rssdata = numpy.fliplr(rssdata)
-
-        rsshdu = fits.PrimaryHDU(rssdata, header=reduced[0].header)
-        header_list = self.getHeaderList(
-            [reduced, rinput.obresult.images[0].open()])
-        rss = fits.HDUList([rsshdu] + header_list)
-
-        self.logger.info('extracted %i fibers', rssdata.shape[0])
-
-        # Skip any other inputs for the moment
-        # data_wlcalib, fwhm_image = self.calibrate_wl(rssdata, rinput.lines_catalog,
-        #                                  rinput.polynomial_degree, rinput.tracemap)
-
         current_vph = rinput.obresult.tags['vph']
 
-        if reduced[0].header['INSTRUME'] == 'MEGARA':
-            threshold = vph_thr['default'][current_vph]['threshold']
-            min_distance = vph_thr['default'][current_vph]['min_distance']
+        if reduced2d[0].header['INSTRUME'] == 'MEGARA':
+            threshold = vph_thr_arc['default'][current_vph]['threshold']
+            min_distance = vph_thr_arc['default'][current_vph]['min_distance']
         else:
-            raise ValueError('INSTRUME keyword is %s', reduced[0].header['INSTRUME'])
+            raise ValueError('INSTRUME keyword is %s', reduced2d[0].header['INSTRUME'])
 
-        data_wlcalib, fwhm_image = self.calibrate_wl(rssdata,
+        data_wlcalib, fwhm_image = self.calibrate_wl(reduced_rss[0].data,
                                                      rinput.lines_catalog,
                                                      rinput.polynomial_degree,
                                                      rinput.tracemap,
@@ -124,7 +114,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         data_wlcalib.tags = rinput.obresult.tags
         # WL calibration goes here
-        return self.create_result(arc_image=reduced, arc_rss=rss,
+        return self.create_result(arc_image=reduced2d, arc_rss=reduced_rss,
                                   master_wlcalib=data_wlcalib,
                                   fwhm_image=fwhm_image)
 

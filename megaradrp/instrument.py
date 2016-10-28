@@ -112,3 +112,18 @@ vph_thr = {'LR-I': 0.27,
            'LR-U': 0.02,
            'HR-I': 0.20,
            }
+
+
+vph_thr_arc = {
+    'default':
+        {'LR-I': {'min_distance': 10, 'threshold': 0.06},
+         'LR-R': {'min_distance': 10,
+                  'threshold': 0.20},
+         'LR-V': {'min_distance': 30,
+                  'threshold': 0.19},
+         'LR-Z': {'min_distance': 60,
+                  'threshold': 0.02},
+         'LR-U': {'min_distance': 10,
+                  'threshold': 0.02, }
+         },
+}

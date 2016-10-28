@@ -47,11 +47,7 @@ class MegaraBaseRecipe(BaseRecipe):
     logger = logging.getLogger('numina.recipes.megara')
 
     def __init__(self, version):
-        self.__flow = {'ArcCalibrationRecipe': [OverscanCorrector, TrimImage,
-                                                BiasCorrector,
-                                                BadPixelCorrector,
-                                                DarkCorrector],
-                       'BadPixelsMaskRecipe': [OverscanCorrector, TrimImage,
+        self.__flow = {'BadPixelsMaskRecipe': [OverscanCorrector, TrimImage,
                                                BiasCorrector, DarkCorrector],
                        'FiberFlatRecipe': [OverscanCorrector, TrimImage,
                                            BiasCorrector, DarkCorrector,
