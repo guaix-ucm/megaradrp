@@ -239,10 +239,8 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37):
     box_match = numpy.digitize(peaks_y[:, 0], box_borders)
 
     _logger.debug('initial pairing fibers in column %d', center)
-    for box in boxes:
+    for boxid, box in enumerate(boxes):
         nfibers = box['nfibers']
-        boxid = box['id'] - 1
-
         dist_b_fibs = (box_borders[boxid + 1] - box_borders[boxid]) / (nfibers + 2.0)
         mask_fibers = (box_match == (boxid + 1))
         # Peaks in this box
