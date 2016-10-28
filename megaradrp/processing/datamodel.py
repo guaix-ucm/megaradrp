@@ -21,12 +21,14 @@
 
 from __future__ import division
 
+import re
 import logging
+
 from numina.flow.datamodel import DataModel
 from numina.core import DataFrame, ObservationResult
 
 
-_logger = logging.getLogger('numina.recipes.megara')
+# _logger = logging.getLogger('numina.recipes.megara')
 
 
 class MegaraDataModel(DataModel):
@@ -51,6 +53,16 @@ class MegaraDataModel(DataModel):
             return 'dateobs:{}'.format(hdr['DATE-OBS'])
         else:
             return super(MegaraDataModel, self).get_imgid(img)
+
+    def get_fiberconf(self, img):
+        # Obtain FIBER extension
+        if 'FIBERS' in img:
+            # We have a 'fibers' extension
+            # Information os there
+            hdr_fiber = img['FIBERS'].header
+            return read_fibers_extension(hdr_fiber)
+            # Read fiber info from headers
+        return 0
 
     def gather_info_dframe(self, img):
         with img.open() as hdulist:
@@ -82,3 +94,119 @@ class MegaraDataModel(DataModel):
             else:
                 pass
         return metadata
+
+
+class FibersConf(object):
+
+    def __init__(self):
+        self.name = ""
+        self.conf_id = 1
+        self.nbundles = 0
+        self.nfibers = 0
+        self.bundles = {}
+        self.fibers = {}
+
+    def sky_fibers(self):
+        result = []
+        for bundle in self.bundles.values():
+            if bundle.target_type == 'SKY':
+                result.extend(bundle.fibers.keys())
+        return result
+
+    def inactive_fibers(self):
+        result = []
+        for fiber in self.fibers.values():
+            if fiber.inactive:
+                result.append(fiber.fibid)
+        return result
+
+
+    def active_fibers(self):
+        result = []
+        for fiber in self.fibers.values():
+            if not fiber.inactive:
+                result.append(fiber.fibid)
+        return result
+
+
+class BundleConf(object):
+    def __init__(self):
+        self.id = 0
+        self.target_type = 'UNASSIGNED'
+        self.target_priority = 0
+        self.target_name = 'unknown'
+        self.x_fix = 0
+        self.y_fix = 0
+        self.pa_fix = 0
+        self.x = 0
+        self.y = 0
+        self.pa = 0
+
+
+class FiberConf(object):
+    def __init__(self):
+        self.fibid = 0
+        self.inactive = False
+
+
+def read_fibers_extension(hdr):
+    conf = FibersConf()
+    conf.name = hdr['INSMODE']
+    conf.conf_id = hdr['CONFID']
+    conf.nbundles = hdr['NBUNDLES']
+    conf.nfibers = hdr['NFIBERS']
+    # Read bundles
+
+    bun_ids = []
+    fib_ids = []
+    bundles = conf.bundles
+    fibers = conf.fibers
+
+    # loop over everything, count BUN%03d_P and FIB%03d_B
+    pattern1 = re.compile(r"BUN(\d+)_P")
+    pattern2 = re.compile(r"FIB(\d+)_B")
+    for key in hdr:
+        bun_re = pattern1.match(key)
+        fib_re = pattern2.match(key)
+        if bun_re:
+            bun_idx = int(bun_re.group(1))
+            bun_ids.append(bun_idx)
+        elif fib_re:
+            fib_idx = int(fib_re.group(1))
+            fib_ids.append(fib_idx)
+
+    for i in bun_ids:
+        bb = BundleConf()
+        bb.id = i
+        bb.target_priority = hdr["BUN%03d_P" % i]
+        bb.target_name = hdr["BUN%03d_I" % i]
+        bb.target_type = hdr["BUN%03d_T" % i]
+        bb.fibers = {}
+        bundles[i] = bb
+
+    for fibid in fib_ids:
+        ff = FiberConf()
+        ff.fibid = fibid
+
+        # Coordinates
+        ff.d = hdr["FIB%03d_D" % fibid]
+        ff.r = hdr["FIB%03d_R" % fibid]
+        ff.o = hdr["FIB%03d_O" % fibid]
+        # Active
+        ff.inactive = not hdr["FIB%03d_A" % fibid]
+
+        # Coordinates XY
+        ff.x = hdr["FIB%03d_X" % fibid]
+        ff.y = hdr["FIB%03d_Y" % fibid]
+
+        ff.b = hdr["FIB%03d_B" % fibid]
+
+        print('fiber', ff.__dict__)
+        bundles[ff.b].fibers[ff.fibid] = ff
+        fibers[ff.fibid] = ff
+
+    for i in bun_ids:
+        bb = bundles[i]
+        print(bb.__dict__)
+
+    return conf
