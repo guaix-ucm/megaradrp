@@ -113,10 +113,11 @@ vph_thr = {'LR-I': 0.27,
            'HR-I': 0.20,
            }
 
-
+# Values for recipe Arc
 vph_thr_arc = {
     'default':
-        {'LR-I': {'min_distance': 10, 'threshold': 0.06},
+        {'LR-I': {'min_distance': 10,
+                  'threshold': 0.06},
          'LR-R': {'min_distance': 10,
                   'threshold': 0.20},
          'LR-V': {'min_distance': 30,
@@ -126,4 +127,17 @@ vph_thr_arc = {
          'LR-U': {'min_distance': 10,
                   'threshold': 0.02, }
          },
+}
+
+
+# FIXED values for arc calibration
+vph_thr_wl_calib = {
+    'default': {
+        'LR-I': {
+            'crval': 7140.0,
+            'cdelt': 0.37,
+            'crpix': 1.0,
+            'npix': 4300
+        },
+    },
 }

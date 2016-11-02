@@ -29,16 +29,10 @@ import numina.array.utils as u
 from numina.flow.processing import Corrector
 from numina.array.interpolation import SteffenInterpolator
 
+from megaradrp.instrument import vph_thr_wl_calib
+
 _logger = logging.getLogger(__name__)
 
-
-# FIXME: hardcoded numbers
-vph_thr = {'default': {'LR-I':{'crval': 7140.0,
-                              'cdelt': 0.37,
-                              'crpix': 1.0,
-                              'npix': 4300},
-                      },
-}
 
 class WavelengthCalibrator(Corrector):
     """A Node that applies wavelength calibration."""
@@ -59,11 +53,11 @@ class WavelengthCalibrator(Corrector):
         current_vph = rss[0].header['VPH']
 
         _logger.debug('Current VPH is %s', current_vph)
-        if current_vph not in vph_thr['default']:
+        if current_vph not in vph_thr_wl_calib['default']:
             raise ValueError('grism ' + current_vph + ' is not defined in ' +
                              'vph_thr dictionary')
 
-        wvpar_dict = vph_thr['default'][current_vph]
+        wvpar_dict = vph_thr_wl_calib['default'][current_vph]
 
         _logger.debug('Resample RSS')
         final, wcsdata, map = self.resample_rss_flux(rss[0].data, wvpar_dict)
@@ -117,7 +111,7 @@ class WavelengthCalibrator(Corrector):
 
         old_x_borders = numpy.arange(-0.5, nsamples)
         old_x_borders += crpix  # following FITS criterium
-        #old_wl_borders = polyval(old_x_borders, wcalib.T)
+        # old_wl_borders = polyval(old_x_borders, wcalib.T)
 
         new_borders = self.map_borders(new_wl)
 
