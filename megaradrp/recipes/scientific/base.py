@@ -96,10 +96,18 @@ class ImageRecipe(MegaraBaseRecipe):
         fiberconf = self.datamodel.get_fiberconf(img)
         # Sky fibers
         self.logger.debug('sky fibers are: %s', fiberconf.sky_fibers())
+        import numpy
+        import astropy.io.fits as fits
+        target_data = img[0].data
+        sky_data = numpy.zeros_like(target_data)
+
+        for fibid in fiberconf.sky_fibers():
+            rowid = fibid - 1
+            sky_data[rowid] = target_data[rowid]
 
         final = img
         origin = img
-        sky = img
+        sky = fits.PrimaryHDU(data=sky_data, header=img[0].header)
 
         return final, origin, sky
 
