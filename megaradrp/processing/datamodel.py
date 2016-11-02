@@ -22,8 +22,9 @@
 from __future__ import division
 
 import re
-import logging
+import pkgutil
 
+from six import StringIO
 from numina.flow.datamodel import DataModel
 from numina.core import DataFrame, ObservationResult
 
@@ -61,8 +62,21 @@ class MegaraDataModel(DataModel):
             # Information os there
             hdr_fiber = img['FIBERS'].header
             return read_fibers_extension(hdr_fiber)
-            # Read fiber info from headers
-        return 0
+        else:
+            import astropy.io.fits as fits
+            # Invalid in general
+            insmode = img[0].header.get('INSMODE')
+            if insmode == 'LCB':
+                data = pkgutil.get_data('megaradrp', 'lcb_default_header.txt')
+
+                default_hdr = StringIO(data)
+                hdr_fiber = fits.header.Header.fromfile(default_hdr)
+                return read_fibers_extension(hdr_fiber)
+            elif insmode == 'MOS':
+                raise ValueError('No fibers, MOS')
+            else:
+                # Read fiber info from headers
+                raise ValueError('No fibers')
 
     def gather_info_dframe(self, img):
         with img.open() as hdulist:
@@ -201,12 +215,7 @@ def read_fibers_extension(hdr):
 
         ff.b = hdr["FIB%03d_B" % fibid]
 
-        print('fiber', ff.__dict__)
         bundles[ff.b].fibers[ff.fibid] = ff
         fibers[ff.fibid] = ff
-
-    for i in bun_ids:
-        bb = bundles[i]
-        print(bb.__dict__)
 
     return conf

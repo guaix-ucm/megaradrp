@@ -54,27 +54,54 @@ class ImageRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(ImageRecipe, self).__init__(version="0.1.0")
+        self.datamodel = MegaraDataModel()
 
     def base_run(self, rinput):
 
+        # 2D reduction
         flow1 = self.init_filters(rinput, rinput.obresult.configuration.values)
         img = basic_processing_with_combination(rinput, flow1, method=combine.median)
         hdr = img[0].header
         self.set_base_headers(hdr)
 
-        datamodel = MegaraDataModel()
+        # 1D, extraction, Wl calibration, Flat fielding
+        reduced2d, reduced_rss = self.run_reduction_1d(
+            img,
+            rinput.tracemap,
+            rinput.wlcalib,
+            rinput.master_fiberflat
+        )
+
+        return reduced2d, reduced_rss
+
+    def run_reduction_1d(self, img, tracemap, wlcalib, fiberflat):
+        # 1D, extraction, Wl calibration, Flat fielding
+
         splitter1 = Splitter()
-        calibrator_aper = ApertureExtractor(rinput.tracemap, datamodel)
-        calibrator_wl = WavelengthCalibrator(rinput.wlcalib, datamodel)
+        calibrator_aper = ApertureExtractor(tracemap, self.datamodel)
+        calibrator_wl = WavelengthCalibrator(wlcalib, self.datamodel)
         flipcor = FlipLR()
-        calibrator_flat = FiberFlatCorrector(rinput.master_fiberflat.open(), datamodel)
+        calibrator_flat = FiberFlatCorrector(fiberflat.open(), self.datamodel)
 
         flow2 = SerialFlow([splitter1, calibrator_aper, flipcor, calibrator_wl, calibrator_flat])
 
         reduced2d = splitter1.out
         reduced_rss =  flow2(img)
-
         return reduced2d, reduced_rss
+
+    def run_sky_subtraction(self, img):
+        # Sky subtraction
+
+        self.logger.info('obtain fiber information')
+        fiberconf = self.datamodel.get_fiberconf(img)
+        # Sky fibers
+        self.logger.debug('sky fibers are: %s', fiberconf.sky_fibers())
+
+        final = img
+        origin = img
+        sky = img
+
+        return final, origin, sky
 
     def get_wcallib(self, lambda1, lambda2, fibras, traces, rss, neigh_info, grid):
 

@@ -13,7 +13,7 @@ setup(name='megaradrp',
       license='GPLv3',
       description='MEGARA Data Reduction Pipeline',
       packages=find_packages(),
-      package_data={'megaradrp': ['drp.yaml', 'primary.txt']},
+      package_data={'megaradrp': ['drp.yaml', 'primary.txt', 'lcb_default_header.txt']},
       install_requires=[
          'numpy',
          'astropy >= 1.0',

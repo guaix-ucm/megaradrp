@@ -17,14 +17,12 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Calibration Recipes for Megara"""
+"""LCB Direct Image Recipe for Megara"""
 
 import numpy
 from numina.core import Product
 
-from megaradrp.processing.datamodel import MegaraDataModel
 from megaradrp.recipes.scientific.base import ImageRecipe
-from megaradrp.processing.wavecalibration import WavelengthCalibrator
 from megaradrp.types import ProcessedRSS, ProcessedFrame
 
 
@@ -33,9 +31,8 @@ class LCBImageRecipe(ImageRecipe):
 
     final = Product(ProcessedRSS)
     reduced = Product(ProcessedFrame)
-    rss = Product(ProcessedRSS)
-    #target = Product(ProcessedRSS)
-    # sky = Product(ProcessedRSS)
+    target = Product(ProcessedRSS)
+    sky = Product(ProcessedRSS)
 
     def __init__(self):
         super(LCBImageRecipe, self).__init__()
@@ -44,10 +41,16 @@ class LCBImageRecipe(ImageRecipe):
 
         self.logger.info('starting LCB reduction')
 
-        reduced, rss_data = super(LCBImageRecipe,self).base_run(rinput)
+        reduced2d, rss_data = super(LCBImageRecipe,self).base_run(rinput)
+
+        self.logger.info('start sky subtraction')
+        final, origin, sky = self.run_sky_subtraction(rss_data)
+        self.logger.info('end sky subtraction')
+        self.logger.info('end LCB reduction')
 
         return self.create_result(
             final=rss_data,
-            reduced=reduced,
-            rss=rss_data
+            reduced=reduced2d,
+            target=origin,
+            sky=sky
         )
