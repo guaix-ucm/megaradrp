@@ -250,7 +250,7 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37):
         for elem in thispeaks:
             total_peaks_pos.append(elem.tolist())
 
-        _logger.debug('pseudoslit box: %s', box['id'])
+        _logger.debug('pseudoslit box: %s, id: %d', box['name'], boxid)
         # Start by matching the first peak
         # with the first fiber
         fid = 0
@@ -336,7 +336,7 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37):
             pairs_1 = addl + pairs_1 + addr
 
         for fibid, (relfibid, match) in enumerate(pairs_1, counted_fibers):
-            fti = FiberTraceInfo(fibid + 1, box['id'])
+            fti = FiberTraceInfo(fibid + 1, boxid)
             if match is not None:
                 fti.start = (center, thispeaks[match, 1], thispeaks[match, 2])
             fiber_traces.append(fti)
