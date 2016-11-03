@@ -17,21 +17,22 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Calibration Recipes for Megara'''
+"""Base scientidic recipe for MEGARA"""
 
 
 from astropy.io import fits
 import numpy as np
+
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement, Requirement
 from numina.flow import SerialFlow
+from numina.array import combine
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import WavelengthCalibration
 import megaradrp.requirements as reqs
 from megaradrp.processing.combine import basic_processing_with_combination
-from numina.array import combine
-from megaradrp.processing.datamodel import MegaraDataModel
+
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.wavecalibration import WavelengthCalibrator
 from megaradrp.processing.fiberflat import Splitter, FlipLR, FiberFlatCorrector
@@ -54,7 +55,6 @@ class ImageRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(ImageRecipe, self).__init__(version="0.1.0")
-        self.datamodel = MegaraDataModel()
 
     def base_run(self, rinput):
 
@@ -90,29 +90,48 @@ class ImageRecipe(MegaraBaseRecipe):
         return reduced2d, reduced_rss
 
     def run_sky_subtraction(self, img):
-        # Sky subtraction
+        import numpy
 
+        # Sky subtraction
         self.logger.info('obtain fiber information')
-        fiberconf = self.datamodel.get_fiberconf(img)
+        sky_img = copy_img(img)
+        final_img = copy_img(img)
+        fiberconf = self.datamodel.get_fiberconf(sky_img)
         # Sky fibers
         self.logger.debug('sky fibers are: %s', fiberconf.sky_fibers())
-        import numpy
-        import astropy.io.fits as fits
+
+        # Create empty sky_data
         target_data = img[0].data
-        sky_data = numpy.zeros_like(target_data)
+
+        target_map = img['WLMAP'].data
+        sky_data = numpy.zeros_like(img[0].data)
+        sky_map = numpy.zeros_like(img['WLMAP'].data)
+        sky_img[0].data = sky_data
 
         for fibid in fiberconf.sky_fibers():
             rowid = fibid - 1
             sky_data[rowid] = target_data[rowid]
+            sky_map[rowid] = target_map[rowid]
 
-        final = img
-        origin = img
-        sky = fits.PrimaryHDU(data=sky_data, header=img[0].header)
+        # Sum
+        coldata = sky_data.sum(axis=0)
+        colsum = sky_map.sum(axis=0)
 
-        return final, origin, sky
+        # Divide only where map is > 0
+        mask = colsum > 0
+        avg_sky = numpy.zeros_like(coldata)
+        avg_sky[mask] = coldata[mask] / colsum[mask]
+
+        # This should be done only on valid fibers
+        # The information of which fiber is valid
+        # is in the tracemap, not in the header
+        for fibid in fiberconf.active_fibers():
+            rowid = fibid - 1
+            final_img[0].data[rowid, mask] = img[0].data[rowid, mask] - avg_sky[mask]
+
+        return final_img, img, sky_img
 
     def get_wcallib(self, lambda1, lambda2, fibras, traces, rss, neigh_info, grid):
-
 
         # Take a look at == []
         indices = []
@@ -205,3 +224,7 @@ class ImageRecipe(MegaraBaseRecipe):
         self.logger.info('end JSON generation')
 
         return result
+
+
+def copy_img(img):
+    return fits.HDUList([hdu.copy() for hdu in img])
