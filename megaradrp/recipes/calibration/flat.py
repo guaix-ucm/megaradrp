@@ -37,7 +37,6 @@ from megaradrp.types import ProcessedRSS, ProcessedFrame
 from megaradrp.processing.combine import basic_processing_with_combination
 from numina.array import combine
 # Create RSS
-from megaradrp.processing.datamodel import MegaraDataModel
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.wavecalibration import WavelengthCalibrator
 from megaradrp.processing.fiberflat import Splitter, FlipLR
@@ -123,12 +122,10 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     def run(self, rinput):
 
         img = self.process_flat2d(rinput)
-
-        datamodel = MegaraDataModel()
         splitter1 = Splitter()
-        calibrator_aper = ApertureExtractor(rinput.tracemap, datamodel)
+        calibrator_aper = ApertureExtractor(rinput.tracemap, self.datamodel)
         splitter2 = Splitter()
-        calibrator_wl = WavelengthCalibrator(rinput.wlcalib, datamodel)
+        calibrator_wl = WavelengthCalibrator(rinput.wlcalib, self.datamodel)
         flipcor = FlipLR()
 
         img = splitter1(img)

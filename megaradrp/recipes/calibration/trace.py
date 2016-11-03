@@ -35,7 +35,6 @@ from skimage.filters import threshold_otsu
 from skimage.feature import peak_local_max
 
 from megaradrp.instrument import MEGARA_PSEUDOSLIT_BOXES
-from megaradrp.processing.datamodel import MegaraDataModel
 from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.products import TraceMap
 from megaradrp.products.tracemap import GeometricTrace
@@ -63,7 +62,6 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
     def __init__(self):
         super(TraceMapRecipe, self).__init__(version="0.1.0")
-        self.datamodel = MegaraDataModel()
 
     @numina.core.validator.validate
     def run(self, rinput):

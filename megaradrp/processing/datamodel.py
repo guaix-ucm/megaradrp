@@ -134,7 +134,6 @@ class FibersConf(object):
                 result.append(fiber.fibid)
         return result
 
-
     def active_fibers(self):
         result = []
         for fiber in self.fibers.values():

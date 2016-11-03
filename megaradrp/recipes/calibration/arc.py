@@ -42,7 +42,6 @@ from numina.array import combine
 from skimage.feature import peak_local_max
 
 from megaradrp.processing.combine import basic_processing_with_combination
-from megaradrp.processing.datamodel import MegaraDataModel
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.fiberflat import Splitter, FlipLR
 from megaradrp.core.recipe import MegaraBaseRecipe
@@ -80,9 +79,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         hdr = img[0].header
         self.set_base_headers(hdr)
 
-        datamodel = MegaraDataModel()
         splitter1 = Splitter()
-        calibrator_aper = ApertureExtractor(rinput.tracemap, datamodel)
+        calibrator_aper = ApertureExtractor(rinput.tracemap, self.datamodel)
         flipcor = FlipLR()
 
         flow2 = SerialFlow([splitter1, calibrator_aper, flipcor])

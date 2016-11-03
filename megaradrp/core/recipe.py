@@ -45,6 +45,7 @@ class MegaraBaseRecipe(BaseRecipe):
     obresult = ObservationResultRequirement()
     qc = Product(QualityControlProduct, dest='qc')
     logger = logging.getLogger('numina.recipes.megara')
+    datamodel = MegaraDataModel()
 
     def __init__(self, version):
         self.__flow = {'BadPixelsMaskRecipe': [OverscanCorrector, TrimImage,
@@ -405,8 +406,7 @@ class MegaraBaseRecipe(BaseRecipe):
         #    _logger.debug('running in GTC environment')
         #else:
         cls.logger.debug('running outside of GTC environment')
-        datamodel = MegaraDataModel()
-        meta = datamodel.gather_info(rinput)
+        meta = cls.datamodel.gather_info(rinput)
         cls.logger.debug('obresult info')
         for entry in meta['obresult']:
             cls.logger.debug('frame info is %s', entry)
