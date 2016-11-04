@@ -35,6 +35,13 @@ class GeometricTrace(object):
         # Update polynomial
         self._set_polynomial(fitparms)
 
+    @property
+    def valid(self):
+        if self.fitparms:
+            return True
+        else:
+            return False
+
     def __getstate__(self):
         state = self.__dict__.copy()
         del state['polynomial']
@@ -49,7 +56,6 @@ class GeometricTrace(object):
             self.polynomial = nppol.Polynomial(self.fitparms)
         else:
             self.polynomial = nppol.Polynomial([0.0])
-
 
 
 class TraceMap(BaseStructuredCalibration):

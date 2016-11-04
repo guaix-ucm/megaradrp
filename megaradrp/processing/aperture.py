@@ -50,4 +50,21 @@ class ApertureExtractor(Corrector):
         hdr['NUM-APE'] = self.calibid
         hdr['history'] = 'Aperture extraction with {}'.format(self.calibid)
         hdr['history'] = 'Aperture extraction time {}'.format(datetime.datetime.utcnow().isoformat())
+
+        _logger.debug('remove VARIANCE and MAP extensions')
+        del img['variance']
+        del img['map']
+
+        # Update Fibers
+        fibers_ext = img['FIBERS']
+        fibers_ext_headers = fibers_ext.header
+        for aper in self.tracemap.contents:
+            key = "FIB%03d_V" % aper.fibid
+            fibers_ext_headers[key] = aper.valid
+            key = "FIB%03dS1" % aper.fibid
+            fibers_ext_headers[key] = aper.start
+            key = "FIB%03dS2" % aper.fibid
+            fibers_ext_headers[key] = aper.stop
+
+
         return img

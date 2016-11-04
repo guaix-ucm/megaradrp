@@ -60,15 +60,13 @@ class WavelengthCalibrator(Corrector):
         wvpar_dict = vph_thr_wl_calib['default'][current_vph]
 
         _logger.debug('Resample RSS')
-        final, wcsdata, map = self.resample_rss_flux(rss[0].data, wvpar_dict)
+        final, wcsdata, values = self.resample_rss_flux(rss[0].data, wvpar_dict)
 
         _logger.debug('Update headers')
         rss_wl = fits.PrimaryHDU(
             data=final.astype(self.dtype),
             header=rss[0].header
         )
-
-        rss_map = fits.ImageHDU(data=map.astype(dtype='int32'), name='WLMAP')
 
         hdr = rss_wl.header
         self.add_wcs(rss_wl.header, wvpar_dict['crval'], wvpar_dict['cdelt'],
@@ -80,6 +78,29 @@ class WavelengthCalibrator(Corrector):
 
         # Update other HDUs if needed
         rss[0] = rss_wl
+
+        map_data = numpy.zeros(rss[0].shape, dtype='int32')
+
+        fibers_ext = rss['FIBERS']
+        fibers_ext_headers = fibers_ext.header
+
+        for fibid, (s1, s2) in values:
+            idx = fibid - 1
+            map_data[idx, s1:s2+1] = 1
+            # Update Fibers
+            key = "FIB%03dW1" % fibid
+            fibers_ext_headers[key] =  s1 + 1
+            key = "FIB%03dW2" % fibid
+            fibers_ext_headers[key] =  s2 + 1
+
+        for fibid in self.solutionwl.error_fitting:
+            idx = fibid - 1
+            # Update Fibers
+            key = "FIB%03d_V" % fibid
+            fibers_ext_headers[key] =  False
+
+        rss_map = fits.ImageHDU(data=map_data, name='WLMAP')
+
         rss.append(rss_map)
         return rss
 
@@ -120,6 +141,7 @@ class WavelengthCalibrator(Corrector):
         accum_flux[:, 0] = 0.0
         rss_resampled = numpy.zeros((nfibers, npix))
         rss_map = numpy.zeros((nfibers, npix), dtype='int')
+        values = []
 
         for fibsol in self.solutionwl.contents.values():
 
@@ -145,8 +167,9 @@ class WavelengthCalibrator(Corrector):
             fl_borders = interpolator(new_borders)
             rss_resampled[idx] = fl_borders[1:] - fl_borders[:-1]
             rss_map[idx, s1:s2+1] = 1
+            values.append((fibid, (s1, s2)))
 
-        return rss_resampled, (wl_min, wl_max, delts), rss_map
+        return rss_resampled, (wl_min, wl_max, delts), values
 
     def map_borders(self, wls):
         """Compute borders of pixels for interpolation.

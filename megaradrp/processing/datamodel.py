@@ -100,11 +100,16 @@ class FibersConf(object):
         self.bundles = {}
         self.fibers = {}
 
-    def sky_fibers(self):
+    def sky_fibers(self, valid_only=False):
         result = []
         for bundle in self.bundles.values():
             if bundle.target_type == 'SKY':
-                result.extend(bundle.fibers.keys())
+                if valid_only:
+                    for fib in bundle.fibers.values():
+                        if fib.valid:
+                            result.append(fib.fibid)
+                else:
+                    result.extend(bundle.fibers.keys())
         return result
 
     def inactive_fibers(self):
@@ -118,6 +123,20 @@ class FibersConf(object):
         result = []
         for fiber in self.fibers.values():
             if not fiber.inactive:
+                result.append(fiber.fibid)
+        return result
+
+    def valid_fibers(self):
+        result = []
+        for fiber in self.fibers.values():
+            if fiber.valid:
+                result.append(fiber.fibid)
+        return result
+
+    def invalid_fibers(self):
+        result = []
+        for fiber in self.fibers.values():
+            if not fiber.valid:
                 result.append(fiber.fibid)
         return result
 
@@ -140,14 +159,19 @@ class FiberConf(object):
     def __init__(self):
         self.fibid = 0
         self.inactive = False
+        self.valid = True
 
 
 def read_fibers_extension(hdr):
     conf = FibersConf()
-    conf.name = hdr['INSMODE']
-    conf.conf_id = hdr['CONFID']
-    conf.nbundles = hdr['NBUNDLES']
-    conf.nfibers = hdr['NFIBERS']
+    # conf.name = hdr['INSMODE']
+    # conf.conf_id = hdr['CONFID']
+    # conf.nbundles = hdr['NBUNDLES']
+    # conf.nfibers = hdr['NFIBERS']
+    conf.name = hdr.get('INSMODE', 'LCB')
+    conf.conf_id = hdr.get('CONFID', 1)
+    conf.nbundles = hdr.get('NBUNDLES', 89)
+    conf.nfibers = hdr.get('NFIBERS', 623)
     # Read bundles
 
     bun_ids = []
@@ -193,6 +217,12 @@ def read_fibers_extension(hdr):
         ff.y = hdr["FIB%03d_Y" % fibid]
 
         ff.b = hdr["FIB%03d_B" % fibid]
+
+        # Validity
+        if ff.inactive:
+            ff.valid = False
+        else:
+            ff.valid = hdr.get("FIB%03d_V" % fibid, True)
 
         bundles[ff.b].fibers[ff.fibid] = ff
         fibers[ff.fibid] = ff

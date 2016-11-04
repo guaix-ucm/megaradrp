@@ -59,7 +59,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     obresult = ObservationResultRequirement()
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
-    # master_bpm = reqs.MasterBPMRequirement()
+    master_bpm = reqs.MasterBPMRequirement()
     tracemap = reqs.MasterTraceMapRequirement()
     lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
     polynomial_degree = Parameter(5, 'Polynomial degree of arc calibration')
@@ -89,9 +89,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         reduced2d = splitter1.out
 
         self.logger.info('extract fibers, %i', len(rinput.tracemap.contents))
-        # List of nonextracted fiberids
-        fibids_not_traced = [trace.fibid for trace in rinput.tracemap.contents if
-                             not trace.fitparms]
+        fiberconf = self.datamodel.get_fiberconf(reduced_rss)
+        fibids_not_traced = fiberconf.valid_fibers()
         self.logger.info('not traced fibers, %i', len(fibids_not_traced))
 
         current_vph = rinput.obresult.tags['vph']
@@ -117,9 +116,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                   fwhm_image=fwhm_image)
 
     def calc_fwhm_of_line(self, row, peak_int, lwidth=20):
-        '''
+        """
         Compute FWHM of lines in spectra
-        '''
+        """
         import numina.array.fwhm as fmod
 
         # FIXME: this could wrap around the image
