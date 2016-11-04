@@ -26,10 +26,6 @@ import pkgutil
 
 from six import StringIO
 from numina.flow.datamodel import DataModel
-from numina.core import DataFrame, ObservationResult
-
-
-# _logger = logging.getLogger('numina.recipes.megara')
 
 
 class MegaraDataModel(DataModel):
@@ -92,22 +88,6 @@ class MegaraDataModel(DataModel):
             values[key] = hdulist[0].header.get(val[0], val[1])
 
         return values
-
-    def gather_info(self, recipeinput):
-        klass = recipeinput.__class__
-        metadata = {}
-        for key in klass.stored():
-            val = getattr(recipeinput, key)
-            if isinstance(val, DataFrame):
-                metadata[key] = self.gather_info_dframe(val)
-            elif isinstance(val, ObservationResult):
-                metas = []
-                for f in val.images:
-                    metas.append(self.gather_info_dframe(f))
-                metadata[key] = metas
-            else:
-                pass
-        return metadata
 
 
 class FibersConf(object):

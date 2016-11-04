@@ -29,6 +29,7 @@ from numina.core import BaseRecipe
 from numina.core.dataholders import Product
 from numina.core.products import QualityControlProduct
 from numina.core.requirements import ObservationResultRequirement
+from numina.core import DataFrame, ObservationResult
 
 import megaradrp.core.correctors as cor
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
@@ -406,7 +407,7 @@ class MegaraBaseRecipe(BaseRecipe):
         #    _logger.debug('running in GTC environment')
         #else:
         cls.logger.debug('running outside of GTC environment')
-        meta = cls.datamodel.gather_info(rinput)
+        meta = cls.gather_info(rinput)
         cls.logger.debug('obresult info')
         for entry in meta['obresult']:
             cls.logger.debug('frame info is %s', entry)
@@ -416,8 +417,24 @@ class MegaraBaseRecipe(BaseRecipe):
 
         return flow
 
-
     @classmethod
     def init_filters(cls, rinput, ins):
         getters = cls.load_getters()
         return cls.init_filters_generic(rinput, getters, ins)
+
+    @classmethod
+    def gather_info(cls, recipeinput):
+        klass = recipeinput.__class__
+        metadata = {}
+        for key in klass.stored():
+            val = getattr(recipeinput, key)
+            if isinstance(val, DataFrame):
+                metadata[key] = cls.datamodel.gather_info_dframe(val)
+            elif isinstance(val, ObservationResult):
+                metas = []
+                for f in val.images:
+                    metas.append(cls.datamodel.gather_info_dframe(f))
+                metadata[key] = metas
+            else:
+                pass
+        return metadata
