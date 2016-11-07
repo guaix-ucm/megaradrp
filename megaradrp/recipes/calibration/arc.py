@@ -165,7 +165,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     peak_fluxes = row[ipeaks_int]
                     spositions = peak_fluxes.argsort()
                     # Return last nlines elements
-                    ipeaks_int_filtered = spositions[-nlines:]
+                    ipeaks_int_filtered = ipeaks_int[spositions[-nlines:]]
+                    ipeaks_int_filtered.sort()
 
                 self.logger.debug('ipeaks_int_filtered: %s', ipeaks_int_filtered)
                 ipeaks_float = refine_peaks(row, ipeaks_int_filtered, nwinwidth)[0]
