@@ -63,6 +63,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     tracemap = reqs.MasterTraceMapRequirement()
     lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
     polynomial_degree = Parameter(5, 'Polynomial degree of arc calibration')
+    nlines = Parameter(20, "Use the 'nlines' brigthest lines of the catalog")
     # Products
     arc_image = Product(DataFrameType)
     arc_rss = Product(DataFrameType)
@@ -89,9 +90,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         reduced2d = splitter1.out
 
         self.logger.info('extract fibers, %i', len(rinput.tracemap.contents))
-        fiberconf = self.datamodel.get_fiberconf(reduced_rss)
-        fibids_not_traced = fiberconf.invalid_fibers()
-        self.logger.info('not traced fibers, %i', len(fibids_not_traced))
 
         current_vph = rinput.obresult.tags['vph']
 
@@ -105,7 +103,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                                      rinput.lines_catalog,
                                                      rinput.polynomial_degree,
                                                      rinput.tracemap,
-                                                     skiptraces=fibids_not_traced,
+                                                     rinput.nlines,
                                                      threshold=threshold,
                                                      min_distance=min_distance)
 
@@ -125,12 +123,10 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         qslit = row[peak_int - lwidth:peak_int + lwidth]
         return fmod.compute_fwhm_1d_simple(qslit, lwidth)
 
-    def calibrate_wl(self, rss, lines_catalog, poldeg, tracemap,
-                     times_sigma=50.0, skiptraces=None, threshold=0.27,
+    def calibrate_wl(self, rss, lines_catalog, poldeg, tracemap, nlines,
+                     threshold=0.27,
                      min_distance=30):
 
-        if skiptraces is None:
-            skiptraces = []
         wv_master = lines_catalog[:, 0]
         ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
             gen_triplets_master(wv_master)
@@ -159,8 +155,20 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 # find peaks (initial search providing integer numbers)
                 ipeaks_int = peak_local_max(row, threshold_rel=threshold,
                                              min_distance=min_distance)[:, 0]
+
                 self.logger.debug('ipeaks_int: %s', ipeaks_int)
-                ipeaks_float = refine_peaks(row, ipeaks_int, nwinwidth)[0]
+                # Filter by flux
+                if len(ipeaks_int) <= nlines:
+                    # nothing to do
+                    ipeaks_int_filtered = ipeaks_int
+                else:
+                    peak_fluxes = row[ipeaks_int]
+                    spositions = peak_fluxes.argsort()
+                    # Return last nlines elements
+                    ipeaks_int_filtered = spositions[-nlines:]
+
+                self.logger.debug('ipeaks_int_filtered: %s', ipeaks_int_filtered)
+                ipeaks_float = refine_peaks(row, ipeaks_int_filtered, nwinwidth)[0]
 
                 # if idx==299:
                 if False:
@@ -169,6 +177,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     plt.plot(row)
                     plt.plot(ipeaks_int, row[ipeaks_int], 'ro', alpha=.9, ms=7,
                              label="ipeaks_int")
+                    plt.plot(ipeaks_int_filtered, row[ipeaks_int_filtered], 'ro', alpha=.9, ms=7,
+                             label="ipeaks_int_filtered")
                     plt.legend()
                     plt.show()
 
@@ -274,9 +284,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         import matplotlib.pyplot as plt
                         plt.title('fibid %d' % fibid)
                         rrow = row[::-1]
-                        rpeaks = 4096-ipeaks_int[::-1]
+                        rpeaks = 4096-ipeaks_int_filtered[::-1]
                         plt.plot(rrow)
-                        plt.plot(rpeaks, rrow[rpeaks], 'ro', alpha=.9, ms=7, label="ipeaks_int")
+                        plt.plot(rpeaks, rrow[rpeaks], 'ro', alpha=.9, ms=7, label="ipeaks_int_filtered")
                         # # plt.plot(ipeaks_int2, row[ipeaks_int2],'gs', alpha=.5 , ms=10)
                         plt.legend()
                         plt.show()
