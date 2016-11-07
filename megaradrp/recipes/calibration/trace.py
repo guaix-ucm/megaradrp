@@ -90,15 +90,17 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         boxes = MEGARA_PSEUDOSLIT_BOXES[insmode]
 
-        contents = self.search_traces(reduced,
-                                      boxes,
-                                      box_borders,
-                                      cstart=cstart,
-                                      threshold=threshold,
-                                      poldeg=rinput.polynomial_degree
-                                      )
+        contents, error_fitting = self.search_traces(
+            reduced,
+            boxes,
+            box_borders,
+            cstart=cstart,
+            threshold=threshold,
+            poldeg=rinput.polynomial_degree
+        )
 
         final.contents = contents
+        final.error_fitting = error_fitting
         self.logger.info('end trace spectra recipe')
         return self.create_result(fiberflat_frame=reduced,
                                   master_traces=final)
@@ -138,7 +140,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         maxdis = 2.0
 
         contents = []
-
+        error_fitting = []
         self.logger.info('trace peaks from references')
         for dtrace in central_peaks:
             # FIXME, for traces, the background must be local
@@ -170,6 +172,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
                 pfit = numpy.array([])
                 start = cstart
                 stop = cstart
+                error_fitting.append(dtrace.fibid)
 
             self.logger.debug('trace start %d  stop %d', int(start), int(stop))
 
@@ -182,7 +185,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
             )
             contents.append(this_trace)
 
-        return contents
+        return contents, error_fitting
 
 
 def estimate_background(image, center, hs, boxref):
