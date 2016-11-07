@@ -132,8 +132,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         flat2d = splitter1.out # Copy before extraction
         img = calibrator_aper(img)
         img = splitter2(img)
-        rss_base = splitter2.out # A before el calibration
-        # FIXME: Flip L-R image before calibrating WL
+        rss_base = splitter2.out # Copy before el calibration
         self.logger.debug('Flip RSS left-rigtht, before WL calibration')
         img = flipcor.run(img)
         # Calibrate in WL

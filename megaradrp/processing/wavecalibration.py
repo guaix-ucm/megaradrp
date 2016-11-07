@@ -94,7 +94,11 @@ class WavelengthCalibrator(Corrector):
             fibers_ext_headers[key] =  s2 + 1
 
         for fibid in self.solutionwl.error_fitting:
-            idx = fibid - 1
+            # Update Fibers
+            key = "FIB%03d_V" % fibid
+            fibers_ext_headers[key] =  False
+
+        for fibid in self.solutionwl.missing_fibers:
             # Update Fibers
             key = "FIB%03d_V" % fibid
             fibers_ext_headers[key] =  False
@@ -140,7 +144,6 @@ class WavelengthCalibrator(Corrector):
         accum_flux[:, 1:] = numpy.cumsum(rss_old, axis=1)
         accum_flux[:, 0] = 0.0
         rss_resampled = numpy.zeros((nfibers, npix))
-        rss_map = numpy.zeros((nfibers, npix), dtype='int')
         values = []
 
         for fibsol in self.solutionwl.contents.values():
@@ -166,7 +169,6 @@ class WavelengthCalibrator(Corrector):
             )
             fl_borders = interpolator(new_borders)
             rss_resampled[idx] = fl_borders[1:] - fl_borders[:-1]
-            rss_map[idx, s1:s2+1] = 1
             values.append((fibid, (s1, s2)))
 
         return rss_resampled, (wl_min, wl_max, delts), values

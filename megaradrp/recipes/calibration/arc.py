@@ -90,7 +90,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         self.logger.info('extract fibers, %i', len(rinput.tracemap.contents))
         fiberconf = self.datamodel.get_fiberconf(reduced_rss)
-        fibids_not_traced = fiberconf.valid_fibers()
+        fibids_not_traced = fiberconf.invalid_fibers()
         self.logger.info('not traced fibers, %i', len(fibids_not_traced))
 
         current_vph = rinput.obresult.tags['vph']
@@ -139,15 +139,14 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         error_contador = 0
         missing_fib = 0
 
-        trace_pols = [t.polynomial for t in tracemap.contents]
-
         data_wlcalib = WavelengthCalibration(instrument='MEGARA')
 
-        for idx, row in enumerate(rss):
+        for trace in tracemap.contents:
+            fibid = trace.fibid
+            idx = trace.fibid - 1
 
-            fibid = idx + 1
-
-            if fibid not in skiptraces and numpy.any(row):
+            if trace.valid:
+                row = rss[idx]
 
                 trend = detrend(row)
                 fibdata_detrend = row - trend
@@ -235,8 +234,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     self.logger.info('fitted coefficients %s',
                                      solution_wv.coeff)
 
-
-                    trace_pol = trace_pols[idx]
+                    trace_pol = trace.polynomial
                     # Update feature with measurements of Y coord in original image
                     # Peak and FWHM in RSS
                     for feature in solution_wv.features:

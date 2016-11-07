@@ -125,22 +125,23 @@ def apextract_tracemap_2(data, tracemap):
 
     existing = [None]
     for t in tracemap.contents:
-        if t.fitparms:
+        if t.valid:
             existing.append(t)
 
     existing.append(None)
     # Compute borders
     borders = []
+    far_dist = 100
 
     # Handle the first and last using centinels
     for t1, t2, t3 in zip(existing, existing[1:], existing[2:]):
         # Distance to contfibers # in box
         if t1 is None:
-            d21 = 100
+            d21 = far_dist
         else:
             d21 = (t2.fibid - t1.fibid) + (t2.boxid - t1.boxid)
         if t3 is None:
-            d32 = 100
+            d32 = far_dist
         else:
             d32 = (t3.fibid - t2.fibid) + (t3.boxid - t2.boxid)
 
