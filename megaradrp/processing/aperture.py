@@ -42,6 +42,7 @@ class ApertureExtractor(Corrector):
         _logger.debug('simple aperture extraction')
         imgid = self.get_imgid(img)
         _logger.debug('extracting (apextract_tracemap) in image %s', imgid)
+        _logger.debug('with trace map %s', self.calibid)
         rssdata = apextract_tracemap_2(img[0].data, self.tracemap)
         img[0].data = rssdata
 
@@ -65,6 +66,5 @@ class ApertureExtractor(Corrector):
             fibers_ext_headers[key] = aper.start
             key = "FIB%03dS2" % aper.fibid
             fibers_ext_headers[key] = aper.stop
-
 
         return img
