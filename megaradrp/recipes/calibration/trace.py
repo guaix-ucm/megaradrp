@@ -56,6 +56,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
     polynomial_degree = Parameter(5, 'Polynomial degree of trace fitting')
+    relative_threshold = Parameter(0.3, 'Threshold for peak detection')
 
     fiberflat_frame = Product(ProcessedFrame)
     master_traces = Product(TraceMap)
@@ -82,7 +83,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
             threshold = vph_thr[current_vph]
             self.logger.info('rel threshold for %s is %4.2f', current_vph, threshold)
         else:
-            threshold = 0.3
+            threshold = rinput.relative_threshold
             self.logger.info('rel threshold not defined for %s, using %4.2f', current_vph, threshold)
 
         final = megaradrp.products.TraceMap(instrument=obresult.instrument)
