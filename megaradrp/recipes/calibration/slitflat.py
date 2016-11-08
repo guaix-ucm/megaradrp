@@ -18,24 +18,26 @@
 
 from __future__ import division, print_function
 
-import logging
-import numpy as np
+import uuid
 
+import numpy
+from scipy.ndimage.filters import median_filter
+from scipy.signal import savgol_filter
 from astropy.io import fits
+from numina.array import combine
+from numina.core import Product, Parameter
 
+from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.types import MasterSlitFlat
 import megaradrp.requirements as reqs
-from numina.core import Product, Parameter
-from scipy.ndimage.filters import median_filter
-from scipy.signal import savgol_filter
 
-_logger = logging.getLogger('numina.recipes.megara')
 
 class SlitFlatRecipe(MegaraBaseRecipe):
     """Process SLIT_FLAT images and create MASTER_SLIT_FLAT."""
 
     # Requirements
+    master_bpm = reqs.MasterBiasRequirement()
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
 
@@ -51,33 +53,40 @@ class SlitFlatRecipe(MegaraBaseRecipe):
         super(SlitFlatRecipe, self).__init__(version="0.1.0")
 
     def run(self, rinput):
-        _logger.info('Slit Flat')
+        self.logger.info('starting slit flat reduction')
 
-        parameters = self.get_parameters(rinput)
-        reduced = self.bias_process_common(rinput.obresult, parameters)
+        flow = self.init_filters(rinput, rinput.obresult.configuration.values)
+        reduced = basic_processing_with_combination(rinput, flow, method=combine.median)
+        hdr = reduced[0].header
+        self.set_base_headers(hdr)
 
-        _logger.debug("Compute median")
+        self.save_intermediate_img(reduced, 'reduced.fits')
+
+        self.logger.debug("Compute median")
         if rinput.median_window_length:
             archivo_mediana = median_filter(reduced[0].data, (1, rinput.median_window_length))
         else:
             archivo_mediana = reduced[0].data
 
-        _logger.debug("Compute Savitzky-Golay X filter (%d, %d)", rinput.window_length_x, rinput.polyorder)
+        self.logger.debug("Compute Savitzky-Golay X filter (%d, %d)", rinput.window_length_x, rinput.polyorder)
         result = savgol_filter(archivo_mediana, rinput.window_length_x, rinput.polyorder, axis=1)
 
         if rinput.window_length_y:
-            _logger.debug("Compute Savitzky-Golay Y filter (%d, %d)", rinput.window_length_y, rinput.polyorder)
+            self.logger.debug("Compute Savitzky-Golay Y filter (%d, %d)", rinput.window_length_y, rinput.polyorder)
             result = savgol_filter(result, rinput.window_length_y, rinput.polyorder, axis=0)
 
         qe = reduced[0].data / result
 
-        _logger.debug('Filtering INF/NAN in result')
-        qe[np.isinf(qe)] = 1.0
-        qe[np.isnan(qe)] = 1.0
+        self.logger.debug('Filtering INF/NAN in result')
+        qe[numpy.isinf(qe)] = 1.0
+        qe[numpy.isnan(qe)] = 1.0
 
         hdu = fits.PrimaryHDU(qe, header=reduced[0].header)
-        header_list = self.getHeaderList([reduced, rinput.obresult.images[0].open()])
-        master_slitflat = fits.HDUList([hdu]+header_list)
+        hdu.header['UUID'] = uuid.uuid1().hex
+        hdu.header['OBJECT'] = 'MASTER SLITFLAT'
+        # hdu.header['IMAGETYP'] = 'SLIT_FLAT'
 
-        _logger.info('End slit flat')
+        master_slitflat = fits.HDUList([hdu])
+
+        self.logger.info('end slit flat recipe')
         return self.create_result(master_slitflat=master_slitflat)
