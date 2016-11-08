@@ -23,7 +23,6 @@
 from astropy.io import fits
 import numpy as np
 
-from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement, Requirement
 from numina.flow import SerialFlow
 from numina.array import combine

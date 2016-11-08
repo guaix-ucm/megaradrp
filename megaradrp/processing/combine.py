@@ -32,7 +32,6 @@ from numina.array import combine
 import megaradrp.processing.datamodel
 
 
-
 def basic_processing_with_combination(rinput, flow,
                                       method=combine.mean,
                                       errors=True,
@@ -53,7 +52,6 @@ def basic_processing_with_combination_frames(frames,
     _logger = logging.getLogger(__name__)
     odata = []
     cdata = []
-
 
     datamodel = megaradrp.processing.datamodel.MegaraDataModel()
     try:
