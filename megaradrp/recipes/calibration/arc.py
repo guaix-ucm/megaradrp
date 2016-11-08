@@ -87,6 +87,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         flow2 = SerialFlow([splitter1, calibrator_aper, flipcor])
 
         reduced_rss = flow2(img)
+        reduced_rss.writeto('arc_rss.fits', clobber=True)
         reduced2d = splitter1.out
 
         self.logger.info('extract fibers, %i', len(rinput.tracemap.contents))
@@ -156,7 +157,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 ipeaks_int = peak_local_max(row, threshold_rel=threshold,
                                              min_distance=min_distance)[:, 0]
 
-                self.logger.debug('ipeaks_int: %s', ipeaks_int)
+                self.logger.debug('ipeaks_int.........: %s', ipeaks_int)
                 # Filter by flux
                 if len(ipeaks_int) <= nlines:
                     # nothing to do
