@@ -80,7 +80,7 @@ def test_bpm_corrector():
     from tempfile import mkdtemp
 
     directorio = mkdtemp()
-    names = crear_archivos(directorio)
+    names = crear_archivos(directorio, number=4)
 
     ob = ObservationResult()
     ob.instrument = 'MEGARA'

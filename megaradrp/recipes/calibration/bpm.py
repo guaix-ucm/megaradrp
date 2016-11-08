@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2011-2016 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,48 +17,88 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Bad PIxel Mask (BPM) recipe"""
+"""Bad Pixel Mask (BPM) recipe"""
 
+import uuid
+import datetime
+
+import numina.exceptions
 import astropy.io.fits as fits
-import numpy as np
 from numina.array.cosmetics import ccdmask
 from numina.core import Product
-from numina.core.requirements import ObservationResultRequirement
+from numina.array import combine
+import numina.core.validator as val
 
+from megaradrp.processing.combine import basic_processing_with_combination_frames
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.types import  MasterBPM
-from megaradrp.requirements import MasterBiasRequirement
+import megaradrp.requirements as reqs
 
 
 class BadPixelsMaskRecipe(MegaraBaseRecipe):
-    obresult = ObservationResultRequirement()
-    master_bias = MasterBiasRequirement()
+
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
 
     master_bpm = Product(MasterBPM)
 
     def __init__(self):
         super(BadPixelsMaskRecipe, self).__init__(version="0.1.0")
 
+    @val.validate
     def run(self, rinput):
-        import copy
-
+        self.logger.info('start BPM recipe')
         N = len(rinput.obresult.frames)
-        obresult1 = copy.copy(rinput.obresult)
-        obresult1.frames = rinput.obresult.frames[:N//2]
-        obresult2 = copy.copy(rinput.obresult)
-        obresult2.frames = rinput.obresult.frames[N//2:]
 
-        with rinput.master_bias.open() as hdul:
-            mbias = hdul[0].data.copy()
+        self.logger.debug('we have %d images', N)
+        half = N // 2
+        flow = self.init_filters(rinput, rinput.obresult.configuration.values)
+        self.logger.debug('we have %d images', N)
+        reduced1 = basic_processing_with_combination_frames(
+            rinput.obresult.frames[:half],
+            flow,
+            method=combine.median
+        )
 
-        reduced1 = self.bias_process_common(obresult1, {'biasmap':mbias})
-        reduced2 = self.bias_process_common(obresult2, {'biasmap':mbias})
+        self.save_intermediate_img(reduced1, 'reduced1.fits')
 
-        mask = np.zeros(reduced1[0].data.shape, dtype='int')
+        reduced2 = basic_processing_with_combination_frames(
+            rinput.obresult.frames[half:],
+            flow,
+            method=combine.median
+        )
 
-        bpm = ccdmask(reduced1[0].data, reduced2[0].data, mask, mode='full')
-        hdu = fits.PrimaryHDU(bpm)
+        self.save_intermediate_img(reduced2, 'reduced2.fits')
+
+        ratio, mask, sigma = ccdmask(reduced1[0].data, reduced2[0].data, mode='full')
+
+        hdu = fits.PrimaryHDU(mask, header=reduced1[0].header)
+        hdu.header['UUID'] = uuid.uuid1().hex
+        hdu.header['OBJECT'] = 'MASTER BPM'
+        hdu.header['IMAGETYP'] = 'BPM'
+        self.set_base_headers(hdu.header)
+
+        hdu.header['history'] = 'BPM creation time {}'.format(
+            datetime.datetime.utcnow().isoformat()
+        )
+
+        for frame in rinput.obresult.frames:
+            hdu.header['history'] = "With image {}".format(
+                self.datamodel.get_imgid(frame.open())
+            )
 
         reduced = fits.HDUList([hdu])
-
+        self.logger.info('end BPM recipe')
         return self.create_result(master_bpm=reduced)
+
+    def validate_input(self, recipe_input):
+        "Validate input of the recipe"
+
+        obresult = recipe_input.obresult
+        # Check that the number of frames is even
+        nimages = len(obresult.frames)
+        if nimages % 2 != 0:
+            msg = 'expected even number of frames, received {} instead'.format(nimages)
+            raise numina.exceptions.ValidationError(msg)
+        # Continue with additional checks
+        super(BadPixelsMaskRecipe, self).validate_input(recipe_input)

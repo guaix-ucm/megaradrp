@@ -57,12 +57,11 @@ def generate_bias(detector, number, temporary_path):
     return recipe.run(ri)
 
 
-def crear_archivos(temporary_path):
+def crear_archivos(temporary_path, number=5):
     from megaradrp.simulation.actions import simulate_flat
     from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
     from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
 
-    number = 5
     PSCAN = 50
     DSHAPE = (2056 * 2, 2048 * 2)
     OSCAN = 50
@@ -121,6 +120,6 @@ def crear_archivos(temporary_path):
         filename=open(temporary_path + '/master_bias_data0.fits').name))
     aux = recipe.run(ri)
     fits.writeto('%s/master_bpm.fits' % temporary_path,
-                 aux.master_bpm.frame[0].data[1], clobber=True)
+                 aux.master_bpm.frame[0].data, clobber=True)
 
     return names

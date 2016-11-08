@@ -49,9 +49,7 @@ class MegaraBaseRecipe(BaseRecipe):
     datamodel = MegaraDataModel()
 
     def __init__(self, version):
-        self.__flow = {'BadPixelsMaskRecipe': [OverscanCorrector, TrimImage,
-                                               BiasCorrector, DarkCorrector],
-                       'FiberFlatRecipe': [OverscanCorrector, TrimImage,
+        self.__flow = {'FiberFlatRecipe': [OverscanCorrector, TrimImage,
                                            BiasCorrector, DarkCorrector,
                                            BadPixelCorrector,
                                            SlitFlatCorrector],
@@ -86,14 +84,13 @@ class MegaraBaseRecipe(BaseRecipe):
                                                        DarkCorrector,
                                                        ApertureExtractor,
                                                        FiberFlatCorrector],
-                       'LCBImageRecipe': [OverscanCorrector, TrimImage,
-                                          BiasCorrector, BadPixelCorrector,
-                                          DarkCorrector, SlitFlatCorrector],
-                                          # WeightsCorrector,
-                                          # FiberFlatCorrector,
-                                          # TwilightCorrector],
                        }
         super(MegaraBaseRecipe, self).__init__(version=version)
+        self.save_intermediate_results = True
+
+    def save_intermediate_img(self, img, name):
+        if self.save_intermediate_results:
+            img.writeto(name, clobber=True)
 
     def __generate_flow(self, params, confFile):
         import copy
