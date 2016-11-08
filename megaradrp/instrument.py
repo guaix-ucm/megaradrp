@@ -122,7 +122,7 @@ vph_thr_arc = {
                   'threshold': 0.20},
          'LR-V': {'min_distance': 30,
                   'threshold': 0.19},
-         'LR-Z': {'min_distance': 60,
+         'LR-Z': {'min_distance': 10,
                   'threshold': 0.02},
          'LR-U': {'min_distance': 10,
                   'threshold': 0.02, }
@@ -139,5 +139,11 @@ vph_thr_wl_calib = {
             'crpix': 1.0,
             'npix': 4300
         },
+        'LR-Z': {
+            'crval': 7985.0,
+            'cdelt': 0.41,
+            'crpix': 1.0,
+            'npix': 4300
+        }
     },
 }
