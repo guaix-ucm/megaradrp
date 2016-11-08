@@ -106,7 +106,7 @@ MEGARA_PSEUDOSLIT_BOXES = {
 # Values for recipe Trace
 # Relative threshold for each VPH in LCB
 vph_thr = {'LR-I': 0.27,
-           'LR-R': 0.37,
+           'LR-R': 0.10,
            'LR-V': 0.27,
            'LR-Z': 0.27,
            'LR-U': 0.02,
@@ -119,7 +119,7 @@ vph_thr_arc = {
         {'LR-I': {'min_distance': 10,
                   'threshold': 0.06},
          'LR-R': {'min_distance': 10,
-                  'threshold': 0.20},
+                  'threshold': 0.02},
          'LR-V': {'min_distance': 30,
                   'threshold': 0.19},
          'LR-Z': {'min_distance': 10,
@@ -142,6 +142,12 @@ vph_thr_wl_calib = {
         'LR-Z': {
             'crval': 7985.0,
             'cdelt': 0.41,
+            'crpix': 1.0,
+            'npix': 4300
+        },
+        'LR-R': {
+            'crval': 6030.0,
+            'cdelt': 0.31,
             'crpix': 1.0,
             'npix': 4300
         }
