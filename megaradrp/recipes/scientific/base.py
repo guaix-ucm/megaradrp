@@ -106,14 +106,16 @@ class ImageRecipe(MegaraBaseRecipe):
         sky_data = numpy.zeros_like(img[0].data)
         sky_map = numpy.zeros_like(img['WLMAP'].data)
         sky_img[0].data = sky_data
-        import matplotlib.pyplot as plt
+
         for fibid in fiberconf.sky_fibers(valid_only=True):
             rowid = fibid - 1
             sky_data[rowid] = target_data[rowid]
             sky_map[rowid] = target_map[rowid]
-            plt.plot(sky_data[rowid])
-            plt.title("%d" % fibid)
-            plt.show()
+            if False:
+                import matplotlib.pyplot as plt
+                plt.plot(sky_data[rowid])
+                plt.title("%d" % fibid)
+                plt.show()
         # Sum
         coldata = sky_data.sum(axis=0)
         colsum = sky_map.sum(axis=0)
