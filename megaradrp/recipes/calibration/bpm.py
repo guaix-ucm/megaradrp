@@ -45,7 +45,6 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
     def __init__(self):
         super(BadPixelsMaskRecipe, self).__init__(version="0.1.0")
 
-    @val.validate
     def run(self, rinput):
         self.logger.info('start BPM recipe')
         N = len(rinput.obresult.frames)

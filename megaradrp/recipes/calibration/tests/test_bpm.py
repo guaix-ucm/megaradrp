@@ -81,7 +81,7 @@ def test_bpm():
 
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
-    ob.mode = 'bias_image'
+    ob.mode = 'MEGARA_BIAS_IMAGE'
     ob.configuration = MegaraInstrumentConfiguration('configuration', {
         'trim1': [[0, 2056], [50, 4146]],
         'trim2': [[2156, 4212], [50, 4146]],
