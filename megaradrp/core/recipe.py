@@ -89,7 +89,7 @@ class MegaraBaseRecipe(BaseRecipe):
         if self.save_intermediate_results:
             img.writeto(name, clobber=True)
 
-    def __generate_flow(self, params, confFile):
+    def __generate_flow(self, params, conf):
         import copy
         ff = self.__flow[self.__class__.__name__]
         flow = copy.deepcopy(ff)
@@ -136,7 +136,8 @@ class MegaraBaseRecipe(BaseRecipe):
                         cont -= 1
                 elif issubclass(TrimImage, flow[cont]) or issubclass(
                         OverscanCorrector, flow[cont]):
-                    flow[cont] = (flow[cont](confFile=confFile))
+                    detconf = conf.get('detector.scan')
+                    flow[cont] = (flow[cont](detconf))
                 cont += 1
             basicflow = SerialFlow(flow)
 
@@ -166,7 +167,7 @@ class MegaraBaseRecipe(BaseRecipe):
         if params is None:
             params = {}
 
-        basicflow = self.__generate_flow(params, obresult.configuration.values)
+        basicflow = self.__generate_flow(params, obresult.configuration)
         cdata = []
         headers = []
         hdulist = []

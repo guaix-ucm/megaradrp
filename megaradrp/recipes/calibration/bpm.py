@@ -51,7 +51,7 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
 
         self.logger.debug('we have %d images', N)
         half = N // 2
-        flow = self.init_filters(rinput, rinput.obresult.configuration.values)
+        flow = self.init_filters(rinput, rinput.obresult.configuration)
         self.logger.debug('we have %d images', N)
         reduced1 = basic_processing_with_combination_frames(
             rinput.obresult.frames[:half],

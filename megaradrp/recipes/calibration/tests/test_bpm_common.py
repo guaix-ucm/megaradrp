@@ -23,8 +23,7 @@ import astropy.io.fits as fits
 import numpy as np
 from numina.core import DataFrame, ObservationResult
 
-from megaradrp.core.insconf import MegaraInstrumentConfiguration
-
+from megaradrp.instrument.loader import build_instrument_config
 
 def generate_bias(detector, number, temporary_path):
     from megaradrp.simulation.actions import simulate_bias
@@ -40,16 +39,7 @@ def generate_bias(detector, number, temporary_path):
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'bias_image'
-    ob.configuration = MegaraInstrumentConfiguration('configuration', {
-        'trim1': [[0, 2056], [50, 4146]],
-        'trim2': [[2156, 4212], [50, 4146]],
-        'bng': [1, 1],
-        'overscan1': [[0, 2056], [4149, 4196]],
-        'overscan2': [[2156, 4212], [0, 50]],
-        'prescan1': [[0, 2056], [0, 50]],
-        'prescan2': [[2156, 4212], [4145, 4196]],
-        'middle1': [[2056, 2106], [50, 4146]],
-        'middle2': [[2106, 2156], [50, 4146]]})
+    ob.configuration = build_instrument_config('4fd05b24-2ed9-457b-b563-a3c618bb1d4c')
     ob.frames = [DataFrame(filename=f) for f in fs]
 
     recipe = BiasRecipe()
@@ -99,18 +89,9 @@ def crear_archivos(temporary_path, number=5):
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'bias_image'
-    ob.configuration = MegaraInstrumentConfiguration('configuration', {
-        'trim1': [[0, 2056], [50, 4146]],
-        'trim2': [[2156, 4212], [50, 4146]],
-        'bng': [1, 1],
-        'overscan1': [[0, 2056], [4149, 4196]],
-        'overscan2': [[2156, 4212], [0, 50]],
-        'prescan1': [[0, 2056], [0, 50]],
-        'prescan2': [[2156, 4212], [4145, 4196]],
-        'middle1': [[2056, 2106], [50, 4146]],
-        'middle2': [[2106, 2156], [50, 4146]]})
-    names = []
+    ob.configuration = build_instrument_config('4fd05b24-2ed9-457b-b563-a3c618bb1d4c')
 
+    names = []
     for aux in range(number):
         names.append('%s/flat_%s.fits' % (temporary_path, aux))
     ob.frames = [DataFrame(filename=open(nombre).name) for nombre in names]

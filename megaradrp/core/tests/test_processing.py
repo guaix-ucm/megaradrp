@@ -37,12 +37,19 @@ def generate_bias_file():
 @pytest.mark.parametrize("direction", ['normal', 'mirror'])
 def test_trim_and_o(direction):
     temporary_path = mkdtemp()
-    confFile = {'trim1': [[0,2056],[50,4146]],
-                'trim2': [[2156,4212],[50,4146]],
-                'bng': [1,1]}
+    detconf = {
+        'trim1': [[0,2056],[50,4146]],
+        'trim2': [[2156,4212],[50,4146]],
+        'bng': [1,1]
+    }
     fs = generate_bias_file()
     fits.writeto('%s/flat.fits' % (temporary_path), fs, clobber=True)
-    trimOut('%s/flat.fits' % (temporary_path), out='%s/result.fits' % (temporary_path), direction=direction, confFile=confFile)
+    trimOut(
+        '%s/flat.fits' % (temporary_path),
+        detconf,
+        out='%s/result.fits' % (temporary_path),
+        direction=direction,
+    )
     with fits.open('%s/result.fits' % (temporary_path)) as hdul:
         assert hdul[0].shape[0] + 100 == fs.shape[0]
         assert hdul[0].shape[1] + 100 == fs.shape[1]
@@ -55,11 +62,18 @@ def test_trim_and_o_fail():
     fits.writeto('%s/flat.fits' % (temporary_path), fs, clobber=True)
 
     direction = 'fails'
-    confFile = {'trim1': [[0,2056],[50,4146]],
-                'trim2': [[2156,4212],[50,4146]],
-                'bng': [1,1]}
+    detconf = {
+        'trim1': [[0,2056],[50,4146]],
+        'trim2': [[2156,4212],[50,4146]],
+        'bng': [1,1]
+    }
     with pytest.raises(ValueError) as excinfo:
-        trimOut('%s/flat.fits' % (temporary_path), out='%s/result.fits' % (temporary_path), direction=direction, confFile=confFile)
+        trimOut(
+            '%s/flat.fits' % (temporary_path),
+            detconf,
+            out='%s/result.fits' % (temporary_path),
+            direction=direction
+        )
     shutil.rmtree(temporary_path)
     assert excinfo.value.args[0] == "%s must be either 'normal' or 'mirror'" % direction
 
@@ -69,11 +83,17 @@ def test_trim_and_o_fail2():
     fits.writeto('%s/flat.fits' % (temporary_path), fs, clobber=True)
 
     bins = 'fail'
-    confFile = {'trim1': [[0,2056],[50,4146]],
-                'trim2': [[2156,4212],[50,4146]],
-                'bng': bins}
+    detconf = {
+        'trim1': [[0,2056],[50,4146]],
+        'trim2': [[2156,4212],[50,4146]],
+        'bng': bins
+    }
     with pytest.raises(ValueError) as excinfo:
-        trimOut('%s/flat.fits' % (temporary_path), out='%s/result.fits' % (temporary_path), confFile=confFile)
+        trimOut(
+            '%s/flat.fits' % (temporary_path),
+            detconf,
+            out='%s/result.fits' % (temporary_path)
+        )
     shutil.rmtree(temporary_path)
     assert excinfo.value.args[0] == "%s must be one if '11', '12', '21, '22'" % bins
 

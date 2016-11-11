@@ -55,7 +55,7 @@ class SlitFlatRecipe(MegaraBaseRecipe):
     def run(self, rinput):
         self.logger.info('starting slit flat reduction')
 
-        flow = self.init_filters(rinput, rinput.obresult.configuration.values)
+        flow = self.init_filters(rinput, rinput.obresult.configuration)
         reduced = basic_processing_with_combination(rinput, flow, method=combine.median)
         hdr = reduced[0].header
         self.set_base_headers(hdr)

@@ -30,7 +30,7 @@ from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
 from megaradrp.recipes.calibration.tests.test_bpm_common import generate_bias
 from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.actions import simulate_flat
-from megaradrp.core.insconf import MegaraInstrumentConfiguration
+from megaradrp.instrument.loader import build_instrument_config
 
 
 # @pytest.mark.remote
@@ -82,18 +82,9 @@ def test_bpm():
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'MEGARA_BIAS_IMAGE'
-    ob.configuration = MegaraInstrumentConfiguration('configuration', {
-        'trim1': [[0, 2056], [50, 4146]],
-        'trim2': [[2156, 4212], [50, 4146]],
-        'bng': [1, 1],
-        'overscan1': [[0, 2056], [4149, 4196]],
-        'overscan2': [[2156, 4212], [0, 50]],
-        'prescan1': [[0, 2056], [0, 50]],
-        'prescan2': [[2156, 4212], [4145, 4196]],
-        'middle1': [[2056, 2106], [50, 4146]],
-        'middle2': [[2106, 2156], [50, 4146]]})
-    names = []
+    ob.configuration = build_instrument_config('4fd05b24-2ed9-457b-b563-a3c618bb1d4c')
 
+    names = []
     for aux in range(number * 2):
         names.append('%s/flat_%s.fits' % (temporary_path, aux))
     ob.frames = [DataFrame(filename=open(nombre).name) for nombre in names]

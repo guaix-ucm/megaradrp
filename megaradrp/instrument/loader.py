@@ -147,6 +147,7 @@ class ComponentConfigurations(object):
         conf = self.configurations[key]
         return conf.get(**kwds)
 
+
 def build_instrument_config(uuid, loader=None):
 
     if loader is None:

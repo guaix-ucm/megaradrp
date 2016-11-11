@@ -75,7 +75,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
     def run(self, rinput):
 
-        flow1 = self.init_filters(rinput, rinput.obresult.configuration.values)
+        flow1 = self.init_filters(rinput, rinput.obresult.configuration)
         img = basic_processing_with_combination(rinput, flow1, method=combine.median)
         hdr = img[0].header
         self.set_base_headers(hdr)
