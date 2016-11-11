@@ -24,13 +24,13 @@ import numpy as np
 from megaradrp.core.processing import trimOut, get_conf_value
 from numina.flow.processing import Corrector
 
-_logger = logging.getLogger('megara.processing')
+_logger = logging.getLogger(__name__)
 
 
 class OverscanCorrector(Corrector):
-    '''A Node that corrects a frame from overscan.'''
+    """A Corrector Node that corrects a MEGARA image from overscan."""
 
-    def __init__(self, detconf, datamodel=None, dtype='float32'):
+    def __init__(self, detconf, datamodel=None, calibid='calibid-unknown', dtype='float32'):
 
         trim1 = get_conf_value(detconf, 'trim1')
         trim2 = get_conf_value(detconf, 'trim2')
@@ -66,15 +66,8 @@ class OverscanCorrector(Corrector):
 
         # self.test_image()
         super(OverscanCorrector, self).__init__(datamodel=datamodel,
+                                                calibid=calibid,
                                                 dtype=dtype)
-
-    def _get_conf_value(self, confFile, key=''):
-        if confFile:
-            if key in confFile.keys():
-                return confFile[key]
-            else:
-                raise ValueError('Key is not in configuration file')
-        raise ValueError('Instrument is not in the system')
 
     def data_binning(self, data, binning):
         '''
@@ -133,7 +126,7 @@ class OverscanCorrector(Corrector):
         data[self.trim2] -= avg
         hdr = img['primary'].header
         hdr['NUM-OVPE'] = self.calibid
-        hdr['history'] = 'Overscan correction {}'.format(imgid)
+        hdr['history'] = 'Overscan correction with {}'.format(self.calibid)
         hdr['history'] = 'Overscan correction time {}'.format(datetime.datetime.utcnow().isoformat())
         hdr['history'] = 'Mean of prescan1 is %f' % p1
         hdr['history'] = 'col overscan1 is %f' %  oc1
@@ -146,11 +139,15 @@ class OverscanCorrector(Corrector):
 
 
 class TrimImage(Corrector):
-    '''A Node that trims images.'''
+    """A Corrector Node that trims MEGARA images."""
 
-    def __init__(self, detconf, datamodel=None, dtype='float32'):
+    def __init__(self, detconf, datamodel=None, calibid='calibid-unknown', dtype='float32'):
         self.detconf = detconf
-        super(TrimImage, self).__init__(datamodel=datamodel, dtype=dtype)
+        super(TrimImage, self).__init__(
+            datamodel=datamodel,
+            calibid=calibid,
+            dtype=dtype
+        )
 
     def run(self, img):
         imgid = self.get_imgid(img)
@@ -159,7 +156,7 @@ class TrimImage(Corrector):
         img[0] = trimOut(img[0], self.detconf)
         hdr = img['primary'].header
         hdr['NUM-TRIM'] = self.calibid
-        hdr['history'] = 'Trimming correction {}'.format(imgid)
+        hdr['history'] = 'Trimming correction with {}'.format(self.calibid)
         hdr['history'] = 'Trimming correction time {}'.format(datetime.datetime.utcnow().isoformat())
 
         return img

@@ -97,9 +97,17 @@ def get_corrector_sf(rinput, meta, ins, datamodel):
 
 def get_corrector_o(rinput, meta, ins, datamodel):
     detconf = ins.get('detector.scan')
-    return OverscanCorrector(detconf, datamodel=datamodel)
+    return OverscanCorrector(
+        detconf,
+        datamodel=datamodel,
+        calibid=ins.components['detector'].uuid
+    )
 
 
 def get_corrector_t(rinput, meta, ins, datamodel):
     detconf = ins.get('detector.scan')
-    return TrimImage(detconf, datamodel=datamodel)
+    return TrimImage(
+        detconf,
+        datamodel=datamodel,
+        calibid=ins.components['detector'].uuid
+    )
