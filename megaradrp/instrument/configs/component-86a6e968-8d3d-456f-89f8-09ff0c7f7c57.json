@@ -1,0 +1,165 @@
+{
+ "name": "boxes", 
+ "description": "Pseudo slit Box configurations", 
+ "type": "configuration", 
+ "date_start": "2016-11-08", 
+ "date_end": null, 
+ "uuid": "86a6e968-8d3d-456f-89f8-09ff0c7f7c57",
+ "configurations": {
+  "boxes": {
+   "depends": [
+    "insmode"
+   ],
+   "values": {
+    "MOS": [
+     {
+      "nfibers": 7,
+      "name": "9b"
+     },
+     {
+      "nfibers": 21,
+      "name": "8b"
+     },
+     {
+      "nfibers": 21,
+      "name": "7b"
+     },
+     {
+      "nfibers": 21,
+      "name": "6b"
+     },
+     {
+      "nfibers": 28,
+      "name": "5b"
+     },
+     {
+      "nfibers": 28,
+      "name": "4b"
+     },
+     {
+      "nfibers": 35,
+      "name": "3b"
+     },
+     {
+      "nfibers": 42,
+      "name": "2b"
+     },
+     {
+      "nfibers": 77,
+      "name": "1b"
+     },
+     {
+      "nfibers": 77,
+      "name": "0"
+     },
+     {
+      "nfibers": 77,
+      "name": "1a"
+     },
+     {
+      "nfibers": 42,
+      "name": "2a"
+     },
+     {
+      "nfibers": 35,
+      "name": "3a"
+     },
+     {
+      "nfibers": 28,
+      "name": "4a"
+     },
+     {
+      "nfibers": 28,
+      "name": "5a"
+     },
+     {
+      "nfibers": 21,
+      "name": "6a"
+     },
+     {
+      "nfibers": 21,
+      "name": "7a"
+     },
+     {
+      "nfibers": 21,
+      "name": "8a"
+     },
+     {
+      "nfibers": 14,
+      "name": "9a"
+     }
+    ],
+    "LCB": [
+     {
+      "nfibers": 21,
+      "name": "8b"
+     },
+     {
+      "nfibers": 21,
+      "name": "7b"
+     },
+     {
+      "nfibers": 21,
+      "name": "6b"
+     },
+     {
+      "nfibers": 28,
+      "name": "5b"
+     },
+     {
+      "nfibers": 28,
+      "name": "4b"
+     },
+     {
+      "nfibers": 35,
+      "name": "3b"
+     },
+     {
+      "nfibers": 42,
+      "name": "2b"
+     },
+     {
+      "nfibers": 77,
+      "name": "1b"
+     },
+     {
+      "nfibers": 77,
+      "name": "0"
+     },
+     {
+      "nfibers": 77,
+      "name": "1a"
+     },
+     {
+      "nfibers": 42,
+      "name": "2a"
+     },
+     {
+      "nfibers": 35,
+      "name": "3a"
+     },
+     {
+      "nfibers": 28,
+      "name": "4a"
+     },
+     {
+      "nfibers": 28,
+      "name": "5a"
+     },
+     {
+      "nfibers": 21,
+      "name": "6a"
+     },
+     {
+      "nfibers": 21,
+      "name": "7a"
+     },
+     {
+      "nfibers": 21,
+      "name": "8a"
+     }
+    ]
+   }
+  }
+ }
+}
