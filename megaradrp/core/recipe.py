@@ -405,7 +405,7 @@ class MegaraBaseRecipe(BaseRecipe):
         cls.logger.debug('obresult info')
         for entry in meta['obresult']:
             cls.logger.debug('frame info is %s', entry)
-        correctors = [getter(rinput, meta, ins) for getter in getters]
+        correctors = [getter(rinput, meta, ins, cls.datamodel) for getter in getters]
 
         flow = SerialFlow(correctors)
 

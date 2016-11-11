@@ -34,14 +34,14 @@ from megaradrp.processing.datamodel import MegaraDataModel
 _logger = logging.getLogger(__name__)
 
 
-def get_corrector_p(rinput, meta, ins):
+def get_corrector_p(rinput, meta, ins, datamodel):
     bpm_info = meta.get('master_bpm')
     if bpm_info is not None:
         with rinput.master_bpm.open() as hdul:
             _logger.info('loading BPM')
             _logger.debug('BPM image: %s', bpm_info)
             mbpm = hdul[0].data
-            bpm_corrector = BadPixelCorrector(mbpm, datamodel=MegaraDataModel())
+            bpm_corrector = BadPixelCorrector(mbpm, datamodel=datamodel)
     else:
         _logger.info('BPM not provided, ignored')
         bpm_corrector = IdNode()
@@ -66,21 +66,19 @@ def get_corrector_super(rinput, meta, key, correctorclass, datamodel):
     return corrector
 
 
-def get_corrector_bias(rinput, meta, ins):
+def get_corrector_bias(rinput, meta, ins, datamodel):
     key = 'master_bias'
     correctorclass = BiasCorrector
-    datamodel = MegaraDataModel()
     return get_corrector_super(rinput, meta, key, correctorclass, datamodel)
 
 
-def get_corrector_dark(rinput, meta, ins):
+def get_corrector_dark(rinput, meta, ins, datamodel):
     key = 'master_dark'
     correctorclass = DarkCorrector
-    datamodel = MegaraDataModel()
     return get_corrector_super(rinput, meta, key, correctorclass, datamodel)
 
 
-def get_corrector_sf(rinput, meta, ins):
+def get_corrector_sf(rinput, meta, ins, datamodel):
     key = 'master_slitflat'
     info = meta.get(key)
     if info is not None:
@@ -89,7 +87,7 @@ def get_corrector_sf(rinput, meta, ins):
             _logger.info('loading slit flat')
             _logger.debug('%s image: %s', key, info)
             mbpm = hdul[0].data
-            corrector = SlitFlatCorrector(mbpm, datamodel=MegaraDataModel())
+            corrector = SlitFlatCorrector(mbpm, datamodel)
     else:
         _logger.info('%s not provided, ignored', key)
         corrector = IdNode()
@@ -97,11 +95,11 @@ def get_corrector_sf(rinput, meta, ins):
     return corrector
 
 
-def get_corrector_o(rinput, meta, ins):
+def get_corrector_o(rinput, meta, ins, datamodel):
     detconf = ins.get('detector.scan')
-    return OverscanCorrector(detconf, datamodel=MegaraDataModel())
+    return OverscanCorrector(detconf, datamodel=datamodel)
 
 
-def get_corrector_t(rinput, meta, ins):
+def get_corrector_t(rinput, meta, ins, datamodel):
     detconf = ins.get('detector.scan')
-    return TrimImage(detconf, datamodel=MegaraDataModel())
+    return TrimImage(detconf, datamodel=datamodel)
