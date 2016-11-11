@@ -158,7 +158,6 @@ def build_instrument_config(uuid, loader=None):
     return mm
 
 
-
 if __name__ == '__main__':
 
     key = "4fd05b24-2ed9-457b-b563-a3c618bb1d4c"

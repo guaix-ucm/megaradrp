@@ -19,9 +19,13 @@
 
 
 from numina.core.pipeline import InstrumentConfiguration
-
+import megaradrp.instrument.loader
 
 class MegaraInstrumentConfiguration(InstrumentConfiguration):
     """The instrument configuration of MEGARA"""
     def __init__(self, name, values):
         super(MegaraInstrumentConfiguration, self).__init__(name, values)
+
+
+def load_megara_instrument_configuration(key, value):
+    return megaradrp.instrument.loader.build_instrument_config(value)

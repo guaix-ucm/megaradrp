@@ -30,19 +30,17 @@ _logger = logging.getLogger('megara.processing')
 class OverscanCorrector(Corrector):
     '''A Node that corrects a frame from overscan.'''
 
-    def __init__(self, datamodel=None, dtype='float32', confFile=None):
+    def __init__(self, detconf, datamodel=None, dtype='float32'):
 
-        confFile = {} if confFile is None else confFile
-
-        trim1 = get_conf_value(confFile, 'trim1')
-        trim2 = get_conf_value(confFile, 'trim2')
-        bng = get_conf_value(confFile, 'bng')
-        overscan1 = get_conf_value(confFile, 'overscan1')
-        overscan2 = get_conf_value(confFile, 'overscan2')
-        prescan1 = get_conf_value(confFile, 'prescan1')
-        prescan2 = get_conf_value(confFile, 'prescan2')
-        middle1 = get_conf_value(confFile, 'middle1')
-        middle2 = get_conf_value(confFile, 'middle2')
+        trim1 = get_conf_value(detconf, 'trim1')
+        trim2 = get_conf_value(detconf, 'trim2')
+        bng = get_conf_value(detconf, 'bng')
+        overscan1 = get_conf_value(detconf, 'overscan1')
+        overscan2 = get_conf_value(detconf, 'overscan2')
+        prescan1 = get_conf_value(detconf, 'prescan1')
+        prescan2 = get_conf_value(detconf, 'prescan2')
+        middle1 = get_conf_value(detconf, 'middle1')
+        middle2 = get_conf_value(detconf, 'middle2')
 
         auxX, auxY, auxZ, auxT = self.data_binning(trim1, bng)
         middleX, middleY, middleZ, middleT = self.data_binning(middle1, bng)
@@ -150,15 +148,15 @@ class OverscanCorrector(Corrector):
 class TrimImage(Corrector):
     '''A Node that trims images.'''
 
-    def __init__(self, datamodel=None, dtype='float32', confFile=None):
-        self.confFile = confFile if confFile is not None else {}
+    def __init__(self, detconf, datamodel=None, dtype='float32'):
+        self.detconf = detconf
         super(TrimImage, self).__init__(datamodel=datamodel, dtype=dtype)
 
     def run(self, img):
         imgid = self.get_imgid(img)
         _logger.debug('trimming image %s', imgid)
 
-        img[0] = trimOut(img[0], confFile=self.confFile)
+        img[0] = trimOut(img[0], self.detconf)
         hdr = img['primary'].header
         hdr['NUM-TRIM'] = self.calibid
         hdr['history'] = 'Trimming correction {}'.format(imgid)

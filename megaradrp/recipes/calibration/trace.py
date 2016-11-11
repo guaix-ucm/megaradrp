@@ -34,7 +34,7 @@ import numina.core.validator
 from skimage.filters import threshold_otsu
 from skimage.feature import peak_local_max
 
-from megaradrp.instrument import MEGARA_PSEUDOSLIT_BOXES
+from megaradrp.instrument.loader import build_instrument_config
 from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.products import TraceMap
 from megaradrp.products.tracemap import GeometricTrace
@@ -51,7 +51,6 @@ _logger = logging.getLogger(__name__)
 
 class TraceMapRecipe(MegaraBaseRecipe):
 
-    obresult = ObservationResultRequirement()
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
@@ -68,16 +67,24 @@ class TraceMapRecipe(MegaraBaseRecipe):
     def run(self, rinput):
         self.logger.info('start trace spectra recipe')
 
+        obresult = rinput.obresult
+        current_vph = obresult.tags['vph']
+
         self.logger.info('start basic reduction')
-        flow = self.init_filters(rinput, rinput.obresult.configuration.values)
+        flow = self.init_filters(rinput, obresult.configuration)
         reduced = basic_processing_with_combination(rinput, flow, method=combine.median)
         self.logger.info('end basic reduction')
 
-        obresult = rinput.obresult
-        insmode = obresult.tags['insmode']
-        current_vph = obresult.tags['vph']
-        cstart = obresult.configuration.values['box']['boxcol']
-        box_borders = obresult.configuration.values['box'][current_vph]
+        #insconf_key = "4fd05b24-2ed9-457b-b563-a3c618bb1d4c"
+        #print(obresult.configuration)
+        #insconf = build_instrument_config(insconf_key)
+        #print(insconf)
+        insconf = obresult.configuration
+        values = insconf.get('pseudoslit.boxes_positions', **obresult.tags)
+        cstart = values['ref_column']
+        box_borders = values['positions']
+
+        boxes = insconf.get('pseudoslit.boxes', **obresult.tags)
 
         if current_vph in vph_thr:
             threshold = vph_thr[current_vph]
@@ -88,8 +95,6 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         final = megaradrp.products.TraceMap(instrument=obresult.instrument)
         final.tags = obresult.tags
-
-        boxes = MEGARA_PSEUDOSLIT_BOXES[insmode]
 
         contents, error_fitting = self.search_traces(
             reduced,

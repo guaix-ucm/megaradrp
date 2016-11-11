@@ -27,7 +27,7 @@ from numina.array.trace.extract import extract_simple_rss
 _direc = ['normal', 'mirror']
 
 
-def trimOut(img, direction='normal', out='trimmed.fits', confFile={}):
+def trimOut(img, detconf, direction='normal', out='trimmed.fits'):
     '''
 
     :param data: original data to be trimmed. Can be either a string <path>, an ImageHDU or a numpy array
@@ -39,19 +39,19 @@ def trimOut(img, direction='normal', out='trimmed.fits', confFile={}):
 
     if issubclass(str, type(img)):
         with fits.open(img) as hdul:
-            hdu = trim_and_o_array(hdul[0].data, direction=direction, confFile=confFile)
+            hdu = trim_and_o_array(hdul[0].data, detconf, direction=direction)
             fits.writeto(out, hdu, clobber=True)
 
     elif isinstance(img, fits.PrimaryHDU):
-        finaldata = trim_and_o_array(img.data, direction=direction, confFile=confFile)
+        finaldata = trim_and_o_array(img.data, detconf, direction=direction)
         img.data = finaldata
         return img
 
     elif isinstance(img, numpy.ndarray):
-        return trim_and_o_array(img, direction=direction, confFile=confFile)
+        return trim_and_o_array(img, detconf, direction=direction)
 
 
-def trim_and_o_array(array, direction='normal', confFile={}):
+def trim_and_o_array(array, detconf, direction='normal'):
     """Trim a MEGARA array with overscan."""
 
     if direction not in _direc:
@@ -62,9 +62,9 @@ def trim_and_o_array(array, direction='normal', confFile={}):
     else:
         direcfun = numpy.fliplr
 
-    trim1 = get_conf_value(confFile, 'trim1')
-    trim2 = get_conf_value(confFile, 'trim2')
-    bng = get_conf_value(confFile, 'bng')
+    trim1 = get_conf_value(detconf, 'trim1')
+    trim2 = get_conf_value(detconf, 'trim2')
+    bng = get_conf_value(detconf, 'bng')
 
     if bng not in [[1,1],[1,2],[2,1],[2,2]]:
         raise ValueError("%s must be one if '11', '12', '21, '22'" % bng)
@@ -92,16 +92,8 @@ def trim_and_o_array(array, direction='normal', confFile={}):
     return finaldata
 
 
-def get_conf_value(confFile, key=''):
-    if confFile:
-        if key in confFile.keys():
-            if confFile[key]:
-                return confFile[key]
-            else:
-                raise ValueError('Value not defined')
-        else:
-            raise ValueError('Key is not in configuration file')
-    raise ValueError('Instrument configuration is not in the system')
+def get_conf_value(confFile, key):
+    return confFile[key]
 
 
 def apextract(data, trace):

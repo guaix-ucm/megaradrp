@@ -98,8 +98,10 @@ def get_corrector_sf(rinput, meta, ins):
 
 
 def get_corrector_o(rinput, meta, ins):
-    return OverscanCorrector(datamodel=MegaraDataModel(), confFile=ins)
+    detconf = ins.get('detector.scan')
+    return OverscanCorrector(detconf, datamodel=MegaraDataModel())
 
 
 def get_corrector_t(rinput, meta, ins):
-    return TrimImage(datamodel=MegaraDataModel(), confFile=ins)
+    detconf = ins.get('detector.scan')
+    return TrimImage(detconf, datamodel=MegaraDataModel())
