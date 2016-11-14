@@ -9,7 +9,7 @@ from megaradrp.recipes.calibration.dark import DarkRecipe
 from megaradrp.simulation.factory import MegaraImageFactory
 from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.actions import simulate_dark_fits
-from megaradrp.instrument.loader import build_instrument_config
+from megaradrp.instrument.loader import build_instrument_config, Loader
 
 
 def test_dark():
@@ -54,7 +54,7 @@ def test_dark():
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'MEGARA_DARK_IMAGE'
-    ob.configuration = build_instrument_config('4fd05b24-2ed9-457b-b563-a3c618bb1d4c')
+    ob.configuration = build_instrument_config('4fd05b24-2ed9-457b-b563-a3c618bb1d4c', loader=Loader())
 
     names = []
     for aux in range(number):

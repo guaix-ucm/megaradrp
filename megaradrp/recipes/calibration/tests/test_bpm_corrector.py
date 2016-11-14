@@ -29,7 +29,7 @@ from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
 
 from megaradrp.recipes.calibration.tests.test_bpm_common import crear_archivos
-from megaradrp.instrument.loader import build_instrument_config
+from megaradrp.instrument.loader import build_instrument_config, Loader
 
 
 class TestRecipe(MegaraBaseRecipe):
@@ -86,7 +86,7 @@ def test_bpm_corrector():
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'bias_image'
-    ob.configuration = build_instrument_config('4fd05b24-2ed9-457b-b563-a3c618bb1d4c')
+    ob.configuration = build_instrument_config('4fd05b24-2ed9-457b-b563-a3c618bb1d4c', loader=Loader())
     ob.frames = [DataFrame(filename=open(nombre).name) for nombre in names]
 
     recipe = TestRecipe(directorio)

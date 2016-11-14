@@ -23,7 +23,7 @@ import astropy.io.fits as fits
 import numpy as np
 from numina.core import DataFrame, ObservationResult
 
-from megaradrp.instrument.loader import build_instrument_config
+from megaradrp.instrument.loader import build_instrument_config, Loader
 
 def generate_bias(detector, number, temporary_path):
     from megaradrp.simulation.actions import simulate_bias
@@ -39,7 +39,7 @@ def generate_bias(detector, number, temporary_path):
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'bias_image'
-    ob.configuration = build_instrument_config('4fd05b24-2ed9-457b-b563-a3c618bb1d4c')
+    ob.configuration = build_instrument_config('4fd05b24-2ed9-457b-b563-a3c618bb1d4c', loader=Loader())
     ob.frames = [DataFrame(filename=f) for f in fs]
 
     recipe = BiasRecipe()
@@ -89,7 +89,7 @@ def crear_archivos(temporary_path, number=5):
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'bias_image'
-    ob.configuration = build_instrument_config('4fd05b24-2ed9-457b-b563-a3c618bb1d4c')
+    ob.configuration = build_instrument_config('4fd05b24-2ed9-457b-b563-a3c618bb1d4c', loader=Loader())
 
     names = []
     for aux in range(number):

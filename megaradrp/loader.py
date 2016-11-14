@@ -21,9 +21,7 @@
 
 from numina.core import drp_load
 
-import megaradrp.core.insconf as insconf
 
 def load_drp():
     """Entry point to load MEGARA DRP."""
-    return drp_load('megaradrp', 'drp.yaml',
-                    confclass=insconf.load_megara_instrument_configuration)
+    return drp_load('megaradrp', 'drp.yaml')

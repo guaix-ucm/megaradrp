@@ -30,7 +30,7 @@ from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
 from megaradrp.recipes.calibration.tests.test_bpm_common import generate_bias
 from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.actions import simulate_flat
-from megaradrp.instrument.loader import build_instrument_config
+from megaradrp.instrument.loader import build_instrument_config, Loader
 
 
 # @pytest.mark.remote
@@ -82,7 +82,7 @@ def test_bpm():
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'MEGARA_BIAS_IMAGE'
-    ob.configuration = build_instrument_config('4fd05b24-2ed9-457b-b563-a3c618bb1d4c')
+    ob.configuration = build_instrument_config('4fd05b24-2ed9-457b-b563-a3c618bb1d4c', loader=Loader())
 
     names = []
     for aux in range(number * 2):
