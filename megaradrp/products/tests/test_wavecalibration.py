@@ -68,23 +68,21 @@ def create_test_wavecalib():
     data.error_fitting =  []
     data.missing_fibers = []
     data.total_fibers = 623
-    contents = {}
+    contents = []
 
     for key in range(10):
         fibid = key + 1
         solution = create_solution(orig)
         fibersolution = wc.FiberSolutionArcCalibration(fibid, solution)
-        fibidstr = str(fibid)
-        data.contents[fibidstr] = fibersolution
-        contents[fibidstr] = data.contents[fibidstr].__getstate__()
+        data.contents.append(fibersolution)
+        contents.append(data.contents[-1].__getstate__())
 
     for key in range(100, 101):
         fibid = key + 1
         solution = create_solution(orig)
         fibersolution = wc.FiberSolutionArcCalibration(fibid, solution)
-        fibidstr = str(fibid)
-        data.contents[fibidstr] = fibersolution
-        contents[fibidstr] = data.contents[fibidstr].__getstate__()
+        data.contents.append(fibersolution)
+        contents.append(data.contents[-1].__getstate__())
 
     state = dict(instrument=instrument,
                  tags=tags,
@@ -113,8 +111,8 @@ def test_setstate_wavecalib():
     assert (state['instrument'] == result.instrument)
     assert (state['tags'] == result.tags)
     assert (state['uuid'] == result.uuid)
-    for key in state['contents']:
-        assert (result.contents[key].__getstate__() == state['contents'][key])
+    for idx, cont in enumerate(state['contents']):
+        assert (result.contents[idx].__getstate__() == cont)
 
 
 @pytest.mark.xfail
@@ -137,8 +135,8 @@ def test_load_wavecalib():
     assert (my_open_file.instrument == state['instrument'])
     assert (my_open_file.tags == state['tags'])
     assert (my_open_file.uuid == state['uuid'])
-    for key in my_open_file.contents:
-        assert (my_open_file.contents[key].__getstate__() == state['contents'][key])
+    for idx, cont in enumerate(my_open_file.contents):
+        assert (cont.__getstate__() == state['contents'][idx])
 
 
 def test_dump_wavecalib():

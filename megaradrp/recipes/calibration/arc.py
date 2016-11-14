@@ -274,7 +274,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     #     plt.legend()
                     #     plt.show()
 
-                    data_wlcalib.contents[fibid] = FiberSolutionArcCalibration(fibid, solution_wv)
+                    new = FiberSolutionArcCalibration(fibid, solution_wv)
+                    data_wlcalib.contents.append(new)
 
                 except (ValueError, TypeError, IndexError) as error:
                     self.logger.error("%s", error)
@@ -325,7 +326,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         ##################################################################
 
         final = []
-        for fibercalib in solutions.values():
+        for fibercalib in solutions:
             for feature in fibercalib.solution.features:
                 final.append([feature.xpos, feature.ypos, feature.fwhm])
         final = numpy.asarray(final)

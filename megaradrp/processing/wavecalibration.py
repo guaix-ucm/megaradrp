@@ -146,7 +146,7 @@ class WavelengthCalibrator(Corrector):
         rss_resampled = numpy.zeros((nfibers, npix))
         values = []
 
-        for fibsol in self.solutionwl.contents.values():
+        for fibsol in self.solutionwl.contents:
 
             fibid = fibsol.fibid
             idx = fibid - 1

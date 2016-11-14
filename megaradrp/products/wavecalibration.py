@@ -46,21 +46,25 @@ class FiberSolutionArcCalibration(object):
 class WavelengthCalibration(BaseStructuredCalibration):
     def __init__(self, instrument='unknown'):
         super(WavelengthCalibration, self).__init__(instrument)
-        self.contents = {}
+        self.contents = []
 
     def __getstate__(self):
         st = super(WavelengthCalibration, self).__getstate__()
 
-        st['contents'] = {key: val.__getstate__()
-                        for (key, val) in self.contents.items()}
+        st['contents'] = [val.__getstate__() for val in self.contents]
         return st
 
     def __setstate__(self, state):
         super(WavelengthCalibration, self).__setstate__(state)
 
-        self.contents = {}
-        for (key, val) in state['contents'].items():
+        self.contents = []
+        # Handle dictionary
+        if isinstance(state['contents'], dict):
+            values = state['contents'].values()
+        else:
+            values = state['contents']
+
+        for val in values:
             new = FiberSolutionArcCalibration.__new__(FiberSolutionArcCalibration)
             new.__setstate__(val)
-            self.contents[key] = new
-
+            self.contents.append(new)
