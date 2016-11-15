@@ -4,6 +4,7 @@ configurations:
   values:
   - 9a86b2b2-3f7d-48ec-8f4f-3780ec967c90
   - 4fd05b24-2ed9-457b-b563-a3c618bb1d4c
+  - 66f2283e-3049-4d4b-8ef1-14d62fcb611d
   default: 9a86b2b2-3f7d-48ec-8f4f-3780ec967c90
 modes:
 - name: Success
