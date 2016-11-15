@@ -32,7 +32,7 @@ class MegaraImageFactory(object):
         ('INSTRUME', 'MEGARA', 'Name of the Instrument'),
         ('ORIGIN', 'SIMULATOR_B', 'FITS file originator'),
         ('OSFILTER', False, 'Sort order filter'),
-        ('INSCONF', '66f2283e-3049-4d4b-8ef1-14d62fcb611d', 'Instrument configuration version')
+        ('INSCONF', '66f2283e-3049-4d4b-8ef1-14d62fcb611d')
     ]
 
     def __init__(self):
