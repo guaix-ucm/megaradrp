@@ -159,10 +159,5 @@ pipelines:
       MEGARA_SENSITIVITY_STAR: megaradrp.recipes.scientific.sensivitystar.SensivityStarRecipe
 products:
 - name: megaradrp.products.TraceMap
-  alias: TraceMap
-- name: megaradrp.types.MasterFiberFlat
-  alias: MasterFiberFlat
-- name: megaradrp.types.MasterSlitFlat
-  alias: MasterSlitFlat
-- name: megaradrp.types.MasterSensitivity
-  alias: MasterSensitivity
+  mode: MEGARA_TRACE_MAP
+  field: master_traces
