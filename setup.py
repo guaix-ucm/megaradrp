@@ -21,6 +21,7 @@ setup(
             'lcb_default_header.txt'
         ],
         'megaradrp.instrument.configs': [
+            'component-86a6e968-8d3d-456f-89f8-09ff0c7f7c57.json',
             'component-2e02e135-2325-47c9-9975-466b445b0b8b.json',
             'component-97d48545-3258-473e-9311-00e390999d52.json',
             'instrument-4fd05b24-2ed9-457b-b563-a3c618bb1d4c.json',
