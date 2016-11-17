@@ -30,6 +30,7 @@ from numina.core.dataholders import Product
 from numina.core.products import QualityControlProduct
 from numina.core.requirements import ObservationResultRequirement
 from numina.core import DataFrame, ObservationResult
+from numina.core.qc import QC
 
 import megaradrp.core.correctors as cor
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
@@ -44,7 +45,7 @@ class MegaraBaseRecipe(BaseRecipe):
     """Base clase for all MEGARA Recipes"""
 
     obresult = ObservationResultRequirement()
-    qc = Product(QualityControlProduct, dest='qc')
+    qc = Product(QualityControlProduct, dest='qc', default=QC.GOOD)
     logger = logging.getLogger('numina.recipes.megara')
     datamodel = MegaraDataModel()
 
