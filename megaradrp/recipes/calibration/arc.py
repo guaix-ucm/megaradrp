@@ -317,16 +317,15 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         # Each 10 fibers. Comment this to iterate over all fibers instead.
         ##################################################################
-        aux = {}
-        for key, value in solutions.items():
-            if int(key) % 10 == 0:
-                aux[key] = value
+        aux = []
+        for value in solutions:
+            if value.fibid % 10 == 0:
+                aux.append(value)
 
-        solutions = aux
         ##################################################################
 
         final = []
-        for fibercalib in solutions:
+        for fibercalib in aux:
             for feature in fibercalib.solution.features:
                 final.append([feature.xpos, feature.ypos, feature.fwhm])
         final = numpy.asarray(final)
