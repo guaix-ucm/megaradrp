@@ -42,11 +42,6 @@ class LCB_IFU_StdStarRecipe(MegaraBaseRecipe):
     fiberflat_rss = Product(MasterFiberFlat)
     traces = Product(ArrayType)
 
-    def __init__(self):
-        super(LCB_IFU_StdStarRecipe, self).__init__(
-            version="0.1.0"
-        )
-
     def run(self, rinput):
         pass
 
@@ -59,11 +54,6 @@ class FiberMOS_StdStarRecipe(MegaraBaseRecipe):
     fiberflat_frame = Product(MasterFiberFlat)
     fiberflat_rss = Product(MasterFiberFlat)
     traces = Product(ArrayType)
-
-    def __init__(self):
-        super(FiberMOS_StdStarRecipe, self).__init__(
-            version="0.1.0"
-        )
 
     def run(self, rinput):
         pass
@@ -78,11 +68,6 @@ class SensitivityFromStdStarRecipe(MegaraBaseRecipe):
     fiberflat_rss = Product(MasterFiberFlat)
     traces = Product(ArrayType)
 
-    def __init__(self):
-        super(SensitivityFromStdStarRecipe, self).__init__(
-            version="0.1.0"
-        )
-
     def run(self, rinput):
         pass
 
@@ -95,11 +80,6 @@ class S_And_E_FromStdStarsRecipe(MegaraBaseRecipe):
     fiberflat_frame = Product(MasterFiberFlat)
     fiberflat_rss = Product(MasterFiberFlat)
     traces = Product(ArrayType)
-
-    def __init__(self):
-        super(S_And_E_FromStdStarsRecipe, self).__init__(
-            version="0.1.0"
-        )
 
     def run(self, rinput):
         pass

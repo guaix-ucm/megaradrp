@@ -49,7 +49,7 @@ class MegaraBaseRecipe(BaseRecipe):
     logger = logging.getLogger('numina.recipes.megara')
     datamodel = MegaraDataModel()
 
-    def __init__(self, version):
+    def __init__(self, *args, **kwds):
         self.__flow = {'FiberFlatRecipe': [OverscanCorrector, TrimImage,
                                            BiasCorrector, DarkCorrector,
                                            BadPixelCorrector,
@@ -83,11 +83,10 @@ class MegaraBaseRecipe(BaseRecipe):
                                                        ApertureExtractor,
                                                        FiberFlatCorrector],
                        }
-        super(MegaraBaseRecipe, self).__init__(version=version)
-        self.save_intermediate_results = True
+        super(MegaraBaseRecipe, self).__init__(*args, **kwds)
 
     def save_intermediate_img(self, img, name):
-        if self.save_intermediate_results:
+        if self.intermediate_results:
             img.writeto(name, clobber=True)
 
     def __generate_flow(self, params, conf):

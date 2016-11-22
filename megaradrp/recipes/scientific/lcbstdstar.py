@@ -17,11 +17,9 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Calibration Recipes for Megara'''
-from base import ImageRecipe
-import logging
+"""Calibration Recipes for Megara"""
 
-_logger = logging.getLogger('numina.recipes.megara')
+from .base import ImageRecipe
 
 
 class LCBStandardRecipe(ImageRecipe):
@@ -32,7 +30,7 @@ class LCBStandardRecipe(ImageRecipe):
 
     def run(self, rinput):
 
-        _logger.info('starting LCBStandardRecipe reduction')
+        self.logger.info('starting LCBStandardRecipe reduction')
 
         result = super(LCBStandardRecipe,self).run(rinput)
 

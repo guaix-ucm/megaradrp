@@ -55,6 +55,7 @@ from megaradrp.instrument import vph_thr_arc
 class ArcCalibrationRecipe(MegaraBaseRecipe):
     """Process ARC images and create WL_CALIBRATION."""
 
+    __version__ = "0.1.0"
     # Requirements
     obresult = ObservationResultRequirement()
     master_bias = reqs.MasterBiasRequirement()
@@ -69,9 +70,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     arc_rss = Product(DataFrameType)
     master_wlcalib = Product(WavelengthCalibration)
     fwhm_image = Product(DataFrameType)
-
-    def __init__(self):
-        super(ArcCalibrationRecipe, self).__init__("0.1.0")
 
     def run(self, rinput):
 

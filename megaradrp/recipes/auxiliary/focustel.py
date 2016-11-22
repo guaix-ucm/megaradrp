@@ -35,8 +35,5 @@ _logger = logging.getLogger('numina.recipes.megara')
 class FocusTelescopeRecipe(MegaraBaseRecipe):
     """Process Focus images and find best focus."""
 
-    def __init__(self):
-        super(FocusTelescopeRecipe, self).__init__("0.1.0")
-
     def run(self, rinput):
         raise RecipeError('Recipe not implemented')

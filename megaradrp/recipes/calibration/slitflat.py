@@ -49,9 +49,6 @@ class SlitFlatRecipe(MegaraBaseRecipe):
     # Products
     master_slitflat = Product(MasterSlitFlat)
 
-    def __init__(self):
-        super(SlitFlatRecipe, self).__init__(version="0.1.0")
-
     def run(self, rinput):
         self.logger.info('starting slit flat reduction')
 

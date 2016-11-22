@@ -17,22 +17,18 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Calibration Recipes for Megara'''
-from base import ImageRecipe
-import logging
+"""Calibration Recipes for Megara"""
 
-_logger = logging.getLogger('numina.recipes.megara')
+from base import ImageRecipe
+
 
 
 class LCBFastMappingRecipe(ImageRecipe):
     """Process LCB Fast Mapping Recipe."""
 
-    def __init__(self):
-        super(LCBFastMappingRecipe, self).__init__()
-
     def run(self, rinput):
 
-        _logger.info('starting LCB reduction')
+        self.logger.info('starting LCB reduction')
 
         result = super(LCBFastMappingRecipe,self).run(rinput)
 

@@ -77,9 +77,6 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
     focus_image = Product(ProcessedFrame)
     focus_wavelength = Product(JSONstorage)
 
-    def __init__(self):
-        super(FocusSpectrographRecipe, self).__init__("0.1.0")
-
     def generate_image(self, final):
         from scipy.spatial import cKDTree
 

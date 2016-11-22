@@ -43,9 +43,6 @@ class PseudoFluxCalibrationRecipe(MegaraBaseRecipe):
     calibration = Product(ProcessedFrame)
     calibration_rss = Product(ProcessedRSS)
 
-    def __init__(self):
-        super(PseudoFluxCalibrationRecipe, self).__init__(version="0.1.0")
-
     def run(self, rinput):
         self.logger.info('starting pseudo flux calibration')
 

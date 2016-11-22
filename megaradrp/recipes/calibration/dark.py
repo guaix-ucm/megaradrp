@@ -36,9 +36,6 @@ class DarkRecipe(MegaraBaseRecipe):
 
     master_dark = Product(MasterDark)
 
-    def __init__(self):
-        super(DarkRecipe, self).__init__(version="0.1.0")
-
     def run(self, rinput):
 
         flow = self.init_filters(rinput, rinput.obresult.configuration)

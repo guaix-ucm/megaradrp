@@ -59,13 +59,13 @@ class WeightsRecipe(MegaraBaseRecipe):
     # Products
     master_weights = Product(MasterWeights)
 
-    def __init__(self, size=4096, fibers=623, rows=4112):
+    def __init__(self, size=4096, fibers=623, rows=4112, *args, **kwargs):
         self.SIZE = size
         self.ROWS = rows
         self.FIBERS = fibers
         self.procesos = mp.cpu_count() - 2
 
-        super(WeightsRecipe, self).__init__(version="0.1.0")
+        super(WeightsRecipe, self).__init__(version="0.1.0", *args, **kwargs)
 
     def _add_file_to_tar(self, file_name, tar):
         '''

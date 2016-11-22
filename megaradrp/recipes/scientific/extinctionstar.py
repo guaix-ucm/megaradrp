@@ -17,22 +17,18 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Calibration Recipes for Megara'''
-from base import ImageRecipe
-import logging
+"""Calibration Recipes for Megara"""
 
-_logger = logging.getLogger('numina.recipes.megara')
+
+from .base import ImageRecipe
 
 
 class ExtinctionStarRecipe(ImageRecipe):
     """Process Extinction Star Recipe."""
 
-    def __init__(self):
-        super(ExtinctionStarRecipe, self).__init__()
-
     def run(self, rinput):
 
-        _logger.info('starting ExtinctionStarRecipe reduction')
+        self.logger.info('starting ExtinctionStarRecipe reduction')
 
         result = super(ExtinctionStarRecipe,self).run(rinput)
 

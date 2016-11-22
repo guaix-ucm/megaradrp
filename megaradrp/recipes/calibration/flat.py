@@ -58,9 +58,6 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     fiberflat_rss = Product(ProcessedRSS)
     master_fiberflat = Product(MasterFiberFlat)
 
-    def __init__(self):
-        super(FiberFlatRecipe, self).__init__(version="0.1.0")
-
     def process_flat2d(self, rinput):
         flow = self.init_filters(rinput, rinput.obresult.configuration)
         final_image = basic_processing_with_combination(rinput, flow, method=combine.median)

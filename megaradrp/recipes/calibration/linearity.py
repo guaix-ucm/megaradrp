@@ -26,17 +26,8 @@ from numina.core import RecipeError
 from megaradrp.core.recipe import MegaraBaseRecipe
 
 
-_logger = logging.getLogger('numina.recipes.megara')
-
 class LinearityTestRecipe(MegaraBaseRecipe):
-
     """Process LINTEST images and create LINEARITY_CORRECTON."""
+    pass
 
 
-    def __init__(self):
-        super(LinearityTestRecipe, self).__init__(
-            version="0.1.0"
-        )
-
-    def run(self, rinput):
-        raise RecipeError("Recipe not inplemented")

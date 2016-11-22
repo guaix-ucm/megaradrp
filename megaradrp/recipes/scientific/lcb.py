@@ -34,9 +34,6 @@ class LCBImageRecipe(ImageRecipe):
     target = Product(ProcessedRSS)
     sky = Product(ProcessedRSS)
 
-    def __init__(self):
-        super(LCBImageRecipe, self).__init__()
-
     def run(self, rinput):
 
         self.logger.info('starting LCB reduction')

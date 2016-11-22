@@ -33,9 +33,6 @@ class BiasRecipe(MegaraBaseRecipe):
     master_bpm = MasterBPMRequirement()
     master_bias = Product(MasterBias)
 
-    def __init__(self):
-        super(BiasRecipe, self).__init__(version="0.1.0")
-
     def run(self, rinput):
 
         flow = self.init_filters(rinput, rinput.obresult.configuration)

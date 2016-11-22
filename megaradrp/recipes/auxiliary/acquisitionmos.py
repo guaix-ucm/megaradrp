@@ -39,9 +39,6 @@ class AcquireMOSRecipe(ImageRecipe):
     master_mos_json = Product(LCBCalibration)
     master_mos = Product(ArrayType)
 
-    def __init__(self):
-        super(AcquireMOSRecipe, self).__init__()
-
     def run(self, rinput):
 
         _logger.info('starting MOS reduction')

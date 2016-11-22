@@ -28,13 +28,12 @@ import numpy.polynomial.polynomial as nppol
 from numina.array.peaks.peakdet import refine_peaks
 from numina.array.trace.traces import trace
 from numina.core import Product, Parameter
-from numina.core.requirements import ObservationResultRequirement
+
 from numina.array import combine
 import numina.core.validator
 from skimage.filters import threshold_otsu
 from skimage.feature import peak_local_max
 
-from megaradrp.instrument.loader import build_instrument_config
 from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.products import TraceMap
 from megaradrp.products.tracemap import GeometricTrace
@@ -46,10 +45,8 @@ import megaradrp.products
 from megaradrp.instrument import vph_thr
 
 
-_logger = logging.getLogger(__name__)
-
-
 class TraceMapRecipe(MegaraBaseRecipe):
+    __version__ = "0.1.0"
 
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
@@ -60,40 +57,39 @@ class TraceMapRecipe(MegaraBaseRecipe):
     fiberflat_frame = Product(ProcessedFrame)
     master_traces = Product(TraceMap)
 
-    def __init__(self):
-        super(TraceMapRecipe, self).__init__(version="0.1.0")
-
     @numina.core.validator.validate
     def run(self, rinput):
         self.logger.info('start trace spectra recipe')
 
         obresult = rinput.obresult
         current_vph = obresult.tags['vph']
+        current_insmode = obresult.tags['insmode']
 
         self.logger.info('start basic reduction')
         flow = self.init_filters(rinput, obresult.configuration)
         reduced = basic_processing_with_combination(rinput, flow, method=combine.median)
         self.logger.info('end basic reduction')
 
-        #insconf_key = "4fd05b24-2ed9-457b-b563-a3c618bb1d4c"
-        #print(obresult.configuration)
-        #insconf = build_instrument_config(insconf_key)
-        #print(insconf)
+        self.save_intermediate_img(reduced, 'reduced.fits')
+
         insconf = obresult.configuration
+
         values = insconf.get('pseudoslit.boxes_positions', **obresult.tags)
         cstart = values['ref_column']
         box_borders = values['positions']
 
         boxes = insconf.get('pseudoslit.boxes', **obresult.tags)
 
-        if current_vph in vph_thr:
-            threshold = vph_thr[current_vph]
+        if current_insmode in vph_thr and current_vph in vph_thr[current_insmode]:
+            threshold = vph_thr[current_insmode][current_vph]
             self.logger.info('rel threshold for %s is %4.2f', current_vph, threshold)
         else:
             threshold = rinput.relative_threshold
             self.logger.info('rel threshold not defined for %s, using %4.2f', current_vph, threshold)
 
         final = megaradrp.products.TraceMap(instrument=obresult.instrument)
+        fiberconf = self.datamodel.get_fiberconf(reduced)
+        final.total_fibers = fiberconf.nfibers
         final.tags = obresult.tags
 
         contents, error_fitting = self.search_traces(
@@ -217,6 +213,8 @@ class FiberTraceInfo(object):
 
 
 def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37):
+
+    _logger = logging.getLogger(__name__)
 
     cut_region = slice(center-hs, center+hs)
     cut = image[:,cut_region]

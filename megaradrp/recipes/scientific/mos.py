@@ -17,23 +17,27 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Calibration Recipes for Megara'''
-from base import ImageRecipe
-import logging
+"""Calibration Recipes for Megara"""
 
-_logger = logging.getLogger('numina.recipes.megara')
+from .base import ImageRecipe
 
 
 class MOSImageRecipe(ImageRecipe):
     """Process MOS images."""
 
-    def __init__(self):
-        super(MOSImageRecipe, self).__init__()
-
     def run(self, rinput):
+        self.logger.info('starting MOS reduction')
 
-        _logger.info('starting MOS reduction')
+        reduced2d, rss_data = super(MOSImageRecipe, self).base_run(rinput)
 
-        result = super(MOSImageRecipe,self).run(rinput)
+        self.logger.info('start sky subtraction')
+        final, origin, sky = self.run_sky_subtraction(rss_data)
+        self.logger.info('end sky subtraction')
+        self.logger.info('end MOS reduction')
 
-        return self.create_result(final=result[0], target=result[1], sky=result[2])
+        return self.create_result(
+            final=rss_data,
+            reduced=reduced2d,
+            target=origin,
+            sky=sky
+        )

@@ -38,9 +38,6 @@ class AcquireLCBRecipe(ImageRecipe):
     master_lcb_json = Product(LCBCalibration)
     master_lcb = Product(ArrayType)
 
-    def __init__(self):
-        super(AcquireLCBRecipe, self).__init__()
-
     def run(self, rinput):
 
         _logger.info('starting LCB reduction')

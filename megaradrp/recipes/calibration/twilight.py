@@ -52,11 +52,6 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
     reduced_rss = Product(DataFrameType)
     master_twilight_flat = Product(MasterTwilightFlat)
 
-    def __init__(self):
-        super(TwilightFiberFlatRecipe, self).__init__(
-            version="0.1.0"
-        )
-
     def run(self, rinput):
         # Basic processing
 

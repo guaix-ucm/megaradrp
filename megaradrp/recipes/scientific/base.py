@@ -52,9 +52,6 @@ class ImageRecipe(MegaraBaseRecipe):
     master_twilight = reqs.MasterTwilightRequirement()
     tracemap = reqs.MasterTraceMapRequirement()
 
-    def __init__(self):
-        super(ImageRecipe, self).__init__(version="0.1.0")
-
     def base_run(self, rinput):
 
         # 2D reduction
