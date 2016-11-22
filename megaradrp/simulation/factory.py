@@ -137,7 +137,7 @@ class MegaraImageFactory(object):
 
         pheader = fits.Header(self.CARDS_P)
 
-        pheader['FILENAME'] = name
+        # pheader['FILENAME'] = name
         # OBS mode
         pheader['OBSMODE'] = mode
 
@@ -152,7 +152,7 @@ class MegaraImageFactory(object):
     def create(self, data, name, control):
 
         pheader = fits.Header(self.CARDS_P)
-        pheader['FILENAME'] = name
+        # pheader['FILENAME'] = name
         pheader['OBSMODE'] = control.mode
         pheader['UUID'] = uuid.uuid4().hex
 
