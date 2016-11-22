@@ -29,7 +29,7 @@ import numina.array.utils as u
 from numina.flow.processing import Corrector
 from numina.array.interpolation import SteffenInterpolator
 
-from megaradrp.instrument import vph_thr_wl_calib
+from megaradrp.instrument import WLCALIB_PARAMS
 
 _logger = logging.getLogger(__name__)
 
@@ -51,13 +51,18 @@ class WavelengthCalibrator(Corrector):
         _logger.debug('wavelength calibration in image %s', imgid)
 
         current_vph = rss[0].header['VPH']
+        current_insmode = rss[0].header['INSMODE']
 
-        _logger.debug('Current VPH is %s', current_vph)
-        if current_vph not in vph_thr_wl_calib['default']:
-            raise ValueError('grism ' + current_vph + ' is not defined in ' +
-                             'vph_thr dictionary')
-
-        wvpar_dict = vph_thr_wl_calib['default'][current_vph]
+        _logger.debug('Current INSMODE is %s, VPH is %s', current_insmode, current_vph)
+        if current_insmode in WLCALIB_PARAMS and current_vph in WLCALIB_PARAMS[current_insmode]:
+            wvpar_dict = WLCALIB_PARAMS[current_insmode][current_vph]
+            _logger.info('precomputed wl parameters are %s', wvpar_dict)
+        else:
+            msg = 'insmode {} grism {} is not defined in megaradrp.instrument.WLCALIB_PARAMS'.format(
+                current_insmode,
+                current_vph
+            )
+            raise ValueError(msg)
 
         _logger.debug('Resample RSS')
         final, wcsdata, values = self.resample_rss_flux(rss[0].data, wvpar_dict)

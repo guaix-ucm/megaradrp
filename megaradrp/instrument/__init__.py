@@ -103,19 +103,44 @@ MEGARA_PSEUDOSLIT_BOXES = {
     'MOS': MEGARA_PSEUDOSLIT_BOXES_MOS
 }
 
+
 # Values for recipe Trace
 # Relative threshold for each VPH in LCB
-vph_thr = {'LR-I': 0.27,
-           'LR-R': 0.10,
-           'LR-V': 0.27,
-           'LR-Z': 0.27,
-           'LR-U': 0.02,
-           'HR-I': 0.20,
-           }
+vph_thr = {
+    'LCB': {
+        'LR-I': 0.27,
+        'LR-R': 0.10,
+        'LR-V': 0.27,
+        'LR-Z': 0.27,
+        'LR-U': 0.02,
+        'HR-I': 0.20,
+    },
+    'MOS': {
+        'LR-I': 0.27,
+        'LR-R': 0.10,
+        'LR-V': 0.27,
+        'LR-Z': 0.27,
+        'LR-U': 0.02,
+        'HR-I': 0.20,
+    },
+}
+
 
 # Values for recipe Arc
 vph_thr_arc = {
-    'default':
+    'LCB':
+        {'LR-I': {'min_distance': 10,
+                  'threshold': 0.06},
+         'LR-R': {'min_distance': 10,
+                  'threshold': 0.02},
+         'LR-V': {'min_distance': 30,
+                  'threshold': 0.19},
+         'LR-Z': {'min_distance': 10,
+                  'threshold': 0.02},
+         'LR-U': {'min_distance': 10,
+                  'threshold': 0.02, }
+         },
+    'MOS':
         {'LR-I': {'min_distance': 10,
                   'threshold': 0.06},
          'LR-R': {'min_distance': 10,
@@ -131,8 +156,8 @@ vph_thr_arc = {
 
 
 # FIXED values for arc calibration
-vph_thr_wl_calib = {
-    'default': {
+WLCALIB_PARAMS = {
+    'LCB': {
         'LR-I': {
             'crval': 7140.0,
             'cdelt': 0.37,
@@ -147,6 +172,12 @@ vph_thr_wl_calib = {
         },
         'LR-R': {
             'crval': 6030.0,
+            'cdelt': 0.31,
+            'crpix': 1.0,
+            'npix': 4300
+        },
+        'LR-U': {
+            'crval': 3200,
             'cdelt': 0.31,
             'crpix': 1.0,
             'npix': 4300

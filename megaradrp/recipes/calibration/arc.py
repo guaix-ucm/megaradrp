@@ -91,12 +91,17 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         self.logger.info('extract fibers, %i', len(rinput.tracemap.contents))
 
         current_vph = rinput.obresult.tags['vph']
+        current_insmode = rinput.obresult.tags['insmode']
 
-        if reduced2d[0].header['INSTRUME'] == 'MEGARA':
-            threshold = vph_thr_arc['default'][current_vph]['threshold']
-            min_distance = vph_thr_arc['default'][current_vph]['min_distance']
+        if current_insmode in vph_thr_arc and current_vph in vph_thr_arc[current_insmode]:
+            threshold = vph_thr_arc[current_insmode][current_vph]['threshold']
+            min_distance = vph_thr_arc[current_insmode][current_vph]['min_distance']
+            self.logger.info('rel threshold for %s is %4.2f', current_vph, threshold)
         else:
-            raise ValueError('INSTRUME keyword is %s', reduced2d[0].header['INSTRUME'])
+            threshold = 0.02
+            min_distance = 10.0
+            self.logger.info('rel threshold not defined for %s, using %4.2f', current_vph, threshold)
+            self.logger.info('min dist not defined for %s, using %4.2f', current_vph, min_distance)
 
         data_wlcalib, fwhm_image = self.calibrate_wl(reduced_rss[0].data,
                                                      rinput.lines_catalog,
@@ -135,7 +140,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         missing_fib = 0
 
         data_wlcalib = WavelengthCalibration(instrument='MEGARA')
-
+        data_wlcalib.total_fibers = tracemap.total_fibers
         for trace in tracemap.contents:
             fibid = trace.fibid
             idx = trace.fibid - 1
