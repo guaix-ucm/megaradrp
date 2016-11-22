@@ -8,7 +8,7 @@
  "configurations": {
   "boxes": {
     "uuid": "86a6e968-8d3d-456f-89f8-09ff0c7f7c57"
-  }, 
+  },
   "boxes_positions": {
    "depends": [
     "insmode", 
