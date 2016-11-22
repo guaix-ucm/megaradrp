@@ -33,7 +33,7 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
         self.instrument = instrument
         self.tags = {}
         self.uuid = uuid.uuid1().hex
-        self.total_fibers = 623
+        self.total_fibers = 0
         self.missing_fibers = []
         self.error_fitting = []
 

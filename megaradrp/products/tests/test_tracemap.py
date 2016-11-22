@@ -36,7 +36,7 @@ def create_test_tracemap():
     data = megaradrp.products.TraceMap(instrument=instrument)
     data.tags = tags
     data.uuid = uuid
-
+    data.total_fibers = 623
     state = dict(instrument=instrument,
                  tags=tags,
                  uuid=uuid,
