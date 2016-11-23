@@ -177,8 +177,8 @@ WLCALIB_PARAMS = {
             'npix': 4300
         },
         'LR-U': {
-            'crval': 3200,
-            'cdelt': 0.31,
+            'crval': 3620,
+            'cdelt': 0.186,
             'crpix': 1.0,
             'npix': 4300
         }
