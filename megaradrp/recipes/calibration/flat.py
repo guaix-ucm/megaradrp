@@ -65,7 +65,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         self.set_base_headers(hdr)
         return final_image
 
-    def obtain_fiber_flat(self, rss_wl, wlcalib):
+    def obtain_fiber_flat(self, rss_wl, wlcalib, col1=1900, col2=2100, window=31, degree=3):
         from scipy.signal import savgol_filter
 
         # Bad fibers, join:
@@ -79,7 +79,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         good_idxs_mask[bad_idxs] = False
 
         # Collapse all fiber spectrum
-        xcol = slice(1900, 2100)  # FIXME: hardcoded
+        xcol = slice(col1, col2)
 
         data0 = rss_wl[0].data
 
@@ -90,7 +90,6 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
         col_good_mean = col_mean[valid_mask]
 
-        # FIXME: skip incorrect traces
         data_good = data0[valid_mask] / col_good_mean[:, numpy.newaxis]
         data_good[numpy.isnan(data_good)] = 0.0
 
@@ -98,13 +97,15 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         # This extension was created by WLcalibrator
         wlmap = rss_wl['WLMAP'].data
         mm = numpy.sum(wlmap, axis=0)
-
+        # skip 0 in divisions
+        mask_noinfo = mm < 1
+        mm[mask_noinfo] = 1
         # Filter collapse to smooth it
         collapse = numpy.sum(data_good, axis=0) / mm
-        # FIXME: Savitsky-Golay filter, window 31, pol degree 3
-        collapse_smooth = savgol_filter(collapse, 31, 3)
-
-        # Divide each fiber in rss_wl by  spectrum
+        # Smooting works bad very near the border (overshooting)
+        collapse_smooth = savgol_filter(collapse, window, degree)
+        collapse_smooth[mask_noinfo] = 1.0
+        # Divide each fiber in rss_wl by spectrum
         gmean = col_good_mean.mean()
         data1 = rss_wl[0].data / collapse_smooth
         data1 /= gmean
