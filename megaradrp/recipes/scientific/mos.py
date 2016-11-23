@@ -19,11 +19,19 @@
 
 """Calibration Recipes for Megara"""
 
+from numina.core import Product
+
+from megaradrp.types import ProcessedRSS, ProcessedFrame
 from .base import ImageRecipe
 
 
 class MOSImageRecipe(ImageRecipe):
     """Process MOS images."""
+
+    reduced = Product(ProcessedFrame)
+    final = Product(ProcessedRSS)
+    target = Product(ProcessedRSS)
+    sky = Product(ProcessedRSS)
 
     def run(self, rinput):
         self.logger.info('starting MOS reduction')
@@ -36,8 +44,8 @@ class MOSImageRecipe(ImageRecipe):
         self.logger.info('end MOS reduction')
 
         return self.create_result(
-            final=rss_data,
             reduced=reduced2d,
+            final=final,
             target=origin,
             sky=sky
         )
