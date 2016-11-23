@@ -29,8 +29,8 @@ from megaradrp.types import ProcessedRSS, ProcessedFrame
 class LCBImageRecipe(ImageRecipe):
     """Process LCB images."""
 
-    final = Product(ProcessedRSS)
     reduced = Product(ProcessedFrame)
+    final = Product(ProcessedRSS)
     target = Product(ProcessedRSS)
     sky = Product(ProcessedRSS)
 
@@ -46,8 +46,8 @@ class LCBImageRecipe(ImageRecipe):
         self.logger.info('end LCB reduction')
 
         return self.create_result(
-            final=rss_data,
             reduced=reduced2d,
+            final=final,
             target=origin,
             sky=sky
         )
