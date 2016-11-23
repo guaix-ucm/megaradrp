@@ -167,7 +167,9 @@ def apextract_tracemap_2(data, tracemap):
 
         borders.append((t2.fibid, pix_21, pix_32))
 
-    rss = extract_simple_rss2(data, borders)
+    nfibers = tracemap.total_fibers
+    out = numpy.zeros((nfibers, data.shape[1]), dtype='float')
+    rss = extract_simple_rss2(data, borders, out=out)
 
     return rss
 
