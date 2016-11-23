@@ -39,6 +39,11 @@ class ProcessedRSS(ProcessedFrame):
     pass
 
 
+class ProcessedMultiRSS(ProcessedFrame):
+    """A processed RSS image not to be stored"""
+    pass
+
+
 class MasterBias(MEGARAProductFrame):
     pass
 

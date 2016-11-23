@@ -19,17 +19,25 @@
 
 """Calibration Recipes for Megara"""
 
-from base import ImageRecipe
+
+from numina.core import Product
+
+from megaradrp.types import ProcessedMultiRSS
+from megaradrp.core.recipe import MegaraBaseRecipe
+from megaradrp.processing.multirss import generate_multi_rss
 
 
-
-class LCBFastMappingRecipe(ImageRecipe):
+class LCBFastMappingRecipe(MegaraBaseRecipe):
     """Process LCB Fast Mapping Recipe."""
 
+    final = Product(ProcessedMultiRSS)
+
     def run(self, rinput):
+        self.logger.info('start FastMappingRecipe')
+        obresult = rinput.obresult
+        imgs = [frame.open() for frame in obresult.frames]
 
-        self.logger.info('starting LCB reduction')
+        result = generate_multi_rss(imgs)
+        self.logger.info('end FastMappingRecipe')
 
-        result = super(LCBFastMappingRecipe,self).run(rinput)
-
-        return self.create_result(final=result[0], target=result[1], sky=result[2])
+        return self.create_result(final=result)
