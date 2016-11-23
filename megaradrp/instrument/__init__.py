@@ -183,4 +183,12 @@ WLCALIB_PARAMS = {
             'npix': 4300
         }
     },
+    'MOS': {
+        'LR-U': {
+            'crval': 3610,
+            'cdelt': 0.186,
+            'crpix': 1.0,
+            'npix': 4400
+        }
+    },
 }
