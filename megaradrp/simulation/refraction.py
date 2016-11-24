@@ -1,3 +1,24 @@
+
+# Copyright 2016 Universidad Complutense de Madrid
+#
+# This file is part of Megara DRP
+#
+# Megara DRP is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Megara DRP is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+"""Computing differential atmospheric refraction"""
+
 from __future__ import print_function
 
 import astropy.units as u
@@ -38,7 +59,7 @@ def _dar_dimensionless_(ZD, T, RH, P, wl, lambda_ref):
 
     # print(ZD, T, RH, P, wl, Lambda0)
 
-    PS = -10474.0 + 116.43 * T - 0.43284 * T ** 2 + 0.00053840 * T ** 3
+    PS = -10474.0 + T * (116.43 - T *(0.43284 + 0.00053840 * T))
 
     P2 = RH * PS
     P1 = P - P2
@@ -69,3 +90,9 @@ if __name__ == '__main__':
 
     print(wl)
     print(differential(60*u.deg, wl, 0.5 * u.micron, 11.5 * u.deg_C, 44.2, 772.2e-3 * u.bar).to(u.arcsec))
+
+# [ 0.3   0.35  0.4   0.45  0.5   0.55  0.6   0.65  0.7   0.75  0.8   0.85
+#   0.9   0.95  1.  ] micron
+# [ 139.21843488   75.42767344   39.3957048    16.18259071    0.
+#   -11.86954952  -20.8895519   -27.92780533  -33.53521547  -38.07938831
+#  -41.81507414  -44.92415491  -47.53967765  -49.76096379  -51.66345799] arcsec
