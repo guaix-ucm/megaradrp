@@ -108,19 +108,21 @@ MEGARA_PSEUDOSLIT_BOXES = {
 # Relative threshold for each VPH in LCB
 vph_thr = {
     'LCB': {
-        'LR-I': 0.27,
-        'LR-R': 0.10,
-        'LR-V': 0.27,
-        'LR-Z': 0.27,
         'LR-U': 0.02,
+        'LR-B': 0.02,
+        'LR-V': 0.27,
+        'LR-R': 0.10,
+        'LR-I': 0.27,
+        'LR-Z': 0.27,
         'HR-I': 0.20,
     },
     'MOS': {
-        'LR-I': 0.27,
-        'LR-R': 0.10,
-        'LR-V': 0.27,
-        'LR-Z': 0.27,
         'LR-U': 0.02,
+        'LR-B': 0.02,
+        'LR-V': 0.27,
+        'LR-R': 0.10,
+        'LR-I': 0.27,
+        'LR-Z': 0.27,
         'HR-I': 0.20,
     },
 }
@@ -129,28 +131,36 @@ vph_thr = {
 # Values for recipe Arc
 vph_thr_arc = {
     'LCB':
-        {'LR-I': {'min_distance': 10,
-                  'threshold': 0.06},
+        {'LR-U': {'min_distance': 10,
+                  'threshold': 0.02},
+         'LR-B': {'min_distance': 10,
+                  'threshold': 0.05},
+         'LR-V': {'min_distance': 10,
+                  'threshold': 0.01},
          'LR-R': {'min_distance': 10,
                   'threshold': 0.02},
-         'LR-V': {'min_distance': 30,
-                  'threshold': 0.19},
+         'LR-I': {'min_distance': 10,
+                  'threshold': 0.06},
          'LR-Z': {'min_distance': 10,
                   'threshold': 0.02},
-         'LR-U': {'min_distance': 10,
-                  'threshold': 0.02, }
+         'HR-I': {'min_distance': 10,
+                  'threshold': 0.00}
          },
     'MOS':
-        {'LR-I': {'min_distance': 10,
-                  'threshold': 0.06},
+        {'LR-U': {'min_distance': 10,
+                  'threshold': 0.02},
+         'LR-B': {'min_distance': 10,
+                  'threshold': 0.05},
+         'LR-V': {'min_distance': 10,
+                  'threshold': 0.01},
          'LR-R': {'min_distance': 10,
                   'threshold': 0.02},
-         'LR-V': {'min_distance': 30,
-                  'threshold': 0.19},
+         'LR-I': {'min_distance': 10,
+                  'threshold': 0.06},
          'LR-Z': {'min_distance': 10,
                   'threshold': 0.02},
-         'LR-U': {'min_distance': 10,
-                  'threshold': 0.02, }
+         'HR-I': {'min_distance': 10,
+                  'threshold': 0.00}
          },
 }
 
@@ -158,6 +168,30 @@ vph_thr_arc = {
 # FIXED values for arc calibration
 WLCALIB_PARAMS = {
     'LCB': {
+        'LR-U': {
+            'crval': 3640,
+            'cdelt': 0.186,
+            'crpix': 1.0,
+            'npix': 4300
+        },
+        'LR-B': {
+            'crval': 4280.0,
+            'cdelt': 0.23,
+            'crpix': 1.0,
+            'npix': 4300
+        },
+        'LR-V': {
+            'crval': 5060.0,
+            'cdelt': 0.27,
+            'crpix': 1.0,
+            'npix': 4300
+        },
+        'LR-R': {
+            'crval': 6030.0,
+            'cdelt': 0.31,
+            'crpix': 1.0,
+            'npix': 4300
+        },
         'LR-I': {
             'crval': 7140.0,
             'cdelt': 0.37,
@@ -170,25 +204,55 @@ WLCALIB_PARAMS = {
             'crpix': 1.0,
             'npix': 4300
         },
+        'HR-I': {
+            'crval': 8350.0,
+            'cdelt': 0.13,
+            'crpix': 1.0,
+            'npix': 4300
+        },
+    },
+    'MOS': {
+        'LR-U': {
+            'crval': 3640,
+            'cdelt': 0.186,
+            'crpix': 1.0,
+            'npix': 4300
+        },
+        'LR-B': {
+            'crval': 4280.0,
+            'cdelt': 0.23,
+            'crpix': 1.0,
+            'npix': 4300
+        },
+        'LR-V': {
+            'crval': 5060.0,
+            'cdelt': 0.27,
+            'crpix': 1.0,
+            'npix': 4300
+        },
         'LR-R': {
             'crval': 6030.0,
             'cdelt': 0.31,
             'crpix': 1.0,
             'npix': 4300
         },
-        'LR-U': {
-            'crval': 3620,
-            'cdelt': 0.186,
+        'LR-I': {
+            'crval': 7140.0,
+            'cdelt': 0.37,
             'crpix': 1.0,
             'npix': 4300
-        }
-    },
-    'MOS': {
-        'LR-U': {
-            'crval': 3610,
-            'cdelt': 0.186,
+        },
+        'LR-Z': {
+            'crval': 7985.0,
+            'cdelt': 0.41,
             'crpix': 1.0,
-            'npix': 4400
-        }
+            'npix': 4300
+        },
+        'HR-I': {
+            'crval': 8350.0,
+            'cdelt': 0.13,
+            'crpix': 1.0,
+            'npix': 4300
+        },
     },
 }
