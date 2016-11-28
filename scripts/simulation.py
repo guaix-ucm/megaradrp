@@ -37,13 +37,13 @@ def create_detector():
     PSCAN = 50
     OSCAN = 50
     #qe = 1.0 * np.ones(DSHAPE)
-    qe = fits.getdata('v02/base_qe.fits')
+    qe = fits.getdata('v03/base_qe.fits')
     dcurrent = 3.0 / 3600
 
     readpars1 = ReadParams(gain=1.0, ron=2.0, bias=1000.0)
     readpars2 = ReadParams(gain=1.0, ron=2.0, bias=1005.0)
 
-    qe_wl = EfficiencyFile('v02/tccdbroad_0.1aa.dat')
+    qe_wl = EfficiencyFile('v03/tccdbroad_0.1aa.dat')
 
     detector = MegaraDetectorSat('Detector',
                                  DSHAPE, OSCAN, PSCAN, qe=qe, qe_wl=qe_wl, dark=dcurrent,
@@ -53,11 +53,11 @@ def create_detector():
 
 def create_lcb():
     _logger.info('create LCB')
-    layouttable = np.loadtxt('v02/LCB_spaxel_centers.dat')
+    layouttable = np.loadtxt('v03/LCB_spaxel_centers.dat')
 
     fiberset = FiberSet(name='LCB', size=0.31 * u.arcsec, fwhm=3.6)
     # FIXME: a trans object per fiber is very slow
-    trans = EfficiencyFile('v02/tfiber_0.1aa_20m.dat')
+    trans = EfficiencyFile('v03/tfiber_0.1aa_20m.dat')
     for line in layouttable:
         idx =  int(line[3])
         if idx not in fiberset.bundles:
@@ -84,12 +84,12 @@ def create_lcb():
 
 def create_mos():
     _logger.info('create MOS')
-    layouttable = np.loadtxt('v02/MOS_spaxel_centers.dat')
+    layouttable = np.loadtxt('v03/MOS_spaxel_centers.txt')
     # Create fiber bundles and light fibers
 
     fiberset = FiberSet(name='MOS', size=0.31 * u.arcsec, fwhm=3.6)
     # FIXME: a trans object per fiber is very slow
-    trans = EfficiencyFile('v02/tfiber_0.1aa_20m.dat')
+    trans = EfficiencyFile('v03/tfiber_0.1aa_20m.dat')
     for line in layouttable:
         idx =  int(line[3])
         if idx not in fiberset.bundles:
@@ -125,9 +125,9 @@ def create_wheel():
     vph_conf = {'wl_range': [3653.0, 4051.0, 4386.0]}
     vph = create_vph_by_data('VPH405_LR',
                              'LR-U',
-                             'v02/VPH405_LR2-extra.dat',
-                             'v02/VPH405_LR_res.dat',
-                             'v02/tvph_0.1aa.dat',
+                             'v03/VPH405_LR2-extra.dat',
+                             'v03/VPH405_LR_res.dat',
+                             'v03/tvph_0.1aa.dat',
                              conf=vph_conf
                              )
     wheel.put_in_pos(vph, 0)
@@ -135,9 +135,9 @@ def create_wheel():
     vph_conf = {'wl_range': [8800.0, 9262.0, 9686.0]}
     vph = create_vph_by_data('VPH926_MR',
                              'MR-Z',
-                             'v02/VPH926_MR.txt',
-                             'v02/VPH926_MR_res.dat',
-                             'v02/tvph_0.1aa.dat',
+                             'v03/VPH926_MR.txt',
+                             'v03/VPH926_MR_res.dat',
+                             'v03/tvph_0.1aa.dat',
                              conf=vph_conf
                              )
     wheel.put_in_pos(vph, 1)
@@ -145,9 +145,9 @@ def create_wheel():
     vph_conf = {'wl_range': [8372.0, 8634.0, 8882.0]}
     vph = create_vph_by_data('VPH863_HR',
                              'HR-I',
-                             'v02/VPH863_HR.txt',
-                             'v02/VPH863_HR_res.dat',
-                             'v02/tvph_0.1aa.dat',
+                             'v03/VPH863_HR.txt',
+                             'v03/VPH863_HR_res.dat',
+                             'v03/tvph_0.1aa.dat',
                              conf=vph_conf
                              )
     wheel.put_in_pos(vph, 2)
@@ -168,7 +168,7 @@ def create_vph_by_data(name, setup, distortion, resolution, transmission, conf):
 
 def create_optics():
     _logger.info('create internal optics')
-    t = EfficiencyFile('v02/tspect_0.1aa.dat')
+    t = EfficiencyFile('v03/tspect_0.1aa.dat')
     i = InternalOptics(transmission=t)
     return i
 
@@ -251,7 +251,7 @@ def create_calibration_unit(illum=None):
 
 def create_telescope():
 
-    tel = Telescope(name='GTC', diameter=1040 * u.cm, transmission=EfficiencyFile('v02/ttel_0.1aa.dat'))
+    tel = Telescope(name='GTC', diameter=1040 * u.cm, transmission=EfficiencyFile('v03/ttel_0.1aa.dat'))
 
     return tel
 
@@ -297,20 +297,22 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     illum = illum1
+    illum = None
     cu = create_calibration_unit(illum=illum)
     instrument = create_instrument()
     telescope = create_telescope()
 
+    seeing = 0.9
     # For twilight spectrum
     factor_tws = 1e-15
 
     # For night spectrum
     # 4.97490903177e-17 for magnitude 21.9 with  filters/v_johnsonbessel.dat
     factor_ns = 4.97490903177e-17
-    atm = AtmosphereModel(twilight=InterpolFile('v02/sky/tw-spec.txt', factor=factor_tws),
-                          nightsky=InterpolFile('v02/sky/uves_sky.txt', factor=factor_ns),
-                          seeing=generate_gaussian_profile(seeing_fwhm=0.9),
-                          extinction=InterpolFile('v02/sky/lapalma_sky_extinction.dat')
+    atm = AtmosphereModel(twilight=InterpolFile('v03/sky/tw-spec.txt', factor=factor_tws),
+                          nightsky=InterpolFile('v03/sky/uves_sky.txt', factor=factor_ns),
+                          seeing=generate_gaussian_profile(seeing_fwhm=seeing),
+                          extinction=InterpolFile('v03/sky/lapalma_sky_extinction.dat')
                           )
     telescope.connect(atm)
     factory = MegaraImageFactory()
