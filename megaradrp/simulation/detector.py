@@ -104,9 +104,6 @@ class DetectorBase(HWDevice):
         return self._qe_wl.response(wl)
 
     def expose(self, source=0.0, time=0.0):
-        # FIXME: better handling this
-        _logger.warning('invert img up/down')
-        source = source[::-1,:]
         self._time_last = time
         self._det += (self.qe * source + self.dark) * time
 
@@ -218,10 +215,11 @@ class MegaraDetector(DetectorBase):
         self.virt1 = VirtualDetector(base1, geom1, self.directfun, self.readpars1)
         self.virt2 = VirtualDetector(base2, geom2, self.directfun, self.readpars2)
 
-
     def pre_readout(self, elec_pre):
-        # Do binning in the array
-        elec_v = binning(elec_pre, self.blocks[0], self.blocks[1])
+        # FIXME: there is a bug in numpy here
+        # this crashes if you don't make a copy()
+        elec_pre_inv = numpy.flipud(elec_pre).copy()
+        elec_v = binning(elec_pre_inv, self.blocks[0], self.blocks[1])
         elec_p = elec_v.reshape(elec_v.shape[0], elec_v.shape[1], -1)
         elec_f = elec_p.sum(axis=-1)
         return elec_f

@@ -34,6 +34,7 @@ def generate_bias_file():
 
     return simulate_flat(detector, exposure=1.0, source=5000.0)
 
+
 @pytest.mark.parametrize("direction", ['normal', 'mirror'])
 def test_trim_and_o(direction):
     temporary_path = mkdtemp()
@@ -56,6 +57,7 @@ def test_trim_and_o(direction):
 
     shutil.rmtree(temporary_path)
 
+
 def test_trim_and_o_fail():
     temporary_path = mkdtemp()
     fs = generate_bias_file()
@@ -76,6 +78,7 @@ def test_trim_and_o_fail():
         )
     shutil.rmtree(temporary_path)
     assert excinfo.value.args[0] == "%s must be either 'normal' or 'mirror'" % direction
+
 
 def test_trim_and_o_fail2():
     temporary_path = mkdtemp()
@@ -111,7 +114,6 @@ def test_apextract_weights():
     final = fits.HDUList([hdu_rss])
     final.writeto('rss.fits', clobber=True)
     assert True
-
 
 
 if __name__ == "__main__":
