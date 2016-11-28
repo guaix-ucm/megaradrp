@@ -31,7 +31,7 @@ import astropy.constants as cons
 from .convolution import rect_c, hex_c, setup_grid
 
 
-_logger = logging.getLogger("megaradrp.simulation")
+_logger = logging.getLogger(__name__)
 
 
 def simulate_bias(detector):
@@ -79,8 +79,16 @@ class Sequence(object):
         self.instrument = instrument
         self.mode = mode
 
+    def setup_instrument(self, instrument):
+        pass
+
     def run(self, **kwds):
         raise NotImplemented
+
+
+class MegaraSequence(Sequence):
+    def __init__(self, mode):
+        super(MegaraSequence, self).__init__('MEGARA', mode)
 
 
 class MegaraNullSequence(Sequence):
@@ -92,26 +100,36 @@ class MegaraNullSequence(Sequence):
         return iter(())
 
 
-class MegaraBiasSequence(Sequence):
+class MegaraBiasSequence(MegaraSequence):
     def __init__(self):
-        super(MegaraBiasSequence, self).__init__('MEGARA', 'bias_image')
+        super(MegaraBiasSequence, self).__init__('MEGARA_BIAS_IMAGE')
+
+    def setup_instrument(self, instrument):
+        instrument.shutter = 'STOP'
 
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
-        instrument.shutter = 'STOP'
+
+        self.setup_instrument(instrument)
+
         for i in range(repeat):
             instrument.detector.expose()
             final = instrument.detector.readout()
             yield final
 
 
-class MegaraDarkSequence(Sequence):
+class MegaraDarkSequence(MegaraSequence):
     def __init__(self):
-        super(MegaraDarkSequence, self).__init__('MEGARA', 'dark_image')
+        super(MegaraDarkSequence, self).__init__('MEGARA_DARK_IMAGE')
+
+    def setup_instrument(self, instrument):
+        instrument.shutter = 'STOP'
 
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
-        instrument.shutter = 'STOP'
+
+        self.setup_instrument(instrument)
+
         for i in range(repeat):
             instrument.detector.expose(source=0.0, time=exposure)
             final = instrument.detector.readout()
@@ -186,7 +204,7 @@ class MegaraLampSequence(Sequence):
 
 class MegaraFiberFlatSequence(MegaraLampSequence):
     def __init__(self):
-        super(MegaraFiberFlatSequence, self).__init__('fiber_flat_image')
+        super(MegaraFiberFlatSequence, self).__init__('MEGARA_FIBER_FLAT_IMAGE')
 
     def lamp_check(self, lamp):
         # TODO: check that this is a cont lamp
@@ -195,7 +213,7 @@ class MegaraFiberFlatSequence(MegaraLampSequence):
 
 class MegaraTraceMapSequence(MegaraLampSequence):
     def __init__(self):
-        super(MegaraTraceMapSequence, self).__init__('trace_map')
+        super(MegaraTraceMapSequence, self).__init__('MEGARA_TRACE_AMP')
 
     def lamp_check(self, lamp):
         # TODO: check that this is a cont lamp
@@ -204,7 +222,7 @@ class MegaraTraceMapSequence(MegaraLampSequence):
 
 class MegaraArcSequence(MegaraLampSequence):
     def __init__(self):
-        super(MegaraArcSequence, self).__init__('arc_calibration')
+        super(MegaraArcSequence, self).__init__('MEGARA_ARC_CALIBRATION')
 
     def lamp_check(self, lamp):
         # TODO: check that this is an arc lamp
@@ -213,7 +231,7 @@ class MegaraArcSequence(MegaraLampSequence):
 
 class MegaraSlitFlatSequence(MegaraLampSequence):
     def __init__(self):
-        super(MegaraSlitFlatSequence, self).__init__('slit_flat')
+        super(MegaraSlitFlatSequence, self).__init__('MEGARA_SLIT_FLAT')
 
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
@@ -242,7 +260,7 @@ class MegaraSlitFlatSequence(MegaraLampSequence):
 
 class MegaraTwilightFlatSequence(Sequence):
     def __init__(self):
-        super(MegaraTwilightFlatSequence, self).__init__('MEGARA', 'twilight_flat_image')
+        super(MegaraTwilightFlatSequence, self).__init__('MEGARA', 'MEGARA_twilight_flat_image')
 
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
@@ -254,9 +272,9 @@ class MegaraTwilightFlatSequence(Sequence):
         targets2 = [atm.twilight_spectrum]
 
         wl_in, ns_illum = all_targets_in_focal_plane([], targets2, [], atm, telescope, instrument)
-
         out1 = instrument.apply_transmissions_only(wl_in, ns_illum)
         out2 = instrument.project_rss(wl_in, out1)
+
 
         for i in range(repeat):
             instrument.detector.expose(source=out2, time=exposure)
@@ -266,7 +284,7 @@ class MegaraTwilightFlatSequence(Sequence):
 
 class MegaraFocusSequence(MegaraLampSequence):
     def __init__(self):
-        super(MegaraFocusSequence, self).__init__(mode='focus_spectrograph')
+        super(MegaraFocusSequence, self).__init__(mode='MEGARA_FOCUS_SPECTROGRAPH')
 
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
@@ -295,93 +313,70 @@ class MegaraFocusSequence(MegaraLampSequence):
         return True
 
 
-class MegaraLCBImageSequence(Sequence):
-    def __init__(self):
-        super(MegaraLCBImageSequence, self).__init__('MEGARA', 'lcb_image')
+class MegaraSkyImageSequence(MegaraSequence):
+    def __init__(self, mode):
+        super(MegaraSkyImageSequence, self).__init__(mode)
 
-    def run(self, control, exposure, repeat):
-        instrument = control.get(self.instrument)
-        telescope = control.get('GTC')
-
+    def setup_instrument(self, instrument):
         # Setup instrument
         # Fixed by mode
+        instrument.shutter = 'OPEN'
+
+    def run(self, control, exposure, repeat):
+
+        instrument = control.get(self.instrument)
+
+        self.setup_instrument(instrument)
+
+        telescope = control.get('GTC')
+        atm = telescope.inc # Atmosphere model, incoming light
+
+        # Get targets
+        targets1 = control.targets
+        targets2 = [atm.night_spectrum]
+
+        wl_in, ns_illum = all_targets_in_focal_plane(targets1, targets2, [], atm, telescope, instrument)
+
+        out1 = instrument.apply_transmissions_only(wl_in, ns_illum)
+        out2 = instrument.project_rss(wl_in, out1)
+
+        for i in range(repeat):
+            instrument.detector.expose(source=out2, time=exposure)
+            final = instrument.detector.readout()
+            yield final
+
+
+class MegaraSkyLCBImageSequence(MegaraSkyImageSequence):
+    def __init__(self, mode):
+        super(MegaraSkyLCBImageSequence, self).__init__(mode)
+
+    def setup_instrument(self, instrument):
+        super(MegaraSkyLCBImageSequence, self).setup_instrument(instrument)
         instrument.insmode = 'LCB'
-        instrument.shutter = 'OPEN'
-
-        atm = telescope.inc # Atmosphere model, incoming light
-
-        # Get targets
-        targets1 = control.targets
-        targets2 = [atm.night_spectrum]
-
-        wl_in, ns_illum = all_targets_in_focal_plane(targets1, targets2, [], atm, telescope, instrument)
-
-        out1 = instrument.apply_transmissions_only(wl_in, ns_illum)
-        out2 = instrument.project_rss(wl_in, out1)
-
-        for i in range(repeat):
-            instrument.detector.expose(source=out2, time=exposure)
-            final = instrument.detector.readout()
-            yield final
 
 
-class MegaraMOSImageSequence(Sequence):
+class MegaraLCBImageSequence(MegaraSkyLCBImageSequence):
     def __init__(self):
-        super(MegaraMOSImageSequence, self).__init__('MEGARA', 'mos_image')
+        super(MegaraLCBImageSequence, self).__init__('MEGARA_LCB_IMAGE')
 
-    def run(self, control, exposure, repeat):
-        instrument = control.get(self.instrument)
-        telescope = control.get('GTC')
 
-        # Setup instrument
-        # Fixed by mode
+class MegaraSkyMOSImageSequence(MegaraSkyImageSequence):
+    def __init__(self, mode):
+        super(MegaraSkyMOSImageSequence, self).__init__(mode)
+
+    def setup_instrument(self, instrument):
+        super(MegaraSkyMOSImageSequence, self).setup_instrument(instrument)
         instrument.insmode = 'MOS'
-        instrument.shutter = 'OPEN'
-
-        atm = telescope.inc # Atmosphere model, incoming light
-
-        # Get targets
-        targets1 = control.targets
-        targets2 = [atm.night_spectrum]
-
-        wl_in, ns_illum = all_targets_in_focal_plane(targets1, targets2, [], atm, telescope, instrument)
-
-        out1 = instrument.apply_transmissions_only(wl_in, ns_illum)
-        out2 = instrument.project_rss(wl_in, out1)
-
-        for i in range(repeat):
-            instrument.detector.expose(source=out2, time=exposure)
-            final = instrument.detector.readout()
-            yield final
 
 
-class MegaraMOSAcquisitionSequence(Sequence):
+class MegaraMOSImageSequence(MegaraSkyMOSImageSequence):
     def __init__(self):
-        super(MegaraMOSAcquisitionSequence, self).__init__('MEGARA', 'mos_acquisition')
+        super(MegaraMOSImageSequence, self).__init__('MEGARA_MOS_IMAGE')
 
-    def run(self, control, exposure, repeat):
-        instrument = control.get(self.instrument)
-        telescope = control.get('GTC')
 
-        atm = telescope.inc # Atmosphere model, incoming light
-
-        # Setup instrument
-        # Fixed by mode
-        instrument.insmode = 'MOS'
-        instrument.shutter = 'OPEN'
-        # Get targets
-        targets1 = control.targets
-        targets2 = [atm.night_spectrum]
-
-        wl_in, ns_illum = all_targets_in_focal_plane(targets1, targets2, [], atm, telescope, instrument)
-
-        out1 = instrument.apply_transmissions_only(wl_in, ns_illum)
-        out2 = instrument.project_rss(wl_in, out1)
-
-        for i in range(repeat):
-            instrument.detector.expose(source=out2, time=exposure)
-            final = instrument.detector.readout()
-            yield final
+class MegaraMOSAcquisitionSequence(MegaraSkyMOSImageSequence):
+    def __init__(self):
+        super(MegaraMOSAcquisitionSequence, self).__init__('MEGARA_MOS_ACQUISITION')
 
 
 def megara_sequences():
