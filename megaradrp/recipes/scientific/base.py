@@ -81,8 +81,8 @@ class ImageRecipe(MegaraBaseRecipe):
 
         flow2 = SerialFlow([splitter1, calibrator_aper, flipcor, calibrator_wl, calibrator_flat])
 
-        reduced2d = splitter1.out
         reduced_rss =  flow2(img)
+        reduced2d = splitter1.out
         return reduced2d, reduced_rss
 
     def run_sky_subtraction(self, img):
