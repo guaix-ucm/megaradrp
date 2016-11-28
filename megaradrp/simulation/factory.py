@@ -21,6 +21,7 @@
 
 import json
 import uuid
+from datetime import datetime
 
 import astropy.io.fits as fits
 
@@ -155,6 +156,10 @@ class MegaraImageFactory(object):
         # pheader['FILENAME'] = name
         pheader['OBSMODE'] = control.mode
         pheader['UUID'] = uuid.uuid4().hex
+        # Date of simulation
+        pheader['DATE'] = datetime.utcnow().isoformat()
+        # Date of simulated observation, not set yet
+        pheader['DATE-OBS'] = datetime.utcnow().isoformat()
 
         # Seqs
         metacontrol = control.config_info()
