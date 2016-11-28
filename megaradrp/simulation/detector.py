@@ -18,11 +18,16 @@
 #
 
 
+import logging
+
 import numpy
 from numpy.lib.stride_tricks import as_strided as ast
 
 from .device import HWDevice
 from .efficiency import Efficiency
+
+
+_logger = logging.getLogger(__name__)
 
 
 def binning(arr, br, bc):
@@ -99,6 +104,9 @@ class DetectorBase(HWDevice):
         return self._qe_wl.response(wl)
 
     def expose(self, source=0.0, time=0.0):
+        # FIXME: better handling this
+        _logger.warning('invert img up/down')
+        source = source[::-1,:]
         self._time_last = time
         self._det += (self.qe * source + self.dark) * time
 
