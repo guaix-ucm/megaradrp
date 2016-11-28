@@ -113,22 +113,22 @@ modes:
   summary: Test the linearity of the MEGARA detector
   description: Test the linearity of the MEGARA detector
   key: MEGARA_LINEARITY_TEST
-  tagger: null
+  tagger: megaradrp.taggers.tagger_base_image
 - name: Telescope Focus
   summary: Telescope Focus
   description: Telescope Focus
   key: MEGARA_FOCUS_TELESCOPE
-  tagger: null
+  tagger: megaradrp.taggers.tagger_base_image
 - name: Acquisition with the LCB IFU
   summary: Acquisition with the LCB IFU
   description: Acquisition with the LCB IFU
   key: MEGARA_LCB_ACQUISITION
-  tagger: null
+  tagger: megaradrp.taggers.tagger_base_image
 - name: Acquisition with the Fiber MOS
   summary: Acquisition with the Fiber MOS
   description: Acquisition with the Fiber MOS
   key: MEGARA_MOS_ACQUISITION
-  tagger: null
+  tagger: megaradrp.taggers.tagger_base_image
 pipelines:
   default:
     version: 1
