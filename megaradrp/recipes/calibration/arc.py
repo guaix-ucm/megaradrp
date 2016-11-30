@@ -156,21 +156,38 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 row = fibdata_detrend
 
                 self.logger.info('Starting row %d, fibid %d', idx, fibid)
+
                 # find peaks (initial search providing integer numbers)
                 ipeaks_int = peak_local_max(row, threshold_rel=threshold,
                                              min_distance=min_distance)[:, 0]
 
                 self.logger.debug('ipeaks_int.........: %s', ipeaks_int)
-                # Filter by flux
-                if len(ipeaks_int) <= nlines:
-                    # nothing to do
-                    ipeaks_int_filtered = ipeaks_int
-                else:
-                    peak_fluxes = row[ipeaks_int]
-                    spositions = peak_fluxes.argsort()
-                    # Return last nlines elements
-                    ipeaks_int_filtered = ipeaks_int[spositions[-nlines:]]
-                    ipeaks_int_filtered.sort()
+
+                # Filter by flux, selecting a maximum number of brightest
+                # lines in each region
+                region_size = (len(row)-1)/(len(nlines))
+                ipeaks_int_filtered = numpy.array([], dtype=int)
+                for iregion, nlines_in_region in enumerate(nlines):
+                    if nlines_in_region > 0:
+                        imin = int(iregion * region_size)
+                        imax = int((iregion + 1) * region_size)
+                        if iregion > 0:
+                            imin += 1
+                        ipeaks_int_region = ipeaks_int[numpy.logical_and(
+                            ipeaks_int >= imin, ipeaks_int <= imax
+                        )]
+                        if len(ipeaks_int_region) > 0:
+                            peak_fluxes = row[ipeaks_int_region]
+                            spos = peak_fluxes.argsort()
+                            ipeaks_tmp = ipeaks_int_region[
+                                spos[-nlines_in_region:]
+                            ]
+                            ipeaks_tmp.sort()  # in-place sort
+                            self.logger.debug('ipeaks_in_region...: %s',
+                                              ipeaks_tmp)
+                            ipeaks_int_filtered=numpy.concatenate(
+                                (ipeaks_int_filtered, ipeaks_tmp)
+                            )
 
                 self.logger.debug('ipeaks_int_filtered: %s', ipeaks_int_filtered)
                 ipeaks_float = refine_peaks(row, ipeaks_int_filtered, nwinwidth)[0]
@@ -200,10 +217,10 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                            fill_value=0.0)
                 xpeaks_refined = finterp_channel(ipeaks_float)
 
-                wv_ini_search = int(
-                    lines_catalog[0][0] - 1000)  # initially: 3500
-                wv_end_search = int(
-                    lines_catalog[-1][0] + 1000)  # initially: 4500
+                wv_range_catalog = lines_catalog[-1][0] - lines_catalog[0][0]
+                delta_wv = 0.05 * wv_range_catalog
+                wv_ini_search = int(lines_catalog[0][0] - delta_wv)
+                wv_end_search = int(lines_catalog[-1][0] + delta_wv)
 
                 try:
 
