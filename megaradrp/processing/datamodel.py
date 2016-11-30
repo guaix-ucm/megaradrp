@@ -24,6 +24,7 @@ from __future__ import division
 import re
 import pkgutil
 
+import astropy.io.fits as fits
 from six import StringIO
 from numina.flow.datamodel import DataModel
 
@@ -59,7 +60,6 @@ class MegaraDataModel(DataModel):
             hdr_fiber = img['FIBERS'].header
             return read_fibers_extension(hdr_fiber)
         else:
-            import astropy.io.fits as fits
             # Invalid in general
             insmode = img[0].header.get('INSMODE')
             if insmode == 'LCB':
@@ -110,6 +110,22 @@ class FibersConf(object):
                             result.append(fib.fibid)
                 else:
                     result.extend(bundle.fibers.keys())
+        return result
+
+    def conected_fibers(self, valid_only=False):
+
+        if self.name == 'MOS':
+            raise ValueError('not working for MOS')
+
+        result = []
+        for bundle in self.bundles.values():
+            if bundle.target_type != 'SKY':
+                if valid_only:
+                    for fib in bundle.fibers.values():
+                        if fib.valid:
+                            result.append(fib)
+                else:
+                    result.extend(bundle.fibers.values())
         return result
 
     def inactive_fibers(self):
@@ -164,10 +180,6 @@ class FiberConf(object):
 
 def read_fibers_extension(hdr):
     conf = FibersConf()
-    # conf.name = hdr['INSMODE']
-    # conf.conf_id = hdr['CONFID']
-    # conf.nbundles = hdr['NBUNDLES']
-    # conf.nfibers = hdr['NFIBERS']
     conf.name = hdr.get('INSMODE', 'LCB')
     conf.conf_id = hdr.get('CONFID', 1)
     conf.nbundles = hdr.get('NBUNDLES', 89)
