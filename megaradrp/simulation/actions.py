@@ -141,10 +141,15 @@ class MegaraLampSequence(Sequence):
     def __init__(self, mode):
         super(MegaraLampSequence, self).__init__('MEGARA', mode)
 
+    def setup_instrument(self, instrument):
+        instrument.shutter = 'OPEN'
+
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
         cu = control.get('ICM-MEGARA')
-        instrument.shutter = 'OPEN'
+
+        self.setup_instrument(instrument)
+
         # Get active lamp
         lamp = cu.current()
         if lamp == 'EMPTY':
@@ -234,10 +239,14 @@ class MegaraSlitFlatSequence(MegaraLampSequence):
     def __init__(self):
         super(MegaraSlitFlatSequence, self).__init__('MEGARA_SLIT_FLAT')
 
+    def setup_instrument(self, instrument):
+        instrument.shutter = 'OPEN'
+
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
-        instrument.shutter = 'OPEN'
         cu = control.get('ICM-MEGARA')
+
+        self.setup_instrument(instrument)
 
         # Get active lamp
         lamp = cu.current()
@@ -268,14 +277,14 @@ class MegaraTwilightFlatSequence(Sequence):
         instrument.shutter = 'OPEN'
         telescope = control.get('GTC')
         atm = telescope.inc # Atmosphere model
+        oe = control.get('OE')
         # Simulated tw spectrum
 
         targets2 = [atm.twilight_spectrum]
 
-        wl_in, ns_illum = all_targets_in_focal_plane([], targets2, [], atm, telescope, instrument)
+        wl_in, ns_illum = all_targets_in_focal_plane([], targets2, [], atm, telescope, oe, instrument)
         out1 = instrument.apply_transmissions_only(wl_in, ns_illum)
         out2 = instrument.project_rss(wl_in, out1)
-
 
         for i in range(repeat):
             instrument.detector.expose(source=out2, time=exposure)
@@ -330,13 +339,14 @@ class MegaraSkyImageSequence(MegaraSequence):
         self.setup_instrument(instrument)
 
         telescope = control.get('GTC')
+        oeng = control.get('OE')
         atm = telescope.inc # Atmosphere model, incoming light
 
         # Get targets
         targets1 = control.targets
         targets2 = [atm.night_spectrum]
 
-        wl_in, ns_illum = all_targets_in_focal_plane(targets1, targets2, [], atm, telescope, instrument)
+        wl_in, ns_illum = all_targets_in_focal_plane(targets1, targets2, [], atm, telescope, oeng, instrument)
 
         out1 = instrument.apply_transmissions_only(wl_in, ns_illum)
         out2 = instrument.project_rss(wl_in, out1)
@@ -452,7 +462,7 @@ def simulate_point_like_profile(seeing_model, fibrad, angle=0.0, xsize=12.5, ysi
     return fraction_of_flux
 
 
-def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, instrument):
+def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, oe, instrument):
     # simulate_seeing_profile
 
     # print('enter targets in focal plane')
@@ -468,6 +478,10 @@ def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, instrument):
     final = np.zeros((nfibers, wl.shape[0]))
 
     # Centers of profiles
+    # zenith_distance = 30 * u.deg
+    # airmass = 1.0 / math.cos(zenith_distance.to(u.rad).value)
+
+
     if instrument.fiberset.name == 'MOS':
         # get fiber mos
         fibermos = instrument.get_device('MEGARA.MOS')
@@ -494,7 +508,7 @@ def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, instrument):
             subfinal = final[fibid1 - 1]
             # FIXME: check angles
             rotang = 90 - robot.pa
-            subfinal = add_target_mos(target, subfinal, wl, fibrad, pos_x, pos_y, rotang, telescope, atmosphere)
+            subfinal = add_target_mos(target, subfinal, wl, fibrad, pos_x, pos_y, rotang, oe, telescope, atmosphere)
             final[fibid1 - 1] = subfinal
 
 
@@ -516,7 +530,7 @@ def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, instrument):
         pos_y = tab['y']
         cover_frac = tab['cover']
         subfinal = final[fibid - 1]
-        add_targets_lcb2(t1, subfinal, wl, fibrad, pos_x, pos_y, telescope, atmosphere)
+        add_targets_lcb2(t1, subfinal, wl, fibrad, pos_x, pos_y, oe, telescope, atmosphere)
 
     add_sky(t2, subfinal, wl, fibarea, telescope)
 
@@ -530,20 +544,20 @@ def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, instrument):
     return wl, final
 
 
-def add_targets_lcb(targets, subfinal, wl, fibrad, pos_x, pos_y, telescope, atmosphere):
+def add_targets_lcb(targets, subfinal, wl, fibrad, pos_x, pos_y, oe, telescope, atmosphere):
 
     fraction_of_flux = simulate_point_like_profile(atmosphere.seeing, fibrad.value)
 
     # res = np.zeros_like(subfinal)
 
-    airmass = 1.0
+    airmass = oe.airmass
     extinction = np.power(10, -0.4 * airmass * atmosphere.extinction(wl))
 
     energy_unit = u.erg * u.s**-1 * u.cm**-2 * u.AA **-1
     photon_energy = (cons.h * cons.c / wl)
 
     for target in targets:
-        _logger.debug('object xname is %s', target.name)
+        _logger.debug('object name is %s', target.name)
         center = target.relposition
         # fraction of flux in each fiber
         #scales = np.zeros((nfibers,))
@@ -563,27 +577,25 @@ def add_targets_lcb(targets, subfinal, wl, fibrad, pos_x, pos_y, telescope, atmo
     return subfinal
 
 
-def add_targets_lcb2(targets, subfinal, wl, fibrad, pos_x, pos_y, telescope, atmosphere):
+def add_targets_lcb2(targets, subfinal, wl, fibrad, pos_x, pos_y, oe, telescope, atmosphere):
 
     fraction_of_flux = simulate_point_like_profile(atmosphere.seeing, fibrad.value)
 
-    zenith_distance = 30 * u.deg
-    airmass = 1.0 / math.cos(zenith_distance.to(u.rad).value)
+    airmass = oe.airmass
+    zenith_distance = oe.zenith_distance
     extinction = np.power(10, -0.4 * airmass * atmosphere.extinction(wl))
+
+    ref_wl = 0.5 * (wl.max()  + wl.min())
+    _logger.debug('reference wl is %s', ref_wl)
+    dar = atmosphere.refraction(zenith_distance, wl, ref_wl).to(u.arcsec).value
+    _logger.debug('extreme DAR %s %s', dar[0], dar[-1])
 
     energy_unit = u.erg * u.s**-1 * u.cm**-2 * u.AA **-1
     photon_energy = (cons.h * cons.c / wl)
 
-    from .refraction import differential_p
-    from astropy.units import cds
-    cds.enable()
-
-    rel = 8.0 / 600.0
-    temp = 11.5 * u.deg_C
-    press = 600 * cds.mmHg
     ref_wl = 0.5 * (wl.max()  + wl.min())
     _logger.debug('reference wl is %s', ref_wl)
-    dar = (differential_p(zenith_distance, wl, ref_wl, temp, press, rel).to(u.arcsec)).value
+    dar = atmosphere.refraction(zenith_distance, wl, ref_wl).to(u.arcsec).value
     _logger.debug('extreme DAR %s %s', dar[0], dar[-1])
 
     for target in targets:
@@ -621,12 +633,15 @@ def add_targets_lcb2(targets, subfinal, wl, fibrad, pos_x, pos_y, telescope, atm
     return subfinal
 
 
-def add_target_mos(target, subfinal, wl, fibrad, pos_x, pos_y, rotang, telescope, atmosphere):
+def add_target_mos(target, subfinal, wl, fibrad, pos_x, pos_y, rotang, oe, telescope, atmosphere):
 
     fraction_of_flux = simulate_point_like_profile(atmosphere.seeing, fibrad.value, angle=rotang, xsize=5.0, ysize=5.0)
 
-    zenith_distance = 30 * u.deg
-    airmass = 1.0 / math.cos(zenith_distance.to(u.rad).value)
+    airmass = oe.airmass
+    _logger.debug('airmass is %s', airmass)
+    zenith_distance = oe.zenith_distance
+    _logger.debug('Z dis is %s', zenith_distance)
+
     extinction = np.power(10, -0.4 * airmass * atmosphere.extinction(wl))
 
     energy_unit = u.erg * u.s**-1 * u.cm**-2 * u.AA **-1
@@ -635,17 +650,10 @@ def add_target_mos(target, subfinal, wl, fibrad, pos_x, pos_y, rotang, telescope
     _logger.debug('object is %s', target.name)
     center = target.relposition
 
-    from .refraction import differential_p
-    from astropy.units import cds
-    cds.enable()
-
-    rel = 8.0 / 600.0
-    temp = 11.5 * u.deg_C
-    press = 600 * cds.mmHg
     ref_wl = 0.5 * (wl.max()  + wl.min())
 
     _logger.debug('reference wl is %s', ref_wl)
-    dar = (differential_p(zenith_distance, wl, ref_wl, temp, press, rel).to(u.arcsec)).value
+    dar = atmosphere.refraction(zenith_distance, wl, ref_wl).to(u.arcsec).value
     _logger.debug('extreme DAR %s %s', dar[0], dar[-1])
     # Offset fiber positions
     # Assume DAR affects only one coordinate, this depends on the several

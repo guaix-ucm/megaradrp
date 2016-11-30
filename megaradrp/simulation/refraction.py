@@ -78,6 +78,17 @@ def differential_p(
 
     return delt_r * u.rad
 
+
+class DifferentialRefractionModel(object):
+    def __init__(self, temperature, pressure, relative_humidity):
+        self.temperature = temperature
+        self.pressure = pressure
+        self.relative_humidity = relative_humidity
+
+    def refraction(self, z, wl, ref):
+        return differential_p(z, wl, ref, self.temperature, self.pressure, self.relative_humidity)
+
+
 if __name__ == '__main__':
     from astropy.units import cds
     cds.enable()

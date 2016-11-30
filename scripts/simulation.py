@@ -250,10 +250,32 @@ def create_calibration_unit(illum=None):
 
 
 def create_telescope():
-
+    _logger.info('create telescope')
     tel = Telescope(name='GTC', diameter=1040 * u.cm, transmission=EfficiencyFile('v03/ttel_0.1aa.dat'))
 
     return tel
+
+
+class ObservingEngine(object):
+    def __init__(self, zenith_distance):
+        self._zd = zenith_distance
+
+    @property
+    def zenith_distance(self):
+        return self._zd
+
+    @property
+    def airmass(self):
+        import math
+        za = self._zd
+        sec = 1.0 / math.cos(za.to(u.rad).value)
+        return sec
+
+
+def create_observing_engine(z):
+    _logger.info('create observing engine')
+    oe = ObservingEngine(z)
+    return oe
 
 
 def restricted_float(x):
@@ -270,6 +292,7 @@ if __name__ == '__main__':
 
     from megaradrp.simulation.factory import MegaraImageFactory
     from megaradrp.simulation.atmosphere import AtmosphereModel, generate_gaussian_profile
+    from megaradrp.simulation.refraction import DifferentialRefractionModel
 
     try:
         from numinadb.controldb import ControlSystem1
@@ -302,25 +325,35 @@ if __name__ == '__main__':
     instrument = create_instrument()
     telescope = create_telescope()
 
+    # Observing conditions
+    press = 79993.2 * u.Pa
+    rel = 0.013333333
+    temp = 11.5 * u.deg_C
+
+    refraction_model = DifferentialRefractionModel(temperature=temp, pressure=press, relative_humidity=rel)
+
     seeing = 0.9
+
     # For twilight spectrum
     factor_tws = 1e-15
-
     # For night spectrum
     # 4.97490903177e-17 for magnitude 21.9 with  filters/v_johnsonbessel.dat
     factor_ns = 4.97490903177e-17
     atm = AtmosphereModel(twilight=InterpolFile('v03/sky/tw-spec.txt', factor=factor_tws),
                           nightsky=InterpolFile('v03/sky/uves_sky.txt', factor=factor_ns),
                           seeing=generate_gaussian_profile(seeing_fwhm=seeing),
-                          extinction=InterpolFile('v03/sky/lapalma_sky_extinction.dat')
+                          extinction=InterpolFile('v03/sky/lapalma_sky_extinction.dat'),
+                          refraction=refraction_model
                           )
     telescope.connect(atm)
     factory = MegaraImageFactory()
+    observing_engine = create_observing_engine(60 * u.deg)
 
     control = ControlSystem(factory)
     control.register('MEGARA', instrument)
     control.register('GTC', telescope)
     control.register('ICM-MEGARA', cu)
+    control.register('OE', observing_engine)
     control.register('factory', factory)
 
     # Observation setup
