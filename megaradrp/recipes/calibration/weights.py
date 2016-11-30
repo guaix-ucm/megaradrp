@@ -1,49 +1,53 @@
+#
+# Copyright 2015-2016 Universidad Complutense de Madrid
+#
+# This file is part of Megara DRP
+#
+# Megara DRP is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Megara DRP is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+""" Extraction weights calibration recipes for Megara"""
+
 from __future__ import division
 
 import copy
-import new
+import types
 import math
 import multiprocessing as mp
-import time
-import timeit
-import shutil
 import json as ujson
-
 from tempfile import mkdtemp
-
-import copy_reg
-import numpy as np
 import os
 import os.path
 
-from megaradrp.core.recipe import MegaraBaseRecipe
-from numina.core import Product, Requirement
-import megaradrp.requirements as reqs
-from megaradrp.types import MasterWeights
-# matplotlib.use('agg', warn=True)
-from numina.core.requirements import ObservationResultRequirement
-from astropy.io import fits
+import six.copyreg as copyreg
+import numpy as np
 from astropy.modeling import fitting
 from scipy.stats import norm
 from astropy.modeling.models import custom_model
+from numina.core import Product, Requirement
 
-import logging
-
-_logger = logging.getLogger('numina.recipes.megara')
-
-##############################################################################
-
-def make_instancemethod(inst, methodname):
-    return getattr(inst, methodname)
+from megaradrp.core.recipe import MegaraBaseRecipe
+import megaradrp.requirements as reqs
+from megaradrp.types import MasterWeights
 
 
-def pickle_instancemethod(method):
-    return make_instancemethod, (method.im_self, method.im_func.__name__)
+copyreg.pickle(
+    types.MethodType,
+    lambda method: (getattr, (method.im_self, method.im_func.__name__)),
+    getattr
+)
 
-
-copy_reg.pickle(new.instancemethod, pickle_instancemethod, make_instancemethod)
-
-##############################################################################
 
 M_SQRT_2_PI = math.sqrt(2 * math.pi)
 
