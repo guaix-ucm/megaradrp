@@ -27,69 +27,73 @@ import math
 
 import numpy
 
-#D2R = math.pi / 180.0
+
+@u.quantity_input(zenith_distance=u.micron)
+def ref_index0(wl):
+    wl0 = wl.to(u.micron).value
+    wl1 = (1.0 / wl0)**2
+    return 64.328 + 29498.1 / (146 - wl1) + 255.4 / (41 - wl1)
+
+
+@u.quantity_input(zenith_distance=u.micron)
+def ref_index1(wl, p=760, t=15):
+    # 1 mmHg = 133.322387415
+    n6_0 = ref_index0(wl)
+    factor1 = p * (1 + (1.049 - 0.0157 * t) * 1e-6 * p)
+    factor2 = 720.883 * (1 + 0.003661 * t)
+    n6_1 = n6_0 * factor1 / factor2
+    return n6_1
+
+
+@u.quantity_input(zenith_distance=u.micron)
+def ref_index2(wl, p=760, t=15, f=0.0):
+    n6_1 = ref_index1(wl, p, t)
+    wl0 = wl.to(u.micron).value
+    wl1 = (1.0 / wl0) ** 2
+    cont1 = 0.0624 - 0.000680 * wl1
+    cont2 = 720.883 * (1 + 0.003661 * t)
+    n6_2 = n6_1 - cont1 / cont2 * f
+    return n6_2
+
 
 @u.quantity_input(zenith_distance=u.deg)
-def differential(
+def differential_p(
         zenith_distance,
         wl,
         wl_reference,
         temperature,
+        pressure,
         relative_humidity,
-        pressure
 ):
-    # Z is zenith distance
-    # lambda0 reference wavelength [um]
+    """Differential refraction as given by 1982PASP...94..715F """
 
-    #TC = 11.5                        #Temperature [C]
-    # RH = 14.5                        #Relative Humidity [%]
-    # P = 743.0                        #Pressure [mbar]
+    zd = zenith_distance.to(u.rad).value
+    p = pressure.to(u.Pascal).value / 133.322387415
+    t = temperature.to(u.deg_C, equivalencies=u.temperature()).value
+    f = relative_humidity * p
+    nl = 1 + 1e-6 * ref_index2(wl, p, t, f)
+    n0 = 1 + 1e-6 * ref_index2(wl_reference, p, t, f)
 
-    ZD = zenith_distance.to(u.rad).value
-    T = temperature.to(u.K, equivalencies=u.temperature()).value
-    Lambda = wl.to(u.micron).value
-    Lambda0 = wl_reference.to(u.micron).value
-    RH = relative_humidity / 100
-    P = pressure.to(u.bar).value * 1e3 # milibar
+    delt_r = (nl - n0) * math.tan(zd)
 
-    return _dar_dimensionless_(ZD, T, RH, P, Lambda, Lambda0) * u.rad
-
-
-def _dar_dimensionless_(ZD, T, RH, P, wl, lambda_ref):
-
-    # print(ZD, T, RH, P, wl, Lambda0)
-
-    PS = -10474.0 + T * (116.43 - T *(0.43284 + 0.00053840 * T))
-
-    P2 = RH * PS
-    P1 = P - P2
-    # print(P1)
-    D1 = P1 / T * (1.0 + P1 * (57.90 * 1.0E-8 - (9.3250 * 1.0E-4 / T) + (0.25844 / T ** 2)))
-    D2 = P2 / T * (1.0 + P2 * (1.0 + 3.7E-4 * P2) * (-2.37321E-3 + (2.23366 / T) - (710.792 / T ** 2) + (7.75141E4 / T ** 3)))
-
-    N0_1 = _poly1(D1, D2, 1.0 / lambda_ref)
-
-    N_1 = _poly1(D1, D2, 1.0 / wl)
-
-    DR = math.tan(ZD) * (N0_1 - N_1)
-    return DR
-
-
-def _poly1(D1, D2, S):
-
-    N_1 = 1.0E-8 * ((2371.34 + 683939.7 / (130 - S ** 2) + 4547.3 / (38.9 - S ** 2)) * D1 + (
-        6487.31 + 58.058 * S ** 2 - 0.71150 * S ** 4 + 0.08851 * S ** 6) * D2)
-    return N_1
-
+    return delt_r * u.rad
 
 if __name__ == '__main__':
+    from astropy.units import cds
+    cds.enable()
 
     wl = numpy.linspace(0.3, 1.0, num=15) * u.micron
 
     #wl = 0.6 * u.micron
 
     print(wl)
-    print(differential(60*u.deg, wl, 0.5 * u.micron, 11.5 * u.deg_C, 44.2, 772.2e-3 * u.bar).to(u.arcsec))
+    zdis = 60*u.deg
+    rel = 8.0 / 600.0
+    ref = 0.5 * u.micron
+    temp = 11.5 * u.deg_C
+    press = 600 * cds.mmHg
+    print(differential_p(zdis, wl, ref, temp, press, rel).to(u.arcsec))
+
 
 # [ 0.3   0.35  0.4   0.45  0.5   0.55  0.6   0.65  0.7   0.75  0.8   0.85
 #   0.9   0.95  1.  ] micron
