@@ -443,6 +443,7 @@ def simulate_point_like_profile(seeing_model, fibrad, angle=0.0, xsize=12.5, ysi
 
         # Sample convolved image
         # In the positions of active fibers
+        #
         values = rbs.ev(offpos0[validfibs], offpos1[validfibs]) * Dx * Dy
         # scales include the cover
         result[validfibs] = values
@@ -515,7 +516,7 @@ def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, instrument):
         pos_y = tab['y']
         cover_frac = tab['cover']
         subfinal = final[fibid - 1]
-        add_targets_lcb(t1, subfinal, wl, fibrad, pos_x, pos_y, telescope, atmosphere)
+        add_targets_lcb2(t1, subfinal, wl, fibrad, pos_x, pos_y, telescope, atmosphere)
 
     add_sky(t2, subfinal, wl, fibarea, telescope)
 
@@ -562,12 +563,70 @@ def add_targets_lcb(targets, subfinal, wl, fibrad, pos_x, pos_y, telescope, atmo
     return subfinal
 
 
+def add_targets_lcb2(targets, subfinal, wl, fibrad, pos_x, pos_y, telescope, atmosphere):
+
+    fraction_of_flux = simulate_point_like_profile(atmosphere.seeing, fibrad.value)
+
+    zenith_distance = 30 * u.deg
+    airmass = 1.0 / math.cos(zenith_distance.to(u.rad).value)
+    extinction = np.power(10, -0.4 * airmass * atmosphere.extinction(wl))
+
+    energy_unit = u.erg * u.s**-1 * u.cm**-2 * u.AA **-1
+    photon_energy = (cons.h * cons.c / wl)
+
+    from .refraction import differential_p
+    from astropy.units import cds
+    cds.enable()
+
+    rel = 8.0 / 600.0
+    temp = 11.5 * u.deg_C
+    press = 600 * cds.mmHg
+    ref_wl = 0.5 * (wl.max()  + wl.min())
+    _logger.debug('reference wl is %s', ref_wl)
+    dar = (differential_p(zenith_distance, wl, ref_wl, temp, press, rel).to(u.arcsec)).value
+    _logger.debug('extreme DAR %s %s', dar[0], dar[-1])
+
+    for target in targets:
+        _logger.debug('object is %s', target.name)
+        center = target.relposition
+
+        # Offset fiber positions
+        # Assume DAR affects only one coordinate, this depends on the several
+        # different angles
+        center_dar = np.zeros((2, wl.size))
+        center_dar[0] = center[0] + 0.0 * dar
+        center_dar[1] = center[1] + 1.0 * dar
+        offpos1_dar = pos_y[:, None] - center_dar[1]
+        offpos0_dar = pos_x[:, None] - center_dar[0]
+
+        offpos0 = pos_x - center[0]
+        offpos1 = pos_y - center[1]
+        f_o_f_dar = fraction_of_flux(offpos0_dar, offpos1_dar)
+        f_o_f_wl = f_o_f_dar.sum(axis=0)
+        # print f_o_f_dar
+        f_o_f = fraction_of_flux(offpos0, offpos1)
+        _logger.debug('fraction of flux recovered (no DAR) %f', f_o_f.sum())
+        _logger.debug('fraction of flux recovered min %f', f_o_f_wl.min())
+        _logger.debug('fraction of flux recovered max %f', f_o_f_wl.max())
+
+        # If spectrum is in erg s^-1 cm^-2 AA^-1
+        # Handle units
+        sed = target.spectrum['sed'](wl) * extinction * energy_unit
+
+        nphotons = sed / photon_energy * telescope.area * telescope.transmission(wl)
+        flux_dar = f_o_f_dar * nphotons.to(u.s**-1 * u.micron**-1)
+        # flux_no_dar = f_o_f[:, np.newaxis] * nphotons.to(u.s ** -1 * u.micron ** -1)
+        subfinal += flux_dar
+
+    return subfinal
+
+
 def add_target_mos(target, subfinal, wl, fibrad, pos_x, pos_y, rotang, telescope, atmosphere):
 
     fraction_of_flux = simulate_point_like_profile(atmosphere.seeing, fibrad.value, angle=rotang, xsize=5.0, ysize=5.0)
 
-    # res = np.zeros_like(subfinal)
-    airmass = 1.0
+    zenith_distance = 30 * u.deg
+    airmass = 1.0 / math.cos(zenith_distance.to(u.rad).value)
     extinction = np.power(10, -0.4 * airmass * atmosphere.extinction(wl))
 
     energy_unit = u.erg * u.s**-1 * u.cm**-2 * u.AA **-1
@@ -575,21 +634,47 @@ def add_target_mos(target, subfinal, wl, fibrad, pos_x, pos_y, rotang, telescope
 
     _logger.debug('object is %s', target.name)
     center = target.relposition
-    # fraction of flux in each fiber
-    #scales = np.zeros((nfibers,))
 
+    from .refraction import differential_p
+    from astropy.units import cds
+    cds.enable()
+
+    rel = 8.0 / 600.0
+    temp = 11.5 * u.deg_C
+    press = 600 * cds.mmHg
+    ref_wl = 0.5 * (wl.max()  + wl.min())
+
+    _logger.debug('reference wl is %s', ref_wl)
+    dar = (differential_p(zenith_distance, wl, ref_wl, temp, press, rel).to(u.arcsec)).value
+    _logger.debug('extreme DAR %s %s', dar[0], dar[-1])
     # Offset fiber positions
+    # Assume DAR affects only one coordinate, this depends on the several
+    # different angles
+    center_dar = np.zeros((2, wl.size))
+    center_dar[0] = center[0] + 0.0 * dar
+    center_dar[1] = center[1] + 1.0 * dar
+    offpos1_dar = pos_y[:, None] - center_dar[1]
+    offpos0_dar = pos_x[:, None] - center_dar[0]
+
     offpos0 = pos_x - center[0]
     offpos1 = pos_y - center[1]
-
+    f_o_f_dar = fraction_of_flux(offpos0_dar, offpos1_dar)
+    f_o_f_wl = f_o_f_dar.sum(axis=0)
+    # print f_o_f_dar
     f_o_f = fraction_of_flux(offpos0, offpos1)
-    _logger.debug('fraction of flux recovered %f', f_o_f.sum())
+    _logger.debug('fraction of flux recovered (no DAR) %f', f_o_f.sum())
+    _logger.debug('fraction of flux recovered min %f', f_o_f_wl.min())
+    _logger.debug('fraction of flux recovered max %f', f_o_f_wl.max())
+
     # If spectrum is in erg s^-1 cm^-2 AA^-1
     # Handle units
     sed = target.spectrum['sed'](wl) * extinction * energy_unit
 
     nphotons = sed / photon_energy * telescope.area * telescope.transmission(wl)
-    subfinal += f_o_f[:, np.newaxis] * nphotons.to(u.s**-1 * u.micron**-1)
+    flux_dar = f_o_f_dar * nphotons.to(u.s**-1 * u.micron**-1)
+    # flux_no_dar = f_o_f[:, np.newaxis] * nphotons.to(u.s ** -1 * u.micron ** -1)
+    subfinal += flux_dar
+
     return subfinal
 
 
