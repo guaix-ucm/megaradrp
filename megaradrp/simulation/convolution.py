@@ -87,6 +87,6 @@ def setup_grid(xsize, ysize, Dx, Dy):
     # print 'simulated images are', nxpoints, 'x', nypoints
 
     # grid
-    xx, yy = np.meshgrid(xs, ys, sparse=False)
+    xx, yy = np.meshgrid(xs, ys, sparse=False, indexing='xy')
 
     return xx, yy, xs, ys, xl, yl

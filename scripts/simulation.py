@@ -53,7 +53,7 @@ def create_detector():
 
 def create_lcb():
     _logger.info('create LCB')
-    layouttable = np.loadtxt('v03/LCB_spaxel_centers.dat')
+    layouttable = np.loadtxt('v03/LCB_spaxel_centers.txt')
 
     fiberset = FiberSet(name='LCB', size=0.31 * u.arcsec, fwhm=3.6)
     # FIXME: a trans object per fiber is very slow

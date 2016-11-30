@@ -25,6 +25,7 @@ import logging
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
 from scipy import signal
+import scipy.spatial
 from astropy import units as u
 import astropy.constants as cons
 
@@ -360,6 +361,11 @@ class MegaraLCBImageSequence(MegaraSkyLCBImageSequence):
         super(MegaraLCBImageSequence, self).__init__('MEGARA_LCB_IMAGE')
 
 
+class MegaraLCBAcquisitionSequence(MegaraSkyLCBImageSequence):
+    def __init__(self):
+        super(MegaraLCBAcquisitionSequence, self).__init__('MEGARA_LCB_ACQUISITION')
+
+
 class MegaraSkyMOSImageSequence(MegaraSkyImageSequence):
     def __init__(self, mode):
         super(MegaraSkyMOSImageSequence, self).__init__(mode)
@@ -394,6 +400,7 @@ def megara_sequences():
     seqs['lcb_image'] = MegaraLCBImageSequence()
     seqs['mos_image'] = MegaraMOSImageSequence()
     seqs['mos_acquisition'] = MegaraMOSAcquisitionSequence()
+    seqs['lcb_acquisition'] = MegaraLCBAcquisitionSequence()
     return seqs
 
 
@@ -429,11 +436,10 @@ def simulate_point_like_profile(seeing_model, fibrad, angle=0.0, xsize=12.5, ysi
         result = np.zeros_like(offpos0)
         validfibs = rect_c(offpos0, offpos1, 2 * xl, 2 * yl)
 
-        # FIXME:
-        #import matplotlib.pyplot as plt
-        #plt.imshow(sc, extent=[-xl-0.5*Dx, xl+0.5*Dx, -yl-0.5*Dy,yl+0.5*Dy], origin='lower')
-        #plt.scatter(offpos0[validfibs], offpos1[validfibs])
-        #plt.show()
+        # import matplotlib.pyplot as plt
+        # plt.imshow(sc, extent=[-xl-0.5*Dx, xl+0.5*Dx, -yl-0.5*Dy,yl+0.5*Dy], origin='lower')
+        # plt.scatter(offpos0[validfibs], offpos1[validfibs])
+        # plt.show()
 
         # Sample convolved image
         # In the positions of active fibers
@@ -467,10 +473,10 @@ def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, instrument):
         ids, pos = fibermos.robots_in_focal_plane()
         pos = np.array(pos)
 
-        import scipy.spatial.kdtree as kdtree
         maxdis = 20.0
-        base = kdtree.KDTree(pos)
+        base = scipy.spatial.KDTree(pos)
         for target in t1:
+            _logger.debug('simulate MOS')
             _logger.debug('find robot nearest to %s', target.relposition)
             result = base.query(target.relposition, distance_upper_bound=maxdis)
             if result[1] >= instrument.fiberset.nfibers:
@@ -500,6 +506,7 @@ def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, instrument):
         cover_frac = tab['cover']
         subfinal = final[fibid - 1]
     else:
+        _logger.debug('simulate LCB')
         lcb = instrument.get_device('MEGARA.LCB')
         fibid, allpos = lcb.fibers_in_focal_plane()
         tab = instrument.focal_plane.filter_visible_fibers(fibid, allpos)
