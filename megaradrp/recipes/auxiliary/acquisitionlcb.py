@@ -17,84 +17,92 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Calibration Recipes for Megara'''
-from megaradrp.recipes.scientific.base import ImageRecipe
-import logging
-import astropy.io.fits as fits
+"""Acquisition with LCB"""
+
+
 import numpy as np
-from megaradrp.recipes.scientific.lcbmap import Grid
+from scipy.spatial import KDTree
+
 from numina.core import Product
-from numina.core.products import ArrayType
-from megaradrp.types import LCBCalibration
-import re
 
-
-_logger = logging.getLogger('numina.recipes.megara')
+from megaradrp.recipes.scientific.base import ImageRecipe
+from megaradrp.types import ProcessedRSS, ProcessedFrame
 
 
 class AcquireLCBRecipe(ImageRecipe):
     """Process LCB images."""
 
-    master_lcb_json = Product(LCBCalibration)
-    master_lcb = Product(ArrayType)
+    reduced = Product(ProcessedFrame)
+    final = Product(ProcessedRSS)
 
     def run(self, rinput):
 
-        _logger.info('starting LCB reduction')
+        self.logger.info('starting AC LCB reduction')
 
-        reduced, rssdata = super(AcquireLCBRecipe,self).run(rinput)
+        reduced2d, reduced1d = super(AcquireLCBRecipe, self).base_run(rinput)
+        # rssdata = rss_data[0].data
 
-        fits.writeto('rss.fits', rssdata, clobber=True)
-        reduced.writeto('reduced.fits')
+        self.save_intermediate_img(reduced2d, 'reduced2d.fits')
+        self.save_intermediate_img(reduced1d, 'reduced1d.fits')
 
-        spaxels_x = []
-        spaxels_y = []
-        spaxels_b = []
-        fiber = []
+        do_sky_subtraction = True
+        if do_sky_subtraction:
+            self.logger.info('start sky subtraction')
+            final, origin, sky = self.run_sky_subtraction(reduced1d)
+            self.logger.info('end sky subtraction')
+        else:
+            final =  reduced1d
+            origin = final
+            sky = final
 
-        for key, value in reduced[1].header.items():
-            if 'FIB' in key:
-                if '_X' in key:
-                    spaxels_x.append(value)
-                elif '_Y' in key:
-                    spaxels_y.append(value)
-                    fiber.append(int(re.findall("[-+]?\d+[\.]?\d*", key)[0]))
-                elif '_B' in key:
-                    spaxels_b.append(int(value))
+        fiberconf = self.datamodel.get_fiberconf(final)
+        self.logger.debug("LCB configuration is %s", fiberconf.conf_id)
+        rssdata = final[0].data
+        cut1 = 1000
+        cut2 = 3000
 
-        spaxels = np.array(zip(spaxels_x,spaxels_y, spaxels_b, fiber))
+        points = [(0, 0)] # Center of fiber 313
+        fibers = fiberconf.conected_fibers(valid_only=True)
+        grid_coords = []
+        for fiber in fibers:
+            grid_coords.append((fiber.x, fiber.y))
+        # setup kdtree for searching
+        kdtree = KDTree(grid_coords)
 
-        grid = Grid(spaxels)
+        # Other posibility is
+        # query using radius instead
+        # radius = 1.2
+        # kdtree.query_ball_point(points, k=7, r=radius)
 
-        points = [[0,0]]
-        final_centroids = []
-        final_sky = []
-        fiber = []
-        peaks = []
-        second_order = []
-        cova = []
-        for point in points:
-            vecinos = grid.get_neighbours(point, radius=0.6)
-            neigh_info = []
-            _logger.info("neighbours: %s", vecinos)
+        npoints = 19
+        # 1 + 6  for first ring
+        # 1 + 6  + 12  for second ring
+        # 1 + 6  + 12  + 18 for third ring
+        dis_p, idx_p = kdtree.query(points, k=npoints)
 
-            for elem in vecinos:
-                neigh_info.append(grid.get_from_trace(elem))
-                _logger.info('neighbours: %s', grid.get_from_trace(elem))
+        self.logger.info('Using %d nearest fibers', npoints)
+        for diss, idxs, point in zip(dis_p, idx_p, points):
+            # For each point
+            self.logger.info('For point %s', point)
+            colids = []
+            coords = []
+            for dis, idx in zip(diss, idxs):
+                fiber = fibers[idx]
+                colids.append(fiber.fibid - 1)
+                coords.append((fiber.x, fiber.y))
 
-            centroid, sky, peak, sec_ord, cov = self.get_wcallib(100, 1000, vecinos,
-                                                   rinput.wlcalib, rssdata,
-                                                   np.array(neigh_info), grid)
+            coords = np.asarray(coords)
+            flux_per_cell = rssdata[colids, cut1:cut2].mean(axis=1)
+            flux_per_cell_total = flux_per_cell.sum()
+            flux_per_cell_norm = flux_per_cell / flux_per_cell_total
+            # centroid
+            scf = coords.T * flux_per_cell_norm
+            centroid = scf.sum(axis=1)
+            self.logger.info('centroid: %s', centroid)
+            # central coords
+            c_coords = coords - centroid
+            scf0 = scf - centroid[:, np.newaxis] * flux_per_cell_norm
+            mc2 = np.dot(scf0, c_coords)
+            self.logger.info('2nd order moments, x2=%f, y2=%f, xy=%f', mc2[0,0], mc2[1,1], mc2[0,1])
 
-            final_centroids.append(centroid)
-            final_sky.append(sky)
-            fiber.append(spaxels[grid.get_fiber(centroid),:][-1])
-            peaks.append(peak)
-            second_order.append(sec_ord)
-            cova.append(cov)
-
-        master_lcb_json = self.generateJSON(points, final_centroids, final_sky, fiber, peaks, second_order, cova )
-
-        tabla_final = self.generate_solution(points, final_centroids, final_sky, fiber, peaks, second_order, cova)
-
-        return self.create_result(master_lcb=tabla_final, master_lcb_json=master_lcb_json)
+        return self.create_result(final=final, reduced=reduced2d)
