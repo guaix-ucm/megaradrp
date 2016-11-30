@@ -35,13 +35,12 @@ from megaradrp.types import LCBCalibration
 class AcquireMOSRecipe(ImageRecipe):
     """Process MOS images."""
 
-    #master_mos_json = Product(LCBCalibration)
-    #master_mos = Product(ArrayType)
+    # master_mos_json = Product(LCBCalibration)
+    # master_mos = Product(ArrayType)
 
     reduced = Product(ProcessedFrame)
-    #final = Product(ProcessedRSS)
     final = Product(ProcessedRSS)
-    #sky = Product(ProcessedRSS)
+    # sky = Product(ProcessedRSS)
 
     def run(self, rinput):
 
@@ -80,28 +79,32 @@ class AcquireMOSRecipe(ImageRecipe):
                 #central_fiber_pair_id
                 # Central fiber is
                 self.logger.debug('Center fiber is %d', central_fiber.fibid)
+                self.logger.debug('Center fiber coordinates %f %f', central_fiber.x, central_fiber.y)
 
                 colids = []
                 coords = []
                 for fiber in bundle.fibers.values():
                     colids.append(fiber.fibid - 1)
-                    coords.append((fiber.x - central_fiber.x,
-                                   fiber.y - central_fiber.y)
-                                  )
+                    coords.append((fiber.x, fiber.y))
+
+                coords = np.asarray(coords)
                 flux_per_cell = rssdata[colids, cut1:cut2].mean(axis=1)
-
                 flux_per_cell_total = flux_per_cell.sum()
-                #print(colids)
-                #print(flux_per_cell / flux_per_cell_total)
-                #print(coords)
-                self.logger.debug('Compute centroid: %s', central_fiber.fibid)
-                centroid = np.dot(np.asarray(coords).T, flux_per_cell) / flux_per_cell_total
-                # Compute second order moments
-                # I have this done somewhere
-                print(key, central_coords, central_coords + centroid)
-                p1.append(central_coords)
-                q1.append(central_coords + centroid)
+                flux_per_cell_norm = flux_per_cell / flux_per_cell_total
+                # centroid
+                scf = coords.T * flux_per_cell_norm
+                centroid = scf.sum(axis=1)
+                self.logger.info('centroid: %s', centroid)
+                # central coords
+                c_coords = coords - centroid
+                scf0 = scf - centroid[:, np.newaxis] * flux_per_cell_norm
+                mc2 = np.dot(scf0, c_coords)
+                self.logger.info('2nd order moments, x2=%f, y2=%f, xy=%f', mc2[0, 0], mc2[1, 1], mc2[0, 1])
 
+                p1.append(central_coords)
+                q1.append(centroid)
+
+        self.logger.info('compute offset and rotation with %d points', len(p1))
         offset, rot = fit_offset_and_rotation(np.array(p1), np.array(q1))
         angle = math.atan2(rot[1, 0], rot[0, 0])
         self.logger.info('offset is %s', offset)
