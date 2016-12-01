@@ -257,7 +257,8 @@ def create_telescope():
 
 
 class ObservingEngine(object):
-    def __init__(self, zenith_distance):
+    def __init__(self, location, zenith_distance):
+        self.location = location
         self._zd = zenith_distance
 
     @property
@@ -272,9 +273,9 @@ class ObservingEngine(object):
         return sec
 
 
-def create_observing_engine(z):
+def create_observing_engine(location, z):
     _logger.info('create observing engine')
-    oe = ObservingEngine(z)
+    oe = ObservingEngine(location, z)
     return oe
 
 
@@ -289,6 +290,8 @@ if __name__ == '__main__':
 
     import yaml
     import argparse
+
+    import astropy.coordinates
 
     from megaradrp.simulation.factory import MegaraImageFactory
     from megaradrp.simulation.atmosphere import AtmosphereModel, generate_gaussian_profile
@@ -330,6 +333,15 @@ if __name__ == '__main__':
     rel = 0.013333333
     temp = 11.5 * u.deg_C
 
+    # Observing location
+    # Madrid coordinates
+    location = astropy.coordinates.EarthLocation.from_geodetic(
+        lon=-3.7025600,
+        lat=40.4165000,
+        height=665.0,
+        ellipsoid="WGS84"
+    )
+
     refraction_model = DifferentialRefractionModel(temperature=temp, pressure=press, relative_humidity=rel)
 
     seeing = 0.9
@@ -347,7 +359,7 @@ if __name__ == '__main__':
                           )
     telescope.connect(atm)
     factory = MegaraImageFactory()
-    observing_engine = create_observing_engine(60 * u.deg)
+    observing_engine = create_observing_engine(location, 60 * u.deg)
 
     control = ControlSystem(factory)
     control.register('MEGARA', instrument)
