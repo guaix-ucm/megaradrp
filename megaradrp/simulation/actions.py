@@ -414,7 +414,7 @@ def megara_sequences():
     return seqs
 
 
-def simulate_point_like_profile(seeing_model, fibrad, angle=0.0, xsize=12.5, ysize=12.5):
+def simulate_point_like_profile(seeing_profile, fibrad, angle=0.0, xsize=12.5, ysize=12.5):
     # Simulation of the fraction of flux in each spaxel
     # By convolution of the seeing profile with the
     # spaxel shape
@@ -430,7 +430,7 @@ def simulate_point_like_profile(seeing_model, fibrad, angle=0.0, xsize=12.5, ysi
     hex_kernel = hex_c(xx, yy, rad=fibrad, ang=angle / 180.0 * math.pi)
 
     # print('generate seeing profile')
-    sc = seeing_model(xx, yy)
+    sc = seeing_profile(xx, yy)
 
     # print('convolve hex kernel with seeing profile')
     # Convolve model gaussian with hex kernel
@@ -546,12 +546,12 @@ def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, oe, instrument
 
 def add_targets_lcb(targets, subfinal, wl, fibrad, pos_x, pos_y, oe, telescope, atmosphere):
 
-    fraction_of_flux = simulate_point_like_profile(atmosphere.seeing, fibrad.value)
-
-    # res = np.zeros_like(subfinal)
-
     airmass = oe.airmass
     extinction = np.power(10, -0.4 * airmass * atmosphere.extinction(wl))
+    seeing_fwhm = atmosphere.seeing.fwhm(wl[0], oe.zenith_distance)
+    _logger.debug('seeing FWHM is %', seeing_fwhm)
+    seeing_profile = atmosphere.seeing.profile(seeing_fwhm)
+    fraction_of_flux = simulate_point_like_profile(seeing_profile, fibrad.value)
 
     energy_unit = u.erg * u.s**-1 * u.cm**-2 * u.AA **-1
     photon_energy = (cons.h * cons.c / wl)
@@ -579,24 +579,22 @@ def add_targets_lcb(targets, subfinal, wl, fibrad, pos_x, pos_y, oe, telescope, 
 
 def add_targets_lcb2(targets, subfinal, wl, fibrad, pos_x, pos_y, oe, telescope, atmosphere):
 
-    fraction_of_flux = simulate_point_like_profile(atmosphere.seeing, fibrad.value)
+    ref_wl = 0.5 * (wl.max() + wl.min())
+    _logger.debug('reference wl is %s', ref_wl)
+    seeing_fwhm = atmosphere.seeing.fwhm(ref_wl, oe.zenith_distance)
+    _logger.debug('seeing FWHM is %s', seeing_fwhm)
+    seeing_profile = atmosphere.seeing.profile(seeing_fwhm)
+    fraction_of_flux = simulate_point_like_profile(seeing_profile, fibrad.value)
 
     airmass = oe.airmass
     zenith_distance = oe.zenith_distance
     extinction = np.power(10, -0.4 * airmass * atmosphere.extinction(wl))
 
-    ref_wl = 0.5 * (wl.max()  + wl.min())
-    _logger.debug('reference wl is %s', ref_wl)
     dar = atmosphere.refraction(zenith_distance, wl, ref_wl).to(u.arcsec).value
     _logger.debug('extreme DAR %s %s', dar[0], dar[-1])
 
     energy_unit = u.erg * u.s**-1 * u.cm**-2 * u.AA **-1
     photon_energy = (cons.h * cons.c / wl)
-
-    ref_wl = 0.5 * (wl.max()  + wl.min())
-    _logger.debug('reference wl is %s', ref_wl)
-    dar = atmosphere.refraction(zenith_distance, wl, ref_wl).to(u.arcsec).value
-    _logger.debug('extreme DAR %s %s', dar[0], dar[-1])
 
     for target in targets:
         _logger.debug('object is %s', target.name)
@@ -635,7 +633,13 @@ def add_targets_lcb2(targets, subfinal, wl, fibrad, pos_x, pos_y, oe, telescope,
 
 def add_target_mos(target, subfinal, wl, fibrad, pos_x, pos_y, rotang, oe, telescope, atmosphere):
 
-    fraction_of_flux = simulate_point_like_profile(atmosphere.seeing, fibrad.value, angle=rotang, xsize=5.0, ysize=5.0)
+    ref_wl = 0.5 * (wl.max() + wl.min())
+    _logger.debug('reference wl is %s', ref_wl)
+
+    seeing_fwhm = atmosphere.seeing.fwhm(ref_wl, oe.zenith_distance)
+    _logger.debug('seeing FWHM is %s', seeing_fwhm)
+    seeing_profile = atmosphere.seeing.profile(seeing_fwhm)
+    fraction_of_flux = simulate_point_like_profile(seeing_profile, fibrad.value, angle=rotang, xsize=5.0, ysize=5.0)
 
     airmass = oe.airmass
     _logger.debug('airmass is %s', airmass)

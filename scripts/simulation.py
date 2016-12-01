@@ -294,7 +294,7 @@ if __name__ == '__main__':
     import astropy.coordinates
 
     from megaradrp.simulation.factory import MegaraImageFactory
-    from megaradrp.simulation.atmosphere import AtmosphereModel, generate_gaussian_profile
+    from megaradrp.simulation.atmosphere import AtmosphereModel, generate_gaussian_profile, ConstSeeing
     from megaradrp.simulation.refraction import DifferentialRefractionModel
 
     try:
@@ -345,6 +345,7 @@ if __name__ == '__main__':
     refraction_model = DifferentialRefractionModel(temperature=temp, pressure=press, relative_humidity=rel)
 
     seeing = 0.9
+    seeing_model = ConstSeeing(seeing)
 
     # For twilight spectrum
     factor_tws = 1e-15
@@ -353,7 +354,7 @@ if __name__ == '__main__':
     factor_ns = 4.97490903177e-17
     atm = AtmosphereModel(twilight=InterpolFile('v03/sky/tw-spec.txt', factor=factor_tws),
                           nightsky=InterpolFile('v03/sky/uves_sky.txt', factor=factor_ns),
-                          seeing=generate_gaussian_profile(seeing_fwhm=seeing),
+                          seeing=seeing_model,
                           extinction=InterpolFile('v03/sky/lapalma_sky_extinction.dat'),
                           refraction=refraction_model
                           )
