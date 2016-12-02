@@ -242,7 +242,13 @@ class MegaraSlitFlatSequence(MegaraLampSequence):
     def setup_instrument(self, instrument):
         instrument.shutter = 'OPEN'
 
+        # Internal focus, we need to defocus a lot
+        instrument.set_focus(1000)
+        # FIXME: seting internal value directly
+        instrument._internal_focus_factor = 8
+
     def run(self, control, exposure, repeat):
+
         instrument = control.get(self.instrument)
         cu = control.get('ICM-MEGARA')
 
@@ -253,12 +259,7 @@ class MegaraSlitFlatSequence(MegaraLampSequence):
         if lamp == 'EMPTY':
             raise ValueError('LAMP is %s, exiting' % lamp)
 
-        # Internal focus
-        instrument.set_focus(126.5)
-        # FIXME: seting internal value directly
-        instrument._internal_focus_factor = 8
         # Simulated arc spectrum
-
         wl_in, lamp_illum = self.lamp_in_focal_plane(lamp, instrument)
         out = instrument.apply_transmissions(wl_in, lamp_illum)
 
@@ -270,14 +271,18 @@ class MegaraSlitFlatSequence(MegaraLampSequence):
 
 class MegaraTwilightFlatSequence(Sequence):
     def __init__(self):
-        super(MegaraTwilightFlatSequence, self).__init__('MEGARA', 'MEGARA_twilight_flat_image')
+        super(MegaraTwilightFlatSequence, self).__init__('MEGARA', 'MEGARA_TWILIGHT_FLAT_IMAGE')
+
+    def setup_instrument(self, instrument):
+        instrument.shutter = 'OPEN'
 
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
-        instrument.shutter = 'OPEN'
         telescope = control.get('GTC')
         atm = telescope.inc # Atmosphere model
         oe = control.get('OE')
+
+        self.setup_instrument(instrument)
         # Simulated tw spectrum
 
         targets2 = [atm.twilight_spectrum]
@@ -308,8 +313,7 @@ class MegaraFocusSequence(MegaraLampSequence):
         wl_in, lamp_illum = self.lamp_in_focal_plane(lamp, instrument)
 
         # FIXME, hardcoded
-        focii = range(119, 128)
-
+        focii = range(-1000, 4000, 1000)
         for focus in focii:
             instrument.set_focus(focus)
             out = instrument.apply_transmissions(wl_in, lamp_illum)
@@ -481,7 +485,6 @@ def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, oe, instrument
     # zenith_distance = 30 * u.deg
     # airmass = 1.0 / math.cos(zenith_distance.to(u.rad).value)
 
-
     if instrument.fiberset.name == 'MOS':
         # get fiber mos
         fibermos = instrument.get_device('MEGARA.MOS')
@@ -510,7 +513,6 @@ def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, oe, instrument
             rotang = 90 - robot.pa
             subfinal = add_target_mos(target, subfinal, wl, fibrad, pos_x, pos_y, rotang, oe, telescope, atmosphere)
             final[fibid1 - 1] = subfinal
-
 
         # Recompute all visible fibers
         fibid, allpos = fibermos.fibers_in_focal_plane()

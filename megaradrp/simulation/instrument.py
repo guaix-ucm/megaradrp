@@ -46,15 +46,15 @@ class FocusActuator(HWDevice):
 
         # Focus
         self.internal_focus_factor = 1.0
-        self._ref_focus = 123.123
+        self._ref_focus = 1000.0
         self._internal_focus = self._ref_focus
 
     def set_focus(self, x):
         """Arbitrary parametrization of the focus"""
-        if x < 118 or x > 128:
+        if x < -1000 or x > 3000:
             raise ValueError('focus out of limits')
 
-        self.internal_focus_factor = 1.0 + (math.cosh((x - self._ref_focus) / 2.0) - 1.0) / 5.0
+        self.internal_focus_factor = 1+ 1.9 * (math.cosh((x - self._ref_focus) / 3000.0) - 1)
         self._internal_focus = x
 
     @property

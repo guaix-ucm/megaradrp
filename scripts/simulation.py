@@ -294,7 +294,7 @@ if __name__ == '__main__':
     import astropy.coordinates
 
     from megaradrp.simulation.factory import MegaraImageFactory
-    from megaradrp.simulation.atmosphere import AtmosphereModel, generate_gaussian_profile, ConstSeeing
+    from megaradrp.simulation.atmosphere import AtmosphereModel, ConstSeeing
     from megaradrp.simulation.refraction import DifferentialRefractionModel
 
     try:
