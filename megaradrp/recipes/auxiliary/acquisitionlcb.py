@@ -74,7 +74,7 @@ class AcquireLCBRecipe(ImageRecipe):
         # radius = 1.2
         # kdtree.query_ball_point(points, k=7, r=radius)
 
-        npoints = 19
+        npoints = 19 + 18
         # 1 + 6  for first ring
         # 1 + 6  + 12  for second ring
         # 1 + 6  + 12  + 18 for third ring
@@ -104,5 +104,8 @@ class AcquireLCBRecipe(ImageRecipe):
             scf0 = scf - centroid[:, np.newaxis] * flux_per_cell_norm
             mc2 = np.dot(scf0, c_coords)
             self.logger.info('2nd order moments, x2=%f, y2=%f, xy=%f', mc2[0,0], mc2[1,1], mc2[0,1])
+
+        if True:
+            self.compute_dar(final)
 
         return self.create_result(final=final, reduced=reduced2d)
