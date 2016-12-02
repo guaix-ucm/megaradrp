@@ -98,8 +98,7 @@ def hexplot(axis, x, y, z, extent=None,
     return collection
 
 
-if __name__ == '__main__':
-
+def _demo():
     import matplotlib.pyplot as plt
     import megaradrp.processing.datamodel as dm
     import pkgutil
@@ -130,3 +129,58 @@ if __name__ == '__main__':
     cb = plt.colorbar(col)
     cb.set_label('counts')
     plt.show()
+
+
+if __name__ == '__main__':
+
+    import sys
+    import math
+
+    import matplotlib.pyplot as plt
+    import astropy.io.fits as fits
+    from astropy.wcs import WCS
+
+    import megaradrp.processing.datamodel as dm
+
+    for fname in sys.argv[1:]:
+        with fits.open(fname) as img:
+            datamodel = dm.MegaraDataModel()
+            fiberconf = datamodel.get_fiberconf(img)
+            x = []
+            y = []
+            for fiber in fiberconf.fibers.values():
+                x.append(-fiber.x)
+                y.append(-fiber.y)
+            cut1 = 1000
+            cut2 = 3000
+            z = img[0].data[:, cut1:cut2].mean(axis=1)
+
+            wcs2 = WCS(img['FIBERS'].header)
+
+            wcs3 = WCS(naxis=2)
+            wcs3.wcs.crpix = [0, 0]
+            wcs3.wcs.ctype = ['RA---TAN', 'DEC--TAN']
+            wcs3.wcs.cdelt = [1.0 / 3600.0, 1.0/ 3600.0]
+            wcs3.wcs.crval = [75.906999999999996,  74.848500000000001]
+            # Rotation around (0,0)
+
+            ang = 20.0 / 180 * math.pi
+            cs = math.cos(ang)
+            ss = math.sin(ang)
+            wcs3.wcs.pc = [[cs, -ss], [ss, cs]]
+
+            fig = plt.figure()
+
+            #plt.subplots_adjust(hspace=0.5)
+            ax = fig.add_axes([0.15, 0.1, 0.8, 0.8], projection=wcs3)
+            ax.set_xlim([-6, 6])
+            ax.set_ylim([-6, 6])
+
+            ax.coords.grid(color='black', alpha=1.0, linestyle='solid')
+            col = hexplot(ax, x, y, z, cmap=plt.cm.YlOrRd_r)
+
+            plt.title("LCB")
+            cb = plt.colorbar(col)
+            cb.set_label('counts')
+            plt.show()
+

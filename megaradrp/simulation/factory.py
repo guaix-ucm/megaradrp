@@ -21,8 +21,10 @@
 
 import json
 import uuid
+import math
 from datetime import datetime
 
+import astropy.wcs as wcs
 import astropy.io.fits as fits
 
 
@@ -47,6 +49,23 @@ class MegaraImageFactory(object):
         extract(hdr, meta, ['MEGARA.LCB', 'nbundles'], 'NBUNDLES')
         extract(hdr, meta, ['MEGARA.LCB', 'conf_id'], 'CONFID')
         extract(hdr, meta, ['MEGARA.LCB', 'name'], 'INSMODE')
+
+        # insert WCS
+        w = wcs.WCS(naxis=2)
+        w.wcs.crpix = [0, 0]
+        w.wcs.ctype = ['RA---TAN', 'DEC--TAN']
+        w.wcs.cdelt = [1.0 / 3600.0, 1.0 / 3600.0]
+        w.wcs.crval = [0.0, 70.0]
+        # Rotation around (0,0)
+        ang = 1.0 / 180 * math.pi
+        cs = math.cos(ang)
+        ss = math.sin(ang)
+        w.wcs.pc = [[cs, -ss], [ss, cs]]
+        # Final rotation to a differente center
+        # w.wcs.pv = [[], []]
+        hdrwcs = w.to_header()
+        hdr.extend(hdrwcs.cards)
+
         fibers_info = extractm(meta, ['MEGARA.LCB', 'fibers'])
         # FIXME: inactive
         inactive_fibs_id = []
