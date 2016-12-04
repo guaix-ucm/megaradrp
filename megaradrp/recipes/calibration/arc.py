@@ -22,6 +22,7 @@
 from __future__ import division, print_function
 
 import traceback
+import collections
 
 import numpy
 from astropy.io import fits
@@ -103,11 +104,16 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             self.logger.info('rel threshold not defined for %s, using %4.2f', current_vph, threshold)
             self.logger.info('min dist not defined for %s, using %4.2f', current_vph, min_distance)
 
+        if isinstance(rinput.nlines, collections.Iterable):
+            nlines = rinput.nlines
+        else:
+            nlines = [rinput.nlines]
+
         data_wlcalib, fwhm_image = self.calibrate_wl(reduced_rss[0].data,
                                                      rinput.lines_catalog,
                                                      rinput.polynomial_degree,
                                                      rinput.tracemap,
-                                                     rinput.nlines,
+                                                     nlines,
                                                      threshold=threshold,
                                                      min_distance=min_distance)
 
