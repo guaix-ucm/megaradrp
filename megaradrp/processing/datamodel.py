@@ -65,7 +65,7 @@ class MegaraDataModel(DataModel):
             if insmode == 'LCB':
                 data = pkgutil.get_data('megaradrp', 'lcb_default_header.txt')
 
-                default_hdr = StringIO(data)
+                default_hdr = StringIO(data.decode('utf8'))
                 hdr_fiber = fits.header.Header.fromfile(default_hdr)
                 return read_fibers_extension(hdr_fiber)
             elif insmode == 'MOS':
