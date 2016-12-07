@@ -50,10 +50,7 @@ class MegaraBaseRecipe(BaseRecipe):
     datamodel = MegaraDataModel()
 
     def __init__(self, *args, **kwds):
-        self.__flow = {'FiberFlatRecipe': [OverscanCorrector, TrimImage,
-                                           BiasCorrector, DarkCorrector,
-                                           BadPixelCorrector,
-                                           SlitFlatCorrector],
+        self.__flow = {
                        'WeightsRecipe': [OverscanCorrector, TrimImage,
                                          BiasCorrector, BadPixelCorrector,
                                          DarkCorrector, SlitFlatCorrector],
@@ -63,18 +60,7 @@ class MegaraBaseRecipe(BaseRecipe):
                                                    BadPixelCorrector,
                                                    DarkCorrector,
                                                    SlitFlatCorrector],
-                       'AcquireLCBRecipe': [OverscanCorrector, TrimImage,
-                                          BiasCorrector, BadPixelCorrector,
-                                          DarkCorrector, SlitFlatCorrector],
-                                          # WeightsCorrector,
-                                          # FiberFlatCorrector,
-                                          # TwilightCorrector],
-                       'AcquireMOSRecipe': [OverscanCorrector, TrimImage,
-                                          BiasCorrector, BadPixelCorrector,
-                                          DarkCorrector, SlitFlatCorrector],
-                                          # WeightsCorrector,
-                                          # FiberFlatCorrector,
-                                          # TwilightCorrector],
+
                        'PseudoFluxCalibrationRecipe': [OverscanCorrector,
                                                        TrimImage,
                                                        BiasCorrector,
@@ -252,12 +238,6 @@ class MegaraBaseRecipe(BaseRecipe):
             pass
 
         return parameters
-
-    def get_wlcalib(self, data):
-
-        wlcalib = [elem['aperture']['function']['coefficients'] for elem in
-                   data]
-        return np.array(wlcalib)
 
     def resample_rss_flux(self, rss_old, wcalib, wvpar_dict):
         """

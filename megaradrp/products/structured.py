@@ -87,4 +87,3 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
         result = cls.__new__(cls)
         result.__setstate__(state=state)
         return result
-
