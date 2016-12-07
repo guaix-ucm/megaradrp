@@ -20,6 +20,7 @@
 import logging
 import datetime
 
+import astropy.io.fits as fits
 from numina.flow.processing import Corrector
 
 from megaradrp.core.processing import apextract_tracemap_2
@@ -52,10 +53,6 @@ class ApertureExtractor(Corrector):
         hdr['history'] = 'Aperture extraction with {}'.format(self.calibid)
         hdr['history'] = 'Aperture extraction time {}'.format(datetime.datetime.utcnow().isoformat())
 
-        _logger.debug('remove VARIANCE and MAP extensions')
-        del img['variance']
-        del img['map']
-
         # Update Fibers
         fibers_ext = img['FIBERS']
         fibers_ext_headers = fibers_ext.header
@@ -67,4 +64,5 @@ class ApertureExtractor(Corrector):
             key = "FIB%03dS2" % aper.fibid
             fibers_ext_headers[key] = aper.stop
 
-        return img
+        newimg = fits.HDUList([img[0], fibers_ext])
+        return newimg
