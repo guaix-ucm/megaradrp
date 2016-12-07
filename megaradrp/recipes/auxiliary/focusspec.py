@@ -25,9 +25,9 @@ from __future__ import division, print_function
 import numpy
 from scipy.spatial import cKDTree
 import astropy.io.fits as fits
+
 from numina.core import Requirement, Parameter
 from numina.core.dataholders import Product
-from numina.core import DataFrameType
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import LinesCatalog
@@ -35,30 +35,14 @@ import numina.array.utils
 import numina.array.fwhm as fmod
 from numina.array.stats import robust_std as sigmaG
 from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
-from numina.flow.processing import BiasCorrector
-from numina.flow import SerialFlow
 
-
-from megaradrp.processing.trimover import OverscanCorrector, TrimImage
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import WavelengthCalibration
 from megaradrp.types import JSONstorage, ProcessedFrame
 import megaradrp.requirements as reqs
-from megaradrp.core.processing import apextract_tracemap
-
-
-vph_thr = {'default':{'LR-I':{'min_distance':10,
-                              'threshold':0.02},
-                      'LR-R':{'min_distance':10,
-                              'threshold':0.03},
-                      'LR-V': {'min_distance':30,
-                               'threshold':0.19},
-                      'LR-Z': {'min_distance':60,
-                               'threshold':0.02},
-                      'LR-U':{'min_distance':10,
-                              'threshold': 0.02,}
-                      },
-}
+from megaradrp.processing.combine import basic_processing_with_combination_frames
+from megaradrp.processing.aperture import ApertureExtractor
+from megaradrp.instrument import vph_thr_arc
 
 
 class FocusSpectrographRecipe(MegaraBaseRecipe):
@@ -67,9 +51,10 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
     # Requirements
     obresult = ObservationResultRequirement()
     master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_bpm = reqs.MasterBPMRequirement()
     tracemap = reqs.MasterTraceMapRequirement()
-    lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
-    polynomial_degree = Parameter(2, 'Polynomial degree of arc calibration')
+
     wlcalib = Requirement(WavelengthCalibration,
                           'Wavelength calibration table')
     # Products
@@ -77,61 +62,63 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
     focus_image = Product(ProcessedFrame)
     focus_wavelength = Product(JSONstorage)
 
-    def generate_image(self, final):
-        from scipy.spatial import cKDTree
-
-        voronoi_points = numpy.array(final[:, [0, 1]])
-        x = numpy.arange(2048 * 2)
-        y = numpy.arange(2056 * 2)
-
-        test_points = numpy.transpose(
-            [numpy.tile(x, len(y)), numpy.repeat(y, len(x))])
-
-        voronoi_kdtree = cKDTree(voronoi_points)
-
-        test_point_dist, test_point_regions = voronoi_kdtree.query(test_points,
-                                                                   k=1)
-        final_image = test_point_regions.reshape((4112, 4096)).astype(
-            'float64')
-        final_image[:, :] = final[final_image[:, :].astype('int64'), 2]
-        return (final_image)
-
     def run(self, rinput):
         # Basic processing
         self.logger.info('start focus spectrograph')
-        flow = self.create_flow(rinput.master_bias,
-                                rinput.obresult.configuration.values)
+
+        obresult = rinput.obresult
+        tags = obresult.tags
+
+        flow = self.init_filters(rinput, obresult.configuration)
+
+        current_vph = rinput.obresult.tags['vph']
+        current_insmode = rinput.obresult.tags['insmode']
+
+        if current_insmode in vph_thr_arc and current_vph in vph_thr_arc[current_insmode]:
+            flux_limit = vph_thr_arc[current_insmode][current_vph].get('flux_limit', 200000)
+            self.logger.info('flux_limit for %s is %4.2f', current_vph, flux_limit)
+        else:
+            flux_limit = 40000
+            self.logger.info('flux limit not defined for %s, using %4.2f', current_vph, flux_limit)
+
+        image_groups = {}
+        self.logger.info('group images by focus')
+
+        for idx, frame in enumerate(obresult.frames):
+            with frame.open() as img:
+                focus_val = img[0].header['focus']
+                if focus_val not in image_groups:
+                    self.logger.debug('new focus %s', focus_val)
+                    image_groups[focus_val] = []
+                self.logger.debug('image %s in group %s', img, focus_val)
+                image_groups[focus_val].append(frame)
 
         ever = []
-        focci = []
-        # FIXME: use tagger here
-        vphs = []
+        for focus, frames in image_groups.items():
+            self.logger.info('processing focus %s', focus)
 
-        for frame in rinput.obresult.images:
-            hdulist = frame.open()
+            try:
+                img = basic_processing_with_combination_frames(frames, flow, errors=False)
+                calibrator_aper = ApertureExtractor(rinput.tracemap, self.datamodel)
 
-            focus_val = hdulist[0].header['focus']
-            vph_name = hdulist[0].header['VPH']
-            focci.append(focus_val)
+                self.save_intermediate_img(img, 'focus2d-%s.fits' % (focus,))
+                img1d = calibrator_aper(img)
+                self.save_intermediate_img(img1d, 'focus1d-%s.fits' % (focus,))
 
-            self.logger.info('processing frame %s', frame)
-            hdulist = flow(hdulist)
-            self.logger.info('extract fibers')
-            rssdata = apextract_tracemap(hdulist[0].data, rinput.tracemap)
-            self.logger.info('find lines and compute FWHM')
-            lines_rss_fwhm = self.run_on_image(rssdata, rinput.tracemap, vph_name)
+                self.logger.info('find lines and compute FWHM')
+                lines_rss_fwhm = self.run_on_image(img1d, rinput.tracemap, flux_limit)
+                ever.append(lines_rss_fwhm)
 
-            ever.append(lines_rss_fwhm)
+            except ValueError:
+                self.logger.info('focus %s cannot be processed', focus)
 
         self.logger.info('pair lines in images')
         line_fibers = self.filter_lines(ever)
 
-        focus_wavelength = self.generateJSON(ever,
-                                             self.get_wlcalib(rinput.wlcalib),
-                                             rinput.obresult.images)
+        focus_wavelength = self.generateJSON(ever, rinput.wlcalib, obresult.frames)
 
         self.logger.info('fit FWHM of lines')
-        final = self.reorder_and_fit(line_fibers, focci)
+        final = self.reorder_and_fit(line_fibers, sorted(image_groups.keys()))
 
         focus_median = numpy.median(final[:, 2])
         self.logger.info('median focus value is %5.2f', focus_median)
@@ -145,71 +132,21 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         return self.create_result(focus_table=final, focus_image=focus_image,
                                   focus_wavelength=focus_wavelength)
 
-    def generateJSON(self, data, wlcalib, original_images):
-        from numpy.polynomial.polynomial import polyval
-
-        self.logger.info('start JSON generation')
-
-        result = {}
-        counter = 0
-
-        for image in data:
-            name = original_images[counter].filename
-            result[name] = {}
-            for fiber, value in image.items():
-                result[name][fiber] = []
-                for arco in value:
-                    try:
-                        res = polyval(arco[0], wlcalib[fiber])
-                        result[name][fiber].append(
-                            [arco[0], arco[1], arco[2], res])
-                    except:
-                        self.logger.error('Error in JSON generation. Check later...')
-            counter += 1
-
-        self.logger.info('end JSON generation')
-
-        return result
-
-    def get_focus(self, points, final):
-        a = final[:, [0, 1]]
-
-        b = points
-
-        index = numpy.where(numpy.all(a == b, axis=1))
-        return final[index[0], [2]]
-
-    def create_flow(self, master_bias, confFile):
-
-        biasmap = master_bias.open()[0].data
-
-        flows = [OverscanCorrector(confFile=confFile),
-                 TrimImage(confFile=confFile),
-                 BiasCorrector(biasmap=biasmap)]
-        basicflow = SerialFlow(flows)
-        return basicflow
-
-    def run_on_image(self, rssdata, tracemap, current_vph):
+    def run_on_image(self, img, tracemap, flux_limit=40000, nfiber=10):
         """Extract spectra, find peaks and compute FWHM."""
 
-        # Extract the polynomials
-        # FIXME: a little hackish
-        valid_traces = get_valid_traces(tracemap)
-        pols = [t.polynomial for t in tracemap.contents]
-        vph_t = vph_thr['default']
-        this_val = vph_t.get(current_vph)
-        if this_val:
-            flux_limit = this_val.get('flux_limit', 200000)
-        else:
-            flux_limit = 40000
+        rssdata = img[0].data
+
+        valid_traces = [aper.fibid for aper in tracemap.contents if aper.valid]
+        pols = [aper.polynomial for aper in tracemap.contents]
 
         nwinwidth = 5
         times_sigma = 50.0
         lwidth = 20
         fpeaks = {}
-        # FIXME: We are using here only one in 10 fibers
-        for fibid in valid_traces[::10]:
-            # sampling every 10 fibers...
+
+        for fibid in valid_traces[::nfiber]:
+            # sampling every nfiber fibers...
             idx = fibid - 1
             row = rssdata[idx, :]
 
@@ -247,27 +184,77 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
             self.logger.debug('found %d peaks in fiber %d', len(fpeaks[idx]), idx)
         return fpeaks
 
+    def generate_image(self, final):
+        from scipy.spatial import cKDTree
+
+        voronoi_points = numpy.array(final[:, [0, 1]])
+        x = numpy.arange(2048 * 2)
+        y = numpy.arange(2056 * 2)
+
+        test_points = numpy.transpose(
+            [numpy.tile(x, len(y)), numpy.repeat(y, len(x))])
+
+        voronoi_kdtree = cKDTree(voronoi_points)
+
+        test_point_dist, test_point_regions = voronoi_kdtree.query(test_points,
+                                                                   k=1)
+        final_image = test_point_regions.reshape((4112, 4096)).astype(
+            'float64')
+        final_image[:, :] = final[final_image[:, :].astype('int64'), 2]
+        return (final_image)
+
+    def generateJSON(self, data, wlcalib, original_images):
+        from numpy.polynomial.polynomial import polyval
+
+        self.logger.info('start JSON generation')
+
+        result = {}
+        counter = 0
+
+        wlfib = {}
+        for s in wlcalib.contents:
+            wlfib[s.fibid] = s.solution
+
+        for image in data:
+            name = self.datamodel.get_imgid(original_images[counter].open())
+            result[name] = {}
+            for fiber, value in image.items():
+                result[name][fiber] = []
+                for arco in value:
+                    try:
+                        res = polyval(arco[0], wlfib[fiber].coeff)
+                        result[name][fiber].append(
+                            [arco[0], arco[1], arco[2], res])
+                    except:
+                        self.logger.error('Error in JSON generation. Check later...')
+            counter += 1
+
+        self.logger.info('end JSON generation')
+
+        return result
+
     def pintarGrafica(self, diferencia_final):
-        import matplotlib.pyplot as plt
+        if False:
+            import matplotlib.pyplot as plt
 
-        fig = plt.figure(1)
-        ax = fig.add_subplot(111)
+            fig = plt.figure(1)
+            ax = fig.add_subplot(111)
 
-        ejeX = numpy.arange(len(diferencia_final))
-        ax.plot(ejeX, diferencia_final, label="0")
-        # lgd = ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=4,
-        #                 mode="expand")
-        lgd = ax.legend(bbox_to_anchor=(0., 1.02, 1., .102),
-                        loc='upper center', ncol=4, mode="expand",
-                        borderaxespad=0.)
-        handles, labels = ax.get_legend_handles_labels()
+            ejeX = numpy.arange(len(diferencia_final))
+            ax.plot(ejeX, diferencia_final, label="0")
+            # lgd = ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.1), ncol=4,
+            #                 mode="expand")
+            lgd = ax.legend(bbox_to_anchor=(0., 1.02, 1., .102),
+                            loc='upper center', ncol=4, mode="expand",
+                            borderaxespad=0.)
+            handles, labels = ax.get_legend_handles_labels()
 
-        fig.savefig('diferencia.eps', format='eps', dpi=1500,
-                    bbox_extra_artists=(lgd,), bbox_inches='tight')
-        plt.draw()
-        plt.show()
+            fig.savefig('diferencia.eps', format='eps', dpi=1500,
+                        bbox_extra_artists=(lgd,), bbox_inches='tight')
+            plt.draw()
+            plt.show()
 
-    def filter_lines(self, data):
+    def filter_lines(self, data, maxdis=2.0):
         """Match lines between different images """
 
         ntotal = len(data)
@@ -275,7 +262,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         base = data[center]
         self.logger.debug('use image #%d as reference', center)
         line_fibers = {}
-        maxdis = 2.0
+
         self.logger.debug('matching lines up to %3.1f pixels', maxdis)
         for fiberid in base:
             self.logger.debug('Using %d fiber in reference image', fiberid)
@@ -352,12 +339,3 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         final[:, 2] = best
 
         return final
-
-
-def get_valid_traces(tracemap):
-    valid = []
-    for trace in tracemap:
-        fitparms = trace['fitparms']
-        if len(fitparms) != 0:
-            valid.append(trace['fibid'])
-    return valid
