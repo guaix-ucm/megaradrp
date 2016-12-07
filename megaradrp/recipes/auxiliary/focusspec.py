@@ -168,7 +168,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
 
             # self.pintarGrafica(refine_peaks(row, ipeaks_int, nwinwidth)[0] - refinePeaks_spectrum(row, ipeaks_int, nwinwidth))
 
-            fpeaks[idx] = []
+            fpeaks[fibid] = []
             for peak, peak_f in zip(ipeaks_int, ipeaks_float):
                 try:
                     sl = numina.array.utils.slice_create(peak, lwidth)
@@ -176,12 +176,12 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                     qslit = row[sl]
                     peak_val, fwhm = fmod.compute_fwhm_1d_simple(qslit, rel_peak)
                     peak_on_trace = the_pol(peak)
-                    fpeaks[idx].append((peak_f, peak_on_trace, fwhm))
+                    fpeaks[fibid].append((peak_f, peak_on_trace, fwhm))
                 except ValueError as error:
-                    self.logger.warning('Error %s computing FWHM in fiber %d', error, idx + 1)
+                    self.logger.warning('Error %s computing FWHM in fiber %d', error, fibid)
                 except IndexError as error:
-                    self.logger.warning('Error %s computing FWHM in fiber %d', error, idx + 1)
-            self.logger.debug('found %d peaks in fiber %d', len(fpeaks[idx]), idx)
+                    self.logger.warning('Error %s computing FWHM in fiber %d', error, fibid)
+            self.logger.debug('found %d peaks in fiber %d', len(fpeaks[fibid]), fibid)
         return fpeaks
 
     def generate_image(self, final):
@@ -221,12 +221,10 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
             for fiber, value in image.items():
                 result[name][fiber] = []
                 for arco in value:
-                    try:
-                        res = polyval(arco[0], wlfib[fiber].coeff)
-                        result[name][fiber].append(
-                            [arco[0], arco[1], arco[2], res])
-                    except:
-                        self.logger.error('Error in JSON generation. Check later...')
+                    res = polyval(arco[0], wlfib[fiber].coeff)
+                    result[name][fiber].append(
+                        [arco[0], arco[1], arco[2], res])
+
             counter += 1
 
         self.logger.info('end JSON generation')
