@@ -34,11 +34,14 @@ class BiasRecipe(MegaraBaseRecipe):
     master_bias = Product(MasterBias)
 
     def run(self, rinput):
-
+        self.logger.info('start bias recipe')
         flow = self.init_filters(rinput, rinput.obresult.configuration)
-        hdulist = basic_processing_with_combination(rinput, flow, method=combine.median)
+        errors  = False
+        if not errors:
+            self.logger.info('not computing errors')
+        hdulist = basic_processing_with_combination(rinput, flow, method=combine.median, errors=errors)
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
-
         result = self.create_result(master_bias=hdulist)
+        self.logger.info('end bias recipe')
         return result
