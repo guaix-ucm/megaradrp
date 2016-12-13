@@ -30,7 +30,7 @@ from tempfile import mkdtemp
 import os
 import os.path
 
-import six.copyreg as copyreg
+import six.moves.copyreg as copyreg
 import numpy as np
 from astropy.modeling import fitting
 from scipy.stats import norm

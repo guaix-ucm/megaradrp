@@ -22,7 +22,6 @@ import uuid
 
 import numpy
 from scipy.ndimage.filters import median_filter
-from scipy.signal import savgol_filter
 from astropy.io import fits
 from numina.array import combine
 from numina.core import Product, Parameter
@@ -50,6 +49,8 @@ class SlitFlatRecipe(MegaraBaseRecipe):
     master_slitflat = Product(MasterSlitFlat)
 
     def run(self, rinput):
+        from scipy.signal import savgol_filter
+
         self.logger.info('starting slit flat reduction')
 
         flow = self.init_filters(rinput, rinput.obresult.configuration)
