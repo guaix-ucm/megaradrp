@@ -62,6 +62,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
     focus_image = Product(ProcessedFrame)
     focus_wavelength = Product(JSONstorage)
 
+    @numina.core.validator.validate
     def run(self, rinput):
         # Basic processing
         self.logger.info('start focus spectrograph')
