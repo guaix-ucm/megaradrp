@@ -70,6 +70,7 @@ modes:
 - key: MEGARA_FOCUS_SPECTROGRAPH
   name: Focus Spectrograph
   tagger: megaradrp.taggers.tagger_base_image
+  validator: megaradrp.validators.validate_focus
 - name: Twillight fiber flat
   summary: Twillight fiber flat spectrum
   description: Twillight fiber flat spectrum

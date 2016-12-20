@@ -75,6 +75,11 @@ class MegaraBaseRecipe(BaseRecipe):
         if self.intermediate_results:
             img.writeto(name, clobber=True)
 
+    def validate_input(self, recipe_input):
+        self.logger.info('start validating input')
+        super(MegaraBaseRecipe, self).validate_input(recipe_input)
+        self.logger.info('end validating input')
+
     def __generate_flow(self, params, conf):
         import copy
         ff = self.__flow[self.__class__.__name__]
