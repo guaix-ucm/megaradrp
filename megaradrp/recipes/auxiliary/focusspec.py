@@ -30,7 +30,7 @@ from numina.core import Requirement, Parameter
 from numina.core.dataholders import Product
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
-from numina.core.products import LinesCatalog
+from numina.exceptions import RecipeError
 import numina.array.utils
 import numina.array.fwhm as fmod
 from numina.array.stats import robust_std as sigmaG
@@ -67,12 +67,11 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         self.logger.info('start focus spectrograph')
 
         obresult = rinput.obresult
-        tags = obresult.tags
 
         flow = self.init_filters(rinput, obresult.configuration)
 
-        current_vph = rinput.obresult.tags['vph']
-        current_insmode = rinput.obresult.tags['insmode']
+        current_vph = obresult.tags['vph']
+        current_insmode = obresult.tags['insmode']
 
         if current_insmode in vph_thr_arc and current_vph in vph_thr_arc[current_insmode]:
             flux_limit = vph_thr_arc[current_insmode][current_vph].get('flux_limit', 200000)
@@ -92,6 +91,9 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                     image_groups[focus_val] = []
                 self.logger.debug('image %s in group %s', img, focus_val)
                 image_groups[focus_val].append(frame)
+
+        if len(image_groups) < 2:
+            raise RecipeError('We have only {} different focus'.format(len(image_groups)))
 
         ever = []
         for focus, frames in image_groups.items():
@@ -206,7 +208,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
     def generateJSON(self, data, wlcalib, original_images):
         from numpy.polynomial.polynomial import polyval
 
-        self.logger.info('start JSON generation')
+        self.logger.info('start result generation')
 
         result = {}
         counter = 0
@@ -227,7 +229,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
 
             counter += 1
 
-        self.logger.info('end JSON generation')
+        self.logger.info('end result generation')
 
         return result
 
@@ -318,7 +320,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         """Fit all the values of FWHM to a 2nd degree polynomial and return minimum."""
 
         l = sum(len(value) for key, value in line_fibers.items())
-
+        print('focii', focii)
         self.logger.debug('there are %d groups of lines to fit', l)
         ally = numpy.zeros((len(focii), l))
         final = numpy.zeros((l, 3))
@@ -331,9 +333,13 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                 l += 1
 
         self.logger.debug('line widths are %s', ally)
-        res = numpy.polyfit(focii, ally, deg=2)
-        self.logger.debug('fitting to deg 2 polynomial, done')
-        best = -res[1] / (2 * res[0])
-        final[:, 2] = best
+        try:
+            res = numpy.polyfit(focii, ally, deg=2)
+            self.logger.debug('fitting to deg 2 polynomial, done')
+            best = -res[1] / (2 * res[0])
+            final[:, 2] = best
+        except ValueError as error:
+            self.logger.warning("Error in fitting: %s", error)
+            final[:, 2] = 0.0
 
         return final
