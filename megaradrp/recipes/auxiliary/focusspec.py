@@ -33,6 +33,7 @@ from numina.core.requirements import ObservationResultRequirement
 from numina.exceptions import RecipeError
 import numina.array.utils
 import numina.array.fwhm as fmod
+import numina.core.validator
 from numina.array.stats import robust_std as sigmaG
 from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 
