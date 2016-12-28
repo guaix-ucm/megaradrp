@@ -18,7 +18,8 @@ setup(
         'megaradrp': [
             'drp.yaml',
             'primary.txt',
-            'lcb_default_header.txt'
+            'lcb_default_header.txt',
+            'mos_default_header.txt'
         ],
         'megaradrp.instrument.configs': [
             'component-86a6e968-8d3d-456f-89f8-09ff0c7f7c57.json',
