@@ -26,6 +26,7 @@ import numpy
 from scipy.spatial import cKDTree
 import astropy.io.fits as fits
 
+from numina.array import combine
 from numina.core import Requirement, Parameter
 from numina.core.dataholders import Product
 from numina.core.products import ArrayType
@@ -108,7 +109,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
             self.logger.info('processing focus %s', focus)
 
             try:
-                img = basic_processing_with_combination_frames(frames, flow, errors=False)
+                img = basic_processing_with_combination_frames(frames, flow, method=combine.median, errors=False)
                 calibrator_aper = ApertureExtractor(rinput.tracemap, self.datamodel)
 
                 self.save_intermediate_img(img, 'focus2d-%s.fits' % (focus,))
