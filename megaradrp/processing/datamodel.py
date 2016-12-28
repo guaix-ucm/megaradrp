@@ -69,7 +69,7 @@ class MegaraDataModel(DataModel):
                 # Read fiber info from headers
                 raise ValueError('Invalid INSMODE {}'.format(insmode))
 
-            data = pkgutil.get_data('megaradrp', slit_file)
+            data = pkgutil.get_data('megaradrp.instrument.configs', slit_file)
             default_hdr = StringIO(data.decode('utf8'))
             hdr_fiber = fits.header.Header.fromfile(default_hdr)
             return read_fibers_extension(hdr_fiber)
