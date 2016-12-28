@@ -1,10 +1,14 @@
+
+from __future__ import print_function
+
 import sys
 import pkgutil
-from StringIO import StringIO
+from six import StringIO
 
 import astropy.io.fits as fits
 
-def create_fibers(fname, slit='LCB'):
+
+def create_fibers(slit):
 
     if slit == 'LCB':
         slith = 'lcb_default_header.txt'
@@ -13,19 +17,22 @@ def create_fibers(fname, slit='LCB'):
     else:
         raise ValueError('Wrong slit %s' % (slit,))
 
+    data = pkgutil.get_data('megaradrp', slith)
+    default_hdr = StringIO(data)
+    hdr_fiber = fits.header.Header.fromfile(default_hdr)
+    fibers = fits.ImageHDU(header=hdr_fiber, name='FIBERS')
+    return fibers
+
+
+def insert_fibers(fname, ext):
+
     with fits.open(fname) as hdul:
         while "fibers" in hdul:
             del hdul["fibers"]
-        data = pkgutil.get_data('megaradrp', slith)
-        default_hdr = StringIO(data)
-        hdr_fiber = fits.header.Header.fromfile(default_hdr)
-        fibers = fits.ImageHDU(header=hdr_fiber, name='FIBERS')
         nhdul_l = [l for l in hdul]
-        nhdul_l.append(fibers)
+        nhdul_l.append(ext)
         thdulist = fits.HDUList(nhdul_l)
         thdulist.writeto(fname, clobber=True)
-#        hdul.append(fibers)
-#        hdul.flush()
 
 
 if __name__ == '__main__':
@@ -33,9 +40,18 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='Insert FIBERS extension')
-    for fname in sys.argv[1:]:
+    parser.add_argument('filename', metavar='FILE', nargs='+',
+                        help='files to insert the FIBERS extension')
+
+    parser.add_argument('--slit', default='LCB', choices=['MOS', 'LCB'], help='insert FIBERS')
+
+    args = parser.parse_args()
+
+    fibers = create_fibers(args.slit)
+
+    for fname in args.filename:
         try:
-            print fname
-            create_fibers(fname, 'MOS')
+            print(fname)
+            insert_fibers(fname, fibers)
         except IOError as error:
-            print error
+            print(error, file=sys.stderr)
