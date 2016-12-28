@@ -60,19 +60,21 @@ class MegaraDataModel(DataModel):
             hdr_fiber = img['FIBERS'].header
             return read_fibers_extension(hdr_fiber)
         else:
-            # Invalid in general
             insmode = img[0].header.get('INSMODE')
             if insmode == 'LCB':
-                data = pkgutil.get_data('megaradrp', 'lcb_default_header.txt')
-
-                default_hdr = StringIO(data.decode('utf8'))
-                hdr_fiber = fits.header.Header.fromfile(default_hdr)
-                return read_fibers_extension(hdr_fiber)
+                slit_file = 'lcb_default_header.txt'
             elif insmode == 'MOS':
-                raise ValueError('No fibers, MOS')
+                slit_file = 'mos_default_header.txt'
             else:
                 # Read fiber info from headers
-                raise ValueError('No fibers')
+                raise ValueError('Invalid INSMODE {}'.format(insmode))
+
+            data = pkgutil.get_data('megaradrp', 'lcb_default_header.txt')
+
+            default_hdr = StringIO(data.decode('utf8'))
+            hdr_fiber = fits.header.Header.fromfile(default_hdr)
+            return read_fibers_extension(hdr_fiber)
+
 
     def gather_info_dframe(self, img):
         with img.open() as hdulist:
