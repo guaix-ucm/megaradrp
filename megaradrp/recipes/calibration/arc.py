@@ -211,20 +211,21 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     plt.show()
 
                 # FIXME: xchannel ???
-                # This comes from Nico's code, so probably pixels
-                # will start in 1
                 naxis1 = row.shape[0]
                 crpix1 = 1.0
-                xchannel = numpy.arange(1, naxis1 + 1)
-
-                finterp_channel = interp1d(range(xchannel.size), xchannel,
-                                           kind='linear',
-                                           bounds_error=False,
-                                           fill_value=0.0)
-                xpeaks_refined = finterp_channel(ipeaks_float)
+                # This comes from Nico's code, so probably pixels
+                # will start in 1
+                # xchannel = numpy.arange(1, naxis1 + 1)
+                #
+                # finterp_channel = interp1d(range(xchannel.size), xchannel,
+                #                            kind='linear',
+                #                            bounds_error=False,
+                #                            fill_value=0.0)
+                # xpeaks_refined = finterp_channel(ipeaks_float)
+                xpeaks_refined = ipeaks_float + 1.0
 
                 wv_range_catalog = lines_catalog[-1][0] - lines_catalog[0][0]
-                delta_wv = 0.05 * wv_range_catalog
+                delta_wv = 0.20 * wv_range_catalog
                 wv_ini_search = int(lines_catalog[0][0] - delta_wv)
                 wv_end_search = int(lines_catalog[-1][0] + delta_wv)
 
@@ -243,14 +244,15 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         crpix1=crpix1,
                         wv_ini_search=wv_ini_search,
                         wv_end_search=wv_end_search,
-                        error_xpos_arc=2.3, # initially: 2.0
+                        error_xpos_arc=3.0, # initially: 2.0
                         times_sigma_r=3.0,
                         frac_triplets_for_sum=0.50,
                         times_sigma_theil_sen=10.0,
                         poly_degree_wfit=poldeg,
                         times_sigma_polfilt=10.0,
                         times_sigma_cook=10.0,
-                        times_sigma_inclusion=5.0
+                        times_sigma_inclusion=5.0,
+                        debugplot=0
                     )
 
                     self.logger.info('Solution for row %d completed', idx)
