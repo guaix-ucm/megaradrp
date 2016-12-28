@@ -97,6 +97,12 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         if len(image_groups) < 2:
             raise RecipeError('We have only {} different focus'.format(len(image_groups)))
 
+        # Loop only over fibers with WL calibration
+        valid_traces = [fibsol.fibid for fibsol in rinput.wlcalib.contents]
+        # valid_traces = [aper.fibid for aper in rinput.tracemap.contents if aper.valid]
+        # every tenth fiber
+        valid_traces = valid_traces[::10]
+
         ever = []
         for focus, frames in image_groups.items():
             self.logger.info('processing focus %s', focus)
@@ -110,7 +116,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                 self.save_intermediate_img(img1d, 'focus1d-%s.fits' % (focus,))
 
                 self.logger.info('find lines and compute FWHM')
-                lines_rss_fwhm = self.run_on_image(img1d, rinput.tracemap, flux_limit)
+                lines_rss_fwhm = self.run_on_image(img1d, rinput.tracemap, flux_limit, valid_traces=valid_traces)
                 ever.append(lines_rss_fwhm)
 
             except ValueError:
@@ -136,12 +142,14 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         return self.create_result(focus_table=final, focus_image=focus_image,
                                   focus_wavelength=focus_wavelength)
 
-    def run_on_image(self, img, tracemap, flux_limit=40000, nfiber=10):
+    def run_on_image(self, img, tracemap, flux_limit=40000, valid_traces=None):
         """Extract spectra, find peaks and compute FWHM."""
 
         rssdata = img[0].data
 
-        valid_traces = [aper.fibid for aper in tracemap.contents if aper.valid]
+        if valid_traces is None:
+            valid_traces = [aper.fibid for aper in tracemap.contents if aper.valid]
+
         pols = [aper.polynomial for aper in tracemap.contents]
 
         nwinwidth = 5
@@ -149,8 +157,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         lwidth = 20
         fpeaks = {}
 
-        for fibid in valid_traces[::nfiber]:
-            # sampling every nfiber fibers...
+        for fibid in valid_traces:
             idx = fibid - 1
             row = rssdata[idx, :]
 
@@ -204,8 +211,8 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                                                                    k=1)
         final_image = test_point_regions.reshape((4112, 4096)).astype(
             'float64')
-        final_image[:, :] = final[final_image[:, :].astype('int64'), 2]
-        return (final_image)
+        final_image[:, :] = final[final_image[:, :].astype('int32'), 2]
+        return final_image
 
     def generateJSON(self, data, wlcalib, original_images):
         from numpy.polynomial.polynomial import polyval
@@ -225,10 +232,12 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
             for fiber, value in image.items():
                 result[name][fiber] = []
                 for arco in value:
-                    res = polyval(arco[0], wlfib[fiber].coeff)
-                    result[name][fiber].append(
-                        [arco[0], arco[1], arco[2], res])
-
+                    try:
+                        res = polyval(arco[0], wlfib[fiber].coeff)
+                        result[name][fiber].append(
+                            [arco[0], arco[1], arco[2], res])
+                    except KeyboardInterrupt:
+                        self.logger.warning("Fiber %d hasn't WL calibration, skipping", fiber)
             counter += 1
 
         self.logger.info('end result generation')
