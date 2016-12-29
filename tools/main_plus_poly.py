@@ -12,8 +12,8 @@ import os
 def copy_from_folder():
     for base in glob.glob("*"):
         print(base)
-        for fname in glob.glob("%s/*.json" % base):
-            full_file_name = "%s" % fname
+        for file in glob.glob("%s/*.json" % base):
+            full_file_name = "%s" % file
             dest = "%s.json" % base
             print("\t %s" % full_file_name)
 
@@ -55,14 +55,20 @@ def read_json(name):
     wave = []
     ref = []
     list_fib = []
+    list_coeffs = []
     list_ind = []
 
     fibra = 1
 
-    for elem in data:
-        list_coeffs = elem['aperture']['function']['coefficients']
+    contents = data['contents']
+    if isinstance(contents, dict):
+        conts = contents.values()
+    else:
+        conts = contents
+    for elem in conts:
+        list_coeffs=elem['coeff']
 
-        for linea in elem['aperture']['features']:
+        for linea in elem['features']:
             xpos.append(linea['xpos'])
             ypos.append(linea['ypos'])
             fwhm.append(linea['fwhm'])
@@ -82,12 +88,12 @@ def read_json(name):
             elif 'LRR' in name:
                 try:
                     list_ind.append(lin_lrr.index(linea['reference']) + 1)
-                except StandardError:
+                except:
                     list_ind.append(0)
             else:
                 try:
                     list_ind.append(lin_lri.index(linea['reference']) + 1)
-                except StandardError:
+                except:
                     list_ind.append(0)
         fibra += 1
 
@@ -111,7 +117,7 @@ def read_json(name):
     excel = pd.ExcelWriter('%s.xlsx' % name, engine='xlsxwriter')
     df.to_excel(excel, sheet_name='Sheet1', index=False)
     # df.to_excel(writer, sheet_name='Sheet2')
-    df.to_csv('%s.csv' % name, sep=' ', index=False, encoding='utf-8')
+    csv = df.to_csv('%s.csv' % name, sep=' ', index=False, encoding='utf-8')
 
 
 def generar_xls():
@@ -121,13 +127,14 @@ def generar_xls():
         lista_ficheros.append(file_name)
         read_json(file_name)
 
-    lista = {'LRR': [],
-             'LRV': [],
-             'LRZ': [],
-             'sci_LRR': [],
-             'sci_LRV': [],
-             'sci_LRZ': [],
-             'sci_LRI': [],
+
+    lista = {'LRR':[],
+             'LRV':[],
+             'LRZ':[],
+             'sci_LRR':[],
+             'sci_LRV':[],
+             'sci_LRZ':[],
+             'sci_LRI':[],
              }
     for elem in lista_ficheros:
         if 'LRZ' in elem:
@@ -154,9 +161,9 @@ def generar_xls():
     for elem in lista:
         lista[elem].sort()
         if lista[elem]:
-            with open('%s.txt'%elem, 'w') as fd:
-                for item in lista[elem]:
-                    fd.write("%s\n" % item)
+            file = open('%s.txt'%elem, 'w')
+            for item in lista[elem]:
+                file.write("%s\n" % item)
 
 
 os.chdir(".")
