@@ -217,7 +217,7 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37):
     _logger = logging.getLogger(__name__)
 
     cut_region = slice(center-hs, center+hs)
-    cut = image[:,cut_region]
+    cut = image[:, cut_region]
     colcut = cut.mean(axis=1)
 
     counted_fibers = 0
@@ -290,10 +290,10 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37):
             # Match next fiber
             fid += 1
 
-        _logger.debug('matched %s \t missing: %s', len(pairs_1),nfibers-len(pairs_1))
+        _logger.debug('matched %s \t missing: %s', len(pairs_1), nfibers - len(pairs_1))
         remainig = nfibers - len(pairs_1)
         if remainig > 0:
-            _logger.debug('we have to pair %d miising fibers', remainig)
+            _logger.debug('we have to pair %d missing fibers', remainig)
             # Position of first match fiber
 
             # Position of last match fiber
