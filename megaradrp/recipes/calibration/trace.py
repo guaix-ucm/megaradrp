@@ -255,7 +255,14 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37):
         for elem in thispeaks:
             total_peaks_pos.append(elem.tolist())
 
-        _logger.debug('pseudoslit box: %s, id: %d', box['name'], boxid)
+        _logger.debug('pseudoslit box: %s, id: %d, npeaks: %d', box['name'], boxid, npeaks)
+
+        if npeaks == 0:
+            # skip everything, go to next box
+            _logger.debug('no peaks, go to next box')
+            counted_fibers += nfibers
+            continue
+
         # Start by matching the first peak
         # with the first fiber
         fid = 0
