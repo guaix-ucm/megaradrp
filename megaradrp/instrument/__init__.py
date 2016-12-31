@@ -56,7 +56,7 @@ vph_thr_arc = {
          'LR-V': {'min_distance': 10,
                   'threshold': 0.01},
          'LR-R': {'min_distance': 10,
-                  'threshold': 0.01},
+                  'threshold': 0.00},
          'LR-I': {'min_distance': 10,
                   'threshold': 0.00},
          'LR-Z': {'min_distance': 10,
