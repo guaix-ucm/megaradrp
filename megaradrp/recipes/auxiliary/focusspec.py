@@ -59,6 +59,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
 
     wlcalib = Requirement(WavelengthCalibration,
                           'Wavelength calibration table')
+    nfibers = Parameter(10, "The results are sampled every nfibers")
     # Products
     focus_table = Product(ArrayType)
     focus_image = Product(ProcessedFrame)
@@ -102,7 +103,8 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         valid_traces = [fibsol.fibid for fibsol in rinput.wlcalib.contents]
         # valid_traces = [aper.fibid for aper in rinput.tracemap.contents if aper.valid]
         # every tenth fiber
-        valid_traces = valid_traces[::10]
+        nfibers = rinput.nfibers
+        valid_traces = valid_traces[::nfibers]
 
         ever = []
         for focus, frames in image_groups.items():
