@@ -23,6 +23,7 @@ from __future__ import division, print_function
 
 
 import numpy
+import numpy.polynomial.polynomial as polynomial
 from scipy.spatial import cKDTree
 import astropy.io.fits as fits
 
@@ -106,7 +107,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         nfibers = rinput.nfibers
         valid_traces = valid_traces[::nfibers]
 
-        ever = []
+        ever = {}
         for focus, frames in image_groups.items():
             self.logger.info('processing focus %s', focus)
 
@@ -120,7 +121,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
 
                 self.logger.info('find lines and compute FWHM')
                 lines_rss_fwhm = self.run_on_image(img1d, rinput.tracemap, flux_limit, valid_traces=valid_traces)
-                ever.append(lines_rss_fwhm)
+                ever[focus] = lines_rss_fwhm
 
             except ValueError:
                 self.logger.info('focus %s cannot be processed', focus)
@@ -128,7 +129,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         self.logger.info('pair lines in images')
         line_fibers = self.filter_lines(ever)
 
-        focus_wavelength = self.generateJSON(ever, rinput.wlcalib, obresult.frames)
+        focus_wavelength = self.generate_focus_wl(ever, rinput.wlcalib)
 
         self.logger.info('fit FWHM of lines')
         final = self.reorder_and_fit(line_fibers, sorted(image_groups.keys()))
@@ -201,8 +202,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         return fpeaks
 
     def generate_image(self, final):
-        from scipy.spatial import cKDTree
-
+        # FIXME: hardcoded sizes
         voronoi_points = numpy.array(final[:, [0, 1]])
         x = numpy.arange(2048 * 2)
         y = numpy.arange(2056 * 2)
@@ -212,38 +212,33 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
 
         voronoi_kdtree = cKDTree(voronoi_points)
 
-        test_point_dist, test_point_regions = voronoi_kdtree.query(test_points,
-                                                                   k=1)
-        final_image = test_point_regions.reshape((4112, 4096)).astype(
-            'float64')
+        test_point_dist, test_point_regions = voronoi_kdtree.query(test_points, k=1)
+        final_image = test_point_regions.reshape((4112, 4096)).astype('float64')
         final_image[:, :] = final[final_image[:, :].astype('int32'), 2]
         return final_image
 
-    def generateJSON(self, data, wlcalib, original_images):
-        from numpy.polynomial.polynomial import polyval
+    def generate_focus_wl(self, all_measures, wlcalib):
+
 
         self.logger.info('start result generation')
 
         result = {}
-        counter = 0
 
         wlfib = {}
         for s in wlcalib.contents:
             wlfib[s.fibid] = s.solution
 
-        for image in data:
-            name = self.datamodel.get_imgid(original_images[counter].open())
-            result[name] = {}
+        for focus, image in all_measures.items():
+            cresult = {}
+            result[focus] = cresult
             for fiber, value in image.items():
-                result[name][fiber] = []
+                cresult[fiber] = []
                 for arco in value:
                     try:
-                        res = polyval(arco[0], wlfib[fiber].coeff)
-                        result[name][fiber].append(
-                            [arco[0], arco[1], arco[2], res])
-                    except KeyboardInterrupt:
+                        res = polynomial.polyval(arco[0], wlfib[fiber].coeff)
+                        cresult[fiber].append([arco[0], arco[1], arco[2], res])
+                    except KeyError:
                         self.logger.warning("Fiber %d hasn't WL calibration, skipping", fiber)
-            counter += 1
 
         self.logger.info('end result generation')
 
@@ -270,13 +265,15 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
             plt.draw()
             plt.show()
 
-    def filter_lines(self, data, maxdis=2.0):
+    def filter_lines(self, all_measures, maxdis=2.0):
         """Match lines between different images """
 
-        ntotal = len(data)
+        values = sorted(all_measures.keys())
+        ntotal = len(values)
         center = ntotal // 2
-        base = data[center]
-        self.logger.debug('use image #%d as reference', center)
+        center_focus = values[center]
+        base = all_measures[center_focus]
+        self.logger.debug('use image #%d as reference, focus=%s', center, center_focus)
         line_fibers = {}
 
         self.logger.debug('matching lines up to %3.1f pixels', maxdis)
@@ -305,7 +302,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                         savelines[j]['centers'].append(ref[j, 2])
                     continue
                 self.logger.debug('Matching lines in fiber %d in image # %d', fiberid, i)
-                comp = numpy.array(data[i][fiberid])
+                comp = numpy.array(all_measures[values[i]][fiberid])
 
                 if comp.size == 0:
                     self.logger.debug('No lines in fiber %d in image # %d', fiberid, i)
@@ -336,7 +333,6 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         """Fit all the values of FWHM to a 2nd degree polynomial and return minimum."""
 
         l = sum(len(value) for key, value in line_fibers.items())
-        print('focii', focii)
         self.logger.debug('there are %d groups of lines to fit', l)
         ally = numpy.zeros((len(focii), l))
         final = numpy.zeros((l, 3))
