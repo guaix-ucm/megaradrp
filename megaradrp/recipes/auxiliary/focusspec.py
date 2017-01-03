@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2016-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -150,21 +150,23 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
 
         rssdata = img[0].data
 
-        if valid_traces is None:
-            valid_traces = [aper.fibid for aper in tracemap.contents if aper.valid]
-
-        pols = [aper.polynomial for aper in tracemap.contents]
+        if valid_traces:
+            valid_traces_s = set(valid_traces) # use set for fast membership
+            valid_apers = [aper for aper in tracemap.contents if aper.valid and aper.fibid in valid_traces_s]
+        else:
+            valid_apers = [aper for aper in tracemap.contents if aper.valid]
 
         nwinwidth = 5
         times_sigma = 50.0
         lwidth = 20
         fpeaks = {}
 
-        for fibid in valid_traces:
+        for aper in valid_apers:
+            fibid = aper.fibid
             idx = fibid - 1
             row = rssdata[idx, :]
 
-            the_pol = pols[idx]
+            the_pol = aper.polynomial
 
             # FIXME: using here a different peak routine than in arc
             # find peaks
