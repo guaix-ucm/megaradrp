@@ -235,7 +235,9 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                 cresult[fiber] = []
                 for arco in value:
                     try:
-                        res = polynomial.polyval(arco[0], wlfib[fiber].coeff)
+                        # FIXME: hardcoded sizes
+                        x = 2048 * 2 - arco[0]
+                        res = polynomial.polyval(x, wlfib[fiber].coeff)
                         cresult[fiber].append([arco[0], arco[1], arco[2], res])
                     except KeyError:
                         self.logger.warning("Fiber %d hasn't WL calibration, skipping", fiber)
