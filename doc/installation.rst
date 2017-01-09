@@ -15,6 +15,7 @@ be able to be installed and work properly:
  - `scipy <http://www.scipy.org/>`_
  - `astropy <http://www.astropy.org/>`_ >= 1.0
  - `numina <https://pypi.python.org/pypi/numina/>`_ >= 0.13
+ - `scikit-image <http://scikit-image.org/>`_
 
 Additional packages are optionally required:
 
@@ -26,8 +27,13 @@ Additional packages are optionally required:
 Installing MEGARA DRP
 *********************
 
+Using Conda
+===========
+
+TBD
+
 Using pip
----------
+=========
 To install with pip, simply run:::
 
    pip install --no-deps megaradrp
@@ -55,12 +61,10 @@ by listing the installed recipes with the command line interface tool ``numina``
    has pipeline 'default', version 1
    has pipeline 'experimental', version 1
 
-********************
 Building from source
-********************
+====================
 
-
-The latest stable version of MEGARA DRP can be downloaded from  
+The latest stable version of MEGARA DRP can be downloaded from
 https://pypi.python.org/pypi/megaradrp
 
 To install MEGARA DRP, use the standard installation procedure::
@@ -100,9 +104,9 @@ The documentation will be copied to a directory under `build/sphinx`.
 The documentation can be built in different formats. The complete list will appear
 if you type `make` 
 
-**************************
+
 Deployment with Virtualenv
-**************************
+==========================
 
 `Virtualenv`_ is a tool to build isolated Python environments.
 
@@ -184,7 +188,7 @@ Please refer to :ref:`Numina manual <numina:solaris10>` to install Numina
 and its dependences under Solaris 10.
 
 Install numina
---------------
+==============
 
 First, install all the dependencies:
 
@@ -222,7 +226,7 @@ And then build and install using `nmk`::
     $ nmk -t module.install
 
 Install megaradrp
------------------
+=================
 
 Change directory to `/work/gcsop/src_python/gtc/AL/` and download the source code
 of `megaradrp`, either from `PyPI <https://pypi.python.org/pypi/megaradrp>`_

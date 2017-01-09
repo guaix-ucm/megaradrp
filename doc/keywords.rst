@@ -39,11 +39,9 @@ Type Keyword   Example                    Explanation
  S   IMAGETYP  'FLAT'                    Type of the image
  S   VPH       'LR-R'                    Type of VPH
  S   OBSTYPE   'SLITFLAT'                Type of observation
- L   READPROC   T                        The frame has been preprocessed after readout
  R   EXPOSED                             Photometric time?
  R   DARKTIME                            TBD
  R   EXPTIME                             TBD
  R   ELAPSED                             Time between resets?
- I   OBSID      567                      Identifier of the observing block
  S   OBSMODE   'SLITFLAT                 Identifier of the observing mode
 ==== ========  ========================  ============================================

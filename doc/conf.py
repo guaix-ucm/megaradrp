@@ -23,7 +23,7 @@ templates_path = ['_templates']
 exclude_patterns = ['_build']
 
 project = u'MEGARA Data Reduction Pipeline'
-copyright = u'2013-2016, Universidad Complutense de Madrid'
+copyright = u'2013-2017, Universidad Complutense de Madrid'
 version = '0.6'
 release = '0.6.dev1'
 show_authors = True
@@ -49,12 +49,9 @@ latex_documents = [
 ]
 latex_logo = '_static/megara.png'
 latex_elements = {
-'papersize': 'a4paper',
-#'pointsize': '10pt',
-#'preamble': '',
-}
-
-latex_elements = {
+    'papersize': 'a4paper',
+    #'pointsize': '10pt',
+    #'preamble': '',
     'fontpkg': '\\usepackage{palatino}',
     }
 latex_show_urls = 'footnote'
@@ -62,5 +59,5 @@ latex_show_urls = 'footnote'
 #latex_domain_indices = True
 
 intersphinx_mapping = {
-  'numina': ('http://numina.readthedocs.org/en/latest/', None)
+  'numina': ('http://numina.readthedocs.io/en/latest/', None)
 }

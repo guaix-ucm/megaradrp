@@ -1,7 +1,7 @@
 
-*********************
+*************
 Data Products
-*********************
+*************
 
 Each recipe of the MEGARA Pipeline produces a set of predefined results, known
 as *data products*. In turn, the recipes may request different data products

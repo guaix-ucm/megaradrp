@@ -21,8 +21,11 @@ Reference
 .. toctree::
    :maxdepth: 2
 
-   recipes
+   core
+   instrument
    products
+   recipes
+   simulation
 
    
 Indices and tables
