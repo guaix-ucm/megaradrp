@@ -83,3 +83,12 @@ class MasterTraceMapRequirement(Requirement):
     def __init__(self):
         super(MasterTraceMapRequirement,
               self).__init__(megaradrp.products.TraceMap, 'Trace information of the Apertures')
+
+
+class WavelengthCalibrationRequirement(Requirement):
+    def __init__(self):
+        super(WavelengthCalibrationRequirement,
+              self).__init__(megaradrp.products.WavelengthCalibration, 'Wavelength calibration table')
+
+
+
