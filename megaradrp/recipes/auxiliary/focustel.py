@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2016-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -21,19 +21,105 @@
 
 from __future__ import division, print_function
 
-import logging
-
-
-from numina.core import RecipeError
+import numpy
+from numina.array import combine
+from numina.core.dataholders import Product
+from numina.core.requirements import ObservationResultRequirement
+from numina.exceptions import RecipeError
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-
-
-_logger = logging.getLogger('numina.recipes.megara')
+import megaradrp.requirements as reqs
+from megaradrp.processing.combine import basic_processing_with_combination_frames
+from megaradrp.processing.aperture import ApertureExtractor
 
 
 class FocusTelescopeRecipe(MegaraBaseRecipe):
     """Process Focus images and find best focus."""
 
+    # Requirements
+    obresult = ObservationResultRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_bpm = reqs.MasterBPMRequirement()
+    tracemap = reqs.MasterTraceMapRequirement()
+
+    wlcalib = reqs.WavelengthCalibrationRequirement()
+
+    # Products
+    focus_table = Product(float)
+
+    # @numina.core.validator.validate
     def run(self, rinput):
-        raise RecipeError('Recipe not implemented')
+        # Basic processing
+        self.logger.info('start focus telescope')
+
+        obresult = rinput.obresult
+
+        flow = self.init_filters(rinput, obresult.configuration)
+
+        coors = (0.0, 0.0)
+        focus_t = 'FOCUST'
+
+        image_groups = {}
+        self.logger.info('group images by focus')
+
+        for idx, frame in enumerate(obresult.frames):
+            with frame.open() as img:
+                focus_val = img[0].header[focus_t]
+                if focus_val not in image_groups:
+                    self.logger.debug('new focus %s', focus_val)
+                    image_groups[focus_val] = []
+                self.logger.debug('image %s in group %s', img, focus_val)
+                image_groups[focus_val].append(frame)
+
+        if len(image_groups) < 2:
+            raise RecipeError('We have only {} different focus'.format(len(image_groups)))
+
+        all_images = {}
+        for focus, frames in image_groups.items():
+            self.logger.info('processing focus %s', focus)
+
+            try:
+                img = basic_processing_with_combination_frames(frames, flow, method=combine.median, errors=False)
+                calibrator_aper = ApertureExtractor(rinput.tracemap, self.datamodel)
+
+                self.save_intermediate_img(img, 'focus2d-%s.fits' % (focus,))
+                img1d = calibrator_aper(img)
+                self.save_intermediate_img(img1d, 'focus1d-%s.fits' % (focus,))
+
+                self.logger.info('find lines and compute FWHM')
+                star_rss_fwhm = self.run_on_image(img1d, coors)
+                all_images[focus] = star_rss_fwhm
+
+            except ValueError:
+                self.logger.info('focus %s cannot be processed', focus)
+
+        self.logger.info('fit FWHM of star')
+        final = self.reorder_and_fit(all_images)
+
+        self.logger.info('end focus telescope')
+        return self.create_result(focus_table=final)
+
+    def run_on_image(self, img, coors):
+        """Extract spectra, find peaks and compute FWHM."""
+
+        # TODO
+        return 0.0
+
+    def reorder_and_fit(self, all_images):
+        """Fit all the values of FWHM to a 2nd degree polynomial and return minimum."""
+
+        # We are assuming there is only 1 star
+        focii = sorted(all_images.keys())
+
+        ally = [all_images[focus] for focus in focii]
+
+        try:
+            res = numpy.polyfit(focii, ally, deg=2)
+            self.logger.debug('fitting to deg 2 polynomial, done')
+            best = -res[1] / (2 * res[0])
+        except ValueError as error:
+            self.logger.warning("Error in fitting: %s", error)
+            best = 0.0
+
+        return best
