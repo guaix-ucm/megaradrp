@@ -74,9 +74,10 @@ def create_lcb(insconf):
 
     lcb_pos = {}
     spaxels = insconf.get('LCB.spaxels')
-    for entry in spaxels:
+    for entry in spaxels['positions']:
         idx = entry[2]
         lcb_pos[idx] = (entry[0], entry[1])
+
     lcb = LargeCompactBundle('LCB', fiberset, lcb_pos)
 
     pseudo_slit_lcb = PseudoSlit(name="LCB", insmode='LCB')
