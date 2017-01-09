@@ -20,13 +20,14 @@ setup(
             'primary.txt',
             'lcb_default_header.txt',
             'mos_default_header.txt',
-            'component-86a6e968-8d3d-456f-89f8-09ff0c7f7c57.json',
+            'component-06fc5d6d-d20b-4eba-b3fa-57696f0a1103.json',
             'component-2e02e135-2325-47c9-9975-466b445b0b8b.json',
-            'component-97d48545-3258-473e-9311-00e390999d52.json',
             'component-715c7ced-f989-42a6-bb74-a5b5cda0495c.json',
+            'component-86a6e968-8d3d-456f-89f8-09ff0c7f7c57.json',
+            'component-97d48545-3258-473e-9311-00e390999d52.json',
             'instrument-4fd05b24-2ed9-457b-b563-a3c618bb1d4c.json',
-            'instrument-9a86b2b2-3f7d-48ec-8f4f-3780ec967c90.json',
-            'instrument-66f2283e-3049-4d4b-8ef1-14d62fcb611d.json'
+            'instrument-66f2283e-3049-4d4b-8ef1-14d62fcb611d.json',
+            'instrument-9a86b2b2-3f7d-48ec-8f4f-3780ec967c90.json'
         ],
     },
     install_requires=[
