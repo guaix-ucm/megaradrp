@@ -30,6 +30,9 @@ def main(args=None):
                              "key1,key2,...keyn.'format'")
     parser.add_argument("--geometry",
                         help="tuple x,y,dx,dy")
+    parser.add_argument("--pdffile",
+                        help="output PDF file name",
+                        type=argparse.FileType('w'))
 
     args = parser.parse_args(args=args)
 
@@ -54,10 +57,20 @@ def main(args=None):
             yp = ypol(xp)
             ax.plot(xp+1, yp+1, 'b-')
 
-    import matplotlib.pyplot as plt
-    plt.show(block=False)
-    plt.pause(0.001)
-    pause_debugplot(12)
+    # read pdffile
+    if args.pdffile is not None:
+        from matplotlib.backends.backend_pdf import PdfPages
+        pdf = PdfPages(args.pdffile.name)
+        pdf.savefig()
+        pdf.close()
+    else:
+        import matplotlib
+        matplotlib.use('Qt4Agg')
+        import matplotlib.pyplot as plt
+        plt.show(block=False)
+        plt.pause(0.001)
+        pause_debugplot(12)
+
 
 if __name__ == "__main__":
 
