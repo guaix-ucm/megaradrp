@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2011-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -54,13 +54,6 @@ class MegaraBaseRecipe(BaseRecipe):
                        'WeightsRecipe': [OverscanCorrector, TrimImage,
                                          BiasCorrector, BadPixelCorrector,
                                          DarkCorrector, SlitFlatCorrector],
-                       'TwilightFiberFlatRecipe': [OverscanCorrector,
-                                                   TrimImage,
-                                                   BiasCorrector,
-                                                   BadPixelCorrector,
-                                                   DarkCorrector,
-                                                   SlitFlatCorrector],
-
                        'PseudoFluxCalibrationRecipe': [OverscanCorrector,
                                                        TrimImage,
                                                        BiasCorrector,
