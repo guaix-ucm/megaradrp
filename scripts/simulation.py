@@ -51,7 +51,9 @@ def create_detector():
                                  )
     return detector
 
-def create_lcb():
+
+def create_lcb(insconf):
+
     _logger.info('create LCB')
     layouttable = np.loadtxt('v03/LCB_spaxel_centers.txt')
 
@@ -71,9 +73,10 @@ def create_lcb():
         fiberset.fibers[fibid] = lf
 
     lcb_pos = {}
-    for line in layouttable:
-        idx =  int(line[4])
-        lcb_pos[idx] = (line[0], line[1])
+    spaxels = insconf.get('LCB.spaxels')
+    for entry in spaxels:
+        idx = entry[2]
+        lcb_pos[idx] = (entry[0], entry[1])
     lcb = LargeCompactBundle('LCB', fiberset, lcb_pos)
 
     pseudo_slit_lcb = PseudoSlit(name="LCB", insmode='LCB')
@@ -185,7 +188,7 @@ def illum2(x, y):
     return 1.0 / (1 + np.exp((r - 130.0) / 10.0))
 
 
-def create_instrument():
+def create_instrument(insconf):
     # eq = np.random.normal(loc=0.80, scale=0.01, size=(4096,4096))
     # eq = np.clip(eq, 0.0, 1.0)
     # fits.writeto('eq.fits', eq, clobber=True)
@@ -200,7 +203,7 @@ def create_instrument():
     # print(fibers_mos_base.config_info())
     cover = MegaraCover()
     focal_plane = FocalPlane(cover)
-    fibers_lcb, pseudo_slit_lcb = create_lcb()
+    fibers_lcb, pseudo_slit_lcb = create_lcb(insconf)
     focal_plane.connect_lcb(fibers_lcb)
 
     fiber_mos, pseudo_slit_mos = create_mos()
@@ -325,7 +328,13 @@ if __name__ == '__main__':
     illum = illum1
     illum = None
     cu = create_calibration_unit(illum=illum)
-    instrument = create_instrument()
+
+    import megaradrp.loader as loader
+    key = '66f2283e-3049-4d4b-8ef1-14d62fcb611d'
+    drp = loader.load_drp()
+    insconf = drp.configurations[key]
+
+    instrument = create_instrument(insconf)
     telescope = create_telescope()
 
     # Observing conditions

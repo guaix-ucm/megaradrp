@@ -8,6 +8,7 @@
  "components": 
   {
      "detector": "2e02e135-2325-47c9-9975-466b445b0b8b",
-     "pseudoslit": "715c7ced-f989-42a6-bb74-a5b5cda0495c"
+     "pseudoslit": "715c7ced-f989-42a6-bb74-a5b5cda0495c",
+     "LCB": "06fc5d6d-d20b-4eba-b3fa-57696f0a1103"
   }
 }
