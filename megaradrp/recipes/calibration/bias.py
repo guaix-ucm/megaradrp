@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2016 Universidad Complutense de Madrid
+# Copyright 2014-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -28,19 +28,58 @@ from megaradrp.requirements import MasterBPMRequirement
 
 
 class BiasRecipe(MegaraBaseRecipe):
-    """Process BIAS images and create MASTER_BIAS.
+    """Process BIAS images and create a MASTER_BIAS product.
+
+    This recipe process a set of bias images obtained in
+    *Bias Image* mode and returns a combined product image,
+    trimmed to the physical size of the detector.
+
+    Parameters
+    ----------
+    intermediate_results : bool, optional
+                           If True, save intermediate results of the Recipe
+
 
     Attributes
     ----------
 
-    master_bpm: MasterBPM (requirement)
-    master_bias; MasterBias (product)
+    obresult : ObservationResult, requirement
+
+    master_bpm : MasterBPM, requirement, optional
+
+    master_bias : MasterBias, product
+
+    qc : QualityControl, QC.GOOD by default
+
+    Notes
+    -----
+    Images are corrected from overscan and trimmed to the physical size of the detector.
+    Then, they corrected from Bad Pixel Mask, if the BPM is available,
+    Finally, images are stacked using the median.
+
+    See Also
+    --------
+    megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe: recipe to generate MasterBPM
+
+
     """
 
     master_bpm = MasterBPMRequirement()
     master_bias = Product(MasterBias)
 
     def run(self, rinput):
+        """Execute the recipe.
+
+        Parameters
+        ----------
+
+        rinput : BiasRecipe.RecipeInput
+
+        Returns
+        -------
+        BiasRecipe.RecipeResult
+
+        """
         self.logger.info('start bias recipe')
         flow = self.init_filters(rinput, rinput.obresult.configuration)
         errors  = False

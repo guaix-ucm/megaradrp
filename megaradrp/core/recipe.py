@@ -42,7 +42,28 @@ from megaradrp.processing.twilight import TwilightCorrector
 
 
 class MegaraBaseRecipe(BaseRecipe):
-    """Base clase for all MEGARA Recipes"""
+    """Base clase for all MEGARA Recipes
+
+
+    Parameters
+    ----------
+    intermediate_results : bool, optional
+                           If True, save intermediate results of the Recipe
+
+
+    Attributes
+    ----------
+
+    obresult : ObservationResult, requirement
+
+    qc : QualityControl, result, QC.GOOD by default
+
+    logger :
+         recipe logger
+
+    datamodel : MegaraDataModel
+
+    """
 
     obresult = ObservationResultRequirement()
     qc = Product(QualityControlProduct, dest='qc', default=QC.GOOD)
@@ -65,10 +86,18 @@ class MegaraBaseRecipe(BaseRecipe):
         super(MegaraBaseRecipe, self).__init__(*args, **kwds)
 
     def save_intermediate_img(self, img, name):
+        """Save intermediate FITS objects."""
         if self.intermediate_results:
             img.writeto(name, clobber=True)
 
     def validate_input(self, recipe_input):
+        """Method to customize recipe input validation.
+
+        See Also
+        --------
+        numina.core.validator.validate
+
+        """
         self.logger.info('start validating input')
         super(MegaraBaseRecipe, self).validate_input(recipe_input)
         self.logger.info('end validating input')

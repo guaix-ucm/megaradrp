@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath('../'))
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
               'sphinx.ext.intersphinx', 'sphinx.ext.inheritance_diagram',
               'sphinx.ext.todo', 'sphinx.ext.graphviz','sphinx.ext.coverage',
-              'sphinx.ext.mathjax', 'sphinx.ext.napoleon']
+              'sphinx.ext.mathjax', 'numpydoc']
 
 master_doc = 'index'
 templates_path = ['_templates']
@@ -31,14 +31,15 @@ version = '0.6'
 release = '0.6.dev1'
 show_authors = True
 
-numpydoc_show_inherited_class_members = False
 numpydoc_show_class_members = False
+numpydoc_show_inherited_class_members = False
+
 
 # -- Options for HTML output ---------------------------------------------------
 html_theme = 'default'
 #html_theme_path = []
 #html_theme_options = {}
-html_static_path = ['_static']
+#html_static_path = ['_static']
 #html_logo = None
 #html_last_updated_fmt = '%b %d, %Y'
 #html_use_smartypants = True

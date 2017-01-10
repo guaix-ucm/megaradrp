@@ -17,9 +17,6 @@
    :members:
    :show-inheritance:
 
-.. autoclass:: megaradrp.recipes.calibration.bias.BiasRecipe
-
-
 .. autoclass:: megaradrp.recipes.calibration.dark.DarkRecipe
 
 .. autoclass:: megaradrp.recipes.calibration.slitflat.SlitFlatRecipe

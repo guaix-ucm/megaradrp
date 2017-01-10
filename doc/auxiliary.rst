@@ -26,13 +26,11 @@ default telescope procedures these are:
 
 * Fine acquisition with the LCB IFU
 
-* Fine acquisition with the SCB IFU
-
 * Fine acquisition with the Fiber MOS
 
 These latter three observing modes should be run before any observing run (in
 case of visitor mode observations) and after a long period of inactivity of the
-instrument; at least in the instrument mode to be used (LCB, SCB or MOS).
+instrument; at least in the instrument mode to be used (LCB or MOS).
 
 
 Telescope focus
@@ -45,9 +43,7 @@ bright point source should be identified for this purpose. This mode is an
 alternative to obtain the best focus of the telescope using the A&G system.
 Since this mode requires having precise information on the spatial distribution
 of the flux coming from a point source in a region a few arcsec in diameter the
-use of one of the two IFU bundles is required (LCB or SCB). Since the SCB IFU
-has the finest spatial sampling this should yield the best telescope focus
-estimate.
+use of the LCB  IFU bundle.
 
 Requirements
 ++++++++++++
@@ -62,9 +58,9 @@ be more likely carried out with the cover in that position.
 
 This mode requires having the focal-plane cover configured (at least one of the
 sides should be open; the most likely configuration will be with the
-focal-plane cover fully open; mandatory in the case of the SCB), the instrument
+focal-plane cover fully open), the instrument
 shutter open, to configure the VPH mechanism to select the grating to be used,
-to set the instrument mode to either the LCB or SCB IFU, to move the focusing
+to set the instrument mode to LCB IFU, to move the focusing
 mechanism to the position pre-defined for the specific VPH of choice, to expose
 a certain time and to readout the detector in a series of exposures, being this
 series the telescope focus image set. A pause in between every exposure in the
@@ -113,7 +109,7 @@ image quality for the spectrograph is achieved by using a different focus
 position for each disperser element (VPH). The focus position is independent of
 the instrument mode in use (TBC; see next paragraph).
 
-As said above, the three pseudo-slits (LCB, SCB and MOS) have to be at the same
+As said above, the two pseudo-slits (LCB and MOS) have to be at the same
 exact place at the spectrograph entrance to yield the same focus position. If
 this is not the case MEGARA can correct from this effect by focusing with a
 fixed offset for all the VPHs. This value has to be added to the nominal
@@ -126,7 +122,7 @@ focal-plane cover configuration is TBD.
 Requirements
 ++++++++++++
 This mode requires having the focal-plane cover configured (at least one of the
-sides should be open; both in the case of the SCB), the instrument shutter
+sides should be open), the instrument shutter
 open, to configure the VPH mechanism to select the grating to be used, to set
 the instrument mode to use, to move the focusing mechanism to the pre-defined
 focus position for specific VPH of choice, to expose a certain time and to
@@ -256,63 +252,6 @@ night or exclusively to the target currently being observed.
 | Name                         | Type                                                  |
 +==============================+=======================================================+
 +------------------------------+-------------------------------------------------------+
-
-
-
-Fine acquisition with the SCB IFU
----------------------------------
-:Usage: Online
-
-This mode sequence includes the required actions to acquire a target with known
-celestial coordinates and place it at a reference position inside the SCB IFU
-instrument mode. The reference position for each mode is defined elsewhere in
-the MEGARA documentation as the center of the fibers (or its associated
-microlens) that is closest to the bundle footprint geometrical center. The
-focal-plane cover should be used in its OPEN configuration. This mode is a
-refinement of acquisition performed by the telescope or A&G systems.
-
-Requirements
-++++++++++++
-This mode requires having the focal-plane cover open, the instrument shutter
-open, to configure the VPH mechanism to select the grating to be used, to set
-the instrument mode to SCB, to move the focusing mechanism to the position
-pre-defined for the specific VPH of choice, and to expose a certain time and to
-readout the detector in a series of exposures, being this series the fine
-acquisition image set.
-
-As part of the MEGARA on-line quick-look software the image (or images)
-obtained as part of this observing mode should be processed and the spectra
-extracted so to determine the position of the centroid of the target in the
-corresponding field of view. A view of the field should be also produced in
-order to evaluate whether or not the angle of the Folded-Cass rotator matches
-that specified by the observer.
-
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
-
-Procedure
-+++++++++
-
-Products
-++++++++
-Fine acquisition image sets should be obtained at the beginning of the
-observing night by either the observer or the staff of the observatory (TBD) or
-every time a problem with the telescope absolute pointing is suspected. Such
-image sets should be also obtained when an absolute positioning precision of
-the order of a fraction of the spaxel size is required, better than 0.42 arcsec
-in this case for the SCB.
-
-The observatory staff should decide whether or not the corrections derived must
-be applied to the acquisition of other targets during the same observing night
-or exclusively to the target currently being observed.
-
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
-
 
 
 Fine acquisition with the Fiber MOS
