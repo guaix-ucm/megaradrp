@@ -1,8 +1,5 @@
-astropy==1.0.3
-Cython==0.22.1
-numpy==1.9.2
-py==1.4.30
-pytest==2.7.2
-PyYAML==3.11
-scipy==0.15.1
-six==1.9.0
+numina
+astropy
+numpy
+scipy
+scikit-image
