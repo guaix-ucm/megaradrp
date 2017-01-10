@@ -4,3 +4,4 @@ Cython
 git+https://github.com/guaix-ucm/numina.git#egg=numina
 astropy
 six
+scikit-image
