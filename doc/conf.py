@@ -13,6 +13,9 @@
 
 import sys, os
 
+# This is required by autodoc to work
+sys.path.insert(0, os.path.abspath('../'))
+
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
               'sphinx.ext.intersphinx', 'sphinx.ext.inheritance_diagram',
               'sphinx.ext.todo', 'sphinx.ext.graphviz','sphinx.ext.coverage',
