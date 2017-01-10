@@ -5,10 +5,6 @@
 .. module:: megaradrp.products
    :synopsis:  Data products of the MEGARA pipeline
 
-.. inheritance-diagram:: megaradrp.products.tracemap.TraceMap megaradrp.products.wavecalibration.WavelengthCalibration megaradrp.types.MasterBias
-                         megaradrp.types.MasterBPM
-   :parts: 1
-
 .. autoclass:: megaradrp.types.MEGARAProductFrame
 
 .. autoclass:: megaradrp.types.ProcessedFrame
