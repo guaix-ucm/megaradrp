@@ -71,7 +71,7 @@ Arc
 
 :Mode: Arc
 :Usage: Offline
-:Recipe class: :class:`~megaradrp.recipes.calibration.ArcRecipe`
+:Recipe class: :class:`~megaradrp.recipes.calibration.arc.ArcCalibrationRecipe`
 
 This mode sequence includes the required actions to translate the geometrical
 position of each point in the detector into physical units of wavelength. The
@@ -104,19 +104,19 @@ exposures, being this series the arc image set.
 +--------------------------+---------------+------------+-------------------------------+
 | Name                     | Type          | Default    | Meaning                       |
 +==========================+===============+============+===============================+
-| ``'obresult'``           | Product       | NA         |      Observation Result       |
+| ``'obresult'``           | ObservationResult |        |      Observation Result       |
 +--------------------------+---------------+------------+-------------------------------+
-| ``'master_dark'``        | Product       | NA         |      Master Dark frame        |
+| ``'master_dark'``        | MasterDark    | NA         |      Master Dark frame        |
 +--------------------------+---------------+------------+-------------------------------+
-| ``'master_bias'``        | Product       | NA         |      Master Bias frame        |
+| ``'master_bias'``        | MasterBias    | NA         |      Master Bias frame        |
 +--------------------------+---------------+------------+-------------------------------+
-| ``'master_bpm'``         | Product       | NA         |      Master BPM frame         |
+| ``'master_bpm'``         | masterBPM     | NA         |      Master BPM frame         |
 +--------------------------+---------------+------------+-------------------------------+
-| ``'tracemap'``           | Product       | NA         |      TraceMap                 |
+| ``'tracemap'``           | TraceMap      | NA         |      TraceMap                 |
 +--------------------------+---------------+------------+-------------------------------+
-| ``'lines_catalog'``      | Product       | NA         |      Lines Catalog            |
+| ``'lines_catalog'``      | LinesCatalog  | NA         |      Lines Catalog            |
 +--------------------------+---------------+------------+-------------------------------+
-| ``'polynomial_degree'``  | Product       | NA         |      Polynomial Degree        |
+| ``'polynomial_degree'``  | integer       | 3          |      Polynomial Degree        |
 +--------------------------+---------------+------------+-------------------------------+
 
 Procedure
@@ -133,15 +133,14 @@ Arc image sets are to be obtained both as part of the activities related to the
 verification of the instrument status and for processing data for scientific
 exploitation and are part of the "Daily Calibration Modes".
 
-+-------------------------+-------------------------------------------------+
-| Name                    | Type                                            |
-+=========================+=================================================+
-| ``'arc_image'``         | :class:`~megaradrp.dataproducts.DataFrameType`  |
-+-------------------------+-------------------------------------------------+
-| ``'arc_rss'``           | :class:`~megaradrp.dataproducts.DataFrameType`  |
-+-------------------------+-------------------------------------------------+
-| ``'master_wlcalib'``    | :class:`~megaradrp.dataproducts.ArrayType`      |
-+-------------------------+-------------------------------------------------+
+=====================    ===================================================================
+ Name                     Type
+=====================    ===================================================================
+``'arc_image'``          :class:`~numina.core.DataFrameType`
+``'arc_rss'``            :class:`~numina.core.DataFrameType`
+``'master_wlcalib'``     :class:`~megaradrp.products.wavecalibration.WavelengthCalibration`
+``'fwhm_image'``         :class:`~numina.core.DataFrameType`
+=====================    ===================================================================
 
 A data structure containing information about wavelength calibrations
 (the format is TBD), a QA flag, a text log file of the processing and a
@@ -153,7 +152,7 @@ Bad-pixels mask
 
 :Mode: Bad-pixels mask
 :Usage: Offline
-:Recipe class: :class:`~megaradrp.recipes.calibration.BadPixelsMaskRecipe`
+:Recipe class: :class:`~megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe`
 
 Although science-grade CCD detectors show very few bad pixels / bad columns
 there will be a number of pixels (among the ~17 Million pixels in the MEGARA
@@ -213,14 +212,11 @@ considered part of the "System Calibration Modes".
 +-------------------+---------------------------------------------------------+
 | Name              | Type                                                    |
 +===================+=========================================================+
-| ``'master_bpm'``  | :class:`~megaradrp.dataproducts.MasterBPM`              |
+| ``'master_bpm'``  | :class:`~megaradrp.types.MasterBPM`                     |
 +-------------------+---------------------------------------------------------+
 
 A bidimensional mask of bad pixels, a QA flag, a text log file of the
 processing and a structured text file with information about the processing.
-
-
-
 
 
 Bias
@@ -228,7 +224,7 @@ Bias
 
 :Mode: Bias
 :Usage: Offline
-:Recipe class: :class:`~megaradrp.recipes.calibration.BiasRecipe`
+:Recipe class: :class:`~megaradrp.recipes.calibration.bias.BiasRecipe`
 
 Before the Analog-to-Digital conversion is performed a pedestal (electronic)
 level is added to all images obtained with the MEGARA CCD. This is a standard
@@ -244,11 +240,13 @@ taking images with null integration time. This mode requires having the shutter
 closed and to readout the detector in a series of exposures with null
 integration time, being this series the bias image set.
 
-+--------------------------+---------------+------------+-------------------------------+
-| Name                     | Type          | Default    | Meaning                       |
-+==========================+===============+============+===============================+
-| ``'master_bpm'``         | Product       | NA         |      Master BPM frame         |
-+--------------------------+---------------+------------+-------------------------------+
+
+========================== ==================================== ============ ===============================
+ Name                       Type                                 Default      Meaning
+========================== ==================================== ============ ===============================
+  ``'master_bpm'``         :class:`~megaradrp.types.MasterBPM`   NA            Master BPM frame
+========================== ==================================== ============ ===============================
+
 
 Procedure
 +++++++++
@@ -268,10 +266,9 @@ scientific exploitation.
 +-------------------+---------------------------------------------------------+
 | Name              | Type                                                    |
 +===================+=========================================================+
-| ``'master_bias'`` | :class:`~megaradrp.dataproducts.MasterBias`             |
+| ``'master_bias'`` | :class:`~megaradrp.types.MasterBias`                    |
 +-------------------+---------------------------------------------------------+
-| ``'stats'``       | :class:`~megaradrp.dataproducts.ChannelLevelStatistics` |
-+-------------------+---------------------------------------------------------+
+
 
 A bidimensional bias image, QA flag, a text log file of the processing and a
 structured text file containing information about the processing.
@@ -281,7 +278,7 @@ Dark
 
 :Mode: Dark
 :Usage: Offline
-:Recipe class: :class:`~megaradrp.recipes.calibration.DarkRecipe`
+:Recipe class: :class:`~megaradrp.recipes.calibration.dark.DarkRecipe`
 
 The potential wells in CCD detectors spontaneously generate electron-ion pairs
 at a rate that is a function of temperature. For very long exposures this
@@ -325,7 +322,7 @@ scientific exploitation.
 +------------------------------+-----------------------------------------------+
 | Name                         | Type                                          |
 +==============================+===============================================+
-| ``'master_dark'``            | :class:`~megaradrp.dataproducts.MasterDark`   |
+| ``'master_dark'``            | :class:`~megaradrp.types.MasterDark`          |
 +------------------------------+-----------------------------------------------+
 
 A bidimensional dark image, QA flag, a text log file of the processing and a
@@ -337,7 +334,7 @@ Fiber-flat
 
 :Mode: Fiber-flat
 :Usage: Offline
-:Recipe class: :class:`~megaradrp.recipes.calibration.FiberFlatRecipe`
+:Recipe class: :class:`~megaradrp.recipes.calibration.flat.FiberFlatRecipe`
 
 In fiber-fed spectrographs such as MEGARA each optical fiber behaves like a
 different optical system, and therefore, its optical transmission is different
@@ -406,11 +403,11 @@ scientific exploitation.
 +------------------------------+--------------------------------------------------+
 | Name                         | Type                                             |
 +==============================+==================================================+
-| ``'fiberflat_frame'``        | :class:`~megaradrp.dataproducts.DataFrameType`   |
+| ``'fiberflat_frame'``        | :class:`~megaradrp.types.ProcessedFrame`         |
 +------------------------------+--------------------------------------------------+
-| ``'master_fiberflat'``       | :class:`~megaradrp.dataproducts.DataFrameType`   |
+| ``'fiberflat_rss'``          | :class:`~megaradrp.types.ProcessedRSS`           |
 +------------------------------+--------------------------------------------------+
-| ``'rss_fiberflat'``          | :class:`~megaradrp.dataproducts.MasterFiberFlat` |
+| ``'master_fiberflat'``       | :class:`~megaradrp.types.MasterFiberFlat`        |
 +------------------------------+--------------------------------------------------+
 
 
@@ -423,7 +420,7 @@ Slit-flat
 
 :Mode: Slit-flat
 :Usage: Offline
-:Recipe class: :class:`~megaradrp.recipes.calibration.SlitFlatRecipe`
+:Recipe class: :class:`~megaradrp.recipes.calibration.slitflat.SlitFlatRecipe`
 
 In the case of fiber-fed spectrographs the correction for the detector
 pixel-to-pixel variation of the sensibility is usually carried out using data
@@ -496,7 +493,7 @@ considered as part of the "System Calibration Modes" instead.
 +------------------------------+------------------------------------------------+
 | Name                         | Type                                           |
 +==============================+================================================+
-| ``'master_slitflat'``        | :class:`~megaradrp.dataproducts.MasterSlitFlat`|
+| ``'master_slitflat'``        | :class:`~megaradrp.types.MasterSlitFlat`       |
 +------------------------------+------------------------------------------------+
 
 A bidimensional master slit flat field, QA flag, a text log file of the
@@ -509,7 +506,7 @@ Trace
 
 :Mode: Trace
 :Usage: Offline
-:Recipe class: :class:`~megaradrp.recipes.calibration.TraceMapRecipe`
+:Recipe class: :class:`~megaradrp.recipes.calibration.trace.TraceMapRecipe`
 
 Although for the majority of the observing modes described elsewhere in this
 document the MEGARA off-line pipeline will perform its own fiber spectra
@@ -568,11 +565,10 @@ performance of the on-line quick-look software.
 +------------------------------+-------------------------------------------------------+
 | Name                         | Type                                                  |
 +==============================+=======================================================+
-| ``'master_fiberflat_frame'`` | :class:`~megaradrp.dataproducts.MasterFiberFlatFrame` |
+| ``'fiberflat_frame'``        | :class:`~megaradrp.types.ProcessedFrame`              |
 +------------------------------+-------------------------------------------------------+
-| ``'master_traces'``          | :class:`~megaradrp.dataproducts.TraceMap`             |
+| ``'master_traces'``          | :class:`~megaradrp.products.tracemap.TraceMap`        |
 +------------------------------+-------------------------------------------------------+
-
 
 
 Twilight fiber-flat
@@ -580,7 +576,7 @@ Twilight fiber-flat
 
 :Mode: Twilight fiber-flat
 :Usage: Offline
-:Recipe class: :class:`~megaradrp.recipes.calibration.TwiligthFiberFlatRecipe`
+:Recipe class: :class:`~megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe`
 
 Depending on the final performance of the ICM (provided by the GTC) at F-C the
 twilight fiber-flat mode (proposed in this section) might be offered as
@@ -642,181 +638,17 @@ considered as part of the "Daily Calibration Modes".
 +------------------------------+-------------------------------------------------------+
 | Name                         | Type                                                  |
 +==============================+=======================================================+
-| ``'fiberflat_frame'``        | :class:`~megaradrp.dataproducts.MasterFiberFlatFrame` |
+| ``'reduced_frame'``          | :class:`~megaradrp.types.ProcessedFrame`              |
 +------------------------------+-------------------------------------------------------+
-| ``'fiberflat_rss'``          | :class:`~megaradrp.dataproducts.MasterFiberFlat`      |
+| ``'reduced_rss'``            | :class:`~megaradrp.types.ProcessedRSS`                |
 +------------------------------+-------------------------------------------------------+
-| ``'traces'``                 | :class:`~megaradrp.dataproducts.ArrayType`            |
+| ``'master_twilight_flat'``   | :class:`~megaradrp.products.MasterTwilightFlat`       |
 +------------------------------+-------------------------------------------------------+
 
 A RSS master illumination flat field, QA flag, a text log file of the
 processing and a structured text file containing information about the
 processing.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-Standard star with the LCB IFU
-------------------------------
-
-:Mode: Standard start with the LCB IFU
-:Usage: Offline
-:Recipe class: :class:`~megaradrp.recipes.calibration.LCB_IFU_StdStarRecipe`
-
-This observing mode includes the required actions to obtain those calibration
-images needed to correct for the variation in the response of the system along
-the spectral direction. This signature is manifested by a change in the
-conversion factor between the energy surface density hitting the telescope
-primary mirror and the DUs per CCD pixel with wavelength. Its effect is already
-present in the original data but it could get modified during the reduction
-process, e.g. after the fiber-flat correction is applied.
-
-The flux calibration is performed by observing one or several
-spectrophotometric stars with the same instrument configuration that for the
-scientific observations. Depending on the number of standard stars observed and
-on the weather conditions (mainly transparency) two different types of
-calibration could be achieved:
-
-* Absolute-flux calibration: The weather conditions during the night should be photometric and a number of spectrophotometric standard stars at different airmasses should be observed. This allows to fully correct from DUs per CCD pixel to energy surface density (typically in erg s-1 cm-2 Å-1) incident at the top of the atmosphere. If only one single standard star is observed (at the airmass of the science object) this correction allows deriving the energy surface density hitting the telescope primary mirror exclusively, unless an atmospheric extinction curve for the observatory and that particular night is assumed. In order to properly flux-calibrate scientific observations at all airmasses several stars should be observed during the night.
-
-* Relative-flux calibration: If the weather conditions are not photometric this correction only allows normalizing the DUs per CCD pixel along the spectral direction so the conversion to incident energy at the top of the atmosphere is the same at all wavelengths. In order for this calibration to be valid the assumption that the effect of the atmosphere (including atmospheric cirrus and possibly thick clouds) on the wavelength dependence of this correction is that given by the atmospheric extinction curve adopted.
-
-Since the observing sequence needed for both types of flux calibration is
-identical only one observing mode (standard star) needs to be defined.
-
-We will use this same observing mode also for the observation of either
-telluric standards or radial-velocity standards. The former are needed to
-correct for the presence of telluric absorptions mainly in the red part of the
-spectrum and are achieved by means of observing A-type stars at the same
-airmass and very close in time to the corresponding scientific observation.
-The latter can used to determine a precise zero point velocity for the
-instrument at a specific night and to verify its stability from night to night
-and season to season.
-
-Requirements
-++++++++++++
-
-This mode requires the entire flux of the spectrophotometric standard star to
-be recovered (even if the star is a telluric or radial-velocity standard),
-especially when an absolute-flux calibration is needed, so the LCB IFU bundle
-must be used. The FOV of the LCB IFU is large enough for these observations to
-be carried out with one of the sides of the focal-plane cover closed. When this
-calibration is aimed for a set of Fiber-MOS scientific observations,
-complementary observations of standard stars through the Fiber-MOS minibundles
-might be also required. This allows verifying the quality and stability of the
-calibration when two different pseudo-slits are used. Such observing mode is
-described later.
-
-This mode requires having the focal-plane cover configured (at least one of the
-sides should be open), the instrument shutter open, to configure the VPH
-mechanism to select the grating to be used, to set the instrument mode to LCB
-IFU, to move the focusing mechanism to the position pre-defined for the
-specific VPH of choice, and to expose a certain time and to readout the
-detector in a series of exposures, being this series the image set containing
-the spectral energy distribution of the spectrophotometric standard star.
-
-In order to distribute the flux from the star across multiple spaxels in the
-LCB IFU bundle (particularly important in the case of very bright
-spectrophotometric standard stars) we might also need to apply a small drift
-motion (typically of a few arcsec per second) to one of the telescope axes at
-the start of the observation or, more likely, slightly defocus the telescope.
-
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
-
-Procedure
-+++++++++
-
-Products
-++++++++
-Standard star image sets are to be obtained only as part of the routine
-calibration activities performed by the observer and that are needed for
-processing data for scientific exploitation.
-
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
-
-
-
-Standard star with the Fiber MOS
---------------------------------
-
-:Mode: Standard start with the FIBER MOS
-:Usage: Offline
-:Recipe class: :class:`~megaradrp.recipes.calibration.FiberMOS_StdStarRecipe`
-
-This observing mode includes the required actions to obtain those calibration
-images needed to correct for the variation in the response of the system along
-the spectral direction. The difference between this mode and the two precedent
-observing modes is that in this case the spectrophotometric standard star is
-observed through one of the robotic positioners of the Fiber-MOS subsystem.
-
-As in Standard star with the IFUs observing modes, the calibration is performed
-by observing one or several spectrophotometric stars with the same instrument
-configuration that for the scientific observations. Depending on the number of
-standard stars observed and the weather conditions two different types of
-calibration could be achieved, absolute or relative. In the case of the former
-calibration an aperture correction should be applied to take into account the
-possible flux losses from the standard stars when observed through one of the
-~1.6-arcsec-wide robotic positioners.
-
-
-Requirements
-++++++++++++
-This mode requires having the focal-plane cover configured, the instrument
-shutter open, to configure the VPH mechanism to select the grating to be used,
-to set the instrument mode to Fiber MOS, to move the focusing mechanism to the
-position pre-defined for the specific VPH of choice, to move one of the robotic
-positioners to the position of the spectrophotometric standard star (other
-positioners could be also moved if needed) and to expose a certain time and to
-readout the detector in a series of exposures, being this series the image set
-containing the spectral energy distribution of the spectrophotometric standard
-star.
-
-This observing mode could still be carried out with one of the sides of the
-focal-plane cover closed. However, as the (commonly rather bright)
-spectrophotometric standard star is the only object of interest in the field,
-the other positioners would not be observing scientific targets, so the level
-of cross-talk between these and the positioner devoted to the standard star
-should be negligible. Thus, the use of the focal-plane cover, although
-considered, is not recommended for this specific observing mode.
-
-In order to place the robotic positioner(s) on the corresponding target(s) a
-set of input catalogues previously generated by the observer using MOPSS
-(MEGARA Observing Preparation Software Suite) are needed.
-
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
-
-Procedure
-+++++++++
-
-Products
-++++++++
-Standard star image sets are to be obtained only as part of the routine
-calibration activities performed by the observer that are needed for processing
-data for scientific exploitation.
-
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
 
 Linearity tests
 ---------------

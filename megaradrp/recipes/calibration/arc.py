@@ -54,7 +54,17 @@ from megaradrp.instrument import vph_thr_arc
 
 
 class ArcCalibrationRecipe(MegaraBaseRecipe):
-    """Process ARC images and create WL_CALIBRATION."""
+    """Process ARC images and create WL_CALIBRATION.
+
+    Attributes
+    ----------
+
+    obresult: ObservationResult
+    master_bias: MasterBias
+    master_dark: MasterDark
+
+    arc_image: DataFrameType
+    """
 
     __version__ = "0.1.0"
     # Requirements

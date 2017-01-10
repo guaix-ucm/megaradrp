@@ -26,6 +26,7 @@ from numina.core.products import DataProductTag
 
 
 class MEGARAProductFrame(DataProductTag, DataFrameType):
+    """A MEGARA product image"""
     pass
 
 
@@ -45,13 +46,16 @@ class ProcessedMultiRSS(ProcessedFrame):
 
 
 class MasterBias(MEGARAProductFrame):
+    """A Master Bias image"""
     pass
 
 
 class MasterTwilightFlat(MEGARAProductFrame):
     pass
 
+
 class MasterDark(MEGARAProductFrame):
+    """A Master Dark image"""
     pass
 
 
@@ -68,6 +72,7 @@ class MasterFiberFlatFrame(MEGARAProductFrame):
 
 
 class MasterBPM(MEGARAProductFrame):
+    """Bad Pixel Mask product"""
     pass
 
 

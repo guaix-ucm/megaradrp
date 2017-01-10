@@ -28,6 +28,22 @@ import numina.core.products
 
 class BaseStructuredCalibration(numina.core.products.DataProductTag,
                                 numina.core.types.AutoDataType):
+    """Base class for structured calibration data
+
+    Parameters
+    ----------
+
+    instrument: str
+        Instrument name
+
+    Attributes
+    ----------
+    tags: dict
+        dictionary of selection fields
+    uuid: str
+       UUID of the result
+
+    """
     def __init__(self, instrument='unknown'):
         super(BaseStructuredCalibration, self).__init__()
         self.instrument = instrument

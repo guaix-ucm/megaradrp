@@ -59,6 +59,7 @@ class GeometricTrace(object):
 
 
 class TraceMap(BaseStructuredCalibration):
+    """Trace map calibration product"""
     def __init__(self, instrument='unknown'):
         super(TraceMap, self).__init__(instrument)
         self.contents = []

@@ -5,60 +5,28 @@
 .. module:: megaradrp.products
    :synopsis:  Data products of the MEGARA pipeline
 
-.. inheritance-diagram:: megaradrp.products
-   :parts: 4
+.. inheritance-diagram:: megaradrp.products.tracemap.TraceMap megaradrp.products.wavecalibration.WavelengthCalibration megaradrp.types.MasterBias
+                         megaradrp.types.MasterBPM
+   :parts: 1
 
+.. autoclass:: megaradrp.types.MEGARAProductFrame
 
-.. class:: MasterBias
+.. autoclass:: megaradrp.types.ProcessedFrame
 
-   Master bias MEGARA frame
+.. autoclass:: megaradrp.types.ProcessedRSS
 
+.. autoclass:: megaradrp.types.MasterBPM
 
-.. class:: MasterBPM
+.. autoclass:: megaradrp.types.MasterBias
 
-   Master dark pixel mask MEGARA frame
+.. autoclass:: megaradrp.types.MasterDark
 
+.. autoclass:: megaradrp.types.MasterSlitFlat
 
-.. class:: MasterDark
+.. autoclass:: megaradrp.types.MasterFiberFlat
 
-   Master dark MEGARA frame
+.. autoclass:: megaradrp.products.structured.BaseStructuredCalibration
 
+.. autoclass:: megaradrp.products.tracemap.TraceMap
 
-.. class:: MasterFiberFlat
-
-   Master flat MEGARA frame
-
-
-.. class:: TraceMap
-
-   Master Trace Map
-
-
-.. class:: MasterTwilightFlat
-
-   Master Twilight Flat MEGARA frame
-
-
-.. class:: MasterSlitFlat
-
-   Master Slit Flat MEGARA frame
-
-
-.. class:: MasterFiberFlatFrame
-
-   Master Fiber Flat MEGARA frame
-
-
-.. class:: MasterSensitivity
-
-   Master Sensitivity MEGARA frame
-
-
-.. class:: MasterWeights
-
-   Master Weights .tar file
-
-
-.. class:: WavelengthCalibration
-
-   Wavelength Calibration JSON MEGARA file
+.. autoclass:: megaradrp.products.wavecalibration.WavelengthCalibration

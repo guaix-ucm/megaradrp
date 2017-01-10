@@ -9,6 +9,4 @@
    :parts: 4
 
 
-.. class:: MegaraBaseRecipe
-
-   Master Base Recipe
+.. autoclass:: megaradrp.core.recipe.MegaraBaseRecipe

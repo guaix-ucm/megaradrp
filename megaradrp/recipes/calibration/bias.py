@@ -28,7 +28,14 @@ from megaradrp.requirements import MasterBPMRequirement
 
 
 class BiasRecipe(MegaraBaseRecipe):
-    """Process BIAS images and create MASTER_BIAS."""
+    """Process BIAS images and create MASTER_BIAS.
+
+    Attributes
+    ----------
+
+    master_bpm: MasterBPM (requirement)
+    master_bias; MasterBias (product)
+    """
 
     master_bpm = MasterBPMRequirement()
     master_bias = Product(MasterBias)

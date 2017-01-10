@@ -44,6 +44,8 @@ class FiberSolutionArcCalibration(object):
 
 
 class WavelengthCalibration(BaseStructuredCalibration):
+    """Wavelength Calibration Product
+    """
     def __init__(self, instrument='unknown'):
         super(WavelengthCalibration, self).__init__(instrument)
         self.contents = []

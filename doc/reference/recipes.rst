@@ -13,37 +13,27 @@
    :synopsis:  Calibration Reduction Recipes for MEGARA
 
 
-..
-   .. inheritance-diagram:: megaradrp.recipes.calibration.bias megaradrp.recipes.calibration.bpm megaradrp.recipes.calibration.dark megaradrp.recipes.calibration.linearity megaradrp.recipes.calibration.trace megaradrp.recipes.calibration.twilight megaradrp.recipes.calibration.arc
-   :parts: 4
+.. autoclass:: megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe
+   :members:
+   :show-inheritance:
+
+.. autoclass:: megaradrp.recipes.calibration.bias.BiasRecipe
 
 
-.. class:: bias.BiasRecipe
+.. autoclass:: megaradrp.recipes.calibration.dark.DarkRecipe
+
+.. autoclass:: megaradrp.recipes.calibration.slitflat.SlitFlatRecipe
+
+.. autoclass:: megaradrp.recipes.calibration.trace.TraceMapRecipe
 
 
-.. class:: dark.DarkRecipe
+.. autoclass:: megaradrp.recipes.calibration.arc.ArcCalibrationRecipe
 
 
-.. class:: trace.TraceMapRecipe
+.. autoclass:: megaradrp.recipes.calibration.flat.FiberFlatRecipe
 
 
-.. class:: flat.FiberFlatRecipe
-
-.. inheritance-diagram:: megaradrp.recipes.calibration.flat
-   :parts: 1
-
-.. class:: twilight.TwilightFiberFlatRecipe
-
-
-.. class:: arc.ArcCalibrationRecipe
-
-
-.. class:: bpm.BadPixelsMaskRecipe
-
-
-.. class:: linearity.LinearityTestRecipe
-
-
+.. autoclass:: megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe
 
 
 
@@ -53,7 +43,14 @@
 .. module:: megaradrp.recipes.auxiliary
    :synopsis:  Auxiliary Reduction Recipes for MEGARA
 
-TBD
+.. autoclass:: megaradrp.recipes.auxiliary.acquisitionlcb.AcquireLCBRecipe
+
+.. autoclass:: megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe
+
+.. autoclass:: megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe
+
+.. autoclass:: megaradrp.recipes.auxiliary.focustel.FocusTelescopeRecipe
+
 
 :mod:`megaradrp.recipes.scientific` --- Scientific Reduction Recipes for MEGARA
 ===============================================================================
@@ -61,23 +58,12 @@ TBD
 .. module:: megaradrp.recipes.scientific
    :synopsis:  Scientific Reduction Recipes for MEGARA
 
-.. class:: lcb.LCBImageRecipe
+.. autoclass:: megaradrp.recipes.scientific.lcb.LCBImageRecipe
 
-.. inheritance-diagram:: megaradrp.recipes.scientific.lcb
-   :parts: 4
 
-.. class:: mos.MOSImageRecipe
+.. autoclass:: megaradrp.recipes.scientific.mos.MOSImageRecipe
 
-.. inheritance-diagram:: megaradrp.recipes.scientific.mos
-   :parts: 4
+.. autoclass:: megaradrp.recipes.scientific.lcbstdstar.LCBStandardRecipe
 
-.. class:: lcbstdstar.LCBStandardRecipe
-
-.. inheritance-diagram:: megaradrp.recipes.scientific.lcbstdstar
-   :parts: 4
-
-.. class:: mosstdstar.MOSStandardRecipe
-
-.. inheritance-diagram:: megaradrp.recipes.scientific.mosstdstar
-   :parts: 4
+.. autoclass:: megaradrp.recipes.scientific.mosstdstar.MOSStandardRecipe
 

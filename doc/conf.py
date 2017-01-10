@@ -16,7 +16,7 @@ import sys, os
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
               'sphinx.ext.intersphinx', 'sphinx.ext.inheritance_diagram',
               'sphinx.ext.todo', 'sphinx.ext.graphviz','sphinx.ext.coverage',
-              'sphinx.ext.mathjax']
+              'sphinx.ext.mathjax', 'numpydoc']
 
 master_doc = 'index'
 templates_path = ['_templates']
@@ -27,6 +27,9 @@ copyright = u'2013-2017, Universidad Complutense de Madrid'
 version = '0.6'
 release = '0.6.dev1'
 show_authors = True
+
+numpydoc_show_inherited_class_members = False
+numpydoc_show_class_members = False
 
 # -- Options for HTML output ---------------------------------------------------
 html_theme = 'default'
