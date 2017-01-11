@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2011-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -46,7 +46,6 @@ from megaradrp.instrument import vph_thr
 
 
 class TraceMapRecipe(MegaraBaseRecipe):
-    __version__ = "0.1.0"
 
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
@@ -59,6 +58,17 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
     @numina.core.validator.validate
     def run(self, rinput):
+        """Execute the recipe.
+
+        Parameters
+        ----------
+        rinput : TraceMapRecipe.RecipeInput
+
+        Returns
+        -------
+        TraceMapRecipe.RecipeResult
+
+        """
         self.logger.info('start trace spectra recipe')
 
         obresult = rinput.obresult
