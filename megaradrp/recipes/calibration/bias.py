@@ -34,23 +34,6 @@ class BiasRecipe(MegaraBaseRecipe):
     *Bias Image* mode and returns a combined product image,
     trimmed to the physical size of the detector.
 
-    Parameters
-    ----------
-    intermediate_results : bool, optional
-                           If True, save intermediate results of the Recipe
-
-
-    Attributes
-    ----------
-
-    obresult : ObservationResult, requirement
-
-    master_bpm : MasterBPM, requirement, optional
-
-    master_bias : MasterBias, product
-
-    qc : QualityControl, QC.GOOD by default
-
     Notes
     -----
     Images are corrected from overscan and trimmed to the physical size of the detector.
