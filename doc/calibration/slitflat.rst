@@ -82,3 +82,6 @@ considered as part of the "System Calibration Modes" instead.
 A bidimensional master slit flat field, QA flag, a text log file of the
 processing and a structured text file containing information about the
 processing.
+
+.. autoclass:: megaradrp.recipes.calibration.slitflat.SlitFlatRecipe
+      :members:

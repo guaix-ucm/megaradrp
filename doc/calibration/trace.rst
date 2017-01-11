@@ -66,3 +66,10 @@ performance of the on-line quick-look software.
 +------------------------------+-------------------------------------------------------+
 | ``'master_traces'``          | :class:`~megaradrp.products.tracemap.TraceMap`        |
 +------------------------------+-------------------------------------------------------+
+
+
+Recipe
+------
+
+.. autoclass:: megaradrp.recipes.calibration.trace.TraceMapRecipe
+     :members:

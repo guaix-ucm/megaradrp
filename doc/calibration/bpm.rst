@@ -68,3 +68,6 @@ considered part of the "System Calibration Modes".
 
 A bidimensional mask of bad pixels, a QA flag, a text log file of the
 processing and a structured text file with information about the processing.
+
+.. autoclass:: megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe
+      :members:

@@ -98,6 +98,9 @@ run once every observing run (e.g. the fine-acquisition ones) or, in the best
 +==============================+=======================================================+
 +------------------------------+-------------------------------------------------------+
 
+.. autoclass:: megaradrp.recipes.auxiliary.focustel.FocusTelescopeRecipe
+      :members:
+
 Spectrograph focus
 ------------------
 :Usage: Online
@@ -197,6 +200,8 @@ and a structured text file containing information about the processing.
 | ``'focus_wavelength'``       | :class:`~megaradrp.dataproducts.JSONstorage`          |
 +------------------------------+-------------------------------------------------------+
 
+.. autoclass:: megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe
+      :members:
 
 
 Fine acquisition with the LCB IFU
@@ -253,6 +258,9 @@ night or exclusively to the target currently being observed.
 +==============================+=======================================================+
 +------------------------------+-------------------------------------------------------+
 
+
+.. autoclass:: megaradrp.recipes.auxiliary.acquisitionlcb.AcquireLCBRecipe
+      :members:
 
 Fine acquisition with the Fiber MOS
 -----------------------------------
@@ -311,3 +319,6 @@ currently being observed.
 | Name                         | Type                                                  |
 +==============================+=======================================================+
 +------------------------------+-------------------------------------------------------+
+
+.. autoclass:: megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe
+      :members:

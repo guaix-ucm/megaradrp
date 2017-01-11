@@ -82,3 +82,6 @@ scientific exploitation.
 
 A RSS master flat field; a QA flag; a text log file of the processing; a structured text file
 containing information about the processing; a reduced image and a master flat field image.
+
+.. autoclass:: megaradrp.recipes.calibration.flat.FiberFlatRecipe
+      :members:

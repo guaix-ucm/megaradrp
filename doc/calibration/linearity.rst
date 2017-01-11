@@ -3,7 +3,7 @@ Linearity tests
 
 :Mode: Linearity tests
 :Usage: Offline
-:Recipe class: :class:`~megaradrp.recipes.calibration.LinearityTestRecipe`
+:Recipe class: :class:`~megaradrp.recipes.calibration.linearity.LinearityTestRecipe`
 
 Although the linearity of the MEGARA CCD are well characterized at the LICA lab
 already, it might be advisable to generate linearity test frames both as part
@@ -68,3 +68,7 @@ considered part of the "System Calibration Modes".
 | Name                         | Type                                                  |
 +==============================+=======================================================+
 +------------------------------+-------------------------------------------------------+
+
+
+.. autoclass:: megaradrp.recipes.calibration.linearity.LinearityTestRecipe
+      :members:

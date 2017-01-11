@@ -77,3 +77,6 @@ exploitation and are part of the "Daily Calibration Modes".
 A data structure containing information about wavelength calibrations
 (the format is TBD), a QA flag, a text log file of the processing and a
 structured text file containing information about the processing.
+
+.. autoclass:: megaradrp.recipes.calibration.arc.ArcCalibrationRecipe
+      :members:

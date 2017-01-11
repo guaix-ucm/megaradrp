@@ -75,3 +75,6 @@ considered as part of the "Daily Calibration Modes".
 A RSS master illumination flat field, QA flag, a text log file of the
 processing and a structured text file containing information about the
 processing.
+
+.. autoclass:: megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe
+      :members:

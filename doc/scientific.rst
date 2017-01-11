@@ -62,7 +62,8 @@ calibration mode standard star with the LCB IFU could be used instead.
 +==============================+=======================================================+
 +------------------------------+-------------------------------------------------------+
 
-
+.. autoclass:: megaradrp.recipes.scientific.lcb.LCBImageRecipe
+      :members:
 
 LCB IFU fast mapping
 --------------------
@@ -128,7 +129,8 @@ different from a standard star.
 +==============================+=======================================================+
 +------------------------------+-------------------------------------------------------+
 
-
+.. autoclass:: megaradrp.recipes.scientific.lcbfastmapping.LCBFastMappingRecipe
+      :members:
 
 Fiber MOS scientific observation
 --------------------------------
@@ -200,6 +202,8 @@ observing mode to verify the status of the instrument.
 +==============================+=======================================================+
 +------------------------------+-------------------------------------------------------+
 
+.. autoclass:: megaradrp.recipes.scientific.mos.MOSImageRecipe
+      :members:
 
 Standard star with the LCB IFU
 ------------------------------
@@ -285,7 +289,8 @@ processing data for scientific exploitation.
 +==============================+=======================================================+
 +------------------------------+-------------------------------------------------------+
 
-
+.. autoclass:: megaradrp.recipes.scientific.lcbstdstar.LCBStandardRecipe
+      :members:
 
 Standard star with the Fiber MOS
 --------------------------------
@@ -353,12 +358,23 @@ data for scientific exploitation.
 +==============================+=======================================================+
 +------------------------------+-------------------------------------------------------+
 
+.. autoclass:: megaradrp.recipes.scientific.mosstdstar.MOSStandardRecipe
+      :members:
 
 MEGARA_FLUX_CALIBRATION
--------------------------
+-----------------------
+
+.. autoclass:: megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipe
+      :members:
 
 MEGARA_EXTINCTION_STAR
-------------------------
+----------------------
+
+.. autoclass:: megaradrp.recipes.scientific.extinctionstar.ExtinctionStarRecipe
+      :members:
 
 MEGARA_SENSITIVITY_STAR
-------------------------
+-----------------------
+
+.. autoclass:: megaradrp.recipes.scientific.sensivitystar.SensivityStarRecipe
+      :members:
