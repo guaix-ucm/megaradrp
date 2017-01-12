@@ -31,7 +31,7 @@ class BiasRecipe(MegaraBaseRecipe):
     """Process BIAS images and create a MASTER_BIAS product.
 
     This recipe process a set of bias images obtained in
-    *Bias Image* mode and returns a combined product image,
+    **Bias Image** mode and returns a combined product image,
     trimmed to the physical size of the detector.
 
     Notes

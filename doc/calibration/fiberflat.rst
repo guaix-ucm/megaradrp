@@ -3,7 +3,9 @@ Fiber-flat
 
 :Mode: Fiber-flat
 :Usage: Offline
+:Key: MEGARA_FIBER_FLAT_IMAGE
 :Recipe class: :class:`~megaradrp.recipes.calibration.flat.FiberFlatRecipe`
+:Product: :class:`~megaradrp.types.MasterFiberFlat`
 
 In fiber-fed spectrographs such as MEGARA each optical fiber behaves like a
 different optical system, and therefore, its optical transmission is different
@@ -37,24 +39,6 @@ focusing mechanism to the position pre-defined for the specific VPH of choice
 and to expose a certain time and to readout the detector a series of exposures,
 being this series the fiber-flat image set.
 
-+---------------------------+---------------+------------+-------------------------------+
-| Name                      | Type          | Default    | Meaning                       |
-+===========================+===============+============+===============================+
-| ``'obresult'``            | Product       | NA         |      Observation Result       |
-+---------------------------+---------------+------------+-------------------------------+
-| ``'master_bias'``         | Product       | NA         |      Master Bias frame        |
-+---------------------------+---------------+------------+-------------------------------+
-| ``'master_dark'``         | Product       | NA         |      Master Dark frame        |
-+---------------------------+---------------+------------+-------------------------------+
-| ``'master_bpm'``          | Product       | NA         |      Master BPM frame         |
-+---------------------------+---------------+------------+-------------------------------+
-| ``'master_slitflat'``     | Product       | NA         |      Master SlitFlat          |
-+---------------------------+---------------+------------+-------------------------------+
-| ``'wlcalib'``             | Product       | NA         |      WavelengthCalibration    |
-+---------------------------+---------------+------------+-------------------------------+
-| ``'master_weights'``      | Product       | NA         |      MasterWeights            |
-+---------------------------+---------------+------------+-------------------------------+
-
 
 Procedure
 +++++++++
@@ -69,19 +53,6 @@ Fiber-flat image sets are to be obtained both as part of the activities related
 to the verification of the instrument status and for processing data for
 scientific exploitation.
 
-+------------------------------+--------------------------------------------------+
-| Name                         | Type                                             |
-+==============================+==================================================+
-| ``'fiberflat_frame'``        | :class:`~megaradrp.types.ProcessedFrame`         |
-+------------------------------+--------------------------------------------------+
-| ``'fiberflat_rss'``          | :class:`~megaradrp.types.ProcessedRSS`           |
-+------------------------------+--------------------------------------------------+
-| ``'master_fiberflat'``       | :class:`~megaradrp.types.MasterFiberFlat`        |
-+------------------------------+--------------------------------------------------+
-
-
-A RSS master flat field; a QA flag; a text log file of the processing; a structured text file
-containing information about the processing; a reduced image and a master flat field image.
 
 .. autoclass:: megaradrp.recipes.calibration.flat.FiberFlatRecipe
-      :members:
+   :members:

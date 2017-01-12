@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2011-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -24,12 +24,10 @@ from __future__ import division, print_function
 import numpy
 from astropy.io import fits
 
-from numina.core import Product, Requirement
-from numina.flow import SerialFlow
+from numina.core import Product
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.types import MasterFiberFlat
-from megaradrp.products import WavelengthCalibration
 import megaradrp.requirements as reqs
 from megaradrp.types import ProcessedRSS, ProcessedFrame
 
@@ -41,21 +39,59 @@ from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.wavecalibration import WavelengthCalibrator
 from megaradrp.processing.fiberflat import Splitter, FlipLR
 
+
 class FiberFlatRecipe(MegaraBaseRecipe):
-    """Process FIBER_FLAT images and create MASTER_FIBER_FLAT."""
+    """Process FIBER_FLAT images and create MASTER_FIBER_FLAT product.
+
+    This recipe process a set of continuum flat images obtained in
+    **Fiber Flat** mode and returns the master fiber flat product
+    The recipe also returns the result of processing the input images up to
+    slitflat correction. and the result RSS of the processing
+    up to wavelength calibration.
+
+    See Also
+    --------
+    megaradrp.products.MasterFiberFlat: description of MasterFiberFlat product
+    megaradrp.processing.aperture: aperture extraction
+    megaradrp.processing.wavecalibration: resampling for wavelength calibration
+
+    Notes
+    -----
+    Images provided in `obresult` are trimmed and corrected from overscan,
+    bad pixel mask (if `master_bpm` is not None), bias and dark current
+    (if `master_dark` is not None) and corrected from pixel-to-pixel flat
+    if `master_slitflat` is not None.
+    Images thus corrected are the stacked using the median.
+
+    The result of the combination is saved as an intermediate result, named
+    'reduced_image.fits'. This combined image is also returned in the field
+    `reduced_image` of the recipe result.
+
+    The apertures in the 2D image are extracted, using the information in
+    `master_traces` and resampled accoding to the wavelength calibration in
+    `master_wlcalib`. The resulting RSS is saved as an intermediate
+    result named 'reduced_rss.fits'. This RSS is also returned in the field
+    `reduced_rss` of the recipe result.
+
+    To normalize the `master_fiberflat`, each fiber is divided by a smoothed
+    version (using a Savitzky-Golay filter) of the average of the valid fibers.
+    Finally, all the pixels with information are fiiled with ones. This RSS
+    image is returned in the field `master_fiberflat` of the recipe result.
+
+    """
 
     # Requirements
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
     master_slitflat = reqs.MasterSlitFlatRequirement()
-    wlcalib = Requirement(WavelengthCalibration, 'Wavelength calibration table')
     # master_weights = Requirement(MasterWeights, 'Set of files')
-    tracemap = reqs.MasterTraceMapRequirement()
+    master_traces = reqs.MasterTraceMapRequirement()
+    master_wlcalib = reqs.WavelengthCalibrationRequirement()
 
     # Products
-    fiberflat_frame = Product(ProcessedFrame)
-    fiberflat_rss = Product(ProcessedRSS)
+    reduced_image = Product(ProcessedFrame)
+    reduced_rss = Product(ProcessedRSS)
     master_fiberflat = Product(MasterFiberFlat)
 
     def process_flat2d(self, rinput):
@@ -118,12 +154,25 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         return rss_wl2
 
     def run(self, rinput):
+        """Execute the recipe.
+
+        Parameters
+        ----------
+        rinput : RecipeInput
+
+        Returns
+        -------
+        RecipeResult
+
+        """
 
         img = self.process_flat2d(rinput)
+        self.save_intermediate_img(img, 'reduced_image.fits')
+
         splitter1 = Splitter()
-        calibrator_aper = ApertureExtractor(rinput.tracemap, self.datamodel)
+        calibrator_aper = ApertureExtractor(rinput.master_traces, self.datamodel)
         splitter2 = Splitter()
-        calibrator_wl = WavelengthCalibrator(rinput.wlcalib, self.datamodel)
+        calibrator_wl = WavelengthCalibrator(rinput.master_wlcalib, self.datamodel)
         flipcor = FlipLR()
 
         img = splitter1(img)
@@ -135,13 +184,14 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         img = flipcor.run(img)
         # Calibrate in WL
         rss_wl = calibrator_wl(img)
+        self.save_intermediate_img(rss_wl, 'reduced_rss.fits')
 
         # Obtain flat field
         self.logger.info('Normalize flat field')
-        rss_wl2 = self.obtain_fiber_flat(rss_wl, rinput.wlcalib)
+        rss_wl2 = self.obtain_fiber_flat(rss_wl, rinput.master_wlcalib)
         result = self.create_result(
             master_fiberflat=rss_wl2,
-            fiberflat_frame=flat2d,
-            fiberflat_rss=rss_base
+            reduced_image=flat2d,
+            reduced_rss=rss_base
         )
         return result

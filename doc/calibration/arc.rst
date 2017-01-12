@@ -1,10 +1,11 @@
-Arc
----
+Arc Calibration
+---------------
 
-:Mode: Arc
+:Mode: Arc Calibration
 :Usage: Offline
 :Key: MEGARA_ARC_CALIBRATION
 :Recipe class: :class:`~megaradrp.recipes.calibration.arc.ArcCalibrationRecipe`
+:Product: :class:`~megaradrp.products.wavecalibration.WavelengthCalibration`
 
 This mode sequence includes the required actions to translate the geometrical
 position of each point in the detector into physical units of wavelength. The
@@ -34,24 +35,6 @@ move the focusing mechanism to the position pre-defined for the specific VPH of
 choice and to expose a certain time and to readout the detector a series of
 exposures, being this series the arc image set.
 
-+--------------------------+---------------+------------+-------------------------------+
-| Name                     | Type          | Default    | Meaning                       |
-+==========================+===============+============+===============================+
-| ``'obresult'``           | ObservationResult |        |      Observation Result       |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'master_dark'``        | MasterDark    | NA         |      Master Dark frame        |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'master_bias'``        | MasterBias    | NA         |      Master Bias frame        |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'master_bpm'``         | masterBPM     | NA         |      Master BPM frame         |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'tracemap'``           | TraceMap      | NA         |      TraceMap                 |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'lines_catalog'``      | LinesCatalog  | NA         |      Lines Catalog            |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'polynomial_degree'``  | integer       | 3          |      Polynomial Degree        |
-+--------------------------+---------------+------------+-------------------------------+
-
 Procedure
 +++++++++
 The "User" processes an observing block obtained in the observing mode Arc.
@@ -65,15 +48,6 @@ Products
 Arc image sets are to be obtained both as part of the activities related to the
 verification of the instrument status and for processing data for scientific
 exploitation and are part of the "Daily Calibration Modes".
-
-=====================    ===================================================================
- Name                     Type
-=====================    ===================================================================
-``'arc_image'``          :class:`~numina.core.DataFrameType`
-``'arc_rss'``            :class:`~numina.core.DataFrameType`
-``'master_wlcalib'``     :class:`~megaradrp.products.wavecalibration.WavelengthCalibration`
-``'fwhm_image'``         :class:`~numina.core.DataFrameType`
-=====================    ===================================================================
 
 A data structure containing information about wavelength calibrations
 (the format is TBD), a QA flag, a text log file of the processing and a

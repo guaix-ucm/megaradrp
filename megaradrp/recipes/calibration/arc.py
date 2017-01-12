@@ -67,7 +67,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     --------
     megaradrp.products.WavelengthCalibration: description of WavelengthCalibration product
     megaradrp.products.LinesCatalog: description of the catalog of lines
-    megaradrp.processing.wavecalibration: resampling for wavelength calibration
+    megaradrp.processing.aperture: aperture extraction
     numina.array.wavecalib.arccalibration: wavelength calibration algorithm
     megaradrp.instrument.configs: instrument configuration
 

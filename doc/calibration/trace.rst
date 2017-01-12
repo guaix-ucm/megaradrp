@@ -1,10 +1,12 @@
+=====
 Trace
------
+=====
 
 :Mode: Trace
 :Usage: Offline, Online
 :Key: MEGARA_TRACE_MAP
 :Recipe class: :class:`~megaradrp.recipes.calibration.trace.TraceMapRecipe`
+:Product: :class:`~megaradrp.products.tracemap.TraceMap`.
 
 Although for the majority of the observing modes described elsewhere in this
 document the MEGARA off-line pipeline will perform its own fiber spectra
