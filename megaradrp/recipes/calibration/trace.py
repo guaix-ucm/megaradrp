@@ -45,7 +45,7 @@ import megaradrp.products
 from megaradrp.instrument import vph_thr
 
 
-__all__ = ["TraceMapRecipe"]
+#__all__ = ["TraceMapRecipe"]
 
 
 class TraceMapRecipe(MegaraBaseRecipe):

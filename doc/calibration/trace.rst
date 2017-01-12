@@ -57,3 +57,6 @@ Recipe
 
 .. autoclass:: megaradrp.recipes.calibration.trace.TraceMapRecipe
      :members:
+     :private-members:
+     :special-members:
+     :inherited-members:
