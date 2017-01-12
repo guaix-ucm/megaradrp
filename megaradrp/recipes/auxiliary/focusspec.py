@@ -59,6 +59,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
 
     nfibers = Parameter(10, "The results are sampled every nfibers")
+    tsigma = Parameter(50, "Scale factor for row threshold")
     # Products
     focus_table = Product(ArrayType)
     focus_image = Product(ProcessedFrame)
@@ -66,6 +67,22 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
 
     @numina.core.validator.validate
     def run(self, rinput):
+        """Execute the recipe.
+
+        Parameters
+        ----------
+        rinput : RecipeInput
+
+        Returns
+        -------
+        RecipeResult
+
+        Raises
+        ------
+        ValidationError
+              if the recipe input is invalid
+
+        """
         # Basic processing
         self.logger.info('start focus spectrograph')
 
@@ -144,7 +161,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         return self.create_result(focus_table=final, focus_image=focus_image,
                                   focus_wavelength=focus_wavelength)
 
-    def run_on_image(self, img, tracemap, flux_limit=40000, valid_traces=None):
+    def run_on_image(self, img, tracemap, flux_limit=40000, valid_traces=None, times_sigma=50):
         """Extract spectra, find peaks and compute FWHM."""
 
         rssdata = img[0].data
@@ -156,7 +173,6 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
             valid_apers = [aper for aper in tracemap.contents if aper.valid]
 
         nwinwidth = 5
-        times_sigma = 50.0
         lwidth = 20
         fpeaks = {}
 
