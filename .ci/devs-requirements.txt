@@ -5,5 +5,5 @@ git+https://github.com/guaix-ucm/numina.git#egg=numina
 astropy == 1.2
 six
 scikit-image
-aphinx >= 1.5
+sphinx >= 1.5
 numpydoc
