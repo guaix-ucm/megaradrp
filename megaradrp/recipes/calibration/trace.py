@@ -56,6 +56,12 @@ class TraceMapRecipe(MegaraBaseRecipe):
     to perform fiber extraction in other recipes. The recipe also
     returns the result of processing the input images upto dark correction.
 
+    See Also
+    --------
+    megaradrp.products.tracemap.TraceMap: description of TraceMap product
+    numina.array.trace.traces: tracing algorithm
+    megaradrp.instrument.configs: instrument configuration
+
     Notes
     -----
     Images provided in `obresult` are trimmed and corrected from overscan,
@@ -90,11 +96,6 @@ class TraceMapRecipe(MegaraBaseRecipe):
     stored in the final `master_traces` object.
 
 
-    See Also
-    --------
-    megaradrp.products.tracemap.TraceMap: description of TraceMap product
-    numina.array.trace.traces: tracing algorithm
-    megaradrp.instrument.configs: instrument configuration
 
     """
     master_bias = reqs.MasterBiasRequirement()
