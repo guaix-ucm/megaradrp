@@ -2,7 +2,8 @@ Trace
 -----
 
 :Mode: Trace
-:Usage: Offline
+:Usage: Offline, Online
+:Key: MEGARA_TRACE_MAP
 :Recipe class: :class:`~megaradrp.recipes.calibration.trace.TraceMapRecipe`
 
 Although for the majority of the observing modes described elsewhere in this
@@ -30,19 +31,6 @@ mechanism to the position pre-defined for the specific VPH of choice and to
 expose a certain time and to readout the detector a series of exposures, being
 this series the trace map image set.
 
-+--------------------------+---------------+------------+-------------------------------+
-| Name                     | Type          | Default    | Meaning                       |
-+==========================+===============+============+===============================+
-| ``'obresult'``           | Product       | NA         |      Observation Result       |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'master_dark'``        | Product       | NA         |      Master Dark frame        |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'master_bias'``        | Product       | NA         |      Master Bias frame        |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'master_bpm'``         | Product       | NA         |      Master BPM frame         |
-+--------------------------+---------------+------------+-------------------------------+
-
-
 Procedure
 +++++++++
 The "User" processes an observing block obtained in the observing mode Trace.
@@ -59,13 +47,9 @@ scientific exploitation. Note, however, that the use of this observing mode for
 scientific exploitation should be limited as it could affect to the general
 performance of the on-line quick-look software.
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-| ``'fiberflat_frame'``        | :class:`~megaradrp.types.ProcessedFrame`              |
-+------------------------------+-------------------------------------------------------+
-| ``'master_traces'``          | :class:`~megaradrp.products.tracemap.TraceMap`        |
-+------------------------------+-------------------------------------------------------+
+This mode produces the tracing information required to extract the flux of the fibers.
+The result is stored in an object named  ``master_traces``
+of type :class:`~megaradrp.products.tracemap.TraceMap`.
 
 
 Recipe

@@ -45,8 +45,58 @@ import megaradrp.products
 from megaradrp.instrument import vph_thr
 
 
-class TraceMapRecipe(MegaraBaseRecipe):
+__all__ = ["TraceMapRecipe"]
 
+
+class TraceMapRecipe(MegaraBaseRecipe):
+    """Provides tracing information from continuum flat images.
+
+    This recipe process a set of continnum flat  images obtained in
+    *Trace Map* mode and returns the tracing information required
+    to perform fiber extraction in other recipes. The recipe also
+    returns the result of processing the input images upto dark correction.
+
+    Notes
+    -----
+    Images provided in `obresult` are trimmed and corrected from overscan,
+    bad pixel mask (if `master_bpm` is not None), bias and dark current
+    (if `master_dark` is not None).
+    Images thus corrected are the stacked using the median.
+
+    The result of the combination is saved as an intermediate result, named
+    'reduced.fits'. This combined image is also returned in the field
+    `fiberflat_frame` of the recipe result and will be used for
+    tracing the position of the fibers.
+
+    The fibers are groups in packs of different numbers of fibers. To match
+    the traces in the image with the corresponding fibers is neccessary
+    to know how fibers are packed and where the different groups of fibers
+    appear in the detector. This information is provided by the fields
+    'pseudoslit.boxes' and 'pseudoslit.boxes_positions' of the instrument
+    configuration.
+
+    Using the column reference provided by 'pseudoslit.boxes_positions', peaks
+    are detected (using an average of 7 columns) and matched to the layout
+    of fibers provided by 'pseudoslit.boxes_positions'. Fibers without a matching peak
+    are counted and their ids stored in the final `master_traces` object.
+
+    Once the peaks in the reference column are found, each one is traced
+    until the border of the image is reached. The trace may be lost before
+    reaching the border. In all cases, the beginning and the end of the trace
+    are stored.
+
+    The Y position of the trace is fitted to a polynomial
+    of degree `polynomial_degree`. The coefficients of the polynomial are
+    stored in the final `master_traces` object.
+
+
+    See Also
+    --------
+    megaradrp.products.tracemap.TraceMap: description of TraceMap product
+    numina.array.trace.traces: tracing algorithm
+    megaradrp.instrument.configs: instrument configuration
+
+    """
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
@@ -67,6 +117,11 @@ class TraceMapRecipe(MegaraBaseRecipe):
         Returns
         -------
         TraceMapRecipe.RecipeResult
+
+        Raises
+        ------
+        ValidationError
+              if the recipe input is invalid
 
         """
         self.logger.info('start trace spectra recipe')

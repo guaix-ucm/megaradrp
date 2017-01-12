@@ -5,6 +5,7 @@ from numina.core.pipelineload import DefaultLoader, build_instrument_config
 
 
 class Loader(DefaultLoader):
+    """Instrument configuration loader for MEGARA"""
     def __init__(self):
         super(Loader, self).__init__("megaradrp.instrument.configs")
 
