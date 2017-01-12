@@ -40,7 +40,6 @@ from numina.array.stats import robust_std as sigmaG
 from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import WavelengthCalibration
 from megaradrp.types import JSONstorage, ProcessedFrame
 import megaradrp.requirements as reqs
 from megaradrp.processing.combine import basic_processing_with_combination_frames
@@ -56,10 +55,9 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
-    tracemap = reqs.MasterTraceMapRequirement()
+    master_traces = reqs.MasterTraceMapRequirement()
+    master_wlcalib = reqs.WavelengthCalibrationRequirement()
 
-    wlcalib = Requirement(WavelengthCalibration,
-                          'Wavelength calibration table')
     nfibers = Parameter(10, "The results are sampled every nfibers")
     # Products
     focus_table = Product(ArrayType)
@@ -101,7 +99,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
             raise RecipeError('We have only {} different focus'.format(len(image_groups)))
 
         # Loop only over fibers with WL calibration
-        valid_traces = [fibsol.fibid for fibsol in rinput.wlcalib.contents]
+        valid_traces = [fibsol.fibid for fibsol in rinput.master_wlcalib.contents]
         # valid_traces = [aper.fibid for aper in rinput.tracemap.contents if aper.valid]
         # every tenth fiber
         nfibers = rinput.nfibers
@@ -113,14 +111,14 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
 
             try:
                 img = basic_processing_with_combination_frames(frames, flow, method=combine.median, errors=False)
-                calibrator_aper = ApertureExtractor(rinput.tracemap, self.datamodel)
+                calibrator_aper = ApertureExtractor(rinput.master_traces, self.datamodel)
 
                 self.save_intermediate_img(img, 'focus2d-%s.fits' % (focus,))
                 img1d = calibrator_aper(img)
                 self.save_intermediate_img(img1d, 'focus1d-%s.fits' % (focus,))
 
                 self.logger.info('find lines and compute FWHM')
-                lines_rss_fwhm = self.run_on_image(img1d, rinput.tracemap, flux_limit, valid_traces=valid_traces)
+                lines_rss_fwhm = self.run_on_image(img1d, rinput.master_traces, flux_limit, valid_traces=valid_traces)
                 ever[focus] = lines_rss_fwhm
 
             except ValueError:
@@ -129,7 +127,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         self.logger.info('pair lines in images')
         line_fibers = self.filter_lines(ever)
 
-        focus_wavelength = self.generate_focus_wl(ever, rinput.wlcalib)
+        focus_wavelength = self.generate_focus_wl(ever, rinput.master_wlcalib)
 
         self.logger.info('fit FWHM of lines')
         final = self.reorder_and_fit(line_fibers, sorted(image_groups.keys()))
@@ -172,7 +170,9 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
             # FIXME: using here a different peak routine than in arc
             # find peaks
             threshold = numpy.median(row) + times_sigma * sigmaG(row)
-
+            self.logger.debug('values for threshold: median: %f, scale: %f, sigma: %f',
+                              numpy.median(row), times_sigma, sigmaG(row))
+            self.logger.debug('threshold is: %f', threshold)
             ipeaks_int1 = find_peaks_indexes(row, nwinwidth, threshold)
             # filter by flux
             self.logger.info('Filtering peaks over %5.0f', flux_limit)
