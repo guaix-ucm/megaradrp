@@ -45,13 +45,10 @@ import megaradrp.products
 from megaradrp.instrument import vph_thr
 
 
-#__all__ = ["TraceMapRecipe"]
-
-
 class TraceMapRecipe(MegaraBaseRecipe):
     """Provides tracing information from continuum flat images.
 
-    This recipe process a set of continnum flat  images obtained in
+    This recipe process a set of continuum flat images obtained in
     *Trace Map* mode and returns the tracing information required
     to perform fiber extraction in other recipes. The recipe also
     returns the result of processing the input images upto dark correction.
@@ -70,8 +67,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
     Images thus corrected are the stacked using the median.
 
     The result of the combination is saved as an intermediate result, named
-    'reduced.fits'. This combined image is also returned in the field
-    `fiberflat_frame` of the recipe result and will be used for
+    'reduced_image.fits'. This combined image is also returned in the field
+    `reduced_image` of the recipe result and will be used for
     tracing the position of the fibers.
 
     The fibers are groups in packs of different numbers of fibers. To match
@@ -95,8 +92,6 @@ class TraceMapRecipe(MegaraBaseRecipe):
     of degree `polynomial_degree`. The coefficients of the polynomial are
     stored in the final `master_traces` object.
 
-
-
     """
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
@@ -104,7 +99,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
     polynomial_degree = Parameter(5, 'Polynomial degree of trace fitting')
     relative_threshold = Parameter(0.3, 'Threshold for peak detection')
 
-    fiberflat_frame = Product(ProcessedFrame)
+    reduced_image = Product(ProcessedFrame)
     master_traces = Product(TraceMap)
 
     @numina.core.validator.validate
@@ -136,7 +131,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         reduced = basic_processing_with_combination(rinput, flow, method=combine.median)
         self.logger.info('end basic reduction')
 
-        self.save_intermediate_img(reduced, 'reduced.fits')
+        self.save_intermediate_img(reduced, 'reduced_image.fits')
 
         insconf = obresult.configuration
 
@@ -170,7 +165,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         final.contents = contents
         final.error_fitting = error_fitting
         self.logger.info('end trace spectra recipe')
-        return self.create_result(fiberflat_frame=reduced,
+        return self.create_result(reduced_image=reduced,
                                   master_traces=final)
 
     def search_traces(self, reduced, boxes, box_borders, cstart=2000, threshold=0.3, poldeg=5, step=2):

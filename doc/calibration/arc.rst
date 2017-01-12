@@ -3,6 +3,7 @@ Arc
 
 :Mode: Arc
 :Usage: Offline
+:Key: MEGARA_ARC_CALIBRATION
 :Recipe class: :class:`~megaradrp.recipes.calibration.arc.ArcCalibrationRecipe`
 
 This mode sequence includes the required actions to translate the geometrical

@@ -42,8 +42,7 @@ class BiasRecipe(MegaraBaseRecipe):
 
     See Also
     --------
-    megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe: recipe to generate MasterBPM
-
+    megaradrp.types.MasterBias: description of the MasterBias product
 
     """
 

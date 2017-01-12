@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -26,7 +26,6 @@ import collections
 
 import numpy
 from astropy.io import fits
-from scipy.interpolate import interp1d
 
 from numina.core import Requirement, Product, Parameter, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
@@ -34,14 +33,13 @@ from numina.core.products import LinesCatalog
 from numina.array.wavecalib.arccalibration import arccalibration_direct
 from numina.array.wavecalib.arccalibration import fit_list_of_wvfeatures
 from numina.array.wavecalib.arccalibration import gen_triplets_master
-from numina.array.wavecalib.arccalibration import robust_std
-from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
+from numina.array.peaks.peakdet import refine_peaks
 from numina.array.peaks.detrend import detrend
 from numina.flow import SerialFlow
 from numina.array import combine
-
 from skimage.feature import peak_local_max
 
+from megaradrp.types import ProcessedFrame, ProcessedRSS
 from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.fiberflat import Splitter, FlipLR
@@ -54,52 +52,103 @@ from megaradrp.instrument import vph_thr_arc
 
 
 class ArcCalibrationRecipe(MegaraBaseRecipe):
-    """Process ARC images and create WL_CALIBRATION.
+    """Provides wavelength calibration information from arc images.
 
-    Attributes
-    ----------
+    This recipes process a set of arc images obtained in
+    *Arc Calibration* mode and returns the information required
+    to perform wavelength calibration and resampling in other recipes,
+    in the form of a WavelengthCalibration object. The recipe also returns
+    a 2D map of the FWHM of the arc lines used for the calibration,
+    the result images up to dark correction, and the result of the processing
+    up to aperture extraction.
 
-    obresult: ObservationResult
-    master_bias: MasterBias
-    master_dark: MasterDark
 
-    arc_image: DataFrameType
+    See Also
+    --------
+    megaradrp.products.WavelengthCalibration: description of WavelengthCalibration product
+    megaradrp.products.LinesCatalog: description of the catalog of lines
+    megaradrp.processing.wavecalibration: resampling for wavelength calibration
+    numina.array.wavecalib.arccalibration: wavelength calibration algorithm
+    megaradrp.instrument.configs: instrument configuration
+
+    Notes
+    -----
+    Images provided in `obresult` are trimmed and corrected from overscan,
+    bad pixel mask (if `master_bpm` is not None), bias and dark current
+    (if `master_dark` is not None).
+    Images thus corrected are the stacked using the median.
+
+    The result of the combination is saved as an intermediate result, named
+    'reduced_image.fits'. This combined image is also returned in the field
+    `reduced_image` of the recipe result.
+
+    The apertures in the 2D image are extracted, using the information in
+    `master_traces`. the result of the extraction is saved as an intermediate
+    result named 'reduced_rss.fits'. This RSS is also returned in the field
+    `reduced_rss` of the recipe result.
+
+    For each fiber in the reduced RSS, the peaks are detected and sorted
+    by peak flux. `nlines` is used to select the brightest peaks. If it is a
+    list, then the peaks are divided, by their position, in as many groups as
+    elements in the list and `nlines[0]` peaks are selected in the first
+    group, `nlines[1]` peaks in the second, etc.
+
+    The selected peaks are matched against the catalog of lines in `lines_catalog`.
+    The matched lines, the quality of the match and other relevant information is
+    stored in the product WavelengthCalibration object. The wavelength of the matched
+    features is fitted to a polynomial
+    of degree `polynomial_degree`. The coefficients of the polynomial are
+    stored in the final `master_wlcalib` object for each fiber.
+
     """
 
-    __version__ = "0.1.0"
     # Requirements
     obresult = ObservationResultRequirement()
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
-    tracemap = reqs.MasterTraceMapRequirement()
+    master_traces = reqs.MasterTraceMapRequirement()
     lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
     polynomial_degree = Parameter(5, 'Polynomial degree of arc calibration')
-    nlines = Parameter(20, "Use the 'nlines' brigthest lines of the catalog")
+    nlines = Parameter(20, "Use the 'nlines' brigthest lines of the spectrum")
     # Products
-    arc_image = Product(DataFrameType)
-    arc_rss = Product(DataFrameType)
+    reduced_image = Product(ProcessedFrame)
+    reduced_rss = Product(ProcessedRSS)
     master_wlcalib = Product(WavelengthCalibration)
     fwhm_image = Product(DataFrameType)
 
     def run(self, rinput):
+        """Execute the recipe.
+
+        Parameters
+        ----------
+        rinput : ArcCalibrationRecipe.RecipeInput
+
+        Returns
+        -------
+        ArcCalibrationRecipe.RecipeResult
+
+        """
 
         flow1 = self.init_filters(rinput, rinput.obresult.configuration)
         img = basic_processing_with_combination(rinput, flow1, method=combine.median)
         hdr = img[0].header
         self.set_base_headers(hdr)
 
+        self.save_intermediate_img(img, 'reduced_image.fits')
+
         splitter1 = Splitter()
-        calibrator_aper = ApertureExtractor(rinput.tracemap, self.datamodel)
+        calibrator_aper = ApertureExtractor(rinput.master_traces, self.datamodel)
         flipcor = FlipLR()
 
         flow2 = SerialFlow([splitter1, calibrator_aper, flipcor])
 
         reduced_rss = flow2(img)
-        reduced_rss.writeto('arc_rss.fits', clobber=True)
+        self.save_intermediate_img(reduced_rss, 'reduced_rss.fits')
+
         reduced2d = splitter1.out
 
-        self.logger.info('extract fibers, %i', len(rinput.tracemap.contents))
+        self.logger.info('extract fibers, %i', len(rinput.master_traces.contents))
 
         current_vph = rinput.obresult.tags['vph']
         current_insmode = rinput.obresult.tags['insmode']
@@ -122,14 +171,14 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         data_wlcalib, fwhm_image = self.calibrate_wl(reduced_rss[0].data,
                                                      rinput.lines_catalog,
                                                      rinput.polynomial_degree,
-                                                     rinput.tracemap,
+                                                     rinput.master_traces,
                                                      nlines,
                                                      threshold=threshold,
                                                      min_distance=min_distance)
 
         data_wlcalib.tags = rinput.obresult.tags
         # WL calibration goes here
-        return self.create_result(arc_image=reduced2d, arc_rss=reduced_rss,
+        return self.create_result(reduced_image=reduced2d, reduced_rss=reduced_rss,
                                   master_wlcalib=data_wlcalib,
                                   fwhm_image=fwhm_image)
 

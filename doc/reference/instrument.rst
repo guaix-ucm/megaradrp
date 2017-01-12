@@ -14,3 +14,10 @@
    :synopsis:  Static configuration
 
 Documention of the module
+
+:mod:`megaradrp.processing.wavecalibration` ---
+============================================================
+
+.. automodule:: megaradrp.processing.wavecalibration
+   :members:
+
