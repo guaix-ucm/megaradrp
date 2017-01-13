@@ -181,7 +181,7 @@ Recipe, inputs and results
 ++++++++++++++++++++++++++
 
 .. autoclass:: megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe
-      :members:
+      :members: FocusSpectrographRecipeInput, FocusSpectrographRecipeResult
 
 
 Fine acquisition with the LCB IFU

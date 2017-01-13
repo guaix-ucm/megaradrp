@@ -40,7 +40,7 @@ from numina.array.stats import robust_std as sigmaG
 from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.types import JSONstorage, ProcessedFrame
+from megaradrp.types import FocusWavelength, ProcessedFrame
 import megaradrp.requirements as reqs
 from megaradrp.processing.combine import basic_processing_with_combination_frames
 from megaradrp.processing.aperture import ApertureExtractor
@@ -48,7 +48,51 @@ from megaradrp.instrument import vph_thr_arc
 
 
 class FocusSpectrographRecipe(MegaraBaseRecipe):
-    """Process Focus images and find best focus."""
+    """Process Focus images and find best focus.
+
+    This recipe process a set of focus images obtained in
+    **Focus Spectrograph** mode and returns different
+    measurements of the spectrograph focus along de detector.
+
+    See Also
+    --------
+    megaradrp.recipes.auxiliary.focustel.FocusTelescopeRecipe:
+                recipe to measure the focus of the telescope
+
+    Notes
+    -----
+    Images provided in `obresult` grouped by the value of their
+    FOCUS keyword. Groups of images are trimmed and corrected from overscan,
+    bad pixel mask (if `master_bpm` is not None), bias and dark current
+    (if `master_dark` is not None). Each group is then stacked using the median.
+
+    The result of the combination is saved as an intermediate result, named
+    'focus2d-#focus.fits', with #focus being the value of the focus
+    of each group. Apertures are extracted in each combined image, and the
+    resulting RSS file is saved as an intermediate result, named
+    'focus1-#focus.fits'.
+
+    For each image, peaks are detected every `nfibers` fibers, and their
+    position, peak flux and FWHM is computed. The image with median
+    focus is taken as reference image, and the peaks of every other
+    image are matched against it.
+
+    Then, for each line matched in the series of images, its FWHM
+    is fitted to a 2nd degree polynomial, and the focus corresponding
+    to its minimum is obtained.
+
+    The recipe returns:
+
+     * `focus_table`: a table with (x,y,best_focus) for each matched peak,
+        with x,y measured in the reference bidimensional image
+
+     * `focus_wavelength`: a structure containing measurements of every
+        matched peak in each image
+
+     * `focus_image`: a bidimensional image representing the spatial
+        variation of the best focus, using a Voronoi diagram.
+
+    """
 
     # Requirements
     obresult = ObservationResultRequirement()
@@ -63,7 +107,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
     # Products
     focus_table = Product(ArrayType)
     focus_image = Product(ProcessedFrame)
-    focus_wavelength = Product(JSONstorage)
+    focus_wavelength = Product(FocusWavelength)
 
     @numina.core.validator.validate
     def run(self, rinput):
