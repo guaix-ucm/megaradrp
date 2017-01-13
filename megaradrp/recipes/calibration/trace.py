@@ -71,7 +71,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
     `reduced_image` of the recipe result and will be used for
     tracing the position of the fibers.
 
-    The fibers are groups in packs of different numbers of fibers. To match
+    The fibers are grouped in packs of different numbers of fibers. To match
     the traces in the image with the corresponding fibers is neccessary
     to know how fibers are packed and where the different groups of fibers
     appear in the detector. This information is provided by the fields
