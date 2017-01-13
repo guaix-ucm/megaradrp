@@ -125,5 +125,10 @@ class JSONstorage(DataType):
         return data
 
 
+class FocusWavelength(JSONstorage):
+    """Rich table with focus and wavelength"""
+    pass
+
+
 class LCBCalibration(JSONstorage):
     pass
