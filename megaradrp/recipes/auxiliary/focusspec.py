@@ -233,7 +233,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         voronoi_kdtree = cKDTree(voronoi_points)
 
         test_point_dist, test_point_regions = voronoi_kdtree.query(test_points, k=1)
-        final_image = test_point_regions.reshape((4112, 4096)).astype('float64')
+        final_image = test_point_regions.reshape((4112, 4096)).astype('float32')
         final_image[:, :] = final[final_image[:, :].astype('int32'), 2]
         return final_image
 
