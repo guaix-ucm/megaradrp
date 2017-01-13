@@ -4,8 +4,8 @@ Twilight fiber-flat
 :Mode: Twilight fiber-flat
 :Usage: Offline
 :Key: MEGARA_TWILIGHT_FLAT_IMAGE
-:Product: :class:`~megaradrp.types.MasterTwilightFlat``
-:Recipe class: :class:`~megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe`
+:Product: :class:`~megaradrp.types.MasterTwilightFlat`
+:Recipe: :class:`~megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe`
 :Recipe input: :class:`megaradrp.recipes.calibration.twilight.RecipeInput`
 :Recipe result: :class:`megaradrp.recipes.calibration.twilight.RecipeResult`
 

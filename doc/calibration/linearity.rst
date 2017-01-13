@@ -3,7 +3,11 @@ Linearity tests
 
 :Mode: Linearity tests
 :Usage: Offline
-:Recipe class: :class:`~megaradrp.recipes.calibration.linearity.LinearityTestRecipe`
+:Key: MEGARA_LINEARITY_TEST
+:Product:
+:Recipe: :class:`~megaradrp.recipes.calibration.linearity.LinearityTestRecipe`
+:Recipe input: :class:`~megaradrp.recipes.calibration.linearity.LinearityTestRecipeInput`
+:Recipe result: :class:`~megaradrp.recipes.calibration.linearity.LinearityTestRecipeResult`
 
 Although the linearity of the MEGARA CCD are well characterized at the LICA lab
 already, it might be advisable to generate linearity test frames both as part
@@ -50,10 +54,6 @@ specific choice for the VPH will depend on the actual color of the ICM halogen
 lamp and on the actual response of the VPHs. In principle, we should choose the
 VPH at the peak of the lamp spectral energy distribution but we
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
 
 Procedure
 +++++++++
@@ -64,11 +64,9 @@ Products
 This Linearity-test observing mode will be used only sporadically as it is
 considered part of the "System Calibration Modes".
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
 
+Recipe, inputs and results
+++++++++++++++++++++++++++
 
 .. autoclass:: megaradrp.recipes.calibration.linearity.LinearityTestRecipe
       :members:

@@ -4,8 +4,10 @@ Arc Calibration
 :Mode: Arc Calibration
 :Usage: Offline
 :Key: MEGARA_ARC_CALIBRATION
-:Recipe class: :class:`~megaradrp.recipes.calibration.arc.ArcCalibrationRecipe`
 :Product: :class:`~megaradrp.products.wavecalibration.WavelengthCalibration`
+:Recipe: :class:`~megaradrp.recipes.calibration.arc.ArcCalibrationRecipe`
+:Recipe input: :class:`~megaradrp.recipes.calibration.arc.ArcCalibrationRecipeInput`
+:Recipe result: :class:`~megaradrp.recipes.calibration.arc.ArcCalibrationRecipeResult`
 
 This mode sequence includes the required actions to translate the geometrical
 position of each point in the detector into physical units of wavelength. The
@@ -52,6 +54,9 @@ exploitation and are part of the "Daily Calibration Modes".
 A data structure containing information about wavelength calibrations
 (the format is TBD), a QA flag, a text log file of the processing and a
 structured text file containing information about the processing.
+
+Recipe, inputs and results
+++++++++++++++++++++++++++
 
 .. autoclass:: megaradrp.recipes.calibration.arc.ArcCalibrationRecipe
       :members:

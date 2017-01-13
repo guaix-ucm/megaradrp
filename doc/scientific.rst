@@ -8,7 +8,13 @@ the Fiber MOS.
 
 LCB IFU scientific observation
 ------------------------------
-:Usage: Online and Offline
+
+:Mode: LCB IFU scientific observation
+:Usage: Online, Offline
+:Key: MEGARA_LCB_IMAGE
+:Recipe: :class:`~megaradrp.recipes.scientific.lcb.LCBImageRecipe`
+:Recipe input: :class:`~megaradrp.recipes.scientific.lcb.LCBImageRecipeInput`
+:Recipe result: :class:`~megaradrp.recipes.scientific.lcb.LCBImageRecipeResult`
 
 This mode sequence includes the required actions to obtain scientifically-valid
 data with the LCB IFU instrument mode of MEGARA.
@@ -41,11 +47,6 @@ larger than the LCB IFU field of view) but a mapping observing mode is not
 required to be used a blank-sky image set should be obtained using the same
 instrumental configuration as for the science target.
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
-
 Procedure
 +++++++++
 
@@ -57,17 +58,22 @@ observing mode to verify the status of the instrument using any source
 different from a standard star. In the case of observing a standard star the
 calibration mode standard star with the LCB IFU could be used instead.
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
+Recipe, inputs and results
+++++++++++++++++++++++++++
 
 .. autoclass:: megaradrp.recipes.scientific.lcb.LCBImageRecipe
       :members:
 
 LCB IFU fast mapping
 --------------------
-:Usage: Online and Offline
+
+:Mode: LCB IFU fast mapping
+:Usage: Online, Offline
+:Key: MEGARA_LCB_FAST_MAPPING
+:Recipe: :class:`~megaradrp.recipes.scientific.lcbfastmapping.LCBFastMappingRecipe`
+:Recipe input: :class:`~megaradrp.recipes.scientific.lcbfastmapping.LCBFastMappingRecipeInput`
+:Recipe result: :class:`~megaradrp.recipes.scientific.lcbfastmapping.LCBFastMappingRecipeResult`
+
 
 This mode sequence includes the required actions to obtain scientifically valid
 data with the LCB IFU instrument mode of MEGARA covering a relatively large
@@ -109,10 +115,6 @@ could be strongly contaminated by emission from the extended target. Note that,
 in any case, the on-line quick-look software should have information on the
 configuration of the focal-plane cover as well.
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
 
 Procedure
 +++++++++
@@ -124,17 +126,24 @@ operation of the instrument. The observatory staff could also make use of this
 observing mode to verify the status of the instrument using any source
 different from a standard star.
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
+
+
+Recipe, inputs and results
+++++++++++++++++++++++++++
 
 .. autoclass:: megaradrp.recipes.scientific.lcbfastmapping.LCBFastMappingRecipe
       :members:
 
 Fiber MOS scientific observation
 --------------------------------
-:Usage: Online and Offline
+
+:Mode: Fiber MOS scientific observation
+:Usage: Online, Offline
+:Key: MEGARA_MOS_IMAGE
+:Recipe: :class:`~megaradrp.recipes.scientific.mos.MOSImageRecipe`
+:Recipe input: :class:`~megaradrp.recipes.scientific.mos.MOSImageRecipeInput`
+:Recipe result: :class:`~megaradrp.recipes.scientific.mos.MOSImageRecipeResult`
+
 
 This mode sequence includes the required actions to observe a list of targets
 with known celestial coordinates with MEGARA using the Fiber MOS instrument
@@ -183,10 +192,6 @@ spectra should then be visualized using the on-line quick-look software. If
 neither a blank-sky observation nor blank-sky positioners are available no sky
 subtraction will be performed.
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
 
 Procedure
 +++++++++
@@ -197,10 +202,9 @@ The observer will obtain Fiber MOS image sets as part of the routine scientific
 operation of the instrument. The observatory staff could also make use of this
 observing mode to verify the status of the instrument.
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
+
+Recipe, inputs and results
+++++++++++++++++++++++++++
 
 .. autoclass:: megaradrp.recipes.scientific.mos.MOSImageRecipe
       :members:
@@ -210,7 +214,10 @@ Standard star with the LCB IFU
 
 :Mode: Standard start with the LCB IFU
 :Usage: Offline
-:Recipe class: :class:`~megaradrp.recipes.calibration.LCB_IFU_StdStarRecipe`
+:Key: MEGARA_LCB_STD_STAR
+:Recipe: :class:`~megaradrp.recipes.scientific.lcbstdstar.LCBStandardRecipe`
+:Recipe input: :class:`~megaradrp.recipes.scientific.lcbstdstar.LCBStandardRecipeInput`
+:Recipe result: :class:`~megaradrp.recipes.scientific.lcbstdstar.LCBStandardRecipeResult`
 
 This observing mode includes the required actions to obtain those calibration
 images needed to correct for the variation in the response of the system along
@@ -270,10 +277,6 @@ spectrophotometric standard stars) we might also need to apply a small drift
 motion (typically of a few arcsec per second) to one of the telescope axes at
 the start of the observation or, more likely, slightly defocus the telescope.
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
 
 Procedure
 +++++++++
@@ -284,10 +287,9 @@ Standard star image sets are to be obtained only as part of the routine
 calibration activities performed by the observer and that are needed for
 processing data for scientific exploitation.
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
+
+Recipe, inputs and results
+++++++++++++++++++++++++++
 
 .. autoclass:: megaradrp.recipes.scientific.lcbstdstar.LCBStandardRecipe
       :members:
@@ -297,7 +299,11 @@ Standard star with the Fiber MOS
 
 :Mode: Standard start with the FIBER MOS
 :Usage: Offline
-:Recipe class: :class:`~megaradrp.recipes.calibration.FiberMOS_StdStarRecipe`
+:Key: MEGARA_MOS_STD_STAR
+:Recipe: :class:`~megaradrp.recipes.scientific.mosstdstar.MOSStandardRecipe`
+:Recipe input: :class:`~megaradrp.recipes.scientific.mosstdstar.MOSStandardRecipeInput`
+:Recipe result: :class:`~megaradrp.recipes.scientific.mosstdstar.MOSStandardRecipeResult`
+
 
 This observing mode includes the required actions to obtain those calibration
 images needed to correct for the variation in the response of the system along
@@ -339,10 +345,6 @@ In order to place the robotic positioner(s) on the corresponding target(s) a
 set of input catalogues previously generated by the observer using MOPSS
 (MEGARA Observing Preparation Software Suite) are needed.
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
 
 Procedure
 +++++++++
@@ -353,10 +355,9 @@ Standard star image sets are to be obtained only as part of the routine
 calibration activities performed by the observer that are needed for processing
 data for scientific exploitation.
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
+
+Recipe, inputs and results
+++++++++++++++++++++++++++
 
 .. autoclass:: megaradrp.recipes.scientific.mosstdstar.MOSStandardRecipe
       :members:
@@ -364,17 +365,48 @@ data for scientific exploitation.
 MEGARA_FLUX_CALIBRATION
 -----------------------
 
+:Mode:
+:Usage: Offline
+:Key: MEGARA_FLUX_CALIBRATION
+:Recipe: :class:`~megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipe`
+:Recipe input: :class:`~megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipeInput`
+:Recipe result: :class:`~megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipeResult`
+
+
+Recipe, inputs and results
+++++++++++++++++++++++++++
+
 .. autoclass:: megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipe
       :members:
 
 MEGARA_EXTINCTION_STAR
 ----------------------
 
+:Mode:
+:Usage: Offline
+:Key: MEGARA_MOS_STD_STAR
+:Recipe: :class:`~megaradrp.recipes.scientific.extinctionstar.ExtinctionStarRecipe`
+:Recipe input: :class:`~megaradrp.recipes.scientific.extinctionstar.ExtinctionStarRecipeInput`
+:Recipe result: :class:`~megaradrp.recipes.scientific.extinctionstar.ExtinctionStarRecipeResult`
+
+Recipe, inputs and results
+++++++++++++++++++++++++++
+
 .. autoclass:: megaradrp.recipes.scientific.extinctionstar.ExtinctionStarRecipe
       :members:
 
 MEGARA_SENSITIVITY_STAR
 -----------------------
+
+:Mode:
+:Usage: Offline
+:Key: MEGARA_FLUX_CALIBRATION
+:Recipe: :class:`~megaradrp.recipes.scientific.sensivitystar.SensivityStarRecipe`
+:Recipe input: :class:`~megaradrp.recipes.scientific.sensivitystar.SensivityStarRecipeInput`
+:Recipe result: :class:`~megaradrp.recipes.scientific.sensivitystar.SensivityStarRecipeResult`
+
+Recipe, inputs and results
+++++++++++++++++++++++++++
 
 .. autoclass:: megaradrp.recipes.scientific.sensivitystar.SensivityStarRecipe
       :members:

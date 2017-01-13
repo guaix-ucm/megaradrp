@@ -22,7 +22,7 @@ the instrument. Below we provide a detailed description of each of these
 observing modes. Regarding the auxiliary observing modes defined to improve the
 default telescope procedures these are:
 
-* (The three previous observing modes)
+* (The two previous observing modes)
 
 * Fine acquisition with the LCB IFU
 
@@ -39,7 +39,7 @@ Telescope focus
 :Mode: Telescope Focus
 :Usage: Online
 :Key: MEGARA_FOCUS_TELESCOPE
-:Recipe class: :class:`~megaradrp.recipes.auxiliary.focustel.FocusTelescopeRecipe`
+:Recipe: :class:`~megaradrp.recipes.auxiliary.focustel.FocusTelescopeRecipe`
 :Recipe input: :class:`~megaradrp.recipes.auxiliary.focustel.FocusTelescopeRecipe.FocusTelescopeRecipeInput`
 :Recipe result: :class:`~megaradrp.recipes.auxiliary.focustel.FocusTelescopeRecipe.FocusTelescopeRecipeResult`
 
@@ -73,8 +73,6 @@ series should be introduced in order to give time for the M2 to adjust each new
 focus position in the series and for the M2 control system to inform about its
 new position, which should then re-start the observing sequence.
 
-
-
 Products
 ++++++++
 The observatory staff should obtain the telescope focus image sets as part of
@@ -104,7 +102,7 @@ Spectrograph focus
 :Mode: Spectrograph Focus
 :Usage: Online
 :Key: MEGARA_FOCUS_SPECTROGRAPH
-:Recipe class: :class:`~megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe`
+:Recipe: :class:`~megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe`
 :Recipe input: :class:`~megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe.FocusSpectrographRecipeInput`
 :Recipe result: :class:`~megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe.FocusSpectrographRecipeResult`
 
@@ -192,7 +190,7 @@ Fine acquisition with the LCB IFU
 :Mode: LCB Acquisition
 :Usage: Online
 :Key: MEGARA_LCB_ACQUISITION
-:Recipe class: :class:`~megaradrp.recipes.auxiliary.acquisitionlcb.AcquireLCBRecipe`
+:Recipe: :class:`~megaradrp.recipes.auxiliary.acquisitionlcb.AcquireLCBRecipe`
 :Recipe input: :class:`~megaradrp.recipes.auxiliary.acquisitionlcb.AcquireLCBRecipe.RecipeInput`
 :Recipe result: :class:`~megaradrp.recipes.auxiliary.acquisitionlcb.AcquireLCBRecipe.RecipeResult`
 
@@ -247,11 +245,10 @@ Recipe, inputs and results
 Fine acquisition with the Fiber MOS
 -----------------------------------
 
-
 :Mode: MOS Acquisition
 :Usage: Online
 :Key: MEGARA_LCB_ACQUISITION
-:Recipe class: :class:`~megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe`
+:Recipe: :class:`~megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe`
 :Recipe input: :class:`~megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe.RecipeInput`
 :Recipe result: :class:`~megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe.RecipeResult`
 

@@ -1,9 +1,13 @@
-Dark
-----
+Dark Image
+----------
 
-:Mode: Dark
+:Mode: Dark Image
 :Usage: Offline
-:Recipe class: :class:`~megaradrp.recipes.calibration.dark.DarkRecipe`
+:Key: MEGARA_DARK_IMAGE
+:Product: :class:`~megaradrp.types.MasterDark`
+:Recipe: :class:`~megaradrp.recipes.calibration.dark.DarkRecipe`
+:Recipe input: :class:`~megaradrp.recipes.calibration.dark.DarkRecipeInput`
+:Recipe result: :class:`~megaradrp.recipes.calibration.dark.DarkRecipeResult`
 
 The potential wells in CCD detectors spontaneously generate electron-ion pairs
 at a rate that is a function of temperature. For very long exposures this
@@ -26,12 +30,6 @@ focal-plane cover is configured (it should be fully closed), the shutter is
 closed and to expose a certain time and readout the detector a series of
 exposures, being this series the dark image set.
 
-+--------------------------+---------------+------------+-------------------------------+
-| Name                     | Type          | Default    | Meaning                       |
-+==========================+===============+============+===============================+
-| ``'master_bias'``        | Product       | NA         |      Master Bias frame        |
-+--------------------------+---------------+------------+-------------------------------+
-
 Procedure
 +++++++++
 The "User" processes an observing block obtained in the observing mode Dark.
@@ -44,14 +42,12 @@ Dark image sets are to be obtained both as part of the activities related to
 the verification of the instrument status and for processing data for
 scientific exploitation.
 
-+------------------------------+-----------------------------------------------+
-| Name                         | Type                                          |
-+==============================+===============================================+
-| ``'master_dark'``            | :class:`~megaradrp.types.MasterDark`          |
-+------------------------------+-----------------------------------------------+
-
 A bidimensional dark image, QA flag, a text log file of the processing and a
 structured text file containing information about the processing.
+
+
+Recipe, inputs and results
+++++++++++++++++++++++++++
 
 .. autoclass:: megaradrp.recipes.calibration.dark.DarkRecipe
       :members:

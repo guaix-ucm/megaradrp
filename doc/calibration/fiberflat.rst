@@ -4,8 +4,10 @@ Fiber-flat
 :Mode: Fiber-flat
 :Usage: Offline
 :Key: MEGARA_FIBER_FLAT_IMAGE
-:Recipe: :class:`~megaradrp.recipes.calibration.flat.FiberFlatRecipe`
 :Product: :class:`~megaradrp.types.MasterFiberFlat`
+:Recipe: :class:`~megaradrp.recipes.calibration.flat.FiberFlatRecipe`
+:Recipe input: :class:`~megaradrp.recipes.calibration.flat.FiberFlatRecipeInput`
+:Recipe result: :class:`~megaradrp.recipes.calibration.flat.FiberFlatRecipeResult`
 
 In fiber-fed spectrographs such as MEGARA each optical fiber behaves like a
 different optical system, and therefore, its optical transmission is different
@@ -53,6 +55,9 @@ Fiber-flat image sets are to be obtained both as part of the activities related
 to the verification of the instrument status and for processing data for
 scientific exploitation.
 
+
+Recipe, inputs and results
+++++++++++++++++++++++++++
 
 .. autoclass:: megaradrp.recipes.calibration.flat.FiberFlatRecipe
    :members:

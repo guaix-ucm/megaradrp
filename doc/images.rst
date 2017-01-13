@@ -12,7 +12,7 @@ about the version of Numina and the name and version of the recipe used.
   ::
 
    NUMXVER = '0.13.0   '           / Numina package version                         
-   NUMRNAM = 'BiasRecipe'          / Numina recipe name                            
+   NUMRNAM = 'BiasRecipe'          / Numina recipe name
    NUMRVER = '0.1.0   '            / Numina recipe version                                     
    NUMTYP  = 'TARGET  '            / Data product type  
 

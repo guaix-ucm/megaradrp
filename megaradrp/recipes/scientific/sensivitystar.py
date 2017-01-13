@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2011-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,12 +17,9 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-'''Calibration Recipes for Megara'''
-from base import ImageRecipe
-import logging
+"""Calibration Recipes for Megara"""
 
-_logger = logging.getLogger('numina.recipes.megara')
-
+from .base import ImageRecipe
 
 class SensivityStarRecipe(ImageRecipe):
     """Process Sensivity Star Recipe."""
@@ -32,7 +29,7 @@ class SensivityStarRecipe(ImageRecipe):
 
     def run(self, rinput):
 
-        _logger.info('starting SensivityStarRecipe reduction')
+        self.logger.info('starting SensivityStarRecipe reduction')
 
         result = super(SensivityStarRecipe,self).run(rinput)
 

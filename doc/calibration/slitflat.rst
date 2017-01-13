@@ -3,7 +3,11 @@ Slit-flat
 
 :Mode: Slit-flat
 :Usage: Offline
-:Recipe class: :class:`~megaradrp.recipes.calibration.slitflat.SlitFlatRecipe`
+:Key: MEGARA_SLIT_FLAT
+:Product: :class:`~megaradrp.types.MasterSlitFlat`
+:Recipe: :class:`~megaradrp.recipes.calibration.slitflat.SlitFlatRecipe`
+:Recipe input: :class:`~megaradrp.recipes.calibration.slitflat.SlitFlatRecipeInput`
+:Recipe result: :class:`~megaradrp.recipes.calibration.slitflat.SlitFlatRecipeResult`
 
 In the case of fiber-fed spectrographs the correction for the detector
 pixel-to-pixel variation of the sensibility is usually carried out using data
@@ -37,24 +41,6 @@ mechanism to the position pre-defined for the specific VPH of choice but offset
 by 3mm and to expose a certain time and to readout the detector a series of
 exposures, being this series the slit-flat image set.
 
-+---------------------------+---------------+------------+-------------------------------+
-| Name                      | Type          | Default    | Meaning                       |
-+===========================+===============+============+===============================+
-| ``'obresult'``            | Product       | NA         |      Observation Result       |
-+---------------------------+---------------+------------+-------------------------------+
-| ``'master_bias'``         | Product       | NA         |      Master Bias frame        |
-+---------------------------+---------------+------------+-------------------------------+
-| ``'master_dark'``         | Product       | NA         |      Master Dark frame        |
-+---------------------------+---------------+------------+-------------------------------+
-| ``'window_length_x'``     | Product       | NA         |      Savitzky-Golay length    |
-+---------------------------+---------------+------------+-------------------------------+
-| ``'window_length_y'``     | Product       | NA         |      Savitzky-Golay length    |
-+---------------------------+---------------+------------+-------------------------------+
-| ``'polyorder'``           | Product       | NA         |      Savitzky-Golay order     |
-+---------------------------+---------------+------------+-------------------------------+
-| ``'median_window_length'``| Product       | NA         |      Median window width      |
-+---------------------------+---------------+------------+-------------------------------+
-
 Procedure
 +++++++++
 The "User" processes an observing block obtained in the observing mode
@@ -73,15 +59,13 @@ Although defined in this document as a mode to be considered part of the
 "Daily Calibration Modes" if it is finally used only sporadic it should be
 considered as part of the "System Calibration Modes" instead.
 
-+------------------------------+------------------------------------------------+
-| Name                         | Type                                           |
-+==============================+================================================+
-| ``'master_slitflat'``        | :class:`~megaradrp.types.MasterSlitFlat`       |
-+------------------------------+------------------------------------------------+
 
 A bidimensional master slit flat field, QA flag, a text log file of the
 processing and a structured text file containing information about the
 processing.
+
+Recipe, inputs and results
+++++++++++++++++++++++++++
 
 .. autoclass:: megaradrp.recipes.calibration.slitflat.SlitFlatRecipe
       :members:

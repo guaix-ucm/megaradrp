@@ -5,7 +5,10 @@ Bias Image
 :Mode: Bias Image
 :Usage: Offline, Online
 :Key: MEGARA_BIAS_IMAGE
-:Recipe class: :class:`~megaradrp.recipes.calibration.bias.BiasRecipe`
+:Product: :class:`~megaradrp.types.MasterBias`
+:Recipe: :class:`~megaradrp.recipes.calibration.bias.BiasRecipe`
+:Recipe input: :class:`~megaradrp.recipes.calibration.bias.BiasRecipe.RecipeInput`
+:Recipe result: :class:`~megaradrp.recipes.calibration.bias.BiasRecipe.RecipeResult`
 
 Before the Analog-to-Digital conversion is performed a pedestal (electronic)
 level is added to all images obtained with the MEGARA CCD. This is a standard
@@ -38,9 +41,9 @@ the verification of the instrument status and for processing data for
 scientific exploitation.
 
 
+Recipe, inputs and results
+++++++++++++++++++++++++++
 
-Recipe
-++++++
 
 .. autoclass:: megaradrp.recipes.calibration.bias.BiasRecipe
       :members:
