@@ -7,10 +7,6 @@ matrix:
       env: DEPS="numpy scipy astropy=1.1" COVERAGE=true
     - python: "2.7"
       env: DEPS="numpy scipy astropy=1.2"
-    - python: "3.4"
-      env: DEPS="numpy scipy astropy=1.1"
-    - python: "3.4"
-      env: DEPS="numpy scipy astropy=1.2"
     - python: "3.5"
       env: DEPS="numpy scipy astropy=1.1"
     - python: "3.5"
