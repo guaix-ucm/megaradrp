@@ -135,7 +135,11 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                 self.save_intermediate_img(img1d, 'focus1d-%s.fits' % (focus,))
 
                 self.logger.info('find lines and compute FWHM')
-                lines_rss_fwhm = self.run_on_image(img1d, rinput.master_traces, flux_limit, valid_traces=valid_traces)
+                lines_rss_fwhm = self.run_on_image(img1d, rinput.master_traces,
+                                                   flux_limit,
+                                                   valid_traces=valid_traces,
+                                                   times_sigma=rinput.tsigma
+                                                   )
                 ever[focus] = lines_rss_fwhm
 
             except ValueError:
