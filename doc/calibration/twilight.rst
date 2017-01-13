@@ -3,7 +3,11 @@ Twilight fiber-flat
 
 :Mode: Twilight fiber-flat
 :Usage: Offline
+:Key: MEGARA_TWILIGHT_FLAT_IMAGE
+:Product: :class:`~megaradrp.types.MasterTwilightFlat``
 :Recipe class: :class:`~megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe`
+:Recipe input: :class:`megaradrp.recipes.calibration.twilight.RecipeInput`
+:Recipe result: :class:`megaradrp.recipes.calibration.twilight.RecipeResult`
 
 Depending on the final performance of the ICM (provided by the GTC) at F-C the
 twilight fiber-flat mode (proposed in this section) might be offered as
@@ -39,13 +43,6 @@ the detector for this series of exposures, being these series the twilight
 image set, each with a different exposure time, but with similar level of
 counts.
 
-+--------------------------+---------------+------------+-------------------------------+
-| Name                     | Type          | Default    | Meaning                       |
-+==========================+===============+============+===============================+
-| ``'obresult'``           | Product       | NA         |      Observation Result       |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'master_bias'``        | Product       | NA         |      Master Bias frame        |
-+--------------------------+---------------+------------+-------------------------------+
 
 Procedure
 +++++++++
@@ -62,19 +59,18 @@ routine calibration activities performed by the observer since are needed for
 processing any scientific-valid data. Therefore, this observing mode should be
 considered as part of the "Daily Calibration Modes".
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-| ``'reduced_frame'``          | :class:`~megaradrp.types.ProcessedFrame`              |
-+------------------------------+-------------------------------------------------------+
-| ``'reduced_rss'``            | :class:`~megaradrp.types.ProcessedRSS`                |
-+------------------------------+-------------------------------------------------------+
-| ``'master_twilight_flat'``   | :class:`~megaradrp.products.MasterTwilightFlat`       |
-+------------------------------+-------------------------------------------------------+
-
 A RSS master illumination flat field, QA flag, a text log file of the
 processing and a structured text file containing information about the
 processing.
+
+Recipe, inputs and results
+++++++++++++++++++++++++++
+
+.. autoclass:: megaradrp.recipes.calibration.twilight.RecipeInput
+      :members:
+
+.. autoclass:: megaradrp.recipes.calibration.twilight.RecipeResult
+      :members:
 
 .. autoclass:: megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe
       :members:

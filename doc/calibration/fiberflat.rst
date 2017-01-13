@@ -4,7 +4,7 @@ Fiber-flat
 :Mode: Fiber-flat
 :Usage: Offline
 :Key: MEGARA_FIBER_FLAT_IMAGE
-:Recipe class: :class:`~megaradrp.recipes.calibration.flat.FiberFlatRecipe`
+:Recipe: :class:`~megaradrp.recipes.calibration.flat.FiberFlatRecipe`
 :Product: :class:`~megaradrp.types.MasterFiberFlat`
 
 In fiber-fed spectrographs such as MEGARA each optical fiber behaves like a

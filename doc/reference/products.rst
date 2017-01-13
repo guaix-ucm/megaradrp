@@ -21,6 +21,8 @@
 
 .. autoclass:: megaradrp.types.MasterFiberFlat
 
+.. autoclass:: megaradrp.types.MasterTwilightFlat
+
 .. autoclass:: megaradrp.products.structured.BaseStructuredCalibration
 
 .. autoclass:: megaradrp.products.tracemap.TraceMap
