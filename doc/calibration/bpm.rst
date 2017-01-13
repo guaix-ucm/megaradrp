@@ -3,7 +3,11 @@ Bad-pixels mask
 
 :Mode: Bad-pixels mask
 :Usage: Offline
-:Recipe class: :class:`~megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe`
+:Key: MEGARA_BAD_PIXEL_MASK
+:Product: :class:`~megaradrp.types.MasterBPM`
+:Recipe: :class:`~megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe`
+:Recipe input: :class:`~megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe.BadPixelsMaskRecipeInput`
+:Recipe result: :class:`~megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe.BadPixelsMaskRecipeResult`
 
 Although science-grade CCD detectors show very few bad pixels / bad columns
 there will be a number of pixels (among the ~17 Million pixels in the MEGARA
@@ -60,14 +64,17 @@ Products
 This Bad-pixels mask observing mode will be used only sporadically as it is
 considered part of the "System Calibration Modes".
 
-+-------------------+---------------------------------------------------------+
-| Name              | Type                                                    |
-+===================+=========================================================+
-| ``'master_bpm'``  | :class:`~megaradrp.types.MasterBPM`                     |
-+-------------------+---------------------------------------------------------+
-
 A bidimensional mask of bad pixels, a QA flag, a text log file of the
 processing and a structured text file with information about the processing.
 
+Recipe, inputs and results
+++++++++++++++++++++++++++
+
 .. autoclass:: megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe
+      :members:
+
+.. autoclass:: megaradrp.recipes.calibration.bpm::BadPixelsMaskRecipe.BadPixelsMaskRecipeInput
+      :members:
+
+.. autoclass:: megaradrp.recipes.calibration.bpm::BadPixelsMaskRecipe.BadPixelsMaskRecipeResult
       :members:

@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2011-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -27,7 +27,6 @@ import astropy.io.fits as fits
 from numina.array.cosmetics import ccdmask
 from numina.core import Product
 from numina.array import combine
-import numina.core.validator as val
 
 from megaradrp.processing.combine import basic_processing_with_combination_frames
 from megaradrp.core.recipe import MegaraBaseRecipe
@@ -36,6 +35,29 @@ import megaradrp.requirements as reqs
 
 
 class BadPixelsMaskRecipe(MegaraBaseRecipe):
+    """Process defocussed FIBER_FLAT images and create MASTER_BPM product.
+
+    This recipe process a set of defocused continuum flat images obtained in
+    **Bad-pixels mask** mode and returns the master bad-pixels mask product.
+
+    See Also
+    --------
+    numina.array.cosmetics.ccdmask: algorithm to select bad-pixels
+    megaradrp.types.MasterBPM: description of MasterBPM product
+
+    Notes
+    -----
+    Images provided in `obresult` are trimmed and corrected from overscan,
+    bias and dark current (if `master_dark` is not None). The first
+    half of the images are the stacked using the median and saved as
+    intermediate result 'reduced_image_1.fits'. The second half is also
+    combined and saved as intermediate result 'reduced_image_2.fits'
+
+    These two images are passed to the `ccdmask` function, that selects
+    bad-pixels by finding outliers in the ratio of the two images.
+
+    The mask is returned in the field `master_bpm` of the recipe result.
+    """
 
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
@@ -56,7 +78,7 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
             method=combine.median
         )
 
-        self.save_intermediate_img(reduced1, 'reduced1.fits')
+        self.save_intermediate_img(reduced1, 'reduced_image_1.fits')
 
         reduced2 = basic_processing_with_combination_frames(
             rinput.obresult.frames[half:],
@@ -64,7 +86,7 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
             method=combine.median
         )
 
-        self.save_intermediate_img(reduced2, 'reduced2.fits')
+        self.save_intermediate_img(reduced2, 'reduced_image_2.fits')
 
         ratio, mask, sigma = ccdmask(reduced1[0].data, reduced2[0].data, mode='full')
 
@@ -88,7 +110,16 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
         return self.create_result(master_bpm=reduced)
 
     def validate_input(self, recipe_input):
-        "Validate input of the recipe"
+        """Validate input of the recipe.
+
+        The number of frames in `recipe_input.obresult` must be even.
+
+        Raises
+        ------
+        numina.exceptions.ValidationError
+            If the number of frames in `obresult` is odd
+
+        """
 
         obresult = recipe_input.obresult
         # Check that the number of frames is even
@@ -97,4 +128,4 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
             msg = 'expected even number of frames, received {} instead'.format(nimages)
             raise numina.exceptions.ValidationError(msg)
         # Continue with additional checks
-        super(BadPixelsMaskRecipe, self).validate_input(recipe_input)
+        return super(BadPixelsMaskRecipe, self).validate_input(recipe_input)
