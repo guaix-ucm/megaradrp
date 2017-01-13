@@ -41,9 +41,8 @@ class FocusTelescopeRecipe(MegaraBaseRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
-    tracemap = reqs.MasterTraceMapRequirement()
-
-    wlcalib = reqs.WavelengthCalibrationRequirement()
+    master_traces = reqs.MasterTraceMapRequirement()
+    master_wlcalib = reqs.WavelengthCalibrationRequirement()
 
     # Products
     focus_table = Product(float)
@@ -81,7 +80,7 @@ class FocusTelescopeRecipe(MegaraBaseRecipe):
 
             try:
                 img = basic_processing_with_combination_frames(frames, flow, method=combine.median, errors=False)
-                calibrator_aper = ApertureExtractor(rinput.tracemap, self.datamodel)
+                calibrator_aper = ApertureExtractor(rinput.master_traces, self.datamodel)
 
                 self.save_intermediate_img(img, 'focus2d-%s.fits' % (focus,))
                 img1d = calibrator_aper(img)
