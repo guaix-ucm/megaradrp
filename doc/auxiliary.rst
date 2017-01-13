@@ -36,7 +36,12 @@ instrument; at least in the instrument mode to be used (LCB or MOS).
 Telescope focus
 ---------------
 
+:Mode: Telescope Focus
 :Usage: Online
+:Key: MEGARA_FOCUS_TELESCOPE
+:Recipe class: :class:`~megaradrp.recipes.auxiliary.focustel.FocusTelescopeRecipe`
+:Recipe input: :class:`~megaradrp.recipes.auxiliary.focustel.FocusTelescopeRecipe.FocusTelescopeRecipeInput`
+:Recipe result: :class:`~megaradrp.recipes.auxiliary.focustel.FocusTelescopeRecipe.FocusTelescopeRecipeResult`
 
 This observing mode includes the required actions to focus GTC using MEGARA. A
 bright point source should be identified for this purpose. This mode is an
@@ -68,13 +73,7 @@ series should be introduced in order to give time for the M2 to adjust each new
 focus position in the series and for the M2 control system to inform about its
 new position, which should then re-start the observing sequence.
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
 
-Procedure
-+++++++++
 
 Products
 ++++++++
@@ -93,17 +92,22 @@ potential temperature effects. In general, Auxiliary modes will be typically
 run once every observing run (e.g. the fine-acquisition ones) or, in the best
 (most relaxed) case, after a long period of inactivity.
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
+Recipe, inputs and results
+++++++++++++++++++++++++++
 
 .. autoclass:: megaradrp.recipes.auxiliary.focustel.FocusTelescopeRecipe
       :members:
 
 Spectrograph focus
 ------------------
+
+:Mode: Spectrograph Focus
 :Usage: Online
+:Key: MEGARA_FOCUS_SPECTROGRAPH
+:Recipe class: :class:`~megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe`
+:Recipe input: :class:`~megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe.FocusSpectrographRecipeInput`
+:Recipe result: :class:`~megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe.FocusSpectrographRecipeResult`
+
 
 This mode sequence includes the required actions to focus the MEGARA
 spectrograph. The arc lamps from the ICM will be used for this purpose. MEGARA
@@ -147,21 +151,6 @@ along the pseudo-slit the best focus compromise. The best focus obtained for
 the VPH of choice should then be stored and used to determine the best foci for
 all spectral configurations (and instrument modes; TBC).
 
-+--------------------------+---------------+------------+-------------------------------+
-| Name                     | Type          | Default    | Meaning                       |
-+==========================+===============+============+===============================+
-| ``'obresult'``           | Product       | NA         |      Observation Result       |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'master_bias'``        | Product       | NA         |      Master Bias frame        |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'tracemap'``           | Product       | NA         |      TraceMap                 |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'lines_catalog'``      | Product       | NA         |      Lines Catalog            |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'polynomial_degree'``  | Product       | NA         |      Polynomial Degree        |
-+--------------------------+---------------+------------+-------------------------------+
-| ``'wlcalib'``            | Product       | NA         |      WavelengthCalibration    |
-+--------------------------+---------------+------------+-------------------------------+
 
 
 Procedure
@@ -190,15 +179,8 @@ FWHM of the spectral line corresponding to each focus, position along the slit
 and wavelength, the collapsed PSFs, QA flag, a text log file of the processing
 and a structured text file containing information about the processing.
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-| ``'focus_table'``            | :class:`~megaradrp.dataproducts.ArrayType`            |
-+------------------------------+----------+------------+-------------------------------+
-| ``'focus_image'``            | :class:`~megaradrp.dataproducts.DataFrameType`        |
-+------------------------------+----------+------------+-------------------------------+
-| ``'focus_wavelength'``       | :class:`~megaradrp.dataproducts.JSONstorage`          |
-+------------------------------+-------------------------------------------------------+
+Recipe, inputs and results
+++++++++++++++++++++++++++
 
 .. autoclass:: megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe
       :members:
@@ -206,7 +188,14 @@ and a structured text file containing information about the processing.
 
 Fine acquisition with the LCB IFU
 ---------------------------------
+
+:Mode: LCB Acquisition
 :Usage: Online
+:Key: MEGARA_LCB_ACQUISITION
+:Recipe class: :class:`~megaradrp.recipes.auxiliary.acquisitionlcb.AcquireLCBRecipe`
+:Recipe input: :class:`~megaradrp.recipes.auxiliary.acquisitionlcb.AcquireLCBRecipe.RecipeInput`
+:Recipe result: :class:`~megaradrp.recipes.auxiliary.acquisitionlcb.AcquireLCBRecipe.RecipeResult`
+
 
 This mode sequence includes the required actions to acquire a target with known
 celestial coordinates and place it at a reference position inside the LCB IFU
@@ -232,10 +221,6 @@ corresponding field of view. A view of the field should be also produced in
 order to evaluate whether or not the angle of the Folded-Cass rotator matches
 that specified by the observer.
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
 
 Procedure
 +++++++++
@@ -253,18 +238,22 @@ The observatory staff should decide whether or not the corrections derived
 must be applied to the acquisition of other targets during the same observing
 night or exclusively to the target currently being observed.
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
-
+Recipe, inputs and results
+++++++++++++++++++++++++++
 
 .. autoclass:: megaradrp.recipes.auxiliary.acquisitionlcb.AcquireLCBRecipe
       :members:
 
 Fine acquisition with the Fiber MOS
 -----------------------------------
+
+
+:Mode: MOS Acquisition
 :Usage: Online
+:Key: MEGARA_LCB_ACQUISITION
+:Recipe class: :class:`~megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe`
+:Recipe input: :class:`~megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe.RecipeInput`
+:Recipe result: :class:`~megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe.RecipeResult`
 
 The sequence for this observing mode includes the required actions to acquire a
 list of targets with known celestial coordinates and place each target at the
@@ -298,10 +287,6 @@ determine the best-fitting set of offsets (both in X and Y) and rotation angle
 to apply to the telescope and Folded-Cass rotator, respectively, to then
 continue with one of the scientific observing modes described in next Section.
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
 
 Procedure
 +++++++++
@@ -315,10 +300,8 @@ Folded-Cass rotator angle) must be applied to the acquisition of other fields
 with the Fiber MOS during the same observing night or exclusively to the target
 currently being observed.
 
-+------------------------------+-------------------------------------------------------+
-| Name                         | Type                                                  |
-+==============================+=======================================================+
-+------------------------------+-------------------------------------------------------+
+Recipe, inputs and results
+++++++++++++++++++++++++++
 
 .. autoclass:: megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe
       :members:
