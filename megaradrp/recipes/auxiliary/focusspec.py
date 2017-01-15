@@ -21,7 +21,6 @@
 
 from __future__ import division, print_function
 
-
 import numpy
 import numpy.polynomial.polynomial as polynomial
 from scipy.spatial import cKDTree
@@ -48,7 +47,7 @@ from megaradrp.instrument import vph_thr_arc
 
 
 class FocusSpectrographRecipe(MegaraBaseRecipe):
-    """Process Focus images and find best focus.
+    """Process spectrograph focus images and find best focus.
 
     This recipe process a set of focus images obtained in
     **Focus Spectrograph** mode and returns different
@@ -61,7 +60,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
 
     Notes
     -----
-    Images provided in `obresult` grouped by the value of their
+    Images provided in `obresult` are grouped by the value of their
     FOCUS keyword. Groups of images are trimmed and corrected from overscan,
     bad pixel mask (if `master_bpm` is not None), bias and dark current
     (if `master_dark` is not None). Each group is then stacked using the median.
