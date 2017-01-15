@@ -24,7 +24,7 @@ from __future__ import division, print_function
 import numpy
 from numina.array import combine
 from numina.core.dataholders import Product
-from numina.core.requirements import ObservationResultRequirement
+from numina.core.requirements import Requirement, ObservationResultRequirement
 from numina.exceptions import RecipeError
 
 from megaradrp.core.recipe import MegaraBaseRecipe
@@ -34,7 +34,36 @@ from megaradrp.processing.aperture import ApertureExtractor
 
 
 class FocusTelescopeRecipe(MegaraBaseRecipe):
-    """Process Focus images and find best focus."""
+    """Process telescope focus images and find best focus.
+
+    This recipe process a set of focus images obtained in
+    **Focus Telescope** mode and returns an estimation
+    of the telescope best focus.
+
+    See Also
+    --------
+    megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe:
+                recipe to measure the focus of the spectrograph
+
+    Notes
+    -----
+    Images provided in `obresult` are grouped by the value of their
+    FOCUST keyword. Groups of images are trimmed and corrected from overscan,
+    bad pixel mask (if `master_bpm` is not None), bias and dark current
+    (if `master_dark` is not None). Each group is then stacked using the median.
+
+    The result of the combination is saved as an intermediate result, named
+    'focus2d-#focus.fits', with #focus being the value of the focus
+    of each group. Apertures are extracted in each combined image, and the
+    resulting RSS file is saved as an intermediate result, named
+    'focus1-#focus.fits'.
+
+    For each image, the FWHM of the object at `position` is computed.
+
+    Then, the FWHM  is fitted to a 2nd degree polynomial, and the focus
+    corresponding to its minimum is obtained and returned in `focus_table`
+
+    """
 
     # Requirements
     obresult = ObservationResultRequirement()
@@ -43,7 +72,7 @@ class FocusTelescopeRecipe(MegaraBaseRecipe):
     master_bpm = reqs.MasterBPMRequirement()
     master_traces = reqs.MasterTraceMapRequirement()
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
-
+    position = Requirement(list, "Position of the reference object", default=(0, 0))
     # Products
     focus_table = Product(float)
 
@@ -56,7 +85,7 @@ class FocusTelescopeRecipe(MegaraBaseRecipe):
 
         flow = self.init_filters(rinput, obresult.configuration)
 
-        coors = (0.0, 0.0)
+        coors = rinput.position
         focus_t = 'FOCUST'
 
         image_groups = {}
