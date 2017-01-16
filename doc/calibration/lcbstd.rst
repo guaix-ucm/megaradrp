@@ -23,18 +23,18 @@ on the weather conditions (mainly transparency) two different types of
 calibration could be achieved:
 
 * Absolute-flux calibration: The weather conditions during the night should be photometric and a number of
-spectrophotometric standard stars at different airmasses should be observed. This allows to fully correct from
-DUs per CCD pixel to energy surface density (typically in erg s-1 cm-2 Å-1) incident at the top of the atmosphere.
-If only one single standard star is observed (at the airmass of the science object) this correction allows deriving
-the energy surface density hitting the telescope primary mirror exclusively, unless an atmospheric extinction curve
-for the observatory and that particular night is assumed. In order to properly flux-calibrate scientific observations
-at all airmasses several stars should be observed during the night.
+  spectrophotometric standard stars at different airmasses should be observed. This allows to fully correct from
+  DUs per CCD pixel to energy surface density (typically in erg s-1 cm-2 Å-1) incident at the top of the atmosphere.
+  If only one single standard star is observed (at the airmass of the science object) this correction allows deriving
+  the energy surface density hitting the telescope primary mirror exclusively, unless an atmospheric extinction curve
+  for the observatory and that particular night is assumed. In order to properly flux-calibrate scientific observations
+  at all airmasses several stars should be observed during the night.
 
 * Relative-flux calibration: If the weather conditions are not photometric this correction only allows normalizing the
-DUs per CCD pixel along the spectral direction so the conversion to incident energy at the top of the atmosphere is
-the same at all wavelengths. In order for this calibration to be valid the assumption that the effect of the
-atmosphere (including atmospheric cirrus and possibly thick clouds) on the wavelength dependence of this
-correction is that given by the atmospheric extinction curve adopted.
+  DUs per CCD pixel along the spectral direction so the conversion to incident energy at the top of the atmosphere is
+  the same at all wavelengths. In order for this calibration to be valid the assumption that the effect of the
+  atmosphere (including atmospheric cirrus and possibly thick clouds) on the wavelength dependence of this
+  correction is that given by the atmospheric extinction curve adopted.
 
 Since the observing sequence needed for both types of flux calibration is
 identical only one observing mode (standard star) needs to be defined.

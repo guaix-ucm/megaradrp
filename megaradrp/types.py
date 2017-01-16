@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2011-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -31,12 +31,17 @@ class MEGARAProductFrame(DataProductTag, DataFrameType):
 
 
 class ProcessedFrame(DataFrameType):
-    """A processed image not to be stored"""
+    """A processed frame"""
+    pass
+
+
+class ProcessedImage(ProcessedFrame):
+    """A processed image"""
     pass
 
 
 class ProcessedRSS(ProcessedFrame):
-    """A processed RSS image not to be stored"""
+    """A processed RSS image"""
     pass
 
 
@@ -50,33 +55,33 @@ class ProcessedSpectrum(ProcessedFrame):
     pass
 
 
-class MasterBias(MEGARAProductFrame):
+class MasterBias(DataProductTag, ProcessedImage):
     """A Master Bias image"""
     pass
 
 
-class MasterTwilightFlat(MEGARAProductFrame):
+class MasterTwilightFlat(DataProductTag, ProcessedRSS):
     pass
 
 
-class MasterDark(MEGARAProductFrame):
+class MasterDark(DataProductTag, ProcessedImage):
     """A Master Dark image"""
     pass
 
 
-class MasterFiberFlat(MEGARAProductFrame):
+class MasterFiberFlat(DataProductTag, ProcessedRSS):
     pass
 
 
-class MasterSlitFlat(MEGARAProductFrame):
+class MasterSlitFlat(DataProductTag, ProcessedImage):
     pass
 
 
-class MasterFiberFlatFrame(MEGARAProductFrame):
+class MasterFiberFlatFrame(DataProductTag, ProcessedRSS):
     pass
 
 
-class MasterBPM(MEGARAProductFrame):
+class MasterBPM(DataProductTag, ProcessedImage):
     """Bad Pixel Mask product"""
     pass
 
@@ -132,8 +137,4 @@ class JSONstorage(DataType):
 
 class FocusWavelength(JSONstorage):
     """Rich table with focus and wavelength"""
-    pass
-
-
-class LCBCalibration(JSONstorage):
     pass

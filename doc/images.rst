@@ -1,4 +1,4 @@
-
+=============
 Data products
 =============
 
@@ -18,6 +18,43 @@ about the version of Numina and the name and version of the recipe used.
 
 ``HISTORY`` keywords may be used also, but the information in these keyword may not be easily indexed.
 
+*************
+Generic types
+*************
+
+
+Processed Frame
+***************
+
+Processed Frame is the type of any image produced by the pipeline that represents a view of the detector.
+Its size may be 4096x4112 for trimmed images or 4196x4212 for unprocessed, raw images.
+
+Processed Frame is represented by :class:`~megaradrp.types.ProcessedFrame`.
+
+Processed RSS
+*************
+Processed Row Stacked Spectra is the type of any image produced by the pipeline that represents
+a view of the focal plane, using extracted fibers. It will have 623 rows in LCB mode and 644 rows
+in MOS mode, each row representing the extracted spectrum of one fiber. The number of columns
+will be 4112 or larger, depending on the stage of the reduction.
+
+Procesed RSS images will tipically have a `FIBERS` extension.
+
+Processed RSS is represented by :class:`~megaradrp.types.ProcessedRSS`.
+
+
+Processed Spectrum
+******************
+Processed spectrum is the type of any image produced by the pipeline that represents
+the spectrum of one object. Its data content will be a 1D array.
+
+Processed Spectrum is represented by :class:`~megaradrp.types.ProcessedSpectrum`.
+
+
+************
+Calibrations
+************
+
 Master Bias frames
 ******************
 
@@ -32,7 +69,7 @@ multiextension FITS file with the following extensions.
   ``MAP``            Image                Number of pixels used to compute the bias level
   ===============    =======   ========   =======================
 
-Master bias frames are represented by :class:`~megaradrp.products.MasterBias`.
+Master bias frames are represented by :class:`~megaradrp.types.MasterBias`.
 
 Master Dark frames
 ******************
@@ -48,7 +85,7 @@ multiextension FITS file with the following extensions.
   ``MAP``            Image                Number of pixels used to compute the dark level
   ===============    =======   ========   =======================
 
-Master dark frames are represented by :class:`~megaradrp.products.MasterDark`.
+Master dark frames are represented by :class:`~megaradrp.types.MasterDark`.
 
 
 Master Bad Pixel Mask
@@ -63,14 +100,27 @@ Each bad pixel mask frame is a multiextension FITS file with the following exten
   ``PRIMARY``        Primary              The Bad Pixel Mask level
   ===============    =======   ========   =======================
 
-Master bad pixel mask frames are represented by :class:`~megaradrp.products.MasterBPM`.
+Master bad pixel mask frames are represented by :class:`~megaradrp.types.MasterBPM`.
 
+Master Slit Flat
+****************
+
+Master Slit Flat is produced by the recipe :class:`~megaradrp.recipes.calibration.slitflat.SlitFlatRecipe`.
+Each slit flat frame is a multiextension FITS file with the following extensions.
+
+  ===============    =======   =======================
+  Extension name     Type      Contents
+  ===============    =======   =======================
+  ``PRIMARY``        Primary   The Slit Flat level
+  ===============    =======   =======================
+
+Masterslit flat frames are represented by :class:`~megaradrp.types.MasterSlitFlat`.
 
 Master Traces
 *************
 
-Master Fiber Flat is produced by the recipe :class:`~megaradrp.recipes.TraceMapRecipe`.
-The result is a YAML_ file where each one of the records belongs to a given fiber
+Master Fiber Flat is produced by the recipe :class:`~megaradrp.recipes.calibration.trace.TraceMapRecipe`.
+The result is a JSON_ file where each one of the records belongs to a given fiber
 in the RSS file. Moreover, each one of the records has the next information:
 
 
@@ -95,25 +145,25 @@ In the following, a real example of the fourth fiber which is in the first box  
     start: 4
     stop: 3594
 
-Master Tracemap files are represented by :class:`~megaradrp.products.TraceMap`.
+Master Tracemap files are represented by :class:`~megaradrp.products.tracemap.TraceMap`.
 
+..
+  Master Weights
+  **************
 
-Master Weights
-**************
+  Master weights file is produced by the recipe :class:`~megaradrp.recipes.calibration.weights.WeightsRecipe`.
+  This is a .tar file which is made up of 4096 .npz files (one per fiber). These are
+  ``numpy`` files where the ndarray are stored.
 
-Master weights file is produced by the recipe :class:`~megaradrp.recipes.calibration.weights.WeightsRecipe`.
-This is a .tar file which is made up of 4096 .npz files (one per fiber). These are
-``numpy`` files where the ndarray are stored.
+  This file is compulsary to generate the master fiber flat.
 
-This file is compulsary to generate the master fiber flat.
-
-Master weights files are represented by :class:`~megaradrp.products.MasterWeights`.
+  Master weights files are represented by :class:`~megaradrp.products.MasterWeights`.
 
 
 Master Wavelength Calibration
 *****************************
 
-Master wavelength calibration is produced by the recipe :class:`~megaradrp.recipes.calibration.arc.ArcRecipe`.
+Master wavelength calibration is produced by the recipe :class:`~megaradrp.recipes.calibration.arc.ArcCalibrationRecipe`.
 The result is a JSON_ file where each one of the records belongs to a given fiber
 in the RSS file. Moreover, each one of the records or ``apertures`` has the next fields:
 
@@ -173,7 +223,7 @@ two arc lines can be seen:
     }
 
 
-Master Wavelength calibration file is represented by :class:`~megaradrp.products.WavelengthCalibration`.
+Master Wavelength calibration file is represented by :class:`~megaradrp.products.wavecalibration.WavelengthCalibration`.
 
 
 Master Fiber Flat
@@ -186,25 +236,10 @@ Each master fiber flat frame is a multiextension FITS file with the following ex
   Extension name     Type      Version    Contents
   ===============    =======   ========   =======================
   ``PRIMARY``        Primary              The Fiber Flat level
+  ``FIBERS``         Image                Description of the focal plane
   ===============    =======   ========   =======================
 
-Master fiber flats frames are represented by :class:`~megaradrp.products.MasterFiberFlat`.
-
-
-Master Slit Flat
-****************
-
-Master Slit Flat is produced by the recipe :class:`~megaradrp.recipes.calibration.slitflat.SlitFlatRecipe`.
-Each slit flat frame is a multiextension FITS file with the following extensions.
-
-  ===============    =======   =======================
-  Extension name     Type      Contents
-  ===============    =======   =======================
-  ``PRIMARY``        Primary   The Slit Flat level
-  ===============    =======   =======================
-
-Masterslit flat frames are represented by :class:`~megaradrp.products.MasterSlitFlat`.
-
+Master fiber flats frames are represented by :class:`~megaradrp.types.MasterFiberFlat`.
 
 Master Twilight Flat
 ********************
@@ -218,82 +253,12 @@ Each twilight flat frame is a multiextension FITS file with the following extens
   ``PRIMARY``        Primary              The Twilight Flat level
   ===============    =======   ========   =======================
 
-Master twilight flat frames are represented by :class:`~megaradrp.products.MasterTwilightFlat`.
+Master twilight flat frames are represented by :class:`~megaradrp.types.MasterTwilightFlat`.
 
 
 
-Master LCB
-**********
-
-Master lcb image is produced by the recipe :class:`~megaradrp.recipes.scientific.lcb.LCBImageRecipe`.
-
-  ===============    =======   ========   =======================
-  Extension name     Type      Version    Contents
-  ===============    =======   ========   =======================
-  ``PRIMARY``        Primary              The LCB Image level
-  ===============    =======   ========   =======================
-
-Master lcb image is represented by :class:`~megaradrp.products.MasterFiberFlat`.
-
-
-Master MOS
-**********
-
-Master mos image is produced by the recipe :class:`~megaradrp.recipes.scientific.mos.MOSImageRecipe`.
-
-  ===============    =======   ========   =======================
-  Extension name     Type      Version    Contents
-  ===============    =======   ========   =======================
-  ``PRIMARY``        Primary              The MOS Image level
-  ===============    =======   ========   =======================
-
-Master mos image is represented by :class:`~megaradrp.products.MasterFiberFlat`.
-
-
-Master LCB Fast Mapping
-***********************
-
-Master lcb fast mapping image is produced by the recipe :class:`~megaradrp.recipes.scientific.lcbfastmapping.LCBFastMappingRecipe`.
-
-  ===============    =======   ========   =======================
-  Extension name     Type      Version    Contents
-  ===============    =======   ========   =======================
-  ``PRIMARY``        Primary              The LCB Fast Mapping Image level
-  ===============    =======   ========   =======================
-
-Master lcb fast mapping image is represented by :class:`~megaradrp.products.MasterFiberFlat`.
-
-
-Master LCB std Star
-*******************
-
-Master lcb standard star image is produced by the recipe :class:`~megaradrp.recipes.scientific.lcbstdstar.LCBStandardRecipe`.
-
-  ===============    =======   ========   =======================
-  Extension name     Type      Version    Contents
-  ===============    =======   ========   =======================
-  ``PRIMARY``        Primary              The LCB std Star Image level
-  ===============    =======   ========   =======================
-
-Master lcb standard star image is represented by :class:`~megaradrp.products.MasterFiberFlat`.
-
-
-Master MOS std Star
-*******************
-
-Master mos standard star image is produced by the recipe :class:`~megaradrp.recipes.scientific.mosstdstar.MOSStandardRecipe`.
-
-  ===============    =======   ========   =======================
-  Extension name     Type      Version    Contents
-  ===============    =======   ========   =======================
-  ``PRIMARY``        Primary              The MOS std Star Image level
-  ===============    =======   ========   =======================
-
-Master mos standard star image is represented by :class:`~megaradrp.products.MasterFiberFlat`.
-
-
-Master Sensitivity Star
-***********************
+Master Sensitivity
+******************
 
 Master sensitivity star image is produced by the recipe :class:`~megaradrp.recipes.scientific.sensitivitystar.SensivityStarRecipe`.
 
@@ -306,8 +271,8 @@ Master sensitivity star image is produced by the recipe :class:`~megaradrp.recip
 Master sensitivity star image is represented by :class:`~megaradrp.products.MasterFiberFlat`.
 
 
-Master Extinction Star
-**********************
+Master Extinction
+*****************
 
 Master extinction star image is produced by the recipe :class:`~megaradrp.recipes.scientific.extinctionstar.SensivityStarRecipe`.
 
@@ -319,23 +284,6 @@ Master extinction star image is produced by the recipe :class:`~megaradrp.recipe
 
 Master extinction star image is represented by :class:`~megaradrp.products.MasterFiberFlat`.
 
-..
-  Master Focus Spectrograph
-  *************************
-
-  Master focus spectrograph is produced by the recipe :class:`~megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe`.
-
-  Master focus spectrograph file is represented by :class:`~megaradrp.products.JSONstorage`.
-
-..
-  Master Focus Flat
-  *************************
-
-  Master focus flat is produced by the recipe :class:`~megaradrp.recipes.auxiliary.`.
-
-  Master focus flat file is represented by :class:`~megaradrp.products.`.
-
 
 
 .. _JSON: http://www.json.org/
-.. _YAML: http://www.yaml.org

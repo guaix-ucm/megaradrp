@@ -55,6 +55,7 @@ Fiber-flat image sets are to be obtained both as part of the activities related
 to the verification of the instrument status and for processing data for
 scientific exploitation.
 
+.. _ff-mode-label:
 
 Recipe, inputs and results
 ++++++++++++++++++++++++++

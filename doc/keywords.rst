@@ -45,3 +45,28 @@ Type Keyword   Example                    Explanation
  R   ELAPSED                             Time between resets?
  S   OBSMODE   'SLITFLAT                 Identifier of the observing mode
 ==== ========  ========================  ============================================
+
+FIBERS extension
+----------------
+
+The state of the focal plane of MEGARA is stored in a dedicated extension names `FIBERS`.
+This extension contains only headers, the data part will be empty.
+
+==== ========  ========================  ============================================
+Type Keyword   Example                    Explanation
+==== ========  ========================  ============================================
+ I   NFIBERS   643                       Number of fibers
+ I   NSPAXEL   644                       Number of spaxels
+ S   INSMODE   LCB                       Name of active pseudo slit
+ S   IMAGETYP  'FLAT'                    Type of the image
+ S   VPH       'LR-R'                    Type of VPH
+ S   OBSTYPE   'SLITFLAT'                Type of observation
+ R   EXPOSED                             Photometric time?
+ R   DARKTIME                            TBD
+ R   EXPTIME                             TBD
+ R   ELAPSED                             Time between resets?
+ S   OBSMODE   'SLITFLAT                 Identifier of the observing mode
+==== ========  ========================  ============================================
+
+
+
