@@ -293,22 +293,6 @@ Recipe, inputs and results
 .. autoclass:: megaradrp.recipes.scientific.mosstdstar.MOSStandardRecipe
       :members:
 
-MEGARA_FLUX_CALIBRATION
------------------------
-
-:Mode:
-:Usage: Offline
-:Key: MEGARA_FLUX_CALIBRATION
-:Recipe: :class:`~megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipe`
-:Recipe input: :class:`~megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipeInput`
-:Recipe result: :class:`~megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipeResult`
-
-
-Recipe, inputs and results
-++++++++++++++++++++++++++
-
-.. autoclass:: megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipe
-      :members:
 
 MEGARA_EXTINCTION_STAR
 ----------------------

@@ -75,13 +75,6 @@ class MegaraBaseRecipe(BaseRecipe):
                        'WeightsRecipe': [OverscanCorrector, TrimImage,
                                          BiasCorrector, BadPixelCorrector,
                                          DarkCorrector, SlitFlatCorrector],
-                       'PseudoFluxCalibrationRecipe': [OverscanCorrector,
-                                                       TrimImage,
-                                                       BiasCorrector,
-                                                       BadPixelCorrector,
-                                                       DarkCorrector,
-                                                       ApertureExtractor,
-                                                       FiberFlatCorrector],
                        }
         super(MegaraBaseRecipe, self).__init__(*args, **kwds)
 

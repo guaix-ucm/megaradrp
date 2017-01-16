@@ -37,11 +37,6 @@ modes:
   description: Lines and mode lines
   key: MEGARA_MOS_IMAGE
   tagger: megaradrp.taggers.tagger_base_image
-- name: Pseudo flux-calibration
-  summary: Summary of Fiber MOS image
-  description: Lines and mode lines
-  key: MEGARA_FLUX_CALIBRATION
-  tagger: megaradrp.taggers.tagger_base_image
 - name: Trace Map
   summary: Summary of Fiber MOS image
   description: Lines and mode lines
@@ -150,7 +145,6 @@ pipelines:
       MEGARA_MOS_ACQUISITION: megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe
       MEGARA_MOS_IMAGE: megaradrp.recipes.scientific.mos.MOSImageRecipe
       MEGARA_MOS_STD_STAR: megaradrp.recipes.scientific.mosstdstar.MOSStandardRecipe
-      MEGARA_FLUX_CALIBRATION: megaradrp.recipes.calibration.fluxcal.PseudoFluxCalibrationRecipe
       MEGARA_EXTINCTION_STAR: megaradrp.recipes.scientific.extinctionstar.ExtinctionStarRecipe
       MEGARA_SENSITIVITY_STAR: megaradrp.recipes.scientific.sensivitystar.SensivityStarRecipe
 products:
