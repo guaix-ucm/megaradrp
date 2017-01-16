@@ -19,12 +19,37 @@
 
 """Calibration Recipes for Megara"""
 
+from numina.core import Product, Requirement
+from numina.core.types import ListOfType
+from numina.core.requirements import ObservationResultRequirement
 
-from megaradrp.recipes.scientific.base import ImageRecipe
+import megaradrp.types as typs
+from megaradrp.core.recipe import MegaraBaseRecipe
 
 
-class Recipe(ImageRecipe):
-    """Process Sensivity Star Recipe."""
+class Recipe(MegaraBaseRecipe):
+    """Process Sensitivity Star Recipe.
+
+    This recipe processes a set of images
+    processed by the recipes of
+    **Standard star with the FIBER MOS** or
+    **Standard star with the LCB IFU**
+    and returns the sensitivity correction required
+    for flux calibration.
+
+    See Also
+    --------
+    megaradrp.recipes.combined.extinctionstar.Recipe
+
+    """
+
+    # Requirements
+    obresult = ObservationResultRequirement()
+
+    master_extinction = Requirement(typs.Extinction, "Atmospheric extinction")
+    reference_spectra = Requirement(ListOfType(typs.ReferenceSpectrum), "Reference spectra of Std stars")
+
+    master_sensitivity = Product(typs.MasterSensitivity)
 
     def run(self, rinput):
 

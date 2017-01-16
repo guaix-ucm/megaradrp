@@ -251,16 +251,16 @@ Each twilight flat frame is a multiextension FITS file with the following extens
   Extension name     Type      Version    Contents
   ===============    =======   ========   =======================
   ``PRIMARY``        Primary              The Twilight Flat level
+  ``FIBERS``         Image                Description of the focal plane
   ===============    =======   ========   =======================
 
 Master twilight flat frames are represented by :class:`~megaradrp.types.MasterTwilightFlat`.
 
 
-
 Master Sensitivity
 ******************
 
-Master sensitivity star image is produced by the recipe :class:`~megaradrp.recipes.scientific.sensitivitystar.SensivityStarRecipe`.
+Master sensitivity star image is produced by the recipe :class:`~megaradrp.recipes.composed.sensstar.Recipe`.
 
   ===============    =======   ========   =======================
   Extension name     Type      Version    Contents
@@ -268,13 +268,13 @@ Master sensitivity star image is produced by the recipe :class:`~megaradrp.recip
   ``PRIMARY``        Primary              The Sensitivity Star Image level
   ===============    =======   ========   =======================
 
-Master sensitivity star image is represented by :class:`~megaradrp.products.MasterFiberFlat`.
+Master sensitivity star image is represented by :class:`~megaradrp.types.MasterSensitivity`.
 
 
 Master Extinction
 *****************
 
-Master extinction star image is produced by the recipe :class:`~megaradrp.recipes.scientific.extinctionstar.SensivityStarRecipe`.
+Master extinction star image is produced by the recipe :class:`~megaradrp.recipes.composed.extinctionstar.Recipe`.
 
   ===============    =======   ========   =======================
   Extension name     Type      Version    Contents
@@ -282,8 +282,26 @@ Master extinction star image is produced by the recipe :class:`~megaradrp.recipe
   ``PRIMARY``        Primary              The Extinction Star Image level
   ===============    =======   ========   =======================
 
-Master extinction star image is represented by :class:`~megaradrp.products.MasterFiberFlat`.
+Master extinction star image is represented by :class:`~megaradrp.types.Extinction`.
 
+
+**********************
+Reference calibrations
+**********************
+
+The following types represent types used for calibration, but that are not the
+result of any recipe. Examples of this type are the spectra of flux standars
+or the tables of spectral lines of calibration lamps.
+
+
+Reference Spectrum
+******************
+
+A tabular representation of the spectral energy distribution of a standard star.
+The first column contains wavelength (in Angstroms) and the second column
+the flux in erg/s/cm^2/Angstrom
+
+Reference spectrum is represented by :class:`~megaradrp.types.ReferenceSpectrum`.
 
 
 .. _JSON: http://www.json.org/

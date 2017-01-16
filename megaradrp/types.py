@@ -22,7 +22,7 @@
 
 from numina.core import DataFrameType, DataProductType
 from numina.core.types import DataType
-from numina.core.products import DataProductTag
+from numina.core.products import DataProductTag, ArrayType
 
 
 class MEGARAProductFrame(DataProductTag, DataFrameType):
@@ -87,6 +87,17 @@ class MasterBPM(DataProductTag, ProcessedImage):
 
 
 class MasterSensitivity(MEGARAProductFrame):
+    """Sensitivity correction."""
+    pass
+
+
+class Extinction(ArrayType):
+    """Atmospheric Extinction."""
+    pass
+
+
+class ReferenceSpectrum(ArrayType):
+    """The spectrum of a reference star"""
     pass
 
 

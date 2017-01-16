@@ -6,7 +6,6 @@ elsewhere (document TEC/MEG/146).
 
 In the following sections, we describe the keywords that are used by the pipeline.
 
-TBD
 
 Primary header
 --------------
@@ -57,16 +56,18 @@ Type Keyword   Example                    Explanation
 ==== ========  ========================  ============================================
  I   NFIBERS   643                       Number of fibers
  I   NSPAXEL   644                       Number of spaxels
+ I   NBUNDLES  92                        Number of fiber bundles
  S   INSMODE   LCB                       Name of active pseudo slit
- S   IMAGETYP  'FLAT'                    Type of the image
- S   VPH       'LR-R'                    Type of VPH
- S   OBSTYPE   'SLITFLAT'                Type of observation
- R   EXPOSED                             Photometric time?
- R   DARKTIME                            TBD
- R   EXPTIME                             TBD
- R   ELAPSED                             Time between resets?
- S   OBSMODE   'SLITFLAT                 Identifier of the observing mode
+ S   CONFID    'b7d35e7df0274fde..'      Unique identicatod of the configuration
+ *   WCS                                 The set of WCS keywords for the focal plane
+ I   BUNnnn_P  0                         Priority of the target in this bundle
+ S   BUNnnn_I  'unknown '                Name of the target
+ S   BUNnnn_T  'UNASSIGNED'              Type of target ('STAR', 'SKY', 'TARGET', 'UNASSIGNED'
+ I   FIBmmm_B   nnn                      ID of the bundle
+ F   FIBmmm_D   +3.34565                 Declination of the spaxel
+ F   FIBmmm_R   12.342223                Right Ascension of the spaxel
+ F   FIBmmm_O   0.0                      Position Angle of the Fiber
+ L   FIBmmm_A   T                        Is fiber active?
+ F   FIBmmm_X   -0.4646226291303512      X position of the fiber in the focal plane
+ F   FIBmmm_Y   63.63025                 Y position of the fiber in the focal plane
 ==== ========  ========================  ============================================
-
-
-

@@ -11,6 +11,8 @@
 
 .. autoclass:: megaradrp.types.ProcessedRSS
 
+.. autoclass:: megaradrp.types.ProcessedSpectrum
+
 .. autoclass:: megaradrp.types.MasterBPM
 
 .. autoclass:: megaradrp.types.MasterBias
@@ -27,4 +29,12 @@
 
 .. autoclass:: megaradrp.products.tracemap.TraceMap
 
+
 .. autoclass:: megaradrp.products.wavecalibration.WavelengthCalibration
+
+
+.. autoclass:: megaradrp.types.MasterSensitivity
+
+.. autoclass:: megaradrp.types.Extinction
+
+.. autoclass:: megaradrp.types.ReferenceSpectrum

@@ -1,7 +1,7 @@
 Standard star with the LCB IFU
 ------------------------------
 
-:Mode: Standard start with the LCB IFU
+:Mode: Standard star with the LCB IFU
 :Usage: Offline
 :Key: MEGARA_LCB_STD_STAR
 :Recipe: :class:`~megaradrp.recipes.calibration.lcbstdstar.LCBStandardRecipe`
