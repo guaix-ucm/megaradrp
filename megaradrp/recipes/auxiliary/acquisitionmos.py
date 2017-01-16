@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2011-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,7 +17,7 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Calibration Recipes for Megara"""
+"""Acquisition with the Fiber MOS"""
 
 
 import math
@@ -28,29 +28,63 @@ import numpy as np
 
 from megaradrp.types import ProcessedRSS, ProcessedFrame
 from megaradrp.recipes.scientific.base import ImageRecipe
-from megaradrp.recipes.scientific.lcbmap import Grid
-from megaradrp.types import LCBCalibration
 
 
 class AcquireMOSRecipe(ImageRecipe):
-    """Process MOS images."""
+    """Process Acquisition MOS images.
 
-    # master_mos_json = Product(LCBCalibration)
-    # master_mos = Product(ArrayType)
+    This recipe processes a set of acquisition images
+    obtained in **MOS Acquisition** mode and returns
+    the offset and rotation required to center the
+    fiducial objects in their reference positions.
 
-    reduced = Product(ProcessedFrame)
-    final = Product(ProcessedRSS)
-    # sky = Product(ProcessedRSS)
+    See Also
+    --------
+    megaradrp.recipes.auxiliary.acquisitionlcb.AcquireLCBRecipe
+    numina.array.offrot: Kabsch algorithm for offset and rotation
+
+    Notes
+    -----
+    Images provided by `obresult` are trimmed and corrected
+    from overscan, bad pixel mask (if `master_bpm` is not None),
+    bias, dark current (if `master_dark` is not None) and
+    slit-flat (if `master_slitflat` is not None).
+
+    Images thus corrected are the stacked using the median.
+    The result of the combination is saved as an intermediate result, named
+    'reduced_image.fits'. This combined image is also returned in the field
+    `reduced_image` of the recipe result.
+
+    The apertures in the 2D image are extracted, using the information in
+    `master_traces` and resampled according to the wavelength calibration in
+    `master_wlcalib`. Then is divided by the `master_fiberflat`.
+    The resulting RSS is saved as an intermediate
+    result named 'reduced_rss.fits'. This RSS is also returned in the field
+    `reduced_rss` of the recipe result.
+
+    The sky is subtracted by combining the the fibers marked as `SKY`
+    in the fibers configuration. The RSS with sky subtracted is returned ini the
+    field `final_rss` of the recipe result.
+
+    Then, the centroid of each fiducial object, marked as `STAR` in the fibers
+    configuration, is computed. The offset and rotation needed to center
+    each fiducial object in its bundle is computed and returned
+
+    """
+
+    # Requirements are defined in base class
+
+    reduced_image = Product(ProcessedFrame)
+    reduced_rss = Product(ProcessedRSS)
+    final_rss = Product(ProcessedRSS)
+    offset = Product(list)
+    rotang = Product(float)
 
     def run(self, rinput):
 
         self.logger.info('starting AC MOS reduction')
 
         reduced2d, reduced1d = super(AcquireMOSRecipe, self).base_run(rinput)
-        # rssdata = rss_data[0].data
-
-        self.save_intermediate_img(reduced2d, 'reduced2d.fits')
-        self.save_intermediate_img(reduced1d, 'reduced1d.fits')
 
         do_sky_subtraction = True
         if do_sky_subtraction:
@@ -111,4 +145,10 @@ class AcquireMOSRecipe(ImageRecipe):
         self.logger.info('rot matrix is %s', rot)
         self.logger.info('rot angle %s', angle)
 
-        return self.create_result(reduced=reduced2d, final=final)
+        return self.create_result(
+            reduced_image=reduced2d,
+            reduced_rss=reduced1d,
+            final_rss=final,
+            offset=offset,
+            rotang=angle,
+        )

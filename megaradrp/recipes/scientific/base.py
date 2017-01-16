@@ -46,11 +46,11 @@ class ImageRecipe(MegaraBaseRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
     master_slitflat = reqs.MasterSlitFlatRequirement()
-    wlcalib = Requirement(WavelengthCalibration, 'Wavelength calibration table')
+    master_wlcalib = reqs.WavelengthCalibrationRequirement()
     # master_weights = Requirement(MasterWeights, 'Set of files')
     master_fiberflat = reqs.MasterFiberFlatRequirement()
     master_twilight = reqs.MasterTwilightRequirement()
-    tracemap = reqs.MasterTraceMapRequirement()
+    master_traces = reqs.MasterTraceMapRequirement()
 
     def base_run(self, rinput):
 
@@ -60,13 +60,16 @@ class ImageRecipe(MegaraBaseRecipe):
         hdr = img[0].header
         self.set_base_headers(hdr)
 
+        self.save_intermediate_img(img, 'reduced_image.fits')
+
         # 1D, extraction, Wl calibration, Flat fielding
         reduced2d, reduced_rss = self.run_reduction_1d(
             img,
-            rinput.tracemap,
-            rinput.wlcalib,
+            rinput.master_traces,
+            rinput.master_wlcalib,
             rinput.master_fiberflat
         )
+        self.save_intermediate_img(reduced_rss, 'reduced_rss.fits')
 
         return reduced2d, reduced_rss
 

@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2011-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -30,10 +30,53 @@ from megaradrp.types import ProcessedRSS, ProcessedFrame
 
 
 class AcquireLCBRecipe(ImageRecipe):
-    """Process LCB images."""
+    """Process Acquisition LCB images.
 
-    reduced = Product(ProcessedFrame)
-    final = Product(ProcessedRSS)
+    This recipe processes a set of acquisition images
+    obtained in **LCB Acquisition** mode and returns
+    the offset and rotation required to center the
+    fiducial object in its reference positions.
+
+    See Also
+    --------
+    megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe
+
+    Notes
+    -----
+    Images provided by `obresult` are trimmed and corrected
+    from overscan, bad pixel mask (if `master_bpm` is not None),
+    bias, dark current (if `master_dark` is not None) and
+    slit-flat (if `master_slitflat` is not None).
+
+    Images thus corrected are the stacked using the median.
+    The result of the combination is saved as an intermediate result, named
+    'reduced_image.fits'. This combined image is also returned in the field
+    `reduced_image` of the recipe result.
+
+    The apertures in the 2D image are extracted, using the information in
+    `master_traces` and resampled according to the wavelength calibration in
+    `master_wlcalib`. Then is divided by the `master_fiberflat`.
+    The resulting RSS is saved as an intermediate
+    result named 'reduced_rss.fits'. This RSS is also returned in the field
+    `reduced_rss` of the recipe result.
+
+    The sky is subtracted by combining the the fibers marked as `SKY`
+    in the fibers configuration. The RSS with sky subtracted is returned ini the
+    field `final_rss` of the recipe result.
+
+    Then, the centroid of the fiducial object nearest to the center of the field
+    is computed. The offset needed to center
+    the fiducial object in the center of the LCB is returned.
+
+    """
+
+    # Requirements are defined in base class
+
+    reduced_image = Product(ProcessedFrame)
+    reduced_rss = Product(ProcessedRSS)
+    final_rss = Product(ProcessedRSS)
+    offset = Product(list)
+    rotang = Product(float)
 
     def run(self, rinput):
 
@@ -41,9 +84,6 @@ class AcquireLCBRecipe(ImageRecipe):
 
         reduced2d, reduced1d = super(AcquireLCBRecipe, self).base_run(rinput)
         # rssdata = rss_data[0].data
-
-        self.save_intermediate_img(reduced2d, 'reduced2d.fits')
-        self.save_intermediate_img(reduced1d, 'reduced1d.fits')
 
         do_sky_subtraction = True
         if do_sky_subtraction:
@@ -108,4 +148,9 @@ class AcquireLCBRecipe(ImageRecipe):
         if True:
             self.compute_dar(final)
 
-        return self.create_result(final=final, reduced=reduced2d)
+        return self.create_result(
+            reduced_image=reduced2d,
+            reduced_rss=reduced1d,
+            final_rss=final,
+            offset=-centroid
+        )
