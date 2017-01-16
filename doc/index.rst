@@ -25,7 +25,7 @@ User documentation
    testing
    running
    modes
-
+   products
 
 Developer documentation
 -----------------------
@@ -34,6 +34,5 @@ Developer documentation
    :maxdepth: 2
 
    recipes
-   products
    reference/index
    glossary

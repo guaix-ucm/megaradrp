@@ -2,7 +2,7 @@ Arc
 ---
 
 :Mode: Arc
-:Usage: Offline
+:Usage: Offline, Online
 :Key: MEGARA_ARC_CALIBRATION
 :Product: :class:`~megaradrp.products.wavecalibration.WavelengthCalibration`
 :Recipe: :class:`~megaradrp.recipes.calibration.arc.ArcCalibrationRecipe`

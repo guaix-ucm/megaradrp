@@ -2,7 +2,7 @@ Twilight fiber-flat
 -------------------
 
 :Mode: Twilight fiber-flat
-:Usage: Offline
+:Usage: Offline, Online
 :Key: MEGARA_TWILIGHT_FLAT_IMAGE
 :Product: :class:`~megaradrp.types.MasterTwilightFlat`
 :Recipe: :class:`~megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe`

@@ -38,10 +38,9 @@ Type Keyword   Example                    Explanation
  S   IMAGETYP  'FLAT'                    Type of the image
  S   VPH       'LR-R'                    Type of VPH
  S   OBSTYPE   'SLITFLAT'                Type of observation
- R   EXPOSED                             Photometric time?
+ R   EXPOSED                             Exposure time in seconds
+ R   EXPTIME                             Exposure time in seconds (synonim)
  R   DARKTIME                            TBD
- R   EXPTIME                             TBD
- R   ELAPSED                             Time between resets?
  S   OBSMODE   'SLITFLAT                 Identifier of the observing mode
 ==== ========  ========================  ============================================
 
@@ -58,8 +57,7 @@ Type Keyword   Example                    Explanation
  I   NSPAXEL   644                       Number of spaxels
  I   NBUNDLES  92                        Number of fiber bundles
  S   INSMODE   LCB                       Name of active pseudo slit
- S   CONFID    'b7d35e7df0274fde..'      Unique identicatod of the configuration
- *   WCS                                 The set of WCS keywords for the focal plane
+ S   CONFID    'b7d35e7df0274fde..'      Unique identificator of the configuration
  I   BUNnnn_P  0                         Priority of the target in this bundle
  S   BUNnnn_I  'unknown '                Name of the target
  S   BUNnnn_T  'UNASSIGNED'              Type of target ('STAR', 'SKY', 'TARGET', 'UNASSIGNED'

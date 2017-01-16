@@ -149,8 +149,6 @@ along the pseudo-slit the best focus compromise. The best focus obtained for
 the VPH of choice should then be stored and used to determine the best foci for
 all spectral configurations (and instrument modes; TBC).
 
-
-
 Procedure
 +++++++++
 Spectrograph focus image sets through; at least, one of the MEGARA VPHs should
@@ -219,10 +217,6 @@ corresponding field of view. A view of the field should be also produced in
 order to evaluate whether or not the angle of the Folded-Cass rotator matches
 that specified by the observer.
 
-
-Procedure
-+++++++++
-
 Products
 ++++++++
 Fine acquisition image sets should be obtained at the beginning of the
@@ -283,10 +277,6 @@ the expected and the actual positions of these reference sources in order to
 determine the best-fitting set of offsets (both in X and Y) and rotation angle
 to apply to the telescope and Folded-Cass rotator, respectively, to then
 continue with one of the scientific observing modes described in next Section.
-
-
-Procedure
-+++++++++
 
 Products
 ++++++++

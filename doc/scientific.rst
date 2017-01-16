@@ -47,9 +47,6 @@ larger than the LCB IFU field of view) but a mapping observing mode is not
 required to be used a blank-sky image set should be obtained using the same
 instrumental configuration as for the science target.
 
-Procedure
-+++++++++
-
 Products
 ++++++++
 The observer will obtain LCB IFU image sets as part of the routine scientific
@@ -122,10 +119,6 @@ available) and subtract it from the spectra of the targets. The processed
 spectra should then be visualized using the on-line quick-look software. If
 neither a blank-sky observation nor blank-sky positioners are available no sky
 subtraction will be performed.
-
-
-Procedure
-+++++++++
 
 Products
 ++++++++

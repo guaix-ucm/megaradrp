@@ -14,7 +14,7 @@ be able to be installed and work properly:
  - `numpy <http://www.numpy.org/>`_ >= 1.7
  - `scipy <http://www.scipy.org/>`_
  - `astropy <http://www.astropy.org/>`_ >= 1.0
- - `numina <https://pypi.python.org/pypi/numina/>`_ >= 0.13
+ - `numina <https://pypi.python.org/pypi/numina/>`_ >= 0.14
  - `scikit-image <http://scikit-image.org/>`_
 
 Additional packages are optionally required:
@@ -30,7 +30,12 @@ Installing MEGARA DRP
 Using Conda
 ===========
 
-TBD
+`megaradrp` can be installed with conda using a custom channel.
+
+From the shell, execute:::
+
+ conda install -c sergiopasra/label/dev megaradrp
+
 
 Using pip
 =========
@@ -44,22 +49,8 @@ To install with pip, simply run:::
     have Numpy installed, since otherwise pip will sometimes try to upgrade 
     your Numpy installation, which may not always be desired.
 
-MEGARA DRP is registered in the Python Package Index. That means (among 
-other things) that can be installed inside the environment with one command.
 
 
-  (myenv) $ pip install megaradrp
-  
-The requirements of megaradrp will be downloaded and installed inside
-the virtual environment. Once the installation is finished, you can check
-by listing the installed recipes with the command line interface tool ``numina``::
-
-  (myenv) $ ./bin/numina show-instruments
-  INFO: Numina simple recipe runner version 0.13.0
-  Instrument: MEGARA
-   has configuration 'default'
-   has pipeline 'default', version 1
-   has pipeline 'experimental', version 1
 
 Building from source
 ====================
@@ -78,7 +69,21 @@ default installation requires administrative privileges. The different
 installation options can be checked with::
 
    $ python setup.py install --help
-   
+
+
+Checking the installation
+=========================
+Once the installation is finished, you can check
+by listing the installed recipes with the command line interface tool ``numina``::
+
+  (myenv) $ ./bin/numina show-instruments
+  INFO: Numina simple recipe runner version 0.13.0
+  Instrument: MEGARA
+   has configuration 'default'
+   has pipeline 'default', version 1
+   has pipeline 'experimental', version 1
+
+
 Development version
 -------------------
 
