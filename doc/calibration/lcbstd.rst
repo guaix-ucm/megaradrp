@@ -76,10 +76,6 @@ spectrophotometric standard stars) we might also need to apply a small drift
 motion (typically of a few arcsec per second) to one of the telescope axes at
 the start of the observation or, more likely, slightly defocus the telescope.
 
-
-Procedure
-+++++++++
-
 Products
 ++++++++
 Standard star image sets are to be obtained only as part of the routine
