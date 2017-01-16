@@ -45,6 +45,11 @@ class ProcessedMultiRSS(ProcessedFrame):
     pass
 
 
+class ProcessedSpectrum(ProcessedFrame):
+    """A 1d spectrum"""
+    pass
+
+
 class MasterBias(MEGARAProductFrame):
     """A Master Bias image"""
     pass
