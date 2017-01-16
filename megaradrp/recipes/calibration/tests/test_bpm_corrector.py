@@ -22,11 +22,14 @@
 from numina.core import DataFrame, ObservationResult
 import astropy.io.fits as fits
 from numina.core.requirements import ObservationResultRequirement
-from numina.flow.processing import BadPixelCorrector
+
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
-from megaradrp.processing.trimover import OverscanCorrector, TrimImage
+
+from numina.array import combine
+
+from megaradrp.processing.combine import basic_processing_with_combination
 
 from megaradrp.recipes.calibration.tests.test_bpm_common import crear_archivos
 from megaradrp.instrument.loader import build_instrument_config, Loader
@@ -39,10 +42,7 @@ class TestRecipe(MegaraBaseRecipe):
 
     def __init__(self, directorio):
         self.directorio = directorio
-        super(TestRecipe, self).__init__(version="0.1.0")
-        self._MegaraBaseRecipe__flow['TestRecipe'] = [OverscanCorrector,
-                                                      TrimImage,
-                                                      BadPixelCorrector]
+        super(TestRecipe, self).__init__()
 
     def run(self, rinput):
         import copy
@@ -51,25 +51,16 @@ class TestRecipe(MegaraBaseRecipe):
         obresult1 = copy.copy(rinput.obresult)
         obresult1.frames = rinput.obresult.frames[:N]
 
-        params = {}
+        flow1 = self.init_filters(rinput, rinput.obresult.configuration)
+        img = basic_processing_with_combination(rinput, flow1, method=combine.median)
+        hdr = img[0].header
+        self.set_base_headers(hdr)
 
-        with rinput.master_bias.open() as hdul:
-            mbias = hdul[0].data.copy()
+        reduced1 = img
 
-        params['biasmap'] = mbias
-
-        reduced1 = self.bias_process_common(obresult1, params)
         fits.writeto(self.directorio + '/reduced_flat.fits', reduced1[0].data,
                      clobber=True)
 
-        try:
-            with rinput.master_bpm.open() as hdul:
-                bpm = hdul[0].data.copy()
-            params['bpm'] = bpm
-        except:
-            pass
-
-        reduced1 = self.bias_process_common(obresult1, params)
         fits.writeto(self.directorio + '/reduced_flat_bpm.fits',
                      reduced1[0].data, clobber=True)
 

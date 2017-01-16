@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -36,7 +36,9 @@ from astropy.modeling import fitting
 from scipy.stats import norm
 from astropy.modeling.models import custom_model
 from numina.core import Product, Requirement
+from numina.array import combine
 
+from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.core.recipe import MegaraBaseRecipe
 import megaradrp.requirements as reqs
 from megaradrp.types import MasterWeights
@@ -74,7 +76,6 @@ class WeightsRecipe(MegaraBaseRecipe):
     def _add_file_to_tar(self, file_name, tar):
         '''
         :param file_name: <str> Name of the *.fits files
-        :param path: <str> Path where fits files are located
         :param tar: <tarfile> descriptor of the tarfile object
         :return:
         '''
@@ -298,12 +299,17 @@ class WeightsRecipe(MegaraBaseRecipe):
 
         return final
 
-
     def run(self, rinput):
         temporary_path = mkdtemp()
 
-        parameters = self.get_parameters(rinput)
-        data2 = self.bias_process_common(rinput.obresult, parameters)
+        flow1 = self.init_filters(rinput, rinput.obresult.configuration)
+        img = basic_processing_with_combination(rinput, flow1, method=combine.median)
+        hdr = img[0].header
+        self.set_base_headers(hdr)
+
+        self.save_intermediate_img(img, 'reduced_image.fits')
+
+        data2 = img
 
         pols2 = [t.polynomial for t in rinput.tracemap.contents]
 
@@ -324,8 +330,12 @@ class WeightsRecipe(MegaraBaseRecipe):
         return result
 
 
+# FIXME: GaussBox is duplicated here
+
+
 def norm_pdf_t(x):
     return np.exp(-0.5 * x * x) / M_SQRT_2_PI
+
 
 def gauss_box_model_deriv(x, amplitude=1.0, mean=0.0, stddev=1.0, hpix=0.5):
     '''Integrate a gaussian profile.'''
@@ -345,6 +355,7 @@ def gauss_box_model_deriv(x, amplitude=1.0, mean=0.0, stddev=1.0, hpix=0.5):
 
     return (da, dl, ds, dd)
 
+
 def gauss_box_model(x, amplitude=1.0, mean=0.0, stddev=1.0,
                         hpix=0.5):
     '''Integrate a gaussian profile.'''
@@ -352,6 +363,7 @@ def gauss_box_model(x, amplitude=1.0, mean=0.0, stddev=1.0,
     m2 = z + hpix / stddev
     m1 = z - hpix / stddev
     return amplitude * (norm.cdf(m2) - norm.cdf(m1))
+
 
 def pixcont(i, x0, sig, hpix=0.5):
     '''Integrate a gaussian profile.'''
@@ -361,10 +373,12 @@ def pixcont(i, x0, sig, hpix=0.5):
     z1 = z - hpixs
     return norm.cdf(z2) - norm.cdf(z1)
 
+
 def g_profile(xl, l, s):
     '''A gaussian profile.'''
     z = (xl - l) / s
     return np.exp(-0.5 * z ** 2)
+
 
 def fit1d_profile(xl, yl, init0, N, nloop=10, S=3):
     """Iterative fitting"""
@@ -418,6 +432,7 @@ def fit1d_profile(xl, yl, init0, N, nloop=10, S=3):
 
     return init, (changes_a, changes_m, changes_s)
 
+
 def calc_sparse_matrix(final, nrows, cut=1.0e-6, extra=10):
     from scipy.sparse import lil_matrix
 
@@ -449,61 +464,64 @@ def calc_sparse_matrix(final, nrows, cut=1.0e-6, extra=10):
     wcol = w_init.tocsr()
     return wcol
 
+
 def calc_profile(data1, pols, col, sigma, start=0, doplots=False):
-        # print 'calc_profile: fitting column', col
+    # print 'calc_profile: fitting column', col
 
-        peaks = np.array([pol(col) for pol in pols])
+    peaks = np.array([pol(col) for pol in pols])
 
-        boxd = data1[:, col]
+    boxd = data1[:, col]
 
-        centers = peaks[:] - start
-        sigs = sigma * np.ones_like(centers)
-        scale_sig = 0.25  # For sigma ~= 1.5, the peak is typically 0.25
-        ecenters = np.ceil(centers - 0.5).astype('int')
+    centers = peaks[:] - start
+    sigs = sigma * np.ones_like(centers)
+    scale_sig = 0.25  # For sigma ~= 1.5, the peak is typically 0.25
+    ecenters = np.ceil(centers - 0.5).astype('int')
 
-        N = len(centers)
-        cmax = boxd.max()
-        yl = boxd / cmax  # Normalize to peak
-        xl = np.arange(len(yl))
+    N = len(centers)
+    cmax = boxd.max()
+    yl = boxd / cmax  # Normalize to peak
+    xl = np.arange(len(yl))
 
-        init_vals = {}
-        for i in range(N):
-            init_vals[i] = {}
-            init_vals[i]['amplitude'] = yl[ecenters[i]] / scale_sig
-            # init_vals[i]['mean'] = ecenters[i]
-            init_vals[i]['mean'] = centers[i]
-            init_vals[i]['stddev'] = sigma
+    init_vals = {}
+    for i in range(N):
+        init_vals[i] = {}
+        init_vals[i]['amplitude'] = yl[ecenters[i]] / scale_sig
+        # init_vals[i]['mean'] = ecenters[i]
+        init_vals[i]['mean'] = centers[i]
+        init_vals[i]['stddev'] = sigma
 
-        final, changes = fit1d_profile(xl, yl, init_vals, N, nloop=10)
+    final, changes = fit1d_profile(xl, yl, init_vals, N, nloop=10)
 
-        for i in range(N):
-            final[i]['amplitude'] = final[i]['amplitude'] * cmax
+    for i in range(N):
+        final[i]['amplitude'] = final[i]['amplitude'] * cmax
 
-        return final
+    return final
+
 
 def calc_all(col, data2, pols2, nrows, temporary_path):
-        '''
-        Poner bien los directorios
-        :param col:
-        :return:
-        '''
-        prefix = os.path.join(temporary_path,'json')
-        sigma = 1.5  # Typical value for MEGARA
-        fname = os.path.join(prefix, '%d.json' % (col,))
+    '''
+    Poner bien los directorios
+    :param col:
+    :return:
+    '''
+    prefix = os.path.join(temporary_path,'json')
+    sigma = 1.5  # Typical value for MEGARA
+    fname = os.path.join(prefix, '%d.json' % (col,))
 
-        final = calc_profile(data2, pols2, col, sigma, start=0)
+    final = calc_profile(data2, pols2, col, sigma, start=0)
 
-        with open(fname, 'w') as outfile:
-            ujson.dump(final, outfile)
+    with open(fname, 'w') as outfile:
+        ujson.dump(final, outfile)
 
-        wm = calc_sparse_matrix(final, nrows, cut=1.0e-6, extra=10)
+    wm = calc_sparse_matrix(final, nrows, cut=1.0e-6, extra=10)
 
-        prefixw = os.path.join(temporary_path,'chunks')
-        jsonname = os.path.join(prefixw, '%d' % (col,))
+    prefixw = os.path.join(temporary_path,'chunks')
+    jsonname = os.path.join(prefixw, '%d' % (col,))
 
-        np.savez(jsonname, data=wm.data, indices=wm.indices, indptr=wm.indptr,
-                 shape=wm.shape)
+    np.savez(jsonname, data=wm.data, indices=wm.indices, indptr=wm.indptr,
+             shape=wm.shape)
 
-        return final, col
+    return final, col
+
 
 GaussBox = custom_model(gauss_box_model,func_fit_deriv=gauss_box_model_deriv)
