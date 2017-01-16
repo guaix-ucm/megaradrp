@@ -1,7 +1,7 @@
-Linearity tests
----------------
+Linearity test
+--------------
 
-:Mode: Linearity tests
+:Mode: Linearity test
 :Usage: Offline
 :Key: MEGARA_LINEARITY_TEST
 :Product:

@@ -141,12 +141,12 @@ pipelines:
       MEGARA_FOCUS_TELESCOPE: megaradrp.recipes.auxiliary.focustel.FocusTelescopeRecipe
       MEGARA_LCB_ACQUISITION: megaradrp.recipes.auxiliary.acquisitionlcb.AcquireLCBRecipe
       MEGARA_LCB_IMAGE: megaradrp.recipes.scientific.lcb.LCBImageRecipe
-      MEGARA_LCB_STD_STAR: megaradrp.recipes.scientific.lcbstdstar.LCBStandardRecipe
+      MEGARA_LCB_STD_STAR: megaradrp.recipes.calibration.lcbstdstar.LCBStandardRecipe
       MEGARA_MOS_ACQUISITION: megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe
       MEGARA_MOS_IMAGE: megaradrp.recipes.scientific.mos.MOSImageRecipe
-      MEGARA_MOS_STD_STAR: megaradrp.recipes.scientific.mosstdstar.MOSStandardRecipe
-      MEGARA_EXTINCTION_STAR: megaradrp.recipes.scientific.extinctionstar.ExtinctionStarRecipe
-      MEGARA_SENSITIVITY_STAR: megaradrp.recipes.scientific.sensivitystar.SensivityStarRecipe
+      MEGARA_MOS_STD_STAR: megaradrp.recipes.calibration.mosstdstar.MOSStandardRecipe
+      MEGARA_EXTINCTION_STAR: megaradrp.recipes.combined.extinctionstar.Recipe
+      MEGARA_SENSITIVITY_STAR: megaradrp.recipes.combined.sensivitystar.Recipe
 products:
 - name: megaradrp.products.TraceMap
   mode: MEGARA_TRACE_MAP

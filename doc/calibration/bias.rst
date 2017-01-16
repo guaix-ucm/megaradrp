@@ -2,7 +2,7 @@
 Bias Image
 **********
 
-:Mode: Bias Image
+:Mode: Bias
 :Usage: Offline, Online
 :Key: MEGARA_BIAS_IMAGE
 :Product: :class:`~megaradrp.types.MasterBias`

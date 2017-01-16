@@ -19,18 +19,17 @@
 
 """Calibration Recipes for Megara"""
 
-from .base import ImageRecipe
 
-class SensivityStarRecipe(ImageRecipe):
-    """Process Sensivity Star Recipe."""
+from megaradrp.recipes.scientific.base import ImageRecipe
 
-    def __init__(self):
-        super(SensivityStarRecipe, self).__init__()
+
+class Recipe(ImageRecipe):
+    """Process Extinction Star Recipe."""
 
     def run(self, rinput):
 
-        self.logger.info('starting SensivityStarRecipe reduction')
+        self.logger.info('starting ExtinctionStarRecipe reduction')
 
-        result = super(SensivityStarRecipe,self).run(rinput)
+        result = super(Recipe,self).run(rinput)
 
         return self.create_result(final=result[0], target=result[1], sky=result[2])

@@ -28,7 +28,6 @@ from numina.flow import SerialFlow
 from numina.array import combine
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import WavelengthCalibration
 import megaradrp.requirements as reqs
 from megaradrp.processing.combine import basic_processing_with_combination
 

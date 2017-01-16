@@ -36,7 +36,7 @@ class MOSStandardRecipe(ImageRecipe):
 
     See Also
     --------
-    megaradrp.recipes.scientific.lcbstdstar.LCBStandardRecipe
+    megaradrp.recipes.calibration.lcbstdstar.LCBStandarddRecipe
 
     Notes
     -----

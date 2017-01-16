@@ -1,7 +1,7 @@
 Dark Image
 ----------
 
-:Mode: Dark Image
+:Mode: Dark
 :Usage: Offline
 :Key: MEGARA_DARK_IMAGE
 :Product: :class:`~megaradrp.types.MasterDark`

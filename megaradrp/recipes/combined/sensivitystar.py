@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2011-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -20,16 +20,16 @@
 """Calibration Recipes for Megara"""
 
 
-from .base import ImageRecipe
+from megaradrp.recipes.scientific.base import ImageRecipe
 
 
-class ExtinctionStarRecipe(ImageRecipe):
-    """Process Extinction Star Recipe."""
+class Recipe(ImageRecipe):
+    """Process Sensivity Star Recipe."""
 
     def run(self, rinput):
 
-        self.logger.info('starting ExtinctionStarRecipe reduction')
+        self.logger.info('starting SensivityStarRecipe reduction')
 
-        result = super(ExtinctionStarRecipe,self).run(rinput)
+        result = super(Recipe,self).run(rinput)
 
         return self.create_result(final=result[0], target=result[1], sky=result[2])

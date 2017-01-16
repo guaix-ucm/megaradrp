@@ -15,3 +15,4 @@ Observing modes are described in full detail elsewhere (document TEC/MEG/05)
    calibration/index
    auxiliary
    scientific
+   combined

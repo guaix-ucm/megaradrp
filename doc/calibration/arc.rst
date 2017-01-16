@@ -1,7 +1,7 @@
-Arc Calibration
----------------
+Arc
+---
 
-:Mode: Arc Calibration
+:Mode: Arc
 :Usage: Offline
 :Key: MEGARA_ARC_CALIBRATION
 :Product: :class:`~megaradrp.products.wavecalibration.WavelengthCalibration`

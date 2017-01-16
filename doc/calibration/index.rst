@@ -78,3 +78,5 @@ MEGARA team.
    twilight
    bpm
    linearity
+   lcbstd
+   mosstd
