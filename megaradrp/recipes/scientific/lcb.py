@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2011-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -19,7 +19,7 @@
 
 """LCB Direct Image Recipe for Megara"""
 
-import numpy
+
 from numina.core import Product
 
 from megaradrp.recipes.scientific.base import ImageRecipe
@@ -27,11 +27,45 @@ from megaradrp.types import ProcessedRSS, ProcessedFrame
 
 
 class LCBImageRecipe(ImageRecipe):
-    """Process LCB images."""
+    """Process LCB images.
 
-    reduced = Product(ProcessedFrame)
-    final = Product(ProcessedRSS)
-    target = Product(ProcessedRSS)
+    This recipe processes a set of images
+    obtained in **LCB image** mode and returns
+    the sky subtracted RSS.
+
+    See Also
+    --------
+    megaradrp.recipes.scientific.mos.MOSImageRecipe
+    megaradrp.recipes.scientific.lcbfastmapping.LCBFastMappingRecipe
+
+    Notes
+    -----
+    Images provided by `obresult` are trimmed and corrected
+    from overscan, bad pixel mask (if `master_bpm` is not None),
+    bias, dark current (if `master_dark` is not None) and
+    slit-flat (if `master_slitflat` is not None).
+
+    Images thus corrected are the stacked using the median.
+    The result of the combination is saved as an intermediate result, named
+    'reduced_image.fits'. This combined image is also returned in the field
+    `reduced_image` of the recipe result.
+
+    The apertures in the 2D image are extracted, using the information in
+    `master_traces` and resampled according to the wavelength calibration in
+    `master_wlcalib`. Then is divided by the `master_fiberflat`.
+    The resulting RSS is saved as an intermediate
+    result named 'reduced_rss.fits'. This RSS is also returned in the field
+    `reduced_rss` of the recipe result.
+
+    The sky is subtracted by combining the the fibers marked as `SKY`
+    in the fibers configuration. The RSS with sky subtracted is returned ini the
+    field `final_rss` of the recipe result.
+
+    """
+
+    reduced_image = Product(ProcessedFrame)
+    final_rss = Product(ProcessedRSS)
+    reduced_rss = Product(ProcessedRSS)
     sky = Product(ProcessedRSS)
 
     def run(self, rinput):
@@ -46,8 +80,8 @@ class LCBImageRecipe(ImageRecipe):
         self.logger.info('end LCB reduction')
 
         return self.create_result(
-            reduced=reduced2d,
-            final=final,
-            target=origin,
+            reduced_image=reduced2d,
+            final_rss=final,
+            reduced_rss=origin,
             sky=sky
         )
