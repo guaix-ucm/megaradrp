@@ -36,7 +36,6 @@ class LCBImageRecipe(ImageRecipe):
     See Also
     --------
     megaradrp.recipes.scientific.mos.MOSImageRecipe
-    megaradrp.recipes.scientific.lcbfastmapping.LCBFastMappingRecipe
 
     Notes
     -----

@@ -106,11 +106,6 @@ modes:
   description: Sensivity Star Recipe
   key: MEGARA_SENSITIVITY_STAR
   tagger: megaradrp.taggers.tagger_base_image
-- name: LCB Fast Mapping Recipe
-  summary: LCB Fast Mapping Recipe
-  description: LCB Fast Mapping Recipe
-  key: MEGARA_LCB_FAST_MAPPING
-  tagger: megaradrp.taggers.tagger_base_image
 - name: Linearity test
   summary: Test the linearity of the MEGARA detector
   description: Test the linearity of the MEGARA detector
@@ -151,7 +146,6 @@ pipelines:
       MEGARA_FOCUS_TELESCOPE: megaradrp.recipes.auxiliary.focustel.FocusTelescopeRecipe
       MEGARA_LCB_ACQUISITION: megaradrp.recipes.auxiliary.acquisitionlcb.AcquireLCBRecipe
       MEGARA_LCB_IMAGE: megaradrp.recipes.scientific.lcb.LCBImageRecipe
-      MEGARA_LCB_FAST_MAPPING: megaradrp.recipes.scientific.lcbfastmapping.LCBFastMappingRecipe
       MEGARA_LCB_STD_STAR: megaradrp.recipes.scientific.lcbstdstar.LCBStandardRecipe
       MEGARA_MOS_ACQUISITION: megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe
       MEGARA_MOS_IMAGE: megaradrp.recipes.scientific.mos.MOSImageRecipe
