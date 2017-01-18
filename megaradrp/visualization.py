@@ -149,8 +149,8 @@ if __name__ == '__main__':
             x = []
             y = []
             for fiber in fiberconf.fibers.values():
-                x.append(-fiber.x)
-                y.append(-fiber.y)
+                x.append(fiber.x)
+                y.append(fiber.y)
             cut1 = 1000
             cut2 = 3000
             z = img[0].data[:, cut1:cut2].mean(axis=1)
