@@ -146,7 +146,7 @@ pipelines:
       MEGARA_MOS_IMAGE: megaradrp.recipes.scientific.mos.MOSImageRecipe
       MEGARA_MOS_STD_STAR: megaradrp.recipes.calibration.mosstdstar.MOSStandardRecipe
       MEGARA_EXTINCTION_STAR: megaradrp.recipes.combined.extinctionstar.Recipe
-      MEGARA_SENSITIVITY_STAR: megaradrp.recipes.combined.sensivitystar.Recipe
+      MEGARA_SENSITIVITY_STAR: megaradrp.recipes.combined.sensstar.Recipe
 products:
 - name: megaradrp.products.TraceMap
   mode: MEGARA_TRACE_MAP
