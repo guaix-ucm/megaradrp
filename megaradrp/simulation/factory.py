@@ -187,7 +187,11 @@ class MegaraImageFactory(object):
         extract(pheader, metacontrol, ['ob_data', 'count'], 'NNSEC', default=0.0)
 
         instrument = control.get('MEGARA')
+        telescope = control.get('GTC')
+
         meta = instrument.config_info()
+        meta.update(telescope.config_info())
+
         # not yet implemented
         # pheader['AMPLAYOU'] = "NORMAL"
         # pheader['AMPUP'] = "G"
@@ -196,7 +200,6 @@ class MegaraImageFactory(object):
         # pheader['GAINLOW'] = meta_det.get('gainlow', 1.0)
         # pheader['RONUP'] = meta_det.get('ronup', 1.0)
         # pheader['RONLOW'] = meta_det.get('ronlow', 1.0)
-
         extract(pheader, meta, ['MEGARA.Detector', 'exposed'], 'EXPTIME')
         extract(pheader, meta, ['MEGARA.Detector', 'exposed'], 'EXPOSED')
         extract(pheader, meta, ['MEGARA.Detector', 'vbin'], 'VBIN')
@@ -211,6 +214,7 @@ class MegaraImageFactory(object):
         extract(pheader, meta, ['MEGARA.Wheel', 'selected', 'wl_range'], 'VPHWL2', selector=lambda x: x[2])
 
         extract(pheader, meta, ['MEGARA.Focus', 'focus'], 'FOCUS', default=0)
+        extract(pheader, meta, ['GTC.Focus', 'focus'], 'FOCUST', default=3)
         extract(pheader, meta, ['MEGARA.Cover', 'label'], 'cover')
         extract(pheader, meta, ['MEGARA.Cover.Left', 'label'], 'cover1')
         extract(pheader, meta, ['MEGARA.Cover.Right', 'label'], 'cover2')
