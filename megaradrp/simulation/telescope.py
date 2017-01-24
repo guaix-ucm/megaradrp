@@ -30,12 +30,12 @@ class M2FocusActuator(FocusActuator):
 
         # Focus
         self.internal_focus_factor = 1.0
-        self._ref_focus = 0
+        self._ref_focus = 1120
         self._internal_focus = self._ref_focus
 
     def set_focus(self, x):
         """Arbitrary parametrization of the focus"""
-        if x < -3000 or x > 3000:
+        if x < -4000 or x > 4000:
             raise ValueError('telescope focus out of limits')
 
         self.internal_focus_factor = 1+ 1.9 * (math.cosh((x - self._ref_focus) / 3000.0) - 1)
