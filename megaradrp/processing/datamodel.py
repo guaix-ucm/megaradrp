@@ -39,7 +39,10 @@ class MegaraDataModel(DataModel):
         self._meta = {
             'texp': ('EXPTIME', None),
             'vph': ('VPH', 'undefined'),
-            'obsmode': ('OBSMODE', 'undefined'),
+            'vphpos': ('VPHWHPOS', 'undefined'),
+            'insmode': ('INSMODE', 'undefined'),
+            'focus': ('FOCUS', 'undefined'),
+            'osfilter': ('OSFILTER', 'undefined'),
             'tstamp': ('TSTAMP', 'undefined')
         }
 
