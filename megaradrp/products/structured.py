@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2016-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -24,6 +24,7 @@ import uuid
 
 import numina.core.types
 import numina.core.products
+from numina.ext.gtc import DF
 
 
 class BaseStructuredCalibration(numina.core.products.DataProductTag,
@@ -52,6 +53,8 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
         self.total_fibers = 0
         self.missing_fibers = []
         self.error_fitting = []
+        #
+        self.add_dialect_info('gtc', DF.TYPE_STRUCT)
 
     @property
     def calibid(self):
