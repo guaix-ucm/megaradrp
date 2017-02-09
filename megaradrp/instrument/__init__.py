@@ -28,6 +28,7 @@ vph_thr = {
         'LR-R': 0.10,
         'LR-I': 0.27,
         'LR-Z': 0.27,
+        'MR-U': 0.05,
         'MR-VR': 0.05,
         'MR-G': 0.05,
         'MR-V': 0.02,
@@ -42,6 +43,7 @@ vph_thr = {
         'LR-R': 0.10,
         'LR-I': 0.27,
         'LR-Z': 0.27,
+        'MR-U': 0.05,
         'MR-UB': 0.05,
         'MR-G': 0.05,
         'MR-V': 0.02,
@@ -67,6 +69,8 @@ vph_thr_arc = {
          'LR-I': {'min_distance': 10,
                   'threshold': 0.00},
          'LR-Z': {'min_distance': 10,
+                  'threshold': 0.00},
+         'MR-U': {'min_distance': 10,
                   'threshold': 0.00},
          'MR-UB': {'min_distance': 10,
                   'threshold': 0.00},
@@ -97,6 +101,8 @@ vph_thr_arc = {
          'LR-I': {'min_distance': 10,
                   'threshold': 0.01},
          'LR-Z': {'min_distance': 10,
+                  'threshold': 0.00},
+         'MR-U': {'min_distance': 10,
                   'threshold': 0.00},
          'MR-UB': {'min_distance': 10,
                   'threshold': 0.00},
@@ -154,6 +160,12 @@ WLCALIB_PARAMS = {
         'LR-Z': {
             'crval': 7960.0,
             'cdelt': 0.41,
+            'crpix': 1.0,
+            'npix': 4300
+        },
+        'MR-U': {
+            'crval': 3905.0,
+            'cdelt': 0.089,
             'crpix': 1.0,
             'npix': 4300
         },
@@ -240,6 +252,12 @@ WLCALIB_PARAMS = {
         'LR-Z': {
             'crval': 7960.0,
             'cdelt': 0.41,
+            'crpix': 1.0,
+            'npix': 4300
+        },
+        'MR-U': {
+            'crval': 3905.0,
+            'cdelt': 0.089,
             'crpix': 1.0,
             'npix': 4300
         },
