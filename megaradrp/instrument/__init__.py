@@ -211,6 +211,12 @@ WLCALIB_PARAMS = {
             'crpix': 1.0,
             'npix': 4300
         },
+        'MR-I': {
+            'crval': 7360.0,
+            'cdelt': 0.1845,
+            'crpix': 1.0,
+            'npix': 4300
+        },
         'HR-R': {
             'crval': 6390.0,
             'cdelt': 0.0974,
@@ -300,6 +306,12 @@ WLCALIB_PARAMS = {
         'MR-RI': {
             'crval': 6735.0,
             'cdelt': 0.17,
+            'crpix': 1.0,
+            'npix': 4300
+        },
+        'MR-I': {
+            'crval': 7360.0,
+            'cdelt': 0.1845,
             'crpix': 1.0,
             'npix': 4300
         },
