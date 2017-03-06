@@ -22,7 +22,7 @@
 import logging
 
 
-__version__ = '0.6.dev0'
+__version__ = '0.6.dev2'
 
 
 # Top level NullHandler
