@@ -1,0 +1,71 @@
+language:
+#  - objective-c  # Used for OSX tests
+  - python        # Used for linux tests
+#  - c
+
+os:
+  - linux
+#  - osx
+
+env:
+  - python=2.7
+  - python=3.4
+
+#matrix:
+#
+#  # Don't wait for allowed failures
+#  fast_finish: true
+#
+#  include:
+#
+#    # Try MacOS X
+#    - os: osx
+#      env: PYTHON_VERSION=2.7 SETUP_CMD='test' OPTIONAL_DEPS=true
+#
+#    - os: linux
+#      env: PYTHON_VERSION=2.7 SETUP_CMD='test --open-files'
+#    - os: linux
+#      env: PYTHON_VERSION=3.4 SETUP_CMD='test --open-files'
+
+branches:
+  only:
+    - master
+
+before_install:
+  - echo $TRAVIS_OS_NAME
+  - echo ${TRAVIS_PYTHON_VERSION:0:1}
+  - echo $TRAVIS_PYTHON_VERSION
+  - echo $python
+#  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get update; fi
+#  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then sudo apt-get install libsdl1.2-dev; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ $python == "2.7" ]; then wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh; fi ; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then chmod +x miniconda.sh; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then ./miniconda.sh -b -p /home/travis/mc; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then export PATH=/home/travis/mc/bin:$PATH; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then brew update; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then if [ $python == "2.7" ]; then wget http://repo.continuum.io/miniconda/Miniconda-latest-MacOSX-x86_64.sh -O miniconda.sh; else wget http://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh; fi ; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then chmod +x miniconda.sh; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then ./miniconda.sh -b; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then if [ $python == "2.7" ]; then export PATH=/Users/travis/miniconda/bin:$PATH; else export PATH=/Users/travis/miniconda3/bin:$PATH; fi ; fi
+
+install:
+  # See:
+  # https://groups.google.com/a/continuum.io/forum/#!topic/conda/RSFENqovnro
+  - conda update --yes conda
+  - conda list
+  - conda install --yes numpy
+  - conda create -n testenv --yes --file requirements.txt
+  - conda list
+  - source activate testenv
+  - pip install -e git+git://github.com/guaix-ucm/numina.git#egg=numina
+  - echo $PATH
+  - which python
+  - conda info
+  - conda list
+  - python setup.py install
+  # Build in place so we can run tests
+  - python setup.py build_ext --inplace
+  - pwd
+
+script:
+  - py.test -s -v megaradrp
