@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2011-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -41,7 +41,7 @@ def test_recipe1(drpmocker):
     insdrp = numina.drps.get_system_drps().query_by_name('MEGARA')
     pipeline = insdrp.pipelines.get('default')
 
-    recipe_fqn = pipeline.recipes.get('MEGARA_BIAS_IMAGE')
+    recipe_fqn = pipeline.recipes.get('MegaraBiasImage')
     RecipeClass = import_object(recipe_fqn)
 
     assert RecipeClass is BiasRecipe

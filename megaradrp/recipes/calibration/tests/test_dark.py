@@ -53,7 +53,7 @@ def test_dark():
 
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
-    ob.mode = 'MEGARA_DARK_IMAGE'
+    ob.mode = 'MegaraDarkImage'
     ob.configuration = build_instrument_config('4fd05b24-2ed9-457b-b563-a3c618bb1d4c', loader=Loader())
 
     names = []

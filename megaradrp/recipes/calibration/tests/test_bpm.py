@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -81,7 +81,7 @@ def test_bpm():
 
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
-    ob.mode = 'MEGARA_BIAS_IMAGE'
+    ob.mode = 'MegaraBiasImage'
     ob.configuration = build_instrument_config('4fd05b24-2ed9-457b-b563-a3c618bb1d4c', loader=Loader())
 
     names = []

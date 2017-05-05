@@ -10,144 +10,145 @@ modes:
 - name: Success
   summary: A mode where the recipe successes
   description: A mode where the recipe successes, used for testing
-  key: MEGARA_SUCCESS
+  key: MegaraSuccess
   tagger: null
 - name: Fail
   summary: A mode where the recipe fails
   description: A mode where the recipe fails, used for testing
-  key: MEGARA_FAIL
+  key: MegaraFail
   tagger: null
 - name: Bias Image
   summary: Recipe to process bias images
   description: Recipe to process bias images
-  key: MEGARA_BIAS_IMAGE
+  key: MegaraBiasImage
   tagger: null
 - name: Dark current Image
   summary: Summary of Dark current Image
   description: Lines and mode lines
-  key: MEGARA_DARK_IMAGE
+  key: MegaraDarkImage
   tagger: null
 - name: Fiber Flat Image
   summary: Summary of Fiber Flat Image
   description: Lines and mode lines
-  key: MEGARA_FIBER_FLAT_IMAGE
+  key: MegaraFiberFlatImage
   tagger: megaradrp.taggers.tagger_base_image
 - name: Image with the fiber MOS
   summary: Summary of Fiber MOS image
   description: Lines and mode lines
-  key: MEGARA_MOS_IMAGE
+  key: MegaraMosImage
   tagger: megaradrp.taggers.tagger_base_image
 - name: Trace Map
   summary: Summary of Fiber MOS image
   description: Lines and mode lines
-  key: MEGARA_TRACE_MAP
+  key: MegaraTraceMap
   tagger: megaradrp.taggers.tagger_base_image
 - name: Arc Calibration
   summary: Summary of Arc Calibration
   description: Process an Arc image
-  key: MEGARA_ARC_CALIBRATION
+  key: MegaraArcCalibration
   tagger: megaradrp.taggers.tagger_base_image
 - name: Bad Pixel Mask
   summary: Bad Pixel Mask
   description: Bad Pixels
-  key: MEGARA_BAD_PIXEL_MASK
+  key: MegaraBadPixelMask
   tagger: null
 - name: Slit Flat
   summary: Slit Flat
   description: Slit Flat
-  key: MEGARA_SLIT_FLAT
+  key: MegaraSlitFlat
   tagger: megaradrp.taggers.tagger_base_image
 - name: Weights
   summary: Weights
   description: Weights
-  key: MEGARA_WEIGHTS
+  key: MegaraWeights
   tagger: megaradrp.taggers.tagger_base_image
-- key: MEGARA_FOCUS_SPECTROGRAPH
+- key: MegaraFocusSpectrograph
   name: Focus Spectrograph
   tagger: megaradrp.taggers.tagger_base_image
   validator: megaradrp.validators.validate_focus
 - name: Twillight fiber flat
   summary: Twillight fiber flat spectrum
   description: Twillight fiber flat spectrum
-  key: MEGARA_TWILIGHT_FLAT_IMAGE
+  key: MegaraTwilightFlatImage
   tagger: megaradrp.taggers.tagger_base_image
 - name: Image with the LCB
   summary: Image with the LCB
   description: Image with the LCB
-  key: MEGARA_LCB_IMAGE
+  key: MegaraLcbImage
   tagger: megaradrp.taggers.tagger_base_image
 - name: Image with the MOS
   summary: Image with the MOS
   description: Image with the MOS
-  key: MEGARA_MOS_IMAGE
+  key: MegaraMosImage
   tagger: megaradrp.taggers.tagger_base_image
 - name: Extinction Star Recipe
   summary: Extinction Star Recipe
   description: Extinction Star Recipe
-  key: MEGARA_EXTINCTION_STAR
+  key: MegaraExtinctionStar
   tagger: megaradrp.taggers.tagger_base_image
 - name: LCB Standard Recipe
   summary: LCB Standard Recipe
   description: LCB Standard Recipe
-  key: MEGARA_LCB_STD_STAR
+  key: MegaraLcbStdStar
   tagger: megaradrp.taggers.tagger_base_image
 - name: MOS Standard Recipe
   summary: MOS Standard Recipe
   description: MOS Standard Recipe
-  key: MEGARA_MOS_STD_STAR
+  key: MegaraMosStdStar
   tagger: megaradrp.taggers.tagger_base_image
 - name: Sensivity Star Recipe
   summary: Sensivity Star Recipe
   description: Sensivity Star Recipe
-  key: MEGARA_SENSITIVITY_STAR
+  key: MegaraSensitivityStar
   tagger: megaradrp.taggers.tagger_base_image
 - name: Linearity test
   summary: Test the linearity of the MEGARA detector
   description: Test the linearity of the MEGARA detector
-  key: MEGARA_LINEARITY_TEST
+  key: MegaraLinearirtyTest
   tagger: megaradrp.taggers.tagger_base_image
 - name: Telescope Focus
   summary: Telescope Focus
   description: Telescope Focus
-  key: MEGARA_FOCUS_TELESCOPE
+  key: MegaraFocusTelescope
   tagger: megaradrp.taggers.tagger_base_image
 - name: Acquisition with the LCB IFU
   summary: Acquisition with the LCB IFU
   description: Acquisition with the LCB IFU
-  key: MEGARA_LCB_ACQUISITION
+  key: MegaraLcbAcquisition
   tagger: megaradrp.taggers.tagger_base_image
 - name: Acquisition with the Fiber MOS
   summary: Acquisition with the Fiber MOS
   description: Acquisition with the Fiber MOS
-  key: MEGARA_MOS_ACQUISITION
+  key: MegaraMosAcquisition
   tagger: megaradrp.taggers.tagger_base_image
 pipelines:
   default:
     version: 1
     recipes:
-      MEGARA_SUCCESS: numina.core.utils.AlwaysSuccessRecipe
-      MEGARA_FAIL: numina.core.utils.AlwaysFailRecipe
-      MEGARA_BAD_PIXEL_MASK: megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe
-      MEGARA_LINEARITY_TEST: megaradrp.recipes.calibration.linearity.LinearityTestRecipe
-      MEGARA_BIAS_IMAGE: megaradrp.recipes.calibration.bias.BiasRecipe
-      MEGARA_DARK_IMAGE: megaradrp.recipes.calibration.dark.DarkRecipe
-      MEGARA_ARC_CALIBRATION: megaradrp.recipes.calibration.arc.ArcCalibrationRecipe
-      MEGARA_SLIT_FLAT: megaradrp.recipes.calibration.slitflat.SlitFlatRecipe
-      MEGARA_TRACE_MAP: megaradrp.recipes.calibration.trace.TraceMapRecipe
-      MEGARA_WEIGHTS: megaradrp.recipes.calibration.weights.WeightsRecipe
-      MEGARA_FIBER_FLAT_IMAGE: megaradrp.recipes.calibration.flat.FiberFlatRecipe
-      MEGARA_TWILIGHT_FLAT_IMAGE: megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe
-      MEGARA_FOCUS_SPECTROGRAPH: megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe
-      MEGARA_FOCUS_TELESCOPE: megaradrp.recipes.auxiliary.focustel.FocusTelescopeRecipe
-      MEGARA_LCB_ACQUISITION: megaradrp.recipes.auxiliary.acquisitionlcb.AcquireLCBRecipe
-      MEGARA_LCB_IMAGE: megaradrp.recipes.scientific.lcb.LCBImageRecipe
-      MEGARA_LCB_STD_STAR: megaradrp.recipes.calibration.lcbstdstar.LCBStandardRecipe
-      MEGARA_MOS_ACQUISITION: megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe
-      MEGARA_MOS_IMAGE: megaradrp.recipes.scientific.mos.MOSImageRecipe
-      MEGARA_MOS_STD_STAR: megaradrp.recipes.calibration.mosstdstar.MOSStandardRecipe
-      MEGARA_EXTINCTION_STAR: megaradrp.recipes.combined.extinctionstar.Recipe
-      MEGARA_SENSITIVITY_STAR: megaradrp.recipes.combined.sensstar.Recipe
+      MegaraSuccess: numina.core.utils.AlwaysSuccessRecipe
+      MegaraFail: numina.core.utils.AlwaysFailRecipe
+      MegaraBadPixelMask: megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe
+      MegaraLinearirtyTest: megaradrp.recipes.calibration.linearity.LinearityTestRecipe
+      MegaraBiasImage: megaradrp.recipes.calibration.bias.BiasRecipe
+      MegaraDarkImage: megaradrp.recipes.calibration.dark.DarkRecipe
+      MegaraArcCalibration: megaradrp.recipes.calibration.arc.ArcCalibrationRecipe
+      MegaraSlitFlat: megaradrp.recipes.calibration.slitflat.SlitFlatRecipe
+      MegaraTraceMap: megaradrp.recipes.calibration.trace.TraceMapRecipe
+      MegaraWeights: megaradrp.recipes.calibration.weights.WeightsRecipe
+      MegaraFiberFlatImage: megaradrp.recipes.calibration.flat.FiberFlatRecipe
+      MegaraTwilightFlatImage: megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe
+      MegaraFocusSpectrograph: megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe
+      MegaraFocusTelescope: megaradrp.recipes.auxiliary.focustel.FocusTelescopeRecipe
+      MegaraLcbAcquisition: megaradrp.recipes.auxiliary.acquisitionlcb.AcquireLCBRecipe
+      MegaraLcbImage: megaradrp.recipes.scientific.lcb.LCBImageRecipe
+      MegaraLcbStdStar: megaradrp.recipes.calibration.lcbstdstar.LCBStandardRecipe
+      MegaraMosAcquisition: megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe
+      MegaraMosImage: megaradrp.recipes.scientific.mos.MOSImageRecipe
+      MegaraMosStdStar: megaradrp.recipes.calibration.mosstdstar.MOSStandardRecipe
+      MegaraExtinctionStar: megaradrp.recipes.combined.extinctionstar.Recipe
+      MegaraSensitivityStar: megaradrp.recipes.combined.sensstar.Recipe
 products:
 - name: megaradrp.products.TraceMap
-  mode: MEGARA_TRACE_MAP
+  mode: MegaraTraceMap
   field: master_traces
+

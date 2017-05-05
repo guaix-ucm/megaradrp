@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -66,7 +66,7 @@ def simulate_dark_fits(factory, instrument, exposure, repeat=1):
     for i in range(repeat):
         detector.expose(time=exposure)
         final = detector.readout()
-        fitsfile = factory.create_from_instrument(mode='MEGARA_DARK_IMAGE',
+        fitsfile = factory.create_from_instrument(mode='MegaraDarkImage',
                                                   instrument=detector,
                                                   data=final,
                                                   name='dark_%s.fits'%i
@@ -103,7 +103,7 @@ class MegaraNullSequence(Sequence):
 
 class MegaraBiasSequence(MegaraSequence):
     def __init__(self):
-        super(MegaraBiasSequence, self).__init__('MEGARA_BIAS_IMAGE')
+        super(MegaraBiasSequence, self).__init__('MegaraBiasImage')
 
     def setup_instrument(self, instrument):
         instrument.shutter = 'STOP'
@@ -121,7 +121,7 @@ class MegaraBiasSequence(MegaraSequence):
 
 class MegaraDarkSequence(MegaraSequence):
     def __init__(self):
-        super(MegaraDarkSequence, self).__init__('MEGARA_DARK_IMAGE')
+        super(MegaraDarkSequence, self).__init__('MegaraDarkImage')
 
     def setup_instrument(self, instrument):
         instrument.shutter = 'STOP'
@@ -210,7 +210,7 @@ class MegaraLampSequence(Sequence):
 
 class MegaraFiberFlatSequence(MegaraLampSequence):
     def __init__(self):
-        super(MegaraFiberFlatSequence, self).__init__('MEGARA_FIBER_FLAT_IMAGE')
+        super(MegaraFiberFlatSequence, self).__init__('MegaraFiberFlatImage')
 
     def lamp_check(self, lamp):
         # TODO: check that this is a cont lamp
@@ -219,7 +219,7 @@ class MegaraFiberFlatSequence(MegaraLampSequence):
 
 class MegaraTraceMapSequence(MegaraLampSequence):
     def __init__(self):
-        super(MegaraTraceMapSequence, self).__init__('MEGARA_TRACE_AMP')
+        super(MegaraTraceMapSequence, self).__init__('MegaraTraceAmp')
 
     def lamp_check(self, lamp):
         # TODO: check that this is a cont lamp
@@ -228,7 +228,7 @@ class MegaraTraceMapSequence(MegaraLampSequence):
 
 class MegaraArcSequence(MegaraLampSequence):
     def __init__(self):
-        super(MegaraArcSequence, self).__init__('MEGARA_ARC_CALIBRATION')
+        super(MegaraArcSequence, self).__init__('MegaraArcCalibration')
 
     def lamp_check(self, lamp):
         # TODO: check that this is an arc lamp
@@ -237,7 +237,7 @@ class MegaraArcSequence(MegaraLampSequence):
 
 class MegaraSlitFlatSequence(MegaraLampSequence):
     def __init__(self):
-        super(MegaraSlitFlatSequence, self).__init__('MEGARA_SLIT_FLAT')
+        super(MegaraSlitFlatSequence, self).__init__('MegaraSlitFlat')
 
     def setup_instrument(self, instrument):
         instrument.shutter = 'OPEN'
@@ -271,7 +271,7 @@ class MegaraSlitFlatSequence(MegaraLampSequence):
 
 class MegaraTwilightFlatSequence(Sequence):
     def __init__(self):
-        super(MegaraTwilightFlatSequence, self).__init__('MEGARA', 'MEGARA_TWILIGHT_FLAT_IMAGE')
+        super(MegaraTwilightFlatSequence, self).__init__('MEGARA', 'MegaraTwilightFlatImage')
 
     def setup_instrument(self, instrument):
         instrument.shutter = 'OPEN'
@@ -299,7 +299,7 @@ class MegaraTwilightFlatSequence(Sequence):
 
 class MegaraFocusSequence(MegaraLampSequence):
     def __init__(self):
-        super(MegaraFocusSequence, self).__init__(mode='MEGARA_FOCUS_SPECTROGRAPH')
+        super(MegaraFocusSequence, self).__init__(mode='MegaraFocusSpectrograph')
 
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
@@ -372,17 +372,17 @@ class MegaraSkyLCBImageSequence(MegaraSkyImageSequence):
 
 class MegaraLCBImageSequence(MegaraSkyLCBImageSequence):
     def __init__(self):
-        super(MegaraLCBImageSequence, self).__init__('MEGARA_LCB_IMAGE')
+        super(MegaraLCBImageSequence, self).__init__('MegaraLcbImage')
 
 
 class MegaraLCBAcquisitionSequence(MegaraSkyLCBImageSequence):
     def __init__(self):
-        super(MegaraLCBAcquisitionSequence, self).__init__('MEGARA_LCB_ACQUISITION')
+        super(MegaraLCBAcquisitionSequence, self).__init__('MegaraLcbAcquisition')
 
 
 class MegaraFocusTelescopeSequence(MegaraSkyLCBImageSequence):
     def __init__(self):
-        super(MegaraFocusTelescopeSequence, self).__init__('MEGARA_FOCUS_TELESCOPE')
+        super(MegaraFocusTelescopeSequence, self).__init__('MegaraFocusTelescope')
 
     def run(self, control, exposure, repeat):
         telescope = control.get('GTC')
@@ -407,12 +407,12 @@ class MegaraSkyMOSImageSequence(MegaraSkyImageSequence):
 
 class MegaraMOSImageSequence(MegaraSkyMOSImageSequence):
     def __init__(self):
-        super(MegaraMOSImageSequence, self).__init__('MEGARA_MOS_IMAGE')
+        super(MegaraMOSImageSequence, self).__init__('MegaraMosImage')
 
 
 class MegaraMOSAcquisitionSequence(MegaraSkyMOSImageSequence):
     def __init__(self):
-        super(MegaraMOSAcquisitionSequence, self).__init__('MEGARA_MOS_ACQUISITION')
+        super(MegaraMOSAcquisitionSequence, self).__init__('MegaraMosAcquisition')
 
 
 def megara_sequences():
