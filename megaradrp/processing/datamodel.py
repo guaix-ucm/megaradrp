@@ -194,7 +194,7 @@ def read_fibers_extension(hdr, insmode='LCB'):
     conf.name = hdr.get('INSMODE', insmode)
     conf.conf_id = hdr.get('CONFID', 1)
     conf.nbundles = hdr.get('NBUNDLES', defaults[insmode][0])
-    conf.nfibers = hdr.get('NFIBERS', defaults[insmode[1]])
+    conf.nfibers = hdr.get('NFIBERS', defaults[insmode][1])
     # Read bundles
 
     bun_ids = []
