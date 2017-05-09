@@ -3,7 +3,7 @@ Bad-pixels mask
 
 :Mode: Bad-pixels mask
 :Usage: Offline, Online
-:Key: MEGARA_BAD_PIXEL_MASK
+:Key: MegaraBadPixelMask
 :Product: :class:`~megaradrp.types.MasterBPM`
 :Recipe: :class:`~megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe`
 :Recipe input: :class:`~megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe.BadPixelsMaskRecipeInput`

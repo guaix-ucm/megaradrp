@@ -4,7 +4,7 @@ Bias Image
 
 :Mode: Bias
 :Usage: Offline, Online
-:Key: MEGARA_BIAS_IMAGE
+:Key: MegaraBIAS_IMAGE
 :Product: :class:`~megaradrp.types.MasterBias`
 :Recipe: :class:`~megaradrp.recipes.calibration.bias.BiasRecipe`
 :Recipe input: :class:`~megaradrp.recipes.calibration.bias.BiasRecipe.RecipeInput`

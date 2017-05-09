@@ -3,7 +3,7 @@ Linearity test
 
 :Mode: Linearity test
 :Usage: Offline, Online
-:Key: MEGARA_LINEARITY_TEST
+:Key: MegaraLinearityTest
 :Product:
 :Recipe: :class:`~megaradrp.recipes.calibration.linearity.LinearityTestRecipe`
 :Recipe input: :class:`~megaradrp.recipes.calibration.linearity.LinearityTestRecipeInput`

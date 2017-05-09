@@ -3,7 +3,7 @@ Standard star with the LCB IFU
 
 :Mode: Standard star with the LCB IFU
 :Usage: Offline, Online
-:Key: MEGARA_LCB_STD_STAR
+:Key: MegaraLcbStdStar
 :Recipe: :class:`~megaradrp.recipes.calibration.lcbstdstar.LCBStandardRecipe`
 :Recipe input: :class:`~megaradrp.recipes.calibration.lcbstdstar.LCBStandardRecipeInput`
 :Recipe result: :class:`~megaradrp.recipes.calibration.lcbstdstar.LCBStandardRecipeResult`

@@ -38,7 +38,7 @@ Telescope focus
 
 :Mode: Telescope Focus
 :Usage: Online
-:Key: MEGARA_FOCUS_TELESCOPE
+:Key: MegaraFocusTelescope
 :Recipe: :class:`~megaradrp.recipes.auxiliary.focustel.FocusTelescopeRecipe`
 :Recipe input: :class:`~megaradrp.recipes.auxiliary.focustel.FocusTelescopeRecipe.FocusTelescopeRecipeInput`
 :Recipe result: :class:`~megaradrp.recipes.auxiliary.focustel.FocusTelescopeRecipe.FocusTelescopeRecipeResult`
@@ -101,7 +101,7 @@ Spectrograph focus
 
 :Mode: Spectrograph Focus
 :Usage: Online
-:Key: MEGARA_FOCUS_SPECTROGRAPH
+:Key: MegaraFocusSpectrograph
 :Recipe: :class:`~megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe`
 :Recipe input: :class:`~megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe.FocusSpectrographRecipeInput`
 :Recipe result: :class:`~megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe.FocusSpectrographRecipeResult`
@@ -187,7 +187,7 @@ Fine acquisition with the LCB IFU
 
 :Mode: LCB Acquisition
 :Usage: Online
-:Key: MEGARA_LCB_ACQUISITION
+:Key: MegaraLcbAcquisition
 :Recipe: :class:`~megaradrp.recipes.auxiliary.acquisitionlcb.AcquireLCBRecipe`
 :Recipe input: :class:`~megaradrp.recipes.auxiliary.acquisitionlcb.AcquireLCBRecipe.RecipeInput`
 :Recipe result: :class:`~megaradrp.recipes.auxiliary.acquisitionlcb.AcquireLCBRecipe.RecipeResult`
@@ -241,7 +241,7 @@ Fine acquisition with the Fiber MOS
 
 :Mode: MOS Acquisition
 :Usage: Online
-:Key: MEGARA_LCB_ACQUISITION
+:Key: MegaraLcbAcquisition
 :Recipe: :class:`~megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe`
 :Recipe input: :class:`~megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe.RecipeInput`
 :Recipe result: :class:`~megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe.RecipeResult`

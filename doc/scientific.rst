@@ -11,7 +11,7 @@ LCB IFU scientific observation
 
 :Mode: LCB IFU scientific observation
 :Usage: Online, Offline
-:Key: MEGARA_LCB_IMAGE
+:Key: MegaraLcbImage
 :Recipe: :class:`~megaradrp.recipes.scientific.lcb.LCBImageRecipe`
 :Recipe input: :class:`~megaradrp.recipes.scientific.lcb.LCBImageRecipeInput`
 :Recipe result: :class:`~megaradrp.recipes.scientific.lcb.LCBImageRecipeResult`
@@ -67,7 +67,7 @@ Fiber MOS scientific observation
 
 :Mode: Fiber MOS scientific observation
 :Usage: Online, Offline
-:Key: MEGARA_MOS_IMAGE
+:Key: MegaraMosImage
 :Recipe: :class:`~megaradrp.recipes.scientific.mos.MOSImageRecipe`
 :Recipe input: :class:`~megaradrp.recipes.scientific.mos.MOSImageRecipeInput`
 :Recipe result: :class:`~megaradrp.recipes.scientific.mos.MOSImageRecipeResult`

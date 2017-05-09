@@ -3,7 +3,7 @@ Slit-flat
 
 :Mode: Slit-flat
 :Usage: Offline, Online
-:Key: MEGARA_SLIT_FLAT
+:Key: MegaraSlitFlat
 :Product: :class:`~megaradrp.types.MasterSlitFlat`
 :Recipe: :class:`~megaradrp.recipes.calibration.slitflat.SlitFlatRecipe`
 :Recipe input: :class:`~megaradrp.recipes.calibration.slitflat.SlitFlatRecipeInput`

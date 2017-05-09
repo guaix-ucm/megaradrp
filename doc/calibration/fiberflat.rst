@@ -3,7 +3,7 @@ Fiber-flat
 
 :Mode: Fiber-flat
 :Usage: Offline, Online
-:Key: MEGARA_FIBER_FLAT_IMAGE
+:Key: MegaraFiberFlatImage
 :Product: :class:`~megaradrp.types.MasterFiberFlat`
 :Recipe: :class:`~megaradrp.recipes.calibration.flat.FiberFlatRecipe`
 :Recipe input: :class:`~megaradrp.recipes.calibration.flat.FiberFlatRecipeInput`

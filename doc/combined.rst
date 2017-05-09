@@ -11,7 +11,7 @@ Compute Sensitivity from Std Stars
 
 :Mode:
 :Usage: Offline
-:Key: MEGARA_SENSITIVITY_STAR
+:Key: MegaraSensitivityStar
 :Product: :class:`~megaradrp.types.MasterSensitivity`
 :Recipe: :class:`~megaradrp.recipes.combined.sensstar.Recipe`
 :Recipe input: :class:`~megaradrp.recipes.combined.sensstar.RecipeInput`
@@ -30,7 +30,7 @@ Compute Extinction and Sensitivity from Std Stars
 
 :Mode: Compute Extinction from Std Stars
 :Usage: Offline
-:Key: MEGARA_EXTINCTION_STAR
+:Key: MegaraExtinctionStar
 :Product: :class:`~megaradrp.types.MasterSensitivity`, :class:`~megaradrp.types.Extinction`
 :Recipe: :class:`~megaradrp.recipes.combined.extinctionstar.Recipe`
 :Recipe input: :class:`~megaradrp.recipes.combined.extinctionstar.RecipeInput`

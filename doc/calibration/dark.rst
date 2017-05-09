@@ -3,7 +3,7 @@ Dark Image
 
 :Mode: Dark
 :Usage: Offline, Online
-:Key: MEGARA_DARK_IMAGE
+:Key: MegaraDarkImage
 :Product: :class:`~megaradrp.types.MasterDark`
 :Recipe: :class:`~megaradrp.recipes.calibration.dark.DarkRecipe`
 :Recipe input: :class:`~megaradrp.recipes.calibration.dark.DarkRecipeInput`

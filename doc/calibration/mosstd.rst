@@ -3,7 +3,7 @@ Standard star with the Fiber MOS
 
 :Mode: Standard star with the FIBER MOS
 :Usage: Offline, Online
-:Key: MEGARA_MOS_STD_STAR
+:Key: MegaraMosStdStar
 :Recipe: :class:`~megaradrp.recipes.calibration.mosstdstar.MOSStandardRecipe`
 :Recipe input: :class:`~megaradrp.recipes.scientific.calibration.MOSStandardRecipeInput`
 :Recipe result: :class:`~megaradrp.recipes.scientific.calibration.MOSStandardRecipeResult`

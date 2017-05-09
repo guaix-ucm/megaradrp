@@ -43,7 +43,7 @@ This is an example of the observation result file
 
     id: dark-test-21
     instrument: MEGARA
-    mode: MEGARA_DARK_IMAGE
+    mode: MegaraDarkImage
     images:
       - r0121.fits
       - r0122.fits
@@ -82,7 +82,7 @@ Example requirements file:
     requirements: (4)
       MEGARA:
          default:
-           MEGARA_ARC_IMAGE:  (5)
+           MegaraArcImage:  (5)
               polynomial_degree: 5 (6)
               nlines: [5, 5]       (6)
 
@@ -178,12 +178,12 @@ Figure:
         a4 -> a3 [rank=same];
         a5 -> a4 [rank=same];
 
-        a0 [label="MEGARA_BIAS_IMAGE"];
-        a1 [label="MEGARA_TRACE_MAP"];
-        a2 [label="MEGARA_ARC_CALIBRATION"];
-        a3 [label="MEGARA_FIBER_FLAT_IMAGE"];
-        a4 [label="MEGARA_WEIGHTS"];
-        a5 [label="MEGARA_SLIT_FLAT"];
+        a0 [label="MegaraBiasImage"];
+        a1 [label="MegaraTraceMap"];
+        a2 [label="MegaraArcCalibration"];
+        a3 [label="MegaraWeights"];
+        a4 [label="MegaraWeights"];
+        a5 [label="MegaraSlitFlat"];
 
     }
 
@@ -216,13 +216,13 @@ change with each execution::
     ...
     $ numina run obsresult-6.yaml -r requirements.yaml
 
-MEGARA_BIAS_IMAGE file, obsresult-1.yaml:
+MegaraBiasImage file, obsresult-1.yaml:
 
 .. code-block:: yaml
 
     id: 1
     instrument: MEGARA
-    mode: MEGARA_BIAS_IMAGE
+    mode: MegaraBiasImage
     configuration: science
     images:
       - bias1.fits
@@ -231,13 +231,13 @@ MEGARA_BIAS_IMAGE file, obsresult-1.yaml:
       - bias4.fits
       - bias5.fits
 
-MEGARA_TRACE_MAP, obsresult-2.yaml:
+MegaraTraceMap, obsresult-2.yaml:
 
 .. code-block:: yaml
 
     id: 2
     instrument: MEGARA
-    mode: MEGARA_TRACE_MAP
+    mode: MegaraTraceMap
     configuration: science
     images:
       - flat1.fits
@@ -246,13 +246,13 @@ MEGARA_TRACE_MAP, obsresult-2.yaml:
       - flat4.fits
       - flat5.fits
 
-MEGARA_ARC_CALIBRATION, obsresult-3.yaml:
+MegaraArcCalibration, obsresult-3.yaml:
 
 .. code-block:: yaml
 
     id: 3
     instrument: MEGARA
-    mode: MEGARA_ARC_CALIBRATION
+    mode: MegaraArcCalibration
     configuration: science
     images:
       - arc1.fits
@@ -261,13 +261,13 @@ MEGARA_ARC_CALIBRATION, obsresult-3.yaml:
       - arc4.fits
       - arc5.fits
 
-MEGARA_SLIT_FLAT, obsresult-4.yaml:
+MegaraSlitFlat, obsresult-4.yaml:
 
 .. code-block:: yaml
 
     id: 4
     instrument: MEGARA
-    mode: MEGARA_SLIT_FLAT
+    mode: MegaraSlitFlat
     configuration: science
     images:
       - flat1.fits
@@ -276,13 +276,13 @@ MEGARA_SLIT_FLAT, obsresult-4.yaml:
       - flat4.fits
       - flat5.fits
 
-MEGARA_WEIGHTS, obsresult-5.yaml:
+MegaraWeights, obsresult-5.yaml:
 
 .. code-block:: yaml
 
     id: 5
     instrument: MEGARA
-    mode: MEGARA_WEIGHTS
+    mode: MegaraWeights
     configuration: science
     images:
       - flat1.fits
@@ -291,13 +291,13 @@ MEGARA_WEIGHTS, obsresult-5.yaml:
       - flat4.fits
       - flat5.fits
 
-MEGARA_FIBER_FLAT_IMAGE, obsresult-6.yaml:
+Mega:wraWeights, obsresult-6.yaml:
 
 .. code-block:: yaml
 
     id: 6
     instrument: MEGARA
-    mode: MEGARA_FIBER_FLAT_IMAGE
+    mode: Mega:wraWeights
     configuration: science
     images:
       - flat1.fits

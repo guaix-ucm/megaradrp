@@ -4,7 +4,7 @@ Trace
 
 :Mode: Trace
 :Usage: Offline, Online
-:Key: MEGARA_TRACE_MAP
+:Key: MegaraTraceMap
 :Product: :class:`~megaradrp.products.tracemap.TraceMap`.
 :Recipe: :class:`~megaradrp.recipes.calibration.trace.TraceMapRecipe`
 :Recipe input: :class:`~megaradrp.recipes.calibration.trace.TraceMapRecipeInput`
