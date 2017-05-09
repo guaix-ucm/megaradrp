@@ -57,11 +57,12 @@ class MegaraDataModel(DataModel):
 
     def get_fiberconf(self, img):
         # Obtain FIBER extension
+        main_insmode = img[0].header.get('INSMODE', '')
         if 'FIBERS' in img:
             # We have a 'fibers' extension
             # Information os there
             hdr_fiber = img['FIBERS'].header
-            return read_fibers_extension(hdr_fiber)
+            return read_fibers_extension(hdr_fiber, insmode=main_insmode)
         else:
             insmode = img[0].header.get('INSMODE')
             if insmode == 'LCB':
@@ -181,12 +182,19 @@ class FiberConf(object):
         self.valid = True
 
 
-def read_fibers_extension(hdr):
+def read_fibers_extension(hdr, insmode='LCB'):
     conf = FibersConf()
-    conf.name = hdr.get('INSMODE', 'LCB')
+    defaults = {}
+    defaults['LCB'] = (89, 623)
+    defaults['MOS'] = (92, 644)
+
+    if insmode not in ['LCB', 'MOS']:
+        raise ValueError('insmode %s not in [LCB, MOS]' % insmode)
+
+    conf.name = hdr.get('INSMODE', insmode)
     conf.conf_id = hdr.get('CONFID', 1)
-    conf.nbundles = hdr.get('NBUNDLES', 89)
-    conf.nfibers = hdr.get('NFIBERS', 623)
+    conf.nbundles = hdr.get('NBUNDLES', defaults[insmode][0])
+    conf.nfibers = hdr.get('NFIBERS', defaults[insmode[1]])
     # Read bundles
 
     bun_ids = []
