@@ -91,7 +91,7 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
         ratio, mask, sigma = ccdmask(reduced1[0].data, reduced2[0].data, mode='full')
 
         hdu = fits.PrimaryHDU(mask, header=reduced1[0].header)
-        hdu.header['UUID'] = uuid.uuid1().hex
+        hdu.header['UUID'] = str(uuid.uuid1())
         hdu.header['OBJECT'] = 'MASTER BPM'
         hdu.header['IMAGETYP'] = 'BPM'
         self.set_base_headers(hdu.header)

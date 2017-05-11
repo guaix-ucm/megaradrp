@@ -80,7 +80,7 @@ class SlitFlatRecipe(MegaraBaseRecipe):
         qe[numpy.isnan(qe)] = 1.0
 
         hdu = fits.PrimaryHDU(qe, header=reduced[0].header)
-        hdu.header['UUID'] = uuid.uuid1().hex
+        hdu.header['UUID'] = str(uuid.uuid1())
         hdu.header['OBJECT'] = 'MASTER SLITFLAT'
         # hdu.header['IMAGETYP'] = 'SLIT_FLAT'
 

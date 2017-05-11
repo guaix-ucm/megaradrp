@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2016-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -84,7 +84,7 @@ def basic_processing_with_combination_frames(frames,
             hdu.header['history'] = "Image {}".format(datamodel.get_imgid(img))
         prevnum = base_header.get('NUM-NCOM', 1)
         hdu.header['NUM-NCOM'] = prevnum * cnum
-        hdu.header['UUID'] = uuid.uuid1().hex
+        hdu.header['UUID'] = str(uuid.uuid1())
 
         # Copy extensions and then append 'variance' and 'map'
         result = fits.HDUList([hdu])

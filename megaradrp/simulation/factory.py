@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -174,7 +174,7 @@ class MegaraImageFactory(object):
         pheader = fits.Header(self.CARDS_P)
         # pheader['FILENAME'] = name
         pheader['OBSMODE'] = control.mode
-        pheader['UUID'] = uuid.uuid4().hex
+        pheader['UUID'] = str(uuid.uuid4())
         # Date of simulation
         pheader['DATE'] = datetime.utcnow().isoformat()
         # Date of simulated observation, not set yet

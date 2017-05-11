@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2011-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -40,7 +40,7 @@ def generate_multi_rss(imgs):
     hdu = fits.PrimaryHDU(data=fdata, header=refimg[0].header)
     hdu.header['MEG-NRSS'] = nimages
     # Generate a new UUID
-    hdu.header['UUID'] = uuid.uuid1().hex
+    hdu.header['UUID'] = str(uuid.uuid1())
 
     allhdus = [hdu]
     for idx, img in enumerate(imgs, 1):
