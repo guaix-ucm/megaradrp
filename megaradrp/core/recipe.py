@@ -66,7 +66,7 @@ class MegaraBaseRecipe(BaseRecipe):
     """
 
     obresult = ObservationResultRequirement()
-    qc = Product(QualityControlProduct, dest='qc', default=QC.GOOD)
+    qc = Product(QualityControlProduct, destination='qc', default=QC.GOOD)
     logger = logging.getLogger('numina.recipes.megara')
     datamodel = MegaraDataModel()
 
