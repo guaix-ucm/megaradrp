@@ -47,7 +47,7 @@ modes:
   summary: Summary of Arc Calibration
   description: Process an Arc image
   key: MegaraArcCalibration
-  tagger: megaradrp.taggers.tagger_base_image
+  tagger: ['vph', 'insmode', 'speclamp']
 - name: Bad Pixel Mask
   summary: Bad Pixel Mask
   description: Bad Pixels
@@ -127,7 +127,11 @@ pipelines:
     version: 1
     recipes:
       MegaraSuccess: numina.core.utils.AlwaysSuccessRecipe
-      MegaraFail: numina.core.utils.AlwaysFailRecipe
+      MegaraFail: 
+         class: numina.core.utils.AlwaysFailRecipe 
+         args: [1,2,3] 
+         keys: {key1: 1, key2: 2} 
+         state: {}
       MegaraBadPixelMask: megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe
       MegaraLinearirtyTest: megaradrp.recipes.calibration.linearity.LinearityTestRecipe
       MegaraBiasImage: megaradrp.recipes.calibration.bias.BiasRecipe
