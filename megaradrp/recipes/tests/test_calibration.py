@@ -40,11 +40,9 @@ def test_recipe1(drpmocker):
 
     insdrp = numina.drps.get_system_drps().query_by_name('MEGARA')
     pipeline = insdrp.pipelines.get('default')
+    recipe = pipeline.get_recipe_object('MegaraBiasImage')
 
-    recipe_fqn = pipeline.recipes.get('MegaraBiasImage')
-    RecipeClass = import_object(recipe_fqn)
-
-    assert RecipeClass is BiasRecipe
+    assert isinstance(recipe, BiasRecipe)
 
 
 @pytest.mark.remote
