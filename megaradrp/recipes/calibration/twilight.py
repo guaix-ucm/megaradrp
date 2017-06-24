@@ -26,6 +26,7 @@ import numpy
 from astropy.io import fits
 
 from numina.core import Product
+from numina.core.requirements import ObservationResultRequirement
 
 import megaradrp.requirements as reqs
 from megaradrp.core.recipe import MegaraBaseRecipe
@@ -45,6 +46,7 @@ from numina.core.metarecipes import generate_docs
 
 @generate_docs
 class RecipeInput(recipeio.RecipeInput):
+    obresult = ObservationResultRequirement()
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
