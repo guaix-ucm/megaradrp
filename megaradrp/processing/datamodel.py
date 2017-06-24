@@ -231,7 +231,7 @@ def read_fibers_extension(hdr, insmode='LCB'):
         # Coordinates
         ff.d = hdr["FIB%03d_D" % fibid]
         ff.r = hdr["FIB%03d_R" % fibid]
-        ff.o = hdr["FIB%03d_O" % fibid]
+        ff.o = 0 #hdr["FIB%03d_O" % fibid]
         # Active
         ff.inactive = not hdr["FIB%03d_A" % fibid]
 
