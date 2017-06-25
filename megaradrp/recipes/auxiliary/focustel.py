@@ -85,7 +85,7 @@ class FocusTelescopeRecipe(ImageRecipe):
         flow = self.init_filters(rinput, obresult.configuration)
 
         coors = rinput.position
-        focus_t = 'FOCUST'
+        focus_t = 'M2UZ'
 
         image_groups = {}
         self.logger.info('group images by focus')
