@@ -23,7 +23,7 @@
 import numpy as np
 from scipy.spatial import KDTree
 
-from numina.core import Product
+from numina.core import Product, Parameter
 
 from megaradrp.recipes.scientific.base import ImageRecipe
 from megaradrp.types import ProcessedRSS, ProcessedFrame
@@ -71,7 +71,7 @@ class AcquireLCBRecipe(ImageRecipe):
     """
 
     # Requirements are defined in base class
-
+    points = Parameter([(0, 0)], "Coordinates")
     reduced_image = Product(ProcessedFrame)
     reduced_rss = Product(ProcessedRSS)
     final_rss = Product(ProcessedRSS)
@@ -101,7 +101,8 @@ class AcquireLCBRecipe(ImageRecipe):
         cut1 = 1000
         cut2 = 3000
 
-        points = [(0, 0)] # Center of fiber 313
+        #points = [(0, 0)] # Center of fiber 313
+        points = rinput.points
         fibers = fiberconf.conected_fibers(valid_only=True)
         grid_coords = []
         for fiber in fibers:
