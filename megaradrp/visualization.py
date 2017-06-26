@@ -172,7 +172,7 @@ if __name__ == '__main__':
             fig = plt.figure()
 
             #plt.subplots_adjust(hspace=0.5)
-            ax = fig.add_axes([0.15, 0.1, 0.8, 0.8], projection=wcs3)
+            ax = fig.add_axes([0.15, 0.1, 0.8, 0.8], projection=wcs2)
             ax.set_xlim([-6, 6])
             ax.set_ylim([-6, 6])
 
