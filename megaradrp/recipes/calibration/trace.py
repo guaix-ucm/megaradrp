@@ -29,6 +29,7 @@ import numpy.polynomial.polynomial as nppol
 from numina.array.peaks.peakdet import refine_peaks
 from numina.array.trace.traces import trace
 from numina.core import Product, Parameter
+import matplotlib.pyplot as plt
 
 from numina.array import combine
 import numina.core.validator
@@ -99,6 +100,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
     master_bpm = reqs.MasterBPMRequirement()
     polynomial_degree = Parameter(5, 'Polynomial degree of trace fitting')
     relative_threshold = Parameter(0.3, 'Threshold for peak detection')
+    debug_plot = Parameter(0, 'Save intermediate tracing plots')
 
     reduced_image = Product(ProcessedFrame)
     master_traces = Product(TraceMap)
@@ -126,6 +128,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
         obresult = rinput.obresult
         current_vph = obresult.tags['vph']
         current_insmode = obresult.tags['insmode']
+
+        debug_plot = rinput.debug_plot if self.intermediate_results else 0
 
         self.logger.info('start basic reduction')
         flow = self.init_filters(rinput, obresult.configuration)
@@ -176,7 +180,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
             box_borders,
             cstart=cstart,
             threshold=threshold,
-            poldeg=rinput.polynomial_degree
+            poldeg=rinput.polynomial_degree,
+            debug_plot=debug_plot
         )
 
         final.contents = contents
@@ -191,12 +196,12 @@ class TraceMapRecipe(MegaraBaseRecipe):
                 final.to_ds9_reg(ds9reg, rawimage=True,
                                  numpix=100, fibid_at=2048)
 
-
         self.logger.info('end trace spectra recipe')
         return self.create_result(reduced_image=reduced,
                                   master_traces=final)
 
-    def search_traces(self, reduced, boxes, box_borders, cstart=2000, threshold=0.3, poldeg=5, step=2):
+    def search_traces(self, reduced, boxes, box_borders, cstart=2000,
+                      threshold=0.3, poldeg=5, step=2, debug_plot=0):
 
         data = reduced[0].data
 
@@ -218,7 +223,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
             boxes=boxes,
             box_borders=box_borders,
             tol=tol,
-            threshold=threshold
+            threshold=threshold,
+            debug_plot=debug_plot
         )
 
         # The byteswapping is required by the cython module
@@ -242,12 +248,12 @@ class TraceMapRecipe(MegaraBaseRecipe):
             if dtrace.start:
                 mm = trace(image2, x=cstart, y=dtrace.start[1], step=step,
                            hs=hs, background=local_trace_background, maxdis=maxdis)
-                if False:
-                    import matplotlib.pyplot as plt
-                    plt.plot(mm[:, 0], mm[:, 1])
+
+                if debug_plot:
+                    plt.plot(mm[:, 0], mm[:, 1], '+')
                     plt.savefig('trace-xy-%d.png' % dtrace.fibid)
                     plt.close()
-                    plt.plot(mm[:, 0], mm[:, 2])
+                    plt.plot(mm[:, 0], mm[:, 2], '+')
                     plt.savefig('trace-xz-%d.png' % dtrace.fibid)
                     plt.close()
                 if len(mm) < poldeg + 1:
@@ -301,7 +307,7 @@ class FiberTraceInfo(object):
         self.start = None
 
 
-def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37):
+def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, debug_plot=0):
 
     _logger = logging.getLogger(__name__)
 
@@ -317,13 +323,14 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37):
     # ipeaks_int = peak_local_max(colcut, min_distance=2, threshold_rel=0.2)[:, 0]
     ipeaks_int = peak_local_max(colcut, min_distance=3, threshold_rel=threshold)[:, 0] # All VPH
 
-    if False:
-        import matplotlib.pyplot as plt
+    if debug_plot:
+        print("plot")
         plt.plot(colcut)
         plt.plot(ipeaks_int, colcut[ipeaks_int], 'r*')
         for border in box_borders:
             plt.axvline(border, color='k')
-        plt.show()
+        plt.savefig('central_cut.png')
+        plt.close()
 
     ipeaks_float = refine_peaks(colcut, ipeaks_int, 3)[0]
     peaks_y = numpy.ones((ipeaks_int.shape[0], 3))
@@ -445,7 +452,6 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37):
             #     fiber_traces[fibid].start = (center, 0, 0)
         counted_fibers += nfibers
 
-        # import matplotlib.pyplot as plt
         # plt.xlim([box_borders[boxid], box_borders[boxid + 1]])
         # plt.plot(colcut, 'b-')
         # plt.plot(thispeaks[:, 1], thispeaks[:, 2], 'ro')
@@ -453,7 +459,6 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37):
         # plt.title('Box %s' %box['id'])
         # plt.show()
 
-    # import matplotlib.pyplot as plt
     # total_peaks_pos = np.array(total_peaks_pos)
     # plt.plot(colcut, 'b-')
     # plt.plot(total_peaks_pos[:, 1], total_peaks_pos[:, 2], 'ro')
