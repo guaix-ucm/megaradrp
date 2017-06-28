@@ -74,3 +74,6 @@ class TraceMap(BaseStructuredCalibration):
         self.contents = [GeometricTrace(**trace) for trace in state['contents']]
 
         return self
+
+    def to_ds9_reg(self, ds9reg, rawimage=False, numpix=100, fibid_at=0):
+        pass

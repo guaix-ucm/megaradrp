@@ -70,7 +70,6 @@ class MegaraBaseRecipe(BaseRecipe):
     logger = logging.getLogger('numina.recipes.megara')
     datamodel = MegaraDataModel()
 
-
     def save_intermediate_img(self, img, name):
         """Save intermediate FITS objects."""
         if self.intermediate_results:
