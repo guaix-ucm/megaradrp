@@ -13,8 +13,12 @@ from numina.array.display.pause_debugplot import pause_debugplot
 
 def plot_trace(ax, coeff, xmin, xmax, ix_offset,
                rawimage, fibids, fibid, colour):
-    num = int(float(xmax - xmin + 1) + 0.5)
-    xp = np.linspace(start=xmin, stop=xmax, num=num)
+    if xmin == xmax == 0:
+        num = 4096
+        xp = np.linspace(start=1, stop=4096, num=num)
+    else:
+        num = int(float(xmax - xmin + 1) + 0.5)
+        xp = np.linspace(start=xmin, stop=xmax, num=num)
     ypol = Polynomial(coeff)
     yp = ypol(xp)
     if rawimage:
@@ -22,7 +26,11 @@ def plot_trace(ax, coeff, xmin, xmax, ix_offset,
         yp[lcut] += 100
     ax.plot(xp + ix_offset, yp + 1, color=colour, linestyle='dotted')
     if fibids:
-        ax.text((xmin + xmax) / 2, yp[int(num / 2)], str(fibid), fontsize=6,
+        if xmin == xmax == 0:
+            xmidpoint =  2048
+        else:
+            xmidpoint = (xmin+xmax)/2
+        ax.text(xmidpoint, yp[int(num / 2)], str(fibid), fontsize=6,
                 bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="grey", ),
                 color=colour, fontweight='bold', backgroundcolor='white')
 
@@ -45,6 +53,9 @@ def main(args=None):
                         help="Vertical offset (+upwards, -downwards)",
                         default=0,
                         type=float)
+    parser.add_argument("--extrapolate",
+                        help="Extrapolate traces plot",
+                        action="store_true")
     parser.add_argument("--fibids",
                         help="Display fiber identification number",
                         action="store_true")
@@ -92,6 +103,9 @@ def main(args=None):
             coeff[0] += args.yoffset
             # update values in bigdict (JSON structure)
             bigdict['contents'][fibid-1]['fitparms'] = coeff.tolist()
+            if args.extrapolate:
+                plot_trace(ax, coeff, 0, 0, ix_offset,
+                           args.rawimage, False, fibid, colour='grey')
             plot_trace(ax, coeff, xmin, xmax, ix_offset,
                        args.rawimage, args.fibids, fibid, colour='blue')
         else:
