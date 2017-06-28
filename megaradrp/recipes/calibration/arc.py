@@ -27,6 +27,7 @@ from datetime import datetime
 
 import numpy
 from astropy.io import fits
+import matplotlib.pyplot as plt
 
 from numina.core import Requirement, Product, Parameter, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
@@ -112,6 +113,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
     polynomial_degree = Parameter(5, 'Polynomial degree of arc calibration')
     nlines = Parameter(20, "Use the 'nlines' brigthest lines of the spectrum")
+    debug_plot = Parameter(0, 'Save intermediate tracing plots')
+
     # Products
     reduced_image = Product(ProcessedFrame)
     reduced_rss = Product(ProcessedRSS)
@@ -130,6 +133,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         ArcCalibrationRecipe.RecipeResult
 
         """
+
+        debugplot = rinput.debug_plot if self.intermediate_results else 0
 
         flow1 = self.init_filters(rinput, rinput.obresult.configuration)
         img = basic_processing_with_combination(rinput, flow1, method=combine.median)
@@ -175,7 +180,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                                      rinput.master_traces,
                                                      nlines,
                                                      threshold=threshold,
-                                                     min_distance=min_distance)
+                                                     min_distance=min_distance,
+                                                     debugplot=debugplot)
 
         data_wlcalib.tags = rinput.obresult.tags
         final = data_wlcalib
@@ -212,7 +218,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
     def calibrate_wl(self, rss, lines_catalog, poldeg, tracemap, nlines,
                      threshold=0.27,
-                     min_distance=30):
+                     min_distance=30,
+                     debugplot=0):
 
         wv_master = lines_catalog[:, 0]
         ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
@@ -276,8 +283,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 ipeaks_float = refine_peaks(row, ipeaks_int_filtered, nwinwidth)[0]
 
                 # if idx==299:
-                if False:
-                    import matplotlib.pyplot as plt
+                if debugplot:
                     plt.title('fibid %d' % fibid)
                     plt.plot(row)
                     plt.plot(ipeaks_int, row[ipeaks_int], 'ro', alpha=.9, ms=7,
@@ -329,7 +335,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         times_sigma_polfilt=10.0,
                         times_sigma_cook=10.0,
                         times_sigma_inclusion=5.0,
-                        debugplot=0
+                        debugplot=debugplot
                     )
 
                     self.logger.info('Solution for row %d completed', idx)
@@ -388,8 +394,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     traceback.print_exc()
                     data_wlcalib.error_fitting.append(fibid)
 
-                    if False:
-                        import matplotlib.pyplot as plt
+                    if debugplot:
                         plt.title('fibid %d' % fibid)
                         rrow = row[::-1]
                         rpeaks = 4096-ipeaks_int_filtered[::-1]
@@ -447,6 +452,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         test_point_dist, test_point_regions = voronoi_kdtree.query(test_points,
                                                                    k=1)
-        final_image = test_point_regions.reshape((4112, 4096)).astype('float64')
-        final_image[:, :] = final[final_image[:, :].astype('int64'), 2]
+        final_image = test_point_regions.reshape((4112, 4096)).astype('float32')
+        final_image[:, :] = final[final_image[:, :].astype('int16'), 2]
         return (final_image)
