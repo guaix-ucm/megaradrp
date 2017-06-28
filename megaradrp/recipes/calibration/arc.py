@@ -23,6 +23,7 @@ from __future__ import division, print_function
 
 import traceback
 import collections
+from datetime import datetime
 
 import numpy
 from astropy.io import fits
@@ -177,6 +178,23 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                                      min_distance=min_distance)
 
         data_wlcalib.tags = rinput.obresult.tags
+        final = data_wlcalib
+        final.meta_info['creation_date'] = datetime.utcnow().isoformat()
+        final.meta_info['mode_name'] = self.mode
+        final.meta_info['instrument_name'] = self.instrument
+        final.meta_info['recipe_name'] = self.__class__.__name__
+        final.meta_info['recipe_version'] = self.__version__
+        final.meta_info['origin'] = {}
+        final.meta_info['origin']['block_uuid'] = reduced2d[0].header.get('BLCKUUID', "UNKNOWN")
+
+        # FIXME: redundant
+        cdata = []
+        for frame in rinput.obresult.frames:
+            hdulist = frame.open()
+            fname = self.datamodel.get_imgid(hdulist)
+            cdata.append(fname)
+
+        final.meta_info['origin']['frames'] = cdata
         # WL calibration goes here
         return self.create_result(reduced_image=reduced2d, reduced_rss=reduced_rss,
                                   master_wlcalib=data_wlcalib,

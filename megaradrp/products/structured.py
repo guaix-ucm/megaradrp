@@ -53,6 +53,7 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
         self.total_fibers = 0
         self.missing_fibers = []
         self.error_fitting = []
+        self.meta_info = {}
         #
         self.add_dialect_info('gtc', DF.TYPE_STRUCT)
 
@@ -71,12 +72,14 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
         st['total_fibers'] = self.total_fibers
         st['missing_fibers'] = self.missing_fibers
         st['error_fitting'] = self.error_fitting
+        st['meta_info'] = self.meta_info
         return st
 
     def __setstate__(self, state):
         self.instrument = state['instrument']
         self.tags = state['tags']
         self.uuid = state['uuid']
+        self.meta_info = {}
 
         for key in state:
             if key not in ['contents']:
@@ -84,7 +87,10 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
 
     def __str__(self):
         sclass = type(self).__name__
-        return "{}(instrument={}, uuid={})".format(sclass, self.instrument, self.uuid)
+        if self.instrument != 'unknown':
+            return "{}(instrument={}, uuid={})".format(sclass, self.instrument, self.uuid)
+        else:
+            return "{}()".format(sclass)
 
     @classmethod
     def _datatype_dump(cls, obj, where):

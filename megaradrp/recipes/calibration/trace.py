@@ -22,6 +22,7 @@
 from __future__ import division, print_function
 
 import logging
+from datetime import datetime
 
 import numpy
 import numpy.polynomial.polynomial as nppol
@@ -153,6 +154,22 @@ class TraceMapRecipe(MegaraBaseRecipe):
         final.total_fibers = fiberconf.nfibers
         final.tags = obresult.tags
 
+        final.meta_info['creation_date'] = datetime.utcnow().isoformat()
+        final.meta_info['mode_name'] = self.mode
+        final.meta_info['instrument_name'] = self.instrument
+        final.meta_info['recipe_name'] = self.__class__.__name__
+        final.meta_info['recipe_version'] = self.__version__
+        final.meta_info['origin'] = {}
+        final.meta_info['origin']['block_uuid'] = reduced[0].header.get('BLCKUUID', "UNKNOWN")
+
+        # FIXME: redundant
+        cdata = []
+        for frame in obresult.frames:
+            hdulist = frame.open()
+            fname = self.datamodel.get_imgid(hdulist)
+            cdata.append(fname)
+
+        final.meta_info['origin']['frames'] = cdata
         contents, error_fitting = self.search_traces(
             reduced,
             boxes,
