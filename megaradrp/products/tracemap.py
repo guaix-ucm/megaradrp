@@ -49,7 +49,7 @@ class GeometricTrace(object):
         return state
 
     def __setstate__(self, state):
-        self.__dict__  = state
+        self.__dict__ = state
         self._set_polynomial(state['fitparms'])
 
     def _set_polynomial(self, fitparms):
@@ -81,7 +81,7 @@ class TraceMap(BaseStructuredCalibration):
 
         Parameters
         ----------
-        ds9_file : file
+        ds9reg : file
             Handle to output file name in ds9-region format.
         rawimage : bool
             If True the traces must be generated to be overplotted on
@@ -107,15 +107,16 @@ class TraceMap(BaseStructuredCalibration):
             'normal roman" select=1 highlite=1 dash=1 fixed=0 edit=1 '
             'move=1 delete=1 include=1 source=1\n')
         ds9reg.write('physical\n')
+        ds9reg.write('#\n# insmode: {0}\n'.format(self.tags['insmode']))
+        ds9reg.write('# vph: {0}\n'.format(self.tags['vph']))
         ds9reg.write('# uuid: {0}\n'.format(self.uuid))
-
         colorbox = ['#ff77ff', '#4444ff']
         for fiberdict in self.contents:
             fibid = fiberdict.fibid
             boxid = fiberdict.boxid
             xmin = fiberdict.start
             xmax = fiberdict.stop
-            ds9reg.write('# fibid: ' + str(fibid) + '\n')
+            ds9reg.write('#\n# fibid: {0}\n'.format(fibid))
             # skip fibers without trace
             if fiberdict.valid:
                 xp = numpy.linspace(start=xmin, stop=xmax, num=numpix)
@@ -128,13 +129,11 @@ class TraceMap(BaseStructuredCalibration):
                     y1 = yp[i] + 1
                     x2 = xp[i + 1] + ix_offset
                     y2 = yp[i + 1] + 1
-                    ds9reg.write('line ' + str(x1) + ' ' + str(y1) + ' ' +
-                                   str(x2) + ' ' + str(y2))
-                    ds9reg.write(' # color=' + colorbox[boxid % 2] + '\n')
+                    ds9reg.write('line {0} {1} {2} {3}'.format(x1, y1, x2, y2))
+                    ds9reg.write(' # color={0}\n'.format(colorbox[boxid % 2]))
                     if fibid_at != 0:
                         if x1 <= fibid_at <= x2:
-                            ds9reg.write('text ' + str((x1 + x2) / 2) + ' ' +
-                                         str((y1 + y2) / 2) +  ' {' +
-                                         str(fibid) + '}  # color=green '
-                                         'font="helvetica 10 bold roman"\n')
-
+                            ds9reg.write('text {0} {1} {{{2}}} # color=green '
+                                         'font="helvetica 10 bold '
+                                         'roman"\n'.format((x1+x2)/2,
+                                                           (y1+y2)/2, fibid))

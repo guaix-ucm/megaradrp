@@ -44,6 +44,10 @@ def traces2ds9(json_file, ds9_file, rawimage, numpix=100, fibid_at=0):
     # read traces from JSON file and save region in ds9 file
     colorbox = ['#ff77ff','#4444ff']
     bigdict = json.loads(open(json_file).read())
+    insmode = bigdict['tags']['insmode']
+    ds9_file.write('#\n# insmode: {0}\n'.format(insmode))
+    vph = bigdict['tags']['vph']
+    ds9_file.write('# vph: {0}\n'.format(vph))
     uuid = bigdict['uuid']
     ds9_file.write('# uuid: {0}\n'.format(uuid))
     for fiberdict in bigdict['contents']:
@@ -52,7 +56,7 @@ def traces2ds9(json_file, ds9_file, rawimage, numpix=100, fibid_at=0):
         xmin = fiberdict['start']
         xmax = fiberdict['stop']
         coeff = np.array(fiberdict['fitparms'])
-        ds9_file.write('# fibid: ' + str(fibid) + '\n')
+        ds9_file.write('#\n# fibid: {0}\n'.format(fibid))
         # skip fibers without trace
         if len(coeff) > 0:
             xp = np.linspace(start=xmin, stop=xmax, num=numpix)
@@ -66,15 +70,14 @@ def traces2ds9(json_file, ds9_file, rawimage, numpix=100, fibid_at=0):
                 y1 = yp[i] + 1
                 x2 = xp[i+1] + ix_offset
                 y2 = yp[i+1] + 1
-                ds9_file.write('line ' + str(x1) + ' ' + str(y1) + ' ' +
-                               str(x2) + ' ' + str(y2))
-                ds9_file.write(' # color=' + colorbox[boxid % 2] + '\n')
+                ds9_file.write('line {0} {1} {2} {3}'.format(x1, y1, x2, y2))
+                ds9_file.write(' # color={0}\n'.format(colorbox[boxid % 2]))
                 if fibid_at != 0:
                     if x1 <= fibid_at <= x2:
-                        ds9_file.write('text ' + str((x1+x2)/2) + ' ' +
-                                       str((y1+y2)/2) + ' {' + str(fibid) +
-                                       '}  # color=green font="helvetica 10 '
-                                       'bold roman"\n')
+                        ds9_file.write('text {0} {1} {{{2}}} # color=green '
+                                       'font="helvetica 10 bold '
+                                       'roman"\n'.format((x1+x2)/2,
+                                                         (y1+y2)/2, fibid))
         else:
             print('Warning ---> Missing fiber:', fibid)
 
