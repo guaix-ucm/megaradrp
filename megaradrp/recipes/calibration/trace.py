@@ -140,11 +140,12 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         insconf = obresult.configuration
 
-        values = insconf.get('pseudoslit.boxes_positions', **obresult.tags)
-        cstart = values['ref_column']
-        box_borders = values['positions']
-
         boxes = insconf.get('pseudoslit.boxes', **obresult.tags)
+        nboxes = len(boxes)
+
+        box_borders, cstart = self.obtain_boxes(insconf, obresult.tags)
+
+        box_borders1, cstart1 = self.obtain_boxes_from_image(reduced, box_borders, nboxes, cstart)
 
         if current_insmode in vph_thr and current_vph in vph_thr[current_insmode]:
             threshold = vph_thr[current_insmode][current_vph]
@@ -174,6 +175,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
             cdata.append(fname)
 
         final.meta_info['origin']['frames'] = cdata
+
         contents, error_fitting = self.search_traces(
             reduced,
             boxes,
@@ -199,6 +201,67 @@ class TraceMapRecipe(MegaraBaseRecipe):
         self.logger.info('end trace spectra recipe')
         return self.create_result(reduced_image=reduced,
                                   master_traces=final)
+
+    def obtain_boxes(self, insconf, tags):
+        values = insconf.get('pseudoslit.boxes_positions', **tags)
+        cstart = values['ref_column']
+        box_borders = values['positions']
+        return box_borders, cstart
+
+    def obtain_boxes_from_image(self, reduced, expected, npeaks, cstart=2000):
+        import matplotlib.pyplot as plt
+        import numpy as np
+        from numina.array.peaks.peakdet import find_peaks_indexes
+        col = cstart
+        data = reduced[0].data
+        rr = data[:, col-1:col+1].mean(axis=1)
+        # standarize
+        rr -= np.median(rr)
+        rr /= rr.max()
+
+        cb = cosinebell(len(rr), 0.10)
+        cbr = cb * rr
+        plt.plot(cbr)
+        plt.show()
+        xv = np.fft.fftfreq(len(cbr))
+        yv = np.fft.fft(cbr)
+        plt.xlim([0.0, 0.5])
+        plt.semilogy(xv, np.abs(yv.real))
+        plt.show()
+
+        cut = abs(xv) > 0.1
+        yv[cut] = 0
+        res = np.fft.ifft(yv)
+        final = -res.real
+        plt.plot(final)
+        #trend = detrend(final)
+        #plt.plot(final - trend)
+        plt.show()
+
+        idx = find_peaks_indexes(final, window_width=3, threshold=0.3, fpeak=1)
+
+        # We expect  differentnumber of pekas in LCB/MOS
+        # order by intensity
+        peak_flux = final[idx]
+        # Number of peaks must be >=18
+        npeaks = npeaks + 1
+        fidx = np.argsort(peak_flux)[:-(npeaks+1):-1]
+        nidx = idx[fidx]
+        nidxs = np.sort(nidx)
+
+        plt.plot(final)
+        #plt.scatter(idx, [0.9 for m in idx])
+        plt.scatter(nidx, [0.95 for m in nidx], c='r')
+        plt.scatter(expected, [1.0 for m in expected])
+        plt.show()
+
+        plt.scatter(expected, nidxs - expected)
+        plt.show()
+
+        print("expected", expected)
+        print("nidx", nidxs)
+
+        return nidxs, col
 
     def search_traces(self, reduced, boxes, box_borders, cstart=2000,
                       threshold=0.3, poldeg=5, step=2, debug_plot=0):
@@ -324,7 +387,6 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
     ipeaks_int = peak_local_max(colcut, min_distance=3, threshold_rel=threshold)[:, 0] # All VPH
 
     if debug_plot:
-        print("plot")
         plt.plot(colcut)
         plt.plot(ipeaks_int, colcut[ipeaks_int], 'r*')
         for border in box_borders:
@@ -452,6 +514,7 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
             #     fiber_traces[fibid].start = (center, 0, 0)
         counted_fibers += nfibers
 
+        # import matplotlib.pyplot as plt
         # plt.xlim([box_borders[boxid], box_borders[boxid + 1]])
         # plt.plot(colcut, 'b-')
         # plt.plot(thispeaks[:, 1], thispeaks[:, 2], 'ro')
@@ -459,6 +522,7 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         # plt.title('Box %s' %box['id'])
         # plt.show()
 
+    # import matplotlib.pyplot as plt
     # total_peaks_pos = np.array(total_peaks_pos)
     # plt.plot(colcut, 'b-')
     # plt.plot(total_peaks_pos[:, 1], total_peaks_pos[:, 2], 'ro')
@@ -468,3 +532,13 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
     _logger.debug('total found + recovered peaks: %d', counted_fibers)
 
     return fiber_traces
+
+def cosinebell(n, fraction):
+    import numpy as np
+    mask = np.ones(n)
+    nmasked = int(fraction*n)
+    for i in range(nmasked):
+        f = 0.5 * (1-np.cos(np.pi*float(i)/ float(nmasked)))
+        mask[i] = f
+        mask[n-i-1] = f
+    return mask
