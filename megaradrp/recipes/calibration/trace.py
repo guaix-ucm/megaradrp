@@ -184,10 +184,12 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         if self.intermediate_results:
             with open('ds9.reg', 'w') as ds9reg:
-                final.to_ds9_reg(ds9reg, rawimage=False, numpix=100, fibid_at=0)
+                final.to_ds9_reg(ds9reg, rawimage=False,
+                                 numpix=100, fibid_at=2048)
 
             with open('ds9_raw.reg', 'w') as ds9reg:
-                final.to_ds9_reg(ds9reg, rawimage=True, numpix=100, fibid_at=0)
+                final.to_ds9_reg(ds9reg, rawimage=True,
+                                 numpix=100, fibid_at=2048)
 
 
         self.logger.info('end trace spectra recipe')
