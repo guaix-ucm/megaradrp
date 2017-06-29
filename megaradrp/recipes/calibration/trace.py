@@ -141,11 +141,13 @@ class TraceMapRecipe(MegaraBaseRecipe):
         insconf = obresult.configuration
 
         boxes = insconf.get('pseudoslit.boxes', **obresult.tags)
-        nboxes = len(boxes)
 
-        box_borders, cstart = self.obtain_boxes(insconf, obresult.tags)
+        box_borders0, cstart0 = self.obtain_boxes(insconf, obresult.tags)
 
-        box_borders1, cstart1 = self.obtain_boxes_from_image(reduced, box_borders, nboxes, cstart)
+        box_borders, cstart = self.refine_boxes_from_image(reduced, box_borders0, cstart0)
+
+        self.logger.debug("original boxes: %s", box_borders0)
+        self.logger.debug("refined boxes: %s", box_borders)
 
         if current_insmode in vph_thr and current_vph in vph_thr[current_insmode]:
             threshold = vph_thr[current_insmode][current_vph]
@@ -218,6 +220,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         # standarize
         rr -= np.median(rr)
         rr /= rr.max()
+        rr *= -1
 
         cb = cosinebell(len(rr), 0.10)
         cbr = cb * rr
@@ -232,7 +235,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         cut = abs(xv) > 0.1
         yv[cut] = 0
         res = np.fft.ifft(yv)
-        final = -res.real
+        final = res.real
         plt.plot(final)
         #trend = detrend(final)
         #plt.plot(final - trend)
@@ -262,6 +265,45 @@ class TraceMapRecipe(MegaraBaseRecipe):
         print("nidx", nidxs)
 
         return nidxs, col
+
+    def search_traces(self, reduced, boxes, box_borders, cstart=2000,
+                      threshold=0.3, poldeg=5, step=2, debug_plot=0):
+    def refine_boxes_from_image(self, reduced, expected, cstart=2000, nsearch=20):
+        """Refine boxes using a filtered Fourier image"""
+
+        hs = 3
+        # Cut freq in Fourier space
+        cut_frec = 0.10
+        # Cosine bell
+        cos_cut = 0.10
+
+        data = reduced[0].data
+        rr = data[:, cstart-hs:cstart+hs].mean(axis=1)
+
+        # standarize and Y flip
+        rr -= numpy.median(rr)
+        rr /= rr.max()
+        rr *= -1
+
+        cb = cosinebell(len(rr), cos_cut)
+        cbr = cb * rr
+
+        xv = numpy.fft.fftfreq(len(cbr))
+        yv = numpy.fft.fft(cbr)
+
+        # Filter freqs in Fourier space
+        yv[abs(xv) > cut_frec] = 0
+
+        res = numpy.fft.ifft(yv)
+        final = res.real
+
+        refined = expected[:]
+
+        for ibox, box in enumerate(expected):
+            iargmax = final[box - nsearch: box + nsearch +1].argmax()
+            refined[ibox] = iargmax + box - nsearch
+
+        return refined, cstart
 
     def search_traces(self, reduced, boxes, box_borders, cstart=2000,
                       threshold=0.3, poldeg=5, step=2, debug_plot=0):
