@@ -64,16 +64,18 @@ class TraceMap(BaseStructuredCalibration):
     def __init__(self, instrument='unknown'):
         super(TraceMap, self).__init__(instrument)
         self.contents = []
+        self.boxes_positions = []
 
     def __getstate__(self):
         st = super(TraceMap, self).__getstate__()
         st['contents'] = [t.__getstate__() for t in self.contents]
+        st['boxes_positions'] = self.boxes_positions
         return st
 
     def __setstate__(self, state):
         super(TraceMap, self).__setstate__(state)
         self.contents = [GeometricTrace(**trace) for trace in state['contents']]
-
+        self.boxes_positions = state['boxes_positions']
         return self
 
     def to_ds9_reg(self, ds9reg, rawimage=False, numpix=100, fibid_at=0):
@@ -81,7 +83,7 @@ class TraceMap(BaseStructuredCalibration):
 
         Parameters
         ----------
-        ds9reg : file
+        ds9reg : BinaryIO
             Handle to output file name in ds9-region format.
         rawimage : bool
             If True the traces must be generated to be overplotted on

@@ -44,7 +44,8 @@ def create_test_tracemap():
                  missing_fibers=[],
                  total_fibers=623,
                  meta_info={},
-                 contents=[]
+                 contents=[],
+                 boxes_positions=[]
                  )
 
     return data, state

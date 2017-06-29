@@ -160,6 +160,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         fiberconf = self.datamodel.get_fiberconf(reduced)
         final.total_fibers = fiberconf.nfibers
         final.tags = obresult.tags
+        final.boxes_positions = box_borders
 
         final.meta_info['creation_date'] = datetime.utcnow().isoformat()
         final.meta_info['mode_name'] = self.mode
@@ -168,6 +169,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         final.meta_info['recipe_version'] = self.__version__
         final.meta_info['origin'] = {}
         final.meta_info['origin']['block_uuid'] = reduced[0].header.get('BLCKUUID', "UNKNOWN")
+        final.meta_info['origin']['insconf_uuid'] = reduced[0].header.get('INSCONF', "UNKNOWN")
 
         # FIXME: redundant
         cdata = []
@@ -211,14 +213,12 @@ class TraceMapRecipe(MegaraBaseRecipe):
         return box_borders, cstart
 
     def obtain_boxes_from_image(self, reduced, expected, npeaks, cstart=2000):
-        import matplotlib.pyplot as plt
-        import numpy as np
         from numina.array.peaks.peakdet import find_peaks_indexes
         col = cstart
         data = reduced[0].data
         rr = data[:, col-1:col+1].mean(axis=1)
         # standarize
-        rr -= np.median(rr)
+        rr -= numpy.median(rr)
         rr /= rr.max()
         rr *= -1
 
@@ -226,15 +226,15 @@ class TraceMapRecipe(MegaraBaseRecipe):
         cbr = cb * rr
         plt.plot(cbr)
         plt.show()
-        xv = np.fft.fftfreq(len(cbr))
-        yv = np.fft.fft(cbr)
+        xv = numpy.fft.fftfreq(len(cbr))
+        yv = numpy.fft.fft(cbr)
         plt.xlim([0.0, 0.5])
-        plt.semilogy(xv, np.abs(yv.real))
+        plt.semilogy(xv, numpy.abs(yv.real))
         plt.show()
 
         cut = abs(xv) > 0.1
         yv[cut] = 0
-        res = np.fft.ifft(yv)
+        res = numpy.fft.ifft(yv)
         final = res.real
         plt.plot(final)
         #trend = detrend(final)
@@ -248,9 +248,9 @@ class TraceMapRecipe(MegaraBaseRecipe):
         peak_flux = final[idx]
         # Number of peaks must be >=18
         npeaks = npeaks + 1
-        fidx = np.argsort(peak_flux)[:-(npeaks+1):-1]
+        fidx = numpy.argsort(peak_flux)[:-(npeaks+1):-1]
         nidx = idx[fidx]
-        nidxs = np.sort(nidx)
+        nidxs = numpy.sort(nidx)
 
         plt.plot(final)
         #plt.scatter(idx, [0.9 for m in idx])
@@ -266,8 +266,6 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         return nidxs, col
 
-    def search_traces(self, reduced, boxes, box_borders, cstart=2000,
-                      threshold=0.3, poldeg=5, step=2, debug_plot=0):
     def refine_boxes_from_image(self, reduced, expected, cstart=2000, nsearch=20):
         """Refine boxes using a filtered Fourier image"""
 
@@ -575,12 +573,13 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
 
     return fiber_traces
 
-def cosinebell(n, fraction):
-    import numpy as np
-    mask = np.ones(n)
+
+def cosinebell(n, fraction=0.10):
+    """"Cosine bell mask"""
+    mask = numpy.ones(n)
     nmasked = int(fraction*n)
     for i in range(nmasked):
-        f = 0.5 * (1-np.cos(np.pi*float(i)/ float(nmasked)))
+        f = 0.5 * (1 - numpy.cos(numpy.pi * float(i) / float(nmasked)))
         mask[i] = f
         mask[n-i-1] = f
     return mask

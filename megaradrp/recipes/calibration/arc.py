@@ -192,6 +192,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         final.meta_info['recipe_version'] = self.__version__
         final.meta_info['origin'] = {}
         final.meta_info['origin']['block_uuid'] = reduced2d[0].header.get('BLCKUUID', "UNKNOWN")
+        final.meta_info['origin']['insconf_uuid'] = reduced2d[0].header.get('INSCONF', "UNKNOWN")
 
         # FIXME: redundant
         cdata = []
