@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -43,6 +43,7 @@ def create_test_tracemap():
                  error_fitting=[],
                  missing_fibers=[],
                  total_fibers=623,
+                 meta_info={},
                  contents=[]
                  )
 

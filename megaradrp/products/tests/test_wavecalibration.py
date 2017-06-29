@@ -90,6 +90,7 @@ def create_test_wavecalib():
                  total_fibers=623,
                  missing_fibers=[],
                  error_fitting=[],
+                 meta_info={},
                  contents=contents
                  )
     return data, state
