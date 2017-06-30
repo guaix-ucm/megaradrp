@@ -22,9 +22,23 @@
 import json
 import uuid
 
+import numpy
 import numina.core.types
 import numina.core.products
 from numina.ext.gtc import DF
+
+
+class ExtEncoder(json.JSONEncoder):
+    """"Encode numpy.floats and numpy.integer"""
+    def default(self, obj):
+        if isinstance(obj, numpy.integer):
+            return int(obj)
+        elif isinstance(obj, numpy.floating):
+            return float(obj)
+        elif isinstance(obj, numpy.ndarray):
+            return obj.tolist()
+        else:
+            return super(ExtEncoder, self).default(obj)
 
 
 class BaseStructuredCalibration(numina.core.products.DataProductTag,
@@ -98,7 +112,7 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
         filename = where.destination + '.json'
 
         with open(filename, 'w') as fd:
-            json.dump(obj.__getstate__(), fd, indent=2)
+            json.dump(obj.__getstate__(), fd, indent=2, cls=ExtEncoder)
 
         return filename
 
