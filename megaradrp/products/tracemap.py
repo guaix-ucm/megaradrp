@@ -75,7 +75,7 @@ class TraceMap(BaseStructuredCalibration):
     def __setstate__(self, state):
         super(TraceMap, self).__setstate__(state)
         self.contents = [GeometricTrace(**trace) for trace in state['contents']]
-        self.boxes_positions = state['boxes_positions']
+        self.boxes_positions = state.get('boxes_positions', [])
         return self
 
     def to_ds9_reg(self, ds9reg, rawimage=False, numpix=100, fibid_at=0):
