@@ -91,6 +91,7 @@ def create_test_wavecalib():
                  missing_fibers=[],
                  error_fitting=[],
                  meta_info={},
+                 type=data.name(),
                  contents=contents
                  )
     return data, state

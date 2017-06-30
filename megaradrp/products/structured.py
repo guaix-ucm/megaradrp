@@ -67,12 +67,13 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
 
     def __getstate__(self):
         st = {}
-        for key in ['instrument', 'tags', 'uuid']:
+        keys = ['instrument', 'tags', 'uuid',
+                "meta_info", "total_fibers",
+                "missing_fibers", "error_fitting"]
+        for key in keys:
             st[key] = self.__dict__[key]
-        st['total_fibers'] = self.total_fibers
-        st['missing_fibers'] = self.missing_fibers
-        st['error_fitting'] = self.error_fitting
-        st['meta_info'] = self.meta_info
+
+        st['type'] = self.name()
         return st
 
     def __setstate__(self, state):
