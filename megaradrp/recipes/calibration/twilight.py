@@ -143,7 +143,8 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
         start = 1900
         end = 2100
         self.logger.info('doing mean between columns %d-%d', start, end)
-        colapse = rss_wl[:, start:end].mean(axis=1)
+        rss_wl_data = rss_wl[0].data
+        colapse = rss_wl_data[:, start:end].mean(axis=1)
 
         normalized = numpy.tile(colapse[:, numpy.newaxis], 4096)
 
