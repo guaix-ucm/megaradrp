@@ -151,9 +151,16 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
         template_header = flat2d[0].header
         master_t_hdu = fits.PrimaryHDU(normalized, header=template_header)
         master_t = fits.HDUList([master_t_hdu])
+        self.set_base_headers(master_t[0].header)
 
         self.logger.info('twilight fiber flat reduction ended')
         result = self.create_result(reduced_image=flat2d, reduced_rss=rss_wl,
                                     master_twilightflat=master_t)
 
         return result
+
+    def set_base_headers(self, hdr):
+        """Set metadata in FITS headers."""
+        hdr = super(TwilightFiberFlatRecipe, self).set_base_headers(hdr)
+        hdr['NUMTYPE'] = ('MasterTwilightFlat', 'Product type')
+        return hdr

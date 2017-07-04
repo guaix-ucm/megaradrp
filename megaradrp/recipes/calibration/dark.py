@@ -45,3 +45,9 @@ class DarkRecipe(MegaraBaseRecipe):
 
         result = self.create_result(master_dark=hdulist)
         return result
+
+    def set_base_headers(self, hdr):
+        """Set metadata in FITS headers."""
+        hdr = super(DarkRecipe, self).set_base_headers(hdr)
+        hdr['NUMTYPE'] = ('MasterDark', 'Product type')
+        return hdr

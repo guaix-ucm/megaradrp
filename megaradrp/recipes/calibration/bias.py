@@ -73,3 +73,9 @@ class BiasRecipe(MegaraBaseRecipe):
         result = self.create_result(master_bias=hdulist)
         self.logger.info('end bias recipe')
         return result
+
+    def set_base_headers(self, hdr):
+        """Set metadata in FITS headers."""
+        hdr = super(BiasRecipe, self).set_base_headers(hdr)
+        hdr['NUMTYPE'] = ('MasterBias', 'Product type')
+        return hdr
