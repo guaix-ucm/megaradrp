@@ -125,6 +125,40 @@ modes:
 pipelines:
   default:
     version: 1
+    products:
+      MasterBias: megaradrp.types.MasterBias
+      MasterBPM: megaradrp.types.MasterBPM
+      MasterDark: megaradrp.types.MasterDark
+      WavelengthCalibration: megaradrp.products.WavelengthCalibration
+      MasterSlitFlat: megaradrp.types.MasterSlitFlat
+      TraceMap: megaradrp.products.TraceMap
+      MasterFiberFlat: megaradrp.types.MasterFiberFlat
+      MasterTwilightFlat: megaradrp.types.MasterTwilightFlat
+    provides:
+      - name: MasterBias
+        mode: MegaraBiasImage
+        field: master_bias
+      - name: MasterBPM
+        mode: MegaraBadPixelMask
+        field: master_bpm
+      - name: MasterDark
+        mode: MegaraDarkImage
+        field: master_dark
+      - name: WavelengthCalibration
+        mode: MegaraArcCalibration
+        field: master_wlcalib
+      - name: MasterSlitFlat
+        mode: MegaraSlitFlat
+        field: master_slitflat
+      - name: TraceMap
+        mode: MegaraTraceMap
+        field: master_traces
+      - name: MasterFiberFlat
+        mode: MegaraFiberFlatImage
+        field: master_fiberflat
+      - name: MasterTwilightFlat
+        mode: MegaraTwilightFlatImage
+        field: master_twilightflat
     recipes:
       MegaraSuccess: numina.core.utils.AlwaysSuccessRecipe
       MegaraFail: 
@@ -133,7 +167,7 @@ pipelines:
          keys: {key1: 1, key2: 2} 
          state: {}
       MegaraBadPixelMask: megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe
-      MegaraLinearirtyTest: megaradrp.recipes.calibration.linearity.LinearityTestRecipe
+      MegaraLinearityTest: megaradrp.recipes.calibration.linearity.LinearityTestRecipe
       MegaraBiasImage: megaradrp.recipes.calibration.bias.BiasRecipe
       MegaraDarkImage: megaradrp.recipes.calibration.dark.DarkRecipe
       MegaraArcCalibration: megaradrp.recipes.calibration.arc.ArcCalibrationRecipe
@@ -152,8 +186,5 @@ pipelines:
       MegaraMosStdStar: megaradrp.recipes.calibration.mosstdstar.MOSStandardRecipe
       MegaraExtinctionStar: megaradrp.recipes.combined.extinctionstar.Recipe
       MegaraSensitivityStar: megaradrp.recipes.combined.sensstar.Recipe
-products:
-- name: megaradrp.products.TraceMap
-  mode: MegaraTraceMap
-  field: master_traces
+
 
