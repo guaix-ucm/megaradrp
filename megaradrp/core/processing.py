@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2011-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,7 +17,7 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-from __future__ import print_function
+from __future__ import print_function, division
 
 import numpy
 import numpy.polynomial.polynomial as nppol
@@ -69,19 +69,19 @@ def trim_and_o_array(array, detconf, direction='normal'):
     if bng not in [[1,1],[1,2],[2,1],[2,2]]:
         raise ValueError("%s must be one if '11', '12', '21, '22'" % bng)
 
-    nr2 = ((trim1[0][1] - trim1[0][0]) + (trim2[0][1]-trim2[0][0]))/bng[0]
-    nc2 = (trim1[1][1] - trim1[1][0]) / bng[1]
-    nr = (trim1[0][1] - trim1[0][0])/bng[0]
+    nr2 = ((trim1[0][1] - trim1[0][0]) + (trim2[0][1]-trim2[0][0])) // bng[0]
+    nc2 = (trim1[1][1] - trim1[1][0]) // bng[1]
+    nr = (trim1[0][1] - trim1[0][0]) // bng[0]
 
-    trim1[0][0] /= bng[0]
-    trim1[0][1] /= bng[0]
-    trim2[0][0] /= bng[0]
-    trim2[0][1] /= bng[0]
+    trim1[0][0] //= bng[0]
+    trim1[0][1] //= bng[0]
+    trim2[0][0] //= bng[0]
+    trim2[0][1] //= bng[0]
 
-    trim1[1][0] /= bng[1]
-    trim1[1][1] /= bng[1]
-    trim2[1][0] /= bng[1]
-    trim2[1][1] /= bng[1]
+    trim1[1][0] //= bng[1]
+    trim1[1][1] //= bng[1]
+    trim2[1][0] //= bng[1]
+    trim2[1][1] //= bng[1]
 
     finaldata = numpy.empty((nr2, nc2), dtype='float32')
 
