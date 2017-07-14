@@ -78,6 +78,9 @@ class MegaraDataModel(DataModel):
             hdr_fiber = fits.header.Header.fromfile(default_hdr)
             return read_fibers_extension(hdr_fiber)
 
+    def gather_info_oresult(self, val):
+        return [self.gather_info_dframe(f) for f in val.images]
+
     def gather_info_dframe(self, img):
         with img.open() as hdulist:
             info = self.gather_info_hdu(hdulist)

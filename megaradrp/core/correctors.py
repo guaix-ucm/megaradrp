@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2016 Universidad Complutense de Madrid
+# Copyright 2011-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -28,20 +28,24 @@ from numina.flow.processing import BiasCorrector, BadPixelCorrector
 from numina.flow.processing import DarkCorrector
 
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
+from megaradrp.processing.trimover import GainCorrector
 from megaradrp.processing.slitflat import SlitFlatCorrector
-from megaradrp.processing.datamodel import MegaraDataModel
+
 
 _logger = logging.getLogger(__name__)
 
 
-def get_corrector_p(rinput, meta, ins, datamodel):
+def get_corrector_bpm(rinput, meta, ins, datamodel):
     bpm_info = meta.get('master_bpm')
     if bpm_info is not None:
         with rinput.master_bpm.open() as hdul:
             _logger.info('loading BPM')
-            _logger.debug('BPM image: %s', bpm_info)
             mbpm = hdul[0].data
-            bpm_corrector = BadPixelCorrector(mbpm, datamodel=datamodel)
+            calibid = datamodel.get_imgid(hdul)
+            _logger.debug('BPM image: %s', calibid)
+            bpm_corrector = BadPixelCorrector(mbpm,
+                                              datamodel=datamodel,
+                                              calibid=calibid)
     else:
         _logger.info('BPM not provided, ignored')
         bpm_corrector = IdNode()
@@ -51,14 +55,15 @@ def get_corrector_p(rinput, meta, ins, datamodel):
 
 def get_corrector_super(rinput, meta, key, correctorclass, datamodel):
     info = meta.get(key)
-    _logger.debug('datamodel is %s', datamodel)
     req = getattr(rinput, key)
     if req is not None:
         with req.open() as hdul:
             _logger.info('loading %s', key)
             _logger.debug('%s info: %s', key, info)
             datac = hdul['primary'].data
-            corrector = correctorclass(datac, datamodel=datamodel)
+            calibid = datamodel.get_imgid(hdul)
+            corrector = correctorclass(datac, datamodel=datamodel,
+                                       calibid=calibid)
     else:
         _logger.info('%s not provided, ignored', key)
         corrector = IdNode()
@@ -78,7 +83,7 @@ def get_corrector_dark(rinput, meta, ins, datamodel):
     return get_corrector_super(rinput, meta, key, correctorclass, datamodel)
 
 
-def get_corrector_sf(rinput, meta, ins, datamodel):
+def get_corrector_slit_flat(rinput, meta, ins, datamodel):
     key = 'master_slitflat'
     info = meta.get(key)
     if info is not None:
@@ -87,7 +92,8 @@ def get_corrector_sf(rinput, meta, ins, datamodel):
             _logger.info('loading slit flat')
             _logger.debug('%s image: %s', key, info)
             mbpm = hdul[0].data
-            corrector = SlitFlatCorrector(mbpm, datamodel)
+            calibid = datamodel.get_imgid(hdul)
+            corrector = SlitFlatCorrector(mbpm, datamodel, calibid=calibid)
     else:
         _logger.info('%s not provided, ignored', key)
         corrector = IdNode()
@@ -95,7 +101,7 @@ def get_corrector_sf(rinput, meta, ins, datamodel):
     return corrector
 
 
-def get_corrector_o(rinput, meta, ins, datamodel):
+def get_corrector_overscan(rinput, meta, ins, datamodel):
     detconf = ins.get('detector.scan')
     return OverscanCorrector(
         detconf,
@@ -104,10 +110,20 @@ def get_corrector_o(rinput, meta, ins, datamodel):
     )
 
 
-def get_corrector_t(rinput, meta, ins, datamodel):
+def get_corrector_trimming(rinput, meta, ins, datamodel):
     detconf = ins.get('detector.scan')
     return TrimImage(
         detconf,
         datamodel=datamodel,
         calibid=ins.components['detector'].uuid
     )
+
+
+def get_corrector_gain(rinput, meta, ins, datamodel):
+    """Correct from gain"""
+    return GainCorrector(
+        detconf=ins.get('detector.scan'),
+        datamodel=datamodel,
+        calibid=ins.components['detector'].uuid
+    )
+

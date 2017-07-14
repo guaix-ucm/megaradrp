@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2015 Universidad Complutense de Madrid
+# Copyright 2011-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -158,5 +158,41 @@ class TrimImage(Corrector):
         hdr['NUM-TRIM'] = self.calibid
         hdr['history'] = 'Trimming correction with {}'.format(self.calibid)
         hdr['history'] = 'Trimming correction time {}'.format(datetime.datetime.utcnow().isoformat())
+
+        return img
+
+
+class GainCorrector(Corrector):
+    """A Corrector Node that corrects MEGARA images from different gain."""
+
+    def __init__(self, detconf, datamodel=None, calibid='calibid-unknown', dtype='float32'):
+        self.detconf = detconf
+        self.gain1 = self.detconf['gain1']
+        self.gain2 = self.detconf['gain2']
+        super(GainCorrector, self).__init__(
+            datamodel=datamodel,
+            calibid=calibid,
+            dtype=dtype
+        )
+
+    def run(self, img):
+        imgid = self.get_imgid(img)
+        _logger.debug('gain correction in image %s', imgid)
+
+        # img[0] = trimOut(img[0], self.detconf)
+        hdr = img['primary'].header
+        hdr['NUM-GAIN'] = self.calibid
+        hdr['BUNIT'] = 'electrons'
+
+        part = img[0].data.shape[0] // 2
+
+        img[0].data[:part] /= self.gain1
+        img[0].data[part:] /= self.gain2
+
+        hdr['history'] = 'Gain correction with {}'.format(self.calibid)
+        hdr['history'] = 'Gain correction time {}'.format(datetime.datetime.utcnow().isoformat())
+        hdr['history'] = 'Gain1 correction value {}'.format(self.gain1)
+        hdr['history'] = 'Gain2 correction value {}'.format(self.gain2)
+
 
         return img

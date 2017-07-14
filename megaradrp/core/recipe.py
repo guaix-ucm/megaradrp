@@ -19,12 +19,8 @@
 
 import logging
 
-import numina.array.combine as combine
 import numpy as np
 from astropy.io import fits
-from numina.flow import SerialFlow
-from numina.flow.processing import BiasCorrector, BadPixelCorrector
-from numina.flow.processing import DarkCorrector
 from numina.core import BaseRecipe
 from numina.core.dataholders import Product
 from numina.core.products import QualityControlProduct
@@ -33,12 +29,7 @@ from numina.core import DataFrame, ObservationResult
 from numina.core.qc import QC
 
 import megaradrp.core.correctors as cor
-from megaradrp.processing.trimover import OverscanCorrector, TrimImage
-from megaradrp.processing.slitflat import SlitFlatCorrector
-from megaradrp.processing.aperture import ApertureExtractor
-from megaradrp.processing.fiberflat import FiberFlatCorrector
 from megaradrp.processing.datamodel import MegaraDataModel
-from megaradrp.processing.twilight import TwilightCorrector
 
 
 class MegaraBaseRecipe(BaseRecipe):
@@ -74,6 +65,11 @@ class MegaraBaseRecipe(BaseRecipe):
         """Save intermediate FITS objects."""
         if self.intermediate_results:
             img.writeto(name, clobber=True)
+
+    def save_intermediate_array(self, array, name):
+        """Save intermediate array object as FITS."""
+        if self.intermediate_results:
+            fits.writeto(name, array, clobber=True)
 
     def validate_input(self, recipe_input):
         """Method to customize recipe input validation.
@@ -177,31 +173,22 @@ class MegaraBaseRecipe(BaseRecipe):
         hdr['CTYPE2'] = 'PIXEL'
         return hdr
 
-    def getHeaderList(self, image_list):
-        final_list = []
-        for image in image_list:
-            for elem in image:
-                if issubclass(fits.ImageHDU, type(elem)):
-                    final_list.append(elem)
-        return final_list
-
-    @classmethod
-    def types_getter(cls):
+    def types_getter(self):
         from megaradrp.types import MasterBias, MasterDark, MasterBPM, MasterSlitFlat
         imgtypes = [None, MasterBPM, MasterBias, MasterDark, MasterSlitFlat]
-        getters = [[cor.get_corrector_o, cor.get_corrector_t],
-                   cor.get_corrector_p, cor.get_corrector_bias,
-                   cor.get_corrector_dark, cor.get_corrector_sf
+        getters = [[cor.get_corrector_overscan, cor.get_corrector_trimming],
+                   cor.get_corrector_bpm, cor.get_corrector_bias,
+                   [cor.get_corrector_dark, cor.get_corrector_gain],
+                   cor.get_corrector_slit_flat
                    ]
         return imgtypes, getters
 
-    @classmethod
-    def load_getters(cls):
+    def get_filters(self):
         import collections
-        imgtypes, getters = cls.types_getter()
+        imgtypes, getters = self.types_getter()
         used_getters = []
         for rtype, getter in zip(imgtypes, getters):
-            cls.logger.debug('load_getters, %s  %s', rtype, getter)
+            self.logger.debug('get_filters, %s  %s', rtype, getter)
             if rtype is None:
                 # Unconditional
                 if isinstance(getter, collections.Iterable):
@@ -210,7 +197,7 @@ class MegaraBaseRecipe(BaseRecipe):
                     used_getters.append(getter)
             else:
                 # Search
-                for key, val in cls.RecipeInput.stored().items():
+                for key, val in self.RecipeInput.stored().items():
                     if isinstance(val.type, rtype):
                         if isinstance(getter, collections.Iterable):
                             used_getters.extend(getter)
@@ -221,43 +208,36 @@ class MegaraBaseRecipe(BaseRecipe):
                     pass
         return used_getters
 
-
-    @classmethod
-    def init_filters_generic(cls, rinput, getters, ins):
+    def init_filters_generic(self, rinput, getters, ins):
         from numina.flow import SerialFlow
         # with BPM, bias, dark, flat and sky
         #if emirdrp.ext.gtc.RUN_IN_GTC:
         #    _logger.debug('running in GTC environment')
         #else:
-        cls.logger.debug('running outside of GTC environment')
-        meta = cls.gather_info(rinput)
-        cls.logger.debug('obresult info')
+        #self.logger.debug('running outside of GTC environment')
+        meta = self.gather_info(rinput)
+        self.logger.debug('obresult info')
         for entry in meta['obresult']:
-            cls.logger.debug('frame info is %s', entry)
-        correctors = [getter(rinput, meta, ins, cls.datamodel) for getter in getters]
+            self.logger.debug('frame info is %s', entry)
+        correctors = [getter(rinput, meta, ins, self.datamodel) for getter in getters]
 
         flow = SerialFlow(correctors)
 
         return flow
 
-    @classmethod
-    def init_filters(cls, rinput, ins):
-        getters = cls.load_getters()
-        return cls.init_filters_generic(rinput, getters, ins)
+    def init_filters(self, rinput, ins):
+        getters = self.get_filters()
+        return self.init_filters_generic(rinput, getters, ins)
 
-    @classmethod
-    def gather_info(cls, recipeinput):
+    def gather_info(self, recipeinput):
         klass = recipeinput.__class__
         metadata = {}
         for key in klass.stored():
             val = getattr(recipeinput, key)
             if isinstance(val, DataFrame):
-                metadata[key] = cls.datamodel.gather_info_dframe(val)
+                metadata[key] = self.datamodel.gather_info_dframe(val)
             elif isinstance(val, ObservationResult):
-                metas = []
-                for f in val.images:
-                    metas.append(cls.datamodel.gather_info_dframe(f))
-                metadata[key] = metas
+                metadata[key] = self.datamodel.gather_info_oresult(val)
             else:
                 pass
         return metadata
