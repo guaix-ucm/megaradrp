@@ -122,7 +122,8 @@ def main(args=None):
         bigdict = json.loads(args.json_file.read())
         newdict = deepcopy(bigdict)
         for fiber in newdict['contents']:
-            fiber['fitparms'][0] += args.yoffset
+            if len(fiber['fitparms']) > 0:
+                fiber['fitparms'][0] += args.yoffset
         json.dump(newdict, args.new_json, indent=2)
 
 
