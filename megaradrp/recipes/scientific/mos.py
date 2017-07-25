@@ -64,7 +64,7 @@ class MOSImageRecipe(ImageRecipe):
     reduced_image = Product(ProcessedFrame)
     final_rss = Product(ProcessedRSS)
     reduced_rss = Product(ProcessedRSS)
-    sky = Product(ProcessedRSS)
+    sky_rss = Product(ProcessedRSS)
 
     def run(self, rinput):
         self.logger.info('starting MOS reduction')
@@ -80,5 +80,5 @@ class MOSImageRecipe(ImageRecipe):
             reduced_image=reduced2d,
             final_rss=final,
             reduced_rss=origin,
-            sky=sky
+            sky_rss=sky
         )
