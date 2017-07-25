@@ -65,17 +65,23 @@ class TraceMap(BaseStructuredCalibration):
         super(TraceMap, self).__init__(instrument)
         self.contents = []
         self.boxes_positions = []
+        self.global_offset = nppol.Polynomial([0.0])
+        self.ref_column = 2000
 
     def __getstate__(self):
         st = super(TraceMap, self).__getstate__()
         st['contents'] = [t.__getstate__() for t in self.contents]
         st['boxes_positions'] = self.boxes_positions
+        st['global_offset'] = self.global_offset.coef
+        st['ref_column'] = self.ref_column
         return st
 
     def __setstate__(self, state):
         super(TraceMap, self).__setstate__(state)
         self.contents = [GeometricTrace(**trace) for trace in state['contents']]
         self.boxes_positions = state.get('boxes_positions', [])
+        self.global_offset = nppol.Polynomial(state.get('global_offset', [0.0]))
+        self.ref_column = state.get('ref_column', 2000)
         return self
 
     def to_ds9_reg(self, ds9reg, rawimage=False, numpix=100, fibid_at=0):

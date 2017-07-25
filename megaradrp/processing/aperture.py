@@ -44,6 +44,7 @@ class ApertureExtractor(Corrector):
         imgid = self.get_imgid(img)
         _logger.debug('extracting (apextract_tracemap) in image %s', imgid)
         _logger.debug('with trace map %s', self.calibid)
+        _logger.debug('offsets are %s', self.tracemap.global_offset.coef)
         rssdata = apextract_tracemap_2(img[0].data, self.tracemap)
         img[0].data = rssdata
 
@@ -51,6 +52,7 @@ class ApertureExtractor(Corrector):
 
         hdr['NUM-APE'] = self.calibid
         hdr['history'] = 'Aperture extraction with {}'.format(self.calibid)
+        hdr['history'] = 'Aperture extraction offsets are {}'.format(self.tracemap.global_offset.coef.tolist())
         hdr['history'] = 'Aperture extraction time {}'.format(datetime.datetime.utcnow().isoformat())
 
         # Update Fibers

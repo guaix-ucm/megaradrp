@@ -46,7 +46,9 @@ def create_test_tracemap():
                  meta_info={},
                  contents=[],
                  boxes_positions=[],
-                 type=data.name()
+                 type=data.name(),
+                 ref_column=2000,
+                 global_offset=[0.0]
                  )
 
     return data, state

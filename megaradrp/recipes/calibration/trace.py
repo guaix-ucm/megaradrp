@@ -161,6 +161,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         final.total_fibers = fiberconf.nfibers
         final.tags = obresult.tags
         final.boxes_positions = box_borders
+        final.ref_column = cstart
 
         final.meta_info['creation_date'] = datetime.utcnow().isoformat()
         final.meta_info['mode_name'] = self.mode
