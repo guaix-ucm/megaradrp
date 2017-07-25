@@ -27,6 +27,7 @@ from numina.core.products import QualityControlProduct
 from numina.core.requirements import ObservationResultRequirement
 from numina.core import DataFrame, ObservationResult
 from numina.core.qc import QC
+from numina.flow import SerialFlow
 
 import megaradrp.core.correctors as cor
 from megaradrp.processing.datamodel import MegaraDataModel
@@ -209,12 +210,7 @@ class MegaraBaseRecipe(BaseRecipe):
         return used_getters
 
     def init_filters_generic(self, rinput, getters, ins):
-        from numina.flow import SerialFlow
-        # with BPM, bias, dark, flat and sky
-        #if emirdrp.ext.gtc.RUN_IN_GTC:
-        #    _logger.debug('running in GTC environment')
-        #else:
-        #self.logger.debug('running outside of GTC environment')
+
         meta = self.gather_info(rinput)
         self.logger.debug('obresult info')
         for entry in meta['obresult']:

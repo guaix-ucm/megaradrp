@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2016-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -43,7 +43,11 @@ class MegaraDataModel(DataModel):
             'insmode': ('INSMODE', 'undefined'),
             'focus': ('FOCUS', 'undefined'),
             'osfilter': ('OSFILTER', 'undefined'),
-            'tstamp': ('TSTAMP', 'undefined')
+            'uuid': ('UUID', 'undefined'),
+            'temp': ('SENTEMP1', 0.0),
+            'block_uuid': ('BLCKUUID', "undefined"),
+            'insconf_uuid': ('INSCONF', "undefined"),
+            'speclamp': ('SPECLMP', 'undefined')
         }
 
     def get_imgid(self, img):
@@ -93,7 +97,7 @@ class MegaraDataModel(DataModel):
         values['name_ext'] = ['PRIMARY'] + extnames
         for key, val in self._meta.items():
             values[key] = hdulist[0].header.get(val[0], val[1])
-
+        values['imageid'] = self.get_imgid(hdulist)
         return values
 
 

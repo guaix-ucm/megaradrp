@@ -128,6 +128,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         obresult = rinput.obresult
         current_vph = obresult.tags['vph']
         current_insmode = obresult.tags['insmode']
+        obresult_meta = self.datamodel.gather_info_oresult(obresult)
 
         debug_plot = rinput.debug_plot if self.intermediate_results else 0
 
@@ -172,14 +173,9 @@ class TraceMapRecipe(MegaraBaseRecipe):
         final.meta_info['origin']['block_uuid'] = reduced[0].header.get('BLCKUUID', "UNKNOWN")
         final.meta_info['origin']['insconf_uuid'] = reduced[0].header.get('INSCONF', "UNKNOWN")
 
-        # FIXME: redundant
-        cdata = []
-        for frame in obresult.frames:
-            hdulist = frame.open()
-            fname = self.datamodel.get_imgid(hdulist)
-            cdata.append(fname)
-
-        final.meta_info['origin']['frames'] = cdata
+        final.meta_info['origin']['frames'] = [img['imageid'] for img in obresult_meta]
+        # Temperature in Celsius with 2 decimals
+        final.tags['temp'] = round(obresult_meta[0]['temp'] - 273.15, 2)
 
         contents, error_fitting = self.search_traces(
             reduced,
