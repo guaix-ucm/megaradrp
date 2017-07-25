@@ -426,6 +426,9 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
 
     # ipeaks_int = peak_local_max(colcut, min_distance=2, threshold_rel=0.2)[:, 0]
     ipeaks_int = peak_local_max(colcut, min_distance=3, threshold_rel=threshold)[:, 0] # All VPH
+    # We always want the result sorted. The order changes in different versions
+    # of scikit-image
+    ipeaks_int.sort()
 
     if debug_plot:
         plt.plot(colcut)
