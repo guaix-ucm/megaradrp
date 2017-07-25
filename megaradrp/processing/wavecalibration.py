@@ -1,5 +1,5 @@
 #
-# Copyright 2016 Universidad Complutense de Madrid
+# Copyright 2016-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -84,7 +84,7 @@ class WavelengthCalibrator(Corrector):
         # Update other HDUs if needed
         rss[0] = rss_wl
 
-        map_data = numpy.zeros(rss[0].shape, dtype='int32')
+        map_data = numpy.zeros(rss[0].shape, dtype='int16')
 
         fibers_ext = rss['FIBERS']
         fibers_ext_headers = fibers_ext.header

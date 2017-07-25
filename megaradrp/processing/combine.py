@@ -97,7 +97,7 @@ def basic_processing_with_combination_frames(frames,
         if errors:
             varhdu = fits.ImageHDU(data[1], name='VARIANCE')
             result.append(varhdu)
-            num = fits.ImageHDU(data[2].astype('int32'), name='MAP')
+            num = fits.ImageHDU(data[2].astype('int16'), name='MAP')
             result.append(num)
 
     finally:
