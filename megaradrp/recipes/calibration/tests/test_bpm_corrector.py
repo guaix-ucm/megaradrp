@@ -1,5 +1,5 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -35,14 +35,14 @@ from megaradrp.recipes.calibration.tests.test_bpm_common import crear_archivos
 from megaradrp.instrument.loader import build_instrument_config, Loader
 
 
-class TestRecipe(MegaraBaseRecipe):
+class DerivedRecipe(MegaraBaseRecipe):
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
     master_bpm = MasterBPMRequirement()
 
     def __init__(self, directorio):
         self.directorio = directorio
-        super(TestRecipe, self).__init__()
+        super(DerivedRecipe, self).__init__()
 
     def run(self, rinput):
         import copy
@@ -76,11 +76,11 @@ def test_bpm_corrector():
 
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
-    ob.mode = 'bias_image'
+    ob.mode = 'MegaraBiasImage'
     ob.configuration = build_instrument_config('4fd05b24-2ed9-457b-b563-a3c618bb1d4c', loader=Loader())
     ob.frames = [DataFrame(filename=open(nombre).name) for nombre in names]
 
-    recipe = TestRecipe(directorio)
+    recipe = DerivedRecipe(directorio)
     ri = recipe.create_input(obresult=ob, master_bias=DataFrame(
         filename=open(directorio + '/master_bias_data0.fits').name),
                              master_bpm=DataFrame(filename=open(
