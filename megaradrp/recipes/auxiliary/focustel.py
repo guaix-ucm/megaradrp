@@ -155,7 +155,6 @@ class FocusTelescopeRecipe(ImageRecipe):
         rssdata = img[0].data
         cut1 = 1000
         cut2 = 3000
-        print('coors', coors)
         points = [(0, 0)] # Center of fiber 313
         fibers = fiberconf.conected_fibers(valid_only=True)
         grid_coords = []

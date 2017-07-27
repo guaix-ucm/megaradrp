@@ -21,6 +21,7 @@
 
 from numina.core import Product
 
+from megaradrp.utils import add_collapsed_mos_extension
 from megaradrp.types import ProcessedRSS, ProcessedFrame
 from .base import ImageRecipe
 
@@ -76,9 +77,15 @@ class MOSImageRecipe(ImageRecipe):
         self.logger.info('end sky subtraction')
         self.logger.info('end MOS reduction')
 
+        final = add_collapsed_mos_extension(final)
+        origin = add_collapsed_mos_extension(origin)
+
         return self.create_result(
             reduced_image=reduced2d,
             final_rss=final,
             reduced_rss=origin,
             sky_rss=sky
         )
+
+
+

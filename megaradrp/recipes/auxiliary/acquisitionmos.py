@@ -27,6 +27,7 @@ from numina.array.offrot import fit_offset_and_rotation
 import numpy as np
 from numina.core.qc import QC
 
+from megaradrp.utils import add_collapsed_mos_extension
 from megaradrp.processing.datamodel import TargetType
 from megaradrp.types import ProcessedRSS, ProcessedFrame
 from megaradrp.recipes.scientific.base import ImageRecipe
@@ -153,6 +154,9 @@ class AcquireMOSRecipe(ImageRecipe):
             self.logger.info('offset is %s', offset)
             self.logger.info('rot matrix is %s', rot)
             self.logger.info('rot angle %s', angle)
+
+        final = add_collapsed_mos_extension(final)
+        origin = add_collapsed_mos_extension(origin)
 
         return self.create_result(
             reduced_image=reduced2d,
