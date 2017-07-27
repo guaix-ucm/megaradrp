@@ -44,7 +44,7 @@ class MegaraDataModel(DataModel):
             'focus': ('FOCUS', 'undefined'),
             'osfilter': ('OSFILTER', 'undefined'),
             'uuid': ('UUID', 'undefined'),
-            'temp': ('SENTEMP1', 0.0),
+            'temp': ('SENTEMP4', 0.0),
             'block_uuid': ('BLCKUUID', "undefined"),
             'insconf_uuid': ('INSCONF', "undefined"),
             'speclamp': ('SPECLMP', 'undefined')
@@ -60,7 +60,7 @@ class MegaraDataModel(DataModel):
             return super(MegaraDataModel, self).get_imgid(img)
 
     def get_fiberconf(self, img):
-        # Obtain FIBER extension
+        """Obtain FIBER extension"""
         main_insmode = img[0].header.get('INSMODE', '')
         if 'FIBERS' in img:
             # We have a 'fibers' extension
@@ -102,7 +102,7 @@ class MegaraDataModel(DataModel):
 
 
 class FibersConf(object):
-
+    """Global configuration of the fibers"""
     def __init__(self):
         self.name = ""
         self.conf_id = 1
@@ -169,6 +169,7 @@ class FibersConf(object):
 
 
 class BundleConf(object):
+    """Description of a bundle"""
     def __init__(self):
         self.id = 0
         self.target_type = 'UNASSIGNED'
@@ -183,6 +184,7 @@ class BundleConf(object):
 
 
 class FiberConf(object):
+    """Description of the fiber"""
     def __init__(self):
         self.fibid = 0
         self.inactive = False
