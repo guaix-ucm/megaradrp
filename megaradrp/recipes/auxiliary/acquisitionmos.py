@@ -25,6 +25,7 @@ import math
 from numina.core import Product
 from numina.array.offrot import fit_offset_and_rotation
 import numpy as np
+from numina.core.qc import QC
 
 from megaradrp.types import ProcessedRSS, ProcessedFrame
 from megaradrp.recipes.scientific.base import ImageRecipe
@@ -139,11 +140,18 @@ class AcquireMOSRecipe(ImageRecipe):
                 q1.append(centroid)
 
         self.logger.info('compute offset and rotation with %d points', len(p1))
-        offset, rot = fit_offset_and_rotation(np.array(p1), np.array(q1))
-        angle = math.atan2(rot[1, 0], rot[0, 0])
-        self.logger.info('offset is %s', offset)
-        self.logger.info('rot matrix is %s', rot)
-        self.logger.info('rot angle %s', angle)
+        if len(p1) == 0:
+            self.logger.warn('cant compute offset and rotation with 0 points')
+            offset = [0.0, 0.0]
+            angle = 0.0
+            qc = QC.BAD
+        else:
+            offset, rot = fit_offset_and_rotation(np.array(p1), np.array(q1))
+            angle = math.atan2(rot[1, 0], rot[0, 0])
+            qc = QC.GOOD
+            self.logger.info('offset is %s', offset)
+            self.logger.info('rot matrix is %s', rot)
+            self.logger.info('rot angle %s', angle)
 
         return self.create_result(
             reduced_image=reduced2d,
@@ -151,4 +159,5 @@ class AcquireMOSRecipe(ImageRecipe):
             final_rss=final,
             offset=offset,
             rotang=angle,
+            qc=qc
         )
