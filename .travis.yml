@@ -4,9 +4,9 @@ sudo: false
 matrix:
   include:
     - python: "2.7"
-      env: DEPS="numpy scipy astropy=1.1" COVERAGE=true
+      env: DEPS="numpy scipy astropy=1.1 enum34" COVERAGE=true
     - python: "2.7"
-      env: DEPS="numpy scipy astropy=1.2"
+      env: DEPS="numpy scipy astropy=1.2 enum34"
     - python: "3.5"
       env: DEPS="numpy scipy astropy=1.1"
     - python: "3.5"
