@@ -38,6 +38,7 @@ setup(
         'scipy',
         'numina >= 0.14',
         'scikit-image',
+        'enum34;python_version<"3.4"',
     ],
     zip_safe=False,
     entry_points={
