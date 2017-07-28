@@ -192,6 +192,21 @@ class FiberConf(object):
 
 
 def read_fibers_extension(hdr, insmode='LCB'):
+    """Read the FIBERS extension
+
+    Parameters
+    ==========
+    hdr:
+       FITS header
+    insmode: str
+        default INSMODE
+
+    Returns
+    =======
+    FibersConf
+
+
+    """
     conf = FibersConf()
     defaults = {}
     defaults['LCB'] = (89, 623)
