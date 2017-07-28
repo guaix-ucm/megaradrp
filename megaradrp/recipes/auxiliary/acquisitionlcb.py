@@ -97,13 +97,26 @@ class AcquireLCBRecipe(ImageRecipe):
 
         fiberconf = self.datamodel.get_fiberconf(final)
         self.logger.debug("LCB configuration is %s", fiberconf.conf_id)
+
         rssdata = final[0].data
+
         cut1 = 1000
         cut2 = 3000
 
-        #points = [(0, 0)] # Center of fiber 313
+        # points = [(0, 0)] # Center of fiber 313
         points = rinput.points
+
+        flux_per_cell_all = rssdata[:, cut1:cut2].mean(axis=1)
+
+        max_cell = flux_per_cell_all.argmax() + 1
+        max_fiber_ = fiberconf.fibers[max_cell]
+
+        self.logger.info("maximum flux in spaxel %d", max_cell)
+        # Extend points with the brightest spaxel
+        points.append((max_fiber_.x, max_fiber_.y))
+
         fibers = fiberconf.conected_fibers(valid_only=True)
+
         grid_coords = []
         for fiber in fibers:
             grid_coords.append((fiber.x, fiber.y))
@@ -133,6 +146,7 @@ class AcquireLCBRecipe(ImageRecipe):
                 coords.append((fiber.x, fiber.y))
 
             coords = np.asarray(coords)
+            # flux_per_cell = flux_per_cell_all[colids]
             flux_per_cell = rssdata[colids, cut1:cut2].mean(axis=1)
             flux_per_cell_total = flux_per_cell.sum()
             flux_per_cell_norm = flux_per_cell / flux_per_cell_total
@@ -146,7 +160,7 @@ class AcquireLCBRecipe(ImageRecipe):
             mc2 = np.dot(scf0, c_coords)
             self.logger.info('2nd order moments, x2=%f, y2=%f, xy=%f', mc2[0,0], mc2[1,1], mc2[0,1])
 
-        if True:
+        if False:
             self.compute_dar(final)
 
         return self.create_result(
