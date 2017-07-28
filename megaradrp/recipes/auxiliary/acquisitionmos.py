@@ -27,6 +27,7 @@ from numina.array.offrot import fit_offset_and_rotation
 import numpy as np
 from numina.core.qc import QC
 
+from megaradrp.processing.datamodel import TargetType
 from megaradrp.types import ProcessedRSS, ProcessedFrame
 from megaradrp.recipes.scientific.base import ImageRecipe
 
@@ -67,7 +68,7 @@ class AcquireMOSRecipe(ImageRecipe):
     in the fibers configuration. The RSS with sky subtracted is returned ini the
     field `final_rss` of the recipe result.
 
-    Then, the centroid of each fiducial object, marked as `STAR` in the fibers
+    Then, the centroid of each fiducial object, marked as `REFERENCE` in the fibers
     configuration, is computed. The offset and rotation needed to center
     each fiducial object in its bundle is computed and returned
 
@@ -106,7 +107,7 @@ class AcquireMOSRecipe(ImageRecipe):
         p1 = []
         q1 = []
         for key, bundle in fiberconf.bundles.items():
-            if bundle.target_type == 'STAR':
+            if bundle.target_type == TargetType.REFERENCE:
                 self.logger.debug("%s %s %s", key, bundle.target_name, bundle.target_type)
                 mm = bundle.fibers.values()
                 central_fiber = mm[3] # Central fiber is number 4 in the list

@@ -21,12 +21,11 @@ import math
 
 import numpy
 
+from megaradrp.processing.datamodel import TargetType
 from .device import HWDevice
 
 
 class RoboticPositioner(HWDevice):
-
-    TARGET_TYPES = ['SKY', 'STAR', 'TARGET', 'OBJECT', 'UNASSIGNED']
 
     def __init__(self, name, id, pos=None, parent=None):
         super(RoboticPositioner,self). __init__(name, parent)
@@ -42,7 +41,7 @@ class RoboticPositioner(HWDevice):
         self.pa_ = self.pa_fix
 
         self._target_priority = 0
-        self._target_type = 'UNASSIGNED'
+        self._target_type = TargetType.UNASSIGNED
         self._target_name = 'unknown'
 
         self.fb = None
@@ -134,10 +133,6 @@ class RoboticPositioner(HWDevice):
 
     @target_type.setter
     def target_type(self, value):
-        if value not in self.TARGET_TYPES:
-            raise ValueError("Target type '{}' not in '{}'".format(value, self.TARGET_TYPES))
-        if value == 'OBJECT':
-            value == 'TARGET'
         self._target_type = value
 
     @property

@@ -23,6 +23,7 @@ from __future__ import division
 
 import re
 import pkgutil
+import enum
 
 import astropy.io.fits as fits
 from six import StringIO
@@ -114,7 +115,7 @@ class FibersConf(object):
     def sky_fibers(self, valid_only=False):
         result = []
         for bundle in self.bundles.values():
-            if bundle.target_type == 'SKY':
+            if bundle.target_type is TargetType.SKY:
                 if valid_only:
                     for fib in bundle.fibers.values():
                         if fib.valid:
@@ -130,7 +131,7 @@ class FibersConf(object):
 
         result = []
         for bundle in self.bundles.values():
-            if bundle.target_type != 'SKY':
+            if bundle.target_type is TargetType.SKY:
                 if valid_only:
                     for fib in bundle.fibers.values():
                         if fib.valid:
@@ -168,11 +169,22 @@ class FibersConf(object):
         return result
 
 
+class TargetType(enum.Enum):
+    SOURCE = 1
+    UNKNOWN = 2
+    UNASSIGNED = 3
+    SKY = 4
+    REFERENCE = 5
+    # aliases for the other fields
+    STAR = 5
+    BLANK = 4
+
+
 class BundleConf(object):
     """Description of a bundle"""
     def __init__(self):
         self.id = 0
-        self.target_type = 'UNASSIGNED'
+        self.target_type = TargetType.UNASSIGNED
         self.target_priority = 0
         self.target_name = 'unknown'
         self.x_fix = 0
@@ -244,7 +256,7 @@ def read_fibers_extension(hdr, insmode='LCB'):
         bb.id = i
         bb.target_priority = hdr["BUN%03d_P" % i]
         bb.target_name = hdr["BUN%03d_I" % i]
-        bb.target_type = hdr["BUN%03d_T" % i]
+        bb.target_type = TargetType[hdr["BUN%03d_T" % i]]
         bb.fibers = {}
         bundles[i] = bb
 
