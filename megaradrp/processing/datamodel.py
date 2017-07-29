@@ -131,7 +131,7 @@ class FibersConf(object):
 
         result = []
         for bundle in self.bundles.values():
-            if bundle.target_type is TargetType.SKY:
+            if bundle.target_type is not TargetType.SKY:
                 if valid_only:
                     for fib in bundle.fibers.values():
                         if fib.valid:
