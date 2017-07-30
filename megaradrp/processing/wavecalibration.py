@@ -49,6 +49,8 @@ class WavelengthCalibrator(Corrector):
     def run(self, rss):
         imgid = self.get_imgid(rss)
         _logger.debug('wavelength calibration in image %s', imgid)
+        _logger.debug('with wavecalib %s', self.calibid)
+        _logger.debug('offsets are %s', self.solutionwl.global_offset.coef)
 
         current_vph = rss[0].header['VPH']
         current_insmode = rss[0].header['INSMODE']
@@ -79,6 +81,8 @@ class WavelengthCalibrator(Corrector):
 
         hdr['NUM-WAV'] = self.calibid
         hdr['history'] = 'Wavelength calibration with {}'.format(self.calibid)
+        hdr['history'] = 'Aperture extraction offsets are {}'.format(
+            self.solutionwl.global_offset.coef.tolist())
         hdr['history'] = 'Wavelength calibration time {}'.format(datetime.datetime.utcnow().isoformat())
 
         # Update other HDUs if needed
@@ -155,7 +159,11 @@ class WavelengthCalibrator(Corrector):
 
             fibid = fibsol.fibid
             idx = fibid - 1
+
+            # small correction defined in master_wlcalib_XXX_XX-X.json
             coeff = fibsol.solution.coeff
+            offset_wavelength = self.solutionwl.global_offset(fibid)
+            coeff[0] -= offset_wavelength
 
             old_wl_borders = polyval(old_x_borders, coeff)
 

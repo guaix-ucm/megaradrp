@@ -22,6 +22,7 @@
 import json
 
 from numina.array.wavecalib.arccalibration import SolutionArcCalibration
+import numpy.polynomial.polynomial as nppol
 
 from .structured import BaseStructuredCalibration
 
@@ -49,15 +50,23 @@ class WavelengthCalibration(BaseStructuredCalibration):
     def __init__(self, instrument='unknown'):
         super(WavelengthCalibration, self).__init__(instrument)
         self.contents = []
+        self.global_offset = nppol.Polynomial([0.0])
 
     def __getstate__(self):
         st = super(WavelengthCalibration, self).__getstate__()
 
         st['contents'] = [val.__getstate__() for val in self.contents]
+        st['global_offset'] = self.global_offset.coef
         return st
 
     def __setstate__(self, state):
         super(WavelengthCalibration, self).__setstate__(state)
+
+        if 'global_offset' not in state:
+            self.global_offset = nppol.Polynomial([0.0])
+        else:
+            self.global_offset = \
+                nppol.Polynomial(state['global_offset'])
 
         self.contents = []
         # Handle dictionary

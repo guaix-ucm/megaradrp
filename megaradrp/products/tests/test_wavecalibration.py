@@ -92,7 +92,8 @@ def create_test_wavecalib():
                  error_fitting=[],
                  meta_info={},
                  type=data.name(),
-                 contents=contents
+                 contents=contents,
+                 global_offset={'coeff': [0.0], 'reference': 1}
                  )
     return data, state
 
