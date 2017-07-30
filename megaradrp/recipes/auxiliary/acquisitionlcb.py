@@ -99,12 +99,21 @@ class AcquireLCBRecipe(ImageRecipe):
         self.logger.debug("LCB configuration is %s", fiberconf.conf_id)
 
         rssdata = final[0].data
+        funit = final['FIBERS'].header.get("FUNIT", "arcsec")
+        platescale = 1.2133
+
+        if funit == "arcsec":
+            self.logger.debug("unit is arcsec")
+            scale = 1
+        else:
+            self.logger.debug("unit is mm")
+            scale = platescale
 
         cut1 = 1000
         cut2 = 3000
 
         # points = [(0, 0)] # Center of fiber 313
-        points = rinput.points
+        points = list(rinput.points)
 
         flux_per_cell_all = rssdata[:, cut1:cut2].mean(axis=1)
 
@@ -137,7 +146,7 @@ class AcquireLCBRecipe(ImageRecipe):
         self.logger.info('Using %d nearest fibers', npoints)
         for diss, idxs, point in zip(dis_p, idx_p, points):
             # For each point
-            self.logger.info('For point %s', point)
+            self.logger.info('For point %s arcsec', [p * scale for p in point])
             colids = []
             coords = []
             for dis, idx in zip(diss, idxs):
@@ -145,7 +154,7 @@ class AcquireLCBRecipe(ImageRecipe):
                 colids.append(fiber.fibid - 1)
                 coords.append((fiber.x, fiber.y))
 
-            coords = np.asarray(coords)
+            coords = np.asarray(coords) * scale
             # flux_per_cell = flux_per_cell_all[colids]
             flux_per_cell = rssdata[colids, cut1:cut2].mean(axis=1)
             flux_per_cell_total = flux_per_cell.sum()
@@ -153,12 +162,12 @@ class AcquireLCBRecipe(ImageRecipe):
             # centroid
             scf = coords.T * flux_per_cell_norm
             centroid = scf.sum(axis=1)
-            self.logger.info('centroid: %s', centroid)
+            self.logger.info('centroid: %s arcsec', centroid)
             # central coords
             c_coords = coords - centroid
             scf0 = scf - centroid[:, np.newaxis] * flux_per_cell_norm
             mc2 = np.dot(scf0, c_coords)
-            self.logger.info('2nd order moments, x2=%f, y2=%f, xy=%f', mc2[0,0], mc2[1,1], mc2[0,1])
+            self.logger.info('2nd order moments, x2=%f, y2=%f, xy=%f arcsec^2', mc2[0,0], mc2[1,1], mc2[0,1])
 
         if False:
             self.compute_dar(final)

@@ -105,6 +105,16 @@ class AcquireMOSRecipe(ImageRecipe):
         cut2 = 3000
         self.logger.debug("MOS configuration is %s", fiberconf.conf_id)
         rssdata = final[0].data
+        funit = final['FIBERS'].header.get("FUNIT", "arcsec")
+        platescale = 1.2133
+
+        if funit == "arcsec":
+            self.logger.debug("unit is arcsec")
+            scale = 1
+        else:
+            self.logger.debug("unit is mm")
+            scale = platescale
+
         p1 = []
         q1 = []
         for key, bundle in fiberconf.bundles.items():
@@ -112,11 +122,12 @@ class AcquireMOSRecipe(ImageRecipe):
                 self.logger.debug("%s %s %s", key, bundle.target_name, bundle.target_type)
                 mm = bundle.fibers.values()
                 central_fiber = mm[3] # Central fiber is number 4 in the list
-                central_coords = [central_fiber.x, central_fiber.y]
+                central_coords = [central_fiber.x * scale, central_fiber.y * scale]
                 #central_fiber_pair_id
                 # Central fiber is
                 self.logger.debug('Center fiber is %d', central_fiber.fibid)
-                self.logger.debug('Center fiber coordinates %f %f', central_fiber.x, central_fiber.y)
+                self.logger.debug('Center fiber coordinates %f %f arcsec', 
+                             central_fiber.x * scale, central_fiber.y * scale)
 
                 colids = []
                 coords = []
@@ -124,19 +135,19 @@ class AcquireMOSRecipe(ImageRecipe):
                     colids.append(fiber.fibid - 1)
                     coords.append((fiber.x, fiber.y))
 
-                coords = np.asarray(coords)
+                coords = np.asarray(coords) * scale
                 flux_per_cell = rssdata[colids, cut1:cut2].mean(axis=1)
                 flux_per_cell_total = flux_per_cell.sum()
                 flux_per_cell_norm = flux_per_cell / flux_per_cell_total
                 # centroid
                 scf = coords.T * flux_per_cell_norm
                 centroid = scf.sum(axis=1)
-                self.logger.info('centroid: %s', centroid)
+                self.logger.info('centroid: %s arcsec', centroid)
                 # central coords
                 c_coords = coords - centroid
                 scf0 = scf - centroid[:, np.newaxis] * flux_per_cell_norm
                 mc2 = np.dot(scf0, c_coords)
-                self.logger.info('2nd order moments, x2=%f, y2=%f, xy=%f', mc2[0, 0], mc2[1, 1], mc2[0, 1])
+                self.logger.info('2nd order moments, x2=%f, y2=%f, xy=%f arcsec^2', mc2[0, 0], mc2[1, 1], mc2[0, 1])
 
                 p1.append(central_coords)
                 q1.append(centroid)
