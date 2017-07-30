@@ -106,7 +106,7 @@ class AcquireMOSRecipe(ImageRecipe):
         self.logger.debug("MOS configuration is %s", fiberconf.conf_id)
         rssdata = final[0].data
         funit = final['FIBERS'].header.get("FUNIT", "arcsec")
-        platescale = 1.2133
+        platescale = 1.2120
 
         if funit == "arcsec":
             self.logger.debug("unit is arcsec")
