@@ -186,13 +186,14 @@ class GainCorrector(Corrector):
 
         part = img[0].data.shape[0] // 2
 
-        img[0].data[:part] /= self.gain1
-        img[0].data[part:] /= self.gain2
+        img[0].data[:part] *= self.gain1
+        img[0].data[part:] *= self.gain2
 
         hdr['history'] = 'Gain correction with {}'.format(self.calibid)
         hdr['history'] = 'Gain correction time {}'.format(datetime.datetime.utcnow().isoformat())
         hdr['history'] = 'Gain1 correction value {}'.format(self.gain1)
         hdr['history'] = 'Gain2 correction value {}'.format(self.gain2)
+
 
 
         return img
