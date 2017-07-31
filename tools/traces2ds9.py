@@ -57,9 +57,11 @@ def traces2ds9(json_file, ds9_file, rawimage, numpix=100, fibid_at=0,
 
     # check for global_offset in JSON file
     if 'global_offset' in bigdict.keys():
-        global_offset = bigdict['global_offset']
+        global_offset_poly = np.polynomial.Polynomial(bigdict['global_offset'])
+        ref_column = bigdict['ref_column']
     else:
-        global_offset = 0.0
+        global_offset_poly = np.polynomial.Polynomial([0.0])
+        ref_column = 2000
 
     for fiberdict in bigdict['contents']:
         fibid = fiberdict['fibid']
@@ -76,6 +78,7 @@ def traces2ds9(json_file, ds9_file, rawimage, numpix=100, fibid_at=0,
             if rawimage:
                 lcut = (yp > 2056.5)
                 yp[lcut] += 100
+            global_offset = global_offset_poly(ypol(ref_column))
             for i in range(len(xp)-1):
                 x1 = xp[i] + ix_offset
                 y1 = yp[i] + 1 + yoffset + global_offset
