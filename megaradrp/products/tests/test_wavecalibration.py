@@ -93,7 +93,7 @@ def create_test_wavecalib():
                  meta_info={},
                  type=data.name(),
                  contents=contents,
-                 global_offset={'coeff': [0.0], 'reference': 1}
+                 global_offset=[0.0]
                  )
     return data, state
 

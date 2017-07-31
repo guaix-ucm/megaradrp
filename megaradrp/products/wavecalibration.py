@@ -62,11 +62,7 @@ class WavelengthCalibration(BaseStructuredCalibration):
     def __setstate__(self, state):
         super(WavelengthCalibration, self).__setstate__(state)
 
-        if 'global_offset' not in state:
-            self.global_offset = nppol.Polynomial([0.0])
-        else:
-            self.global_offset = \
-                nppol.Polynomial(state['global_offset'])
+        self.global_offset = nppol.Polynomial(state.get('global_offset', [0.0]))
 
         self.contents = []
         # Handle dictionary
