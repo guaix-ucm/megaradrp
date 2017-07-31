@@ -182,7 +182,7 @@ class GainCorrector(Corrector):
         # img[0] = trimOut(img[0], self.detconf)
         hdr = img['primary'].header
         hdr['NUM-GAIN'] = self.calibid
-        hdr['BUNIT'] = 'electrons'
+        hdr['BUNIT'] = 'ELECTRON'
 
         part = img[0].data.shape[0] // 2
 
