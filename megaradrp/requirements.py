@@ -67,12 +67,6 @@ class MasterSlitFlatRequirement(Requirement):
                              )
 
 
-class MasterFiberFlatFrameRequirement(Requirement):
-    def __init__(self):
-        super(MasterFiberFlatFrameRequirement,
-              self).__init__(megaradrp.types.MasterFiberFlatFrame,'Master fiber flat frame')
-
-
 class MasterTwilightRequirement(Requirement):
     def __init__(self, optional=True):
         super(MasterTwilightRequirement,

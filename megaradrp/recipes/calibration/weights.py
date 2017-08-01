@@ -59,7 +59,7 @@ class WeightsRecipe(MegaraBaseRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_slitflat = reqs.MasterSlitFlatRequirement()
-    master_fiberflat_frame = reqs.MasterFiberFlatFrameRequirement()
+    master_fiberflat = reqs.MasterFiberFlatRequirement()
     tracemap = reqs.MasterTraceMapRequirement()
 
     # Products
