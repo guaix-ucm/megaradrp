@@ -101,9 +101,9 @@ class ReferenceSpectrumTable(DataProductTag, ArrayType):
     pass
 
 
-class MasterWeights(DataProductType):
+class WeightsMap(DataProductType):
     def __init__(self, default=None):
-        super(MasterWeights, self).__init__(ptype=dict, default=default)
+        super(WeightsMap, self).__init__(ptype=dict, default=default)
 
     def _datatype_dump(self, obj, where):
         import shutil
@@ -111,7 +111,6 @@ class MasterWeights(DataProductType):
         filename = where.destination + '.tar'
 
         shutil.copy(obj, filename)
-        shutil.rmtree(obj.split(filename)[0])
         return filename
 
     def _datatype_load(self, obj):
