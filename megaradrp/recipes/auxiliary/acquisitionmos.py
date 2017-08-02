@@ -117,11 +117,12 @@ class AcquireMOSRecipe(ImageRecipe):
 
         p1 = []
         q1 = []
+        temp = []
         for key, bundle in fiberconf.bundles.items():
             if bundle.target_type == TargetType.REFERENCE:
                 self.logger.debug("%s %s %s", key, bundle.target_name, bundle.target_type)
-                mm = bundle.fibers.values()
-                central_fiber = mm[3] # Central fiber is number 4 in the list
+                sorted_fibers = [bundle.fibers[key] for key in sorted(bundle.fibers)]
+                central_fiber = sorted_fibers[3] # Central fiber is number 4 in the list
                 central_coords = [central_fiber.x * scale, central_fiber.y * scale]
                 #central_fiber_pair_id
                 # Central fiber is
@@ -131,7 +132,7 @@ class AcquireMOSRecipe(ImageRecipe):
 
                 colids = []
                 coords = []
-                for fiber in bundle.fibers.values():
+                for fiber in sorted_fibers:
                     colids.append(fiber.fibid - 1)
                     coords.append((fiber.x, fiber.y))
 
@@ -151,6 +152,12 @@ class AcquireMOSRecipe(ImageRecipe):
 
                 p1.append(central_coords)
                 q1.append(centroid)
+                temp.append((bundle.id, central_fiber.fibid, central_fiber.x * scale, central_fiber.y * scale, centroid[0], centroid[1]))
+
+        if self.intermediate_results:
+            with open("centroids.txt", "w") as fd:
+                for entry in temp:
+                    fd.write("%s %s %6.3f %6.3f %6.3f %6.3f\n" % entry)
 
         self.logger.info('compute offset and rotation with %d points', len(p1))
         if len(p1) == 0:
@@ -161,10 +168,11 @@ class AcquireMOSRecipe(ImageRecipe):
         else:
             offset, rot = fit_offset_and_rotation(np.array(p1), np.array(q1))
             angle = math.atan2(rot[1, 0], rot[0, 0])
+            angle = angle / math.pi * 180.0
             qc = QC.GOOD
             self.logger.info('offset is %s', offset)
             self.logger.info('rot matrix is %s', rot)
-            self.logger.info('rot angle %s', angle)
+            self.logger.info('rot angle %5.2f deg', angle)
 
         final = add_collapsed_mos_extension(final)
         origin = add_collapsed_mos_extension(origin)
