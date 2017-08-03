@@ -106,7 +106,7 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
 
     def process_flat2d(self, rinput):
         flow = self.init_filters(rinput, rinput.obresult.configuration)
-        final_image = basic_processing_with_combination(rinput, flow, method=combine.median)
+        final_image = basic_processing_with_combination(rinput, flow, method=self.combine_median_scaled)
         hdr = final_image[0].header
         self.set_base_headers(hdr)
         return final_image
@@ -164,3 +164,15 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
         hdr = super(TwilightFiberFlatRecipe, self).set_base_headers(hdr)
         hdr['NUMTYPE'] = ('MasterTwilightFlat', 'Product type')
         return hdr
+
+    def combine_median_scaled(self, arrays, masks=None, dtype=None, out=None,
+                                    zeros=None, scales=None,
+                                    weights=None):
+
+        median_vals = numpy.array([numpy.median(arr) for arr in arrays])
+        self.logger.info("median values are %s", median_vals)
+        # normalize by max value
+        median_max = numpy.max(median_vals)
+        scales = median_max / median_vals
+        self.logger.info("scale values are %s", scales)
+        return combine.median(arrays, scales=scales, dtype=dtype)
