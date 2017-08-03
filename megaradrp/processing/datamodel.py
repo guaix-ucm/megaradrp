@@ -276,6 +276,7 @@ def read_fibers_extension(hdr, insmode='LCB'):
         ff.y = hdr["FIB%03d_Y" % fibid]
 
         ff.b = hdr["FIB%03d_B" % fibid]
+        ff.name = hdr.get("FIB%03d_N" % fibid, 'unknown')
 
         # Validity
         if ff.inactive:

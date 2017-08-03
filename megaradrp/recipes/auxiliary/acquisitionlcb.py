@@ -120,7 +120,7 @@ class AcquireLCBRecipe(ImageRecipe):
         max_cell = flux_per_cell_all.argmax() + 1
         max_fiber_ = fiberconf.fibers[max_cell]
 
-        self.logger.info("maximum flux in spaxel %d", max_cell)
+        self.logger.info("maximum flux in spaxel %d -- %s", max_cell, max_fiber_.name)
         # Extend points with the brightest spaxel
         points.append((max_fiber_.x, max_fiber_.y))
 
