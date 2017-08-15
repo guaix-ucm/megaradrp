@@ -1,20 +1,22 @@
 
+import math
 
 import numpy as np
 
 import matplotlib.cbook as cbook
-
 import matplotlib.collections as mcoll
 import matplotlib.colors as mcolors
 import matplotlib.transforms as mtransforms
 import matplotlib.transforms as mtrans
 
 
-def hexplot(axis, x, y, z, extent=None,
-           cmap=None, norm=None, vmin=None, vmax=None,
-           alpha=None, linewidths=None, edgecolors='none',
-           **kwargs):
+M_SQRT3 = math.sqrt(3)
 
+
+def hexplot(axis, x, y, z, scale=1.0, extent=None,
+            cmap=None, norm=None, vmin=None, vmax=None,
+            alpha=None, linewidths=None, edgecolors='none',
+            **kwargs):
     if not axis._hold:
         axis.cla()
 
@@ -25,32 +27,30 @@ def hexplot(axis, x, y, z, extent=None,
     x = np.array(x, float)
     y = np.array(y, float)
 
-    # hardcoded
-    sx = (2 * 0.465) * 0.99
-    sy = (2 * 0.268) * 0.99
+    sx = 2 / M_SQRT3 * scale * 0.99
+    sy = scale * 0.99
 
     if extent is not None:
         xmin, xmax, ymin, ymax = extent
     else:
-        xmin, xmax = (np.amin(x-sx), np.amax(x+sx)) if len(x) else (0, 1)
-        ymin, ymax = (np.amin(y-sy), np.amax(y+sy)) if len(y) else (0, 1)
+        xmin, xmax = (np.amin(x - sx), np.amax(x + sx)) if len(x) else (0, 1)
+        ymin, ymax = (np.amin(y - sy), np.amax(y + sy)) if len(y) else (0, 1)
 
         # to avoid issues with singular data, expand the min/max pairs
         xmin, xmax = mtrans.nonsingular(xmin, xmax, expander=0.1)
         ymin, ymax = mtrans.nonsingular(ymin, ymax, expander=0.1)
 
-    padding = 1.e-9 * (xmax - xmin)
+    padding = 1.0e-9 * (xmax - xmin)
     xmin -= padding
     xmax += padding
 
     n = len(x)
     polygon = np.zeros((6, 2), float)
-    polygon[:, 0] = sx * np.array([-0.5, 0.5, 1.0, 0.5, -0.5, -1.0]) / 3.0
-    polygon[:, 1] = sy * np.array([0.5, 0.5, 0.0, -0.5, -0.5, 0.0])
 
-    #S = math.sqrt(3) / 2
-    #polygon[:, 0] = sx * np.array([-0.5, 0.5, 1.0, 0.5, -0.5, -1.0])
-    #polygon[:, 1] = sy * np.array([S, S, 0.0, -S, -S, 0.0])
+    S = 1 / math.sqrt(3)
+    mx = my = 0.99 * scale
+    polygon[:, 0] = mx * np.array([-0.5 * S, 0.5 * S, 1.0 * S, 0.5 * S, -0.5 * S, -1.0 * S])
+    polygon[:, 1] = my * np.array([0.5, 0.5, 0.0, -0.5, -0.5, 0.0])
 
     offsets = np.zeros((n, 2), float)
     offsets[:, 0] = x
@@ -63,7 +63,7 @@ def hexplot(axis, x, y, z, extent=None,
         offsets=offsets,
         transOffset=mtransforms.IdentityTransform(),
         offset_position="data"
-        )
+    )
 
     if isinstance(norm, mcolors.LogNorm):
         if (z == 0).any():
@@ -111,6 +111,10 @@ def _demo():
     hdr_fiber = fits.header.Header.fromfile(default_hdr)
     fiberconf = dm.read_fibers_extension(hdr_fiber)
 
+    PLATESCALE = 1.2120  # arcsec / mm
+    SCALE = 0.443  # mm from center to center, upwards
+
+    SIZE = SCALE * PLATESCALE
     x = []
     y = []
     for fiber in fiberconf.fibers.values():
@@ -124,7 +128,7 @@ def _demo():
     ax = plt.gca()
     plt.xlim([-8, 8])
     plt.ylim([-8, 8])
-    col = hexplot(ax, x, y, z, cmap=plt.cm.YlOrRd_r)
+    col = hexplot(ax, x, y, z, scale=SIZE, cmap=plt.cm.YlOrRd_r)
     plt.title("Fiber map")
     cb = plt.colorbar(col)
     cb.set_label('counts')
@@ -141,6 +145,10 @@ if __name__ == '__main__':
     from astropy.wcs import WCS
 
     import megaradrp.processing.datamodel as dm
+
+    PLATESCALE = 1.2120  # arcsec / mm
+    SCALE = 0.443  # mm from center to center, upwards
+    SIZE = SCALE * PLATESCALE
 
     for fname in sys.argv[1:]:
         with fits.open(fname) as img:
@@ -171,16 +179,15 @@ if __name__ == '__main__':
 
             fig = plt.figure()
 
-            #plt.subplots_adjust(hspace=0.5)
+            # plt.subplots_adjust(hspace=0.5)
             ax = fig.add_axes([0.15, 0.1, 0.8, 0.8], projection=wcs2)
             ax.set_xlim([-6, 6])
             ax.set_ylim([-6, 6])
 
             ax.coords.grid(color='black', alpha=1.0, linestyle='solid')
-            col = hexplot(ax, x, y, z, cmap=plt.cm.YlOrRd_r)
+            col = hexplot(ax, x, y, z, scale=SIZE, cmap=plt.cm.YlOrRd_r)
 
             plt.title("LCB")
             cb = plt.colorbar(col)
             cb.set_label('counts')
             plt.show()
-
