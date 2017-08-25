@@ -114,7 +114,6 @@ def _demo():
     PLATESCALE = 1.2120  # arcsec / mm
     SCALE = 0.443  # mm from center to center, upwards
 
-    SIZE = SCALE * PLATESCALE
     x = []
     y = []
     for fiber in fiberconf.fibers.values():
@@ -128,7 +127,7 @@ def _demo():
     ax = plt.gca()
     plt.xlim([-8, 8])
     plt.ylim([-8, 8])
-    col = hexplot(ax, x, y, z, scale=SIZE, cmap=plt.cm.YlOrRd_r)
+    col = hexplot(ax, x, y, z, scale=SCALE, cmap=plt.cm.YlOrRd_r)
     plt.title("Fiber map")
     cb = plt.colorbar(col)
     cb.set_label('counts')
@@ -185,7 +184,7 @@ if __name__ == '__main__':
             ax.set_ylim([-6, 6])
 
             ax.coords.grid(color='black', alpha=1.0, linestyle='solid')
-            col = hexplot(ax, x, y, z, scale=SIZE, cmap=plt.cm.YlOrRd_r)
+            col = hexplot(ax, x, y, z, scale=SCALE, cmap=plt.cm.YlOrRd_r)
 
             plt.title("LCB")
             cb = plt.colorbar(col)
