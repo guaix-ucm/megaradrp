@@ -91,12 +91,12 @@ class MasterSensitivity(MEGARAProductFrame):
     pass
 
 
-class Extinction(ArrayType):
+class ReferenceExtinctionTable(DataProductTag, ArrayType):
     """Atmospheric Extinction."""
     pass
 
 
-class ReferenceSpectrum(ArrayType):
+class ReferenceSpectrumTable(DataProductTag, ArrayType):
     """The spectrum of a reference star"""
     pass
 

@@ -87,9 +87,9 @@ class MOSStandardRecipe(ImageRecipe):
         # 1 + 6  + 12  for second ring
         # 1 + 6  + 12  + 18 for third ring
 
-        # In MOS, only 1 ring around centrl point
+        # In MOS, only 1 ring around central point
         npoints = 7
-        spectrum = self.extract_star(final, rinput.position, npoints)
+        spectrum = self.extract_stars(final, rinput.position, npoints)
 
         self.logger.info('end MOSStandardRecipe reduction')
 
@@ -101,7 +101,7 @@ class MOSStandardRecipe(ImageRecipe):
             star_spectrum=spectrum
         )
 
-    def extract_star(self, final, position, npoints):
+    def extract_stars(self, final, position, npoints):
         from scipy.spatial import KDTree
 
         self.logger.info('extracting star')
@@ -124,7 +124,7 @@ class MOSStandardRecipe(ImageRecipe):
         # kdtree.query_ball_point(points, k=7, r=radius)
 
         dis_p, idx_p = kdtree.query(points, k=npoints)
-
+        totals = []
         self.logger.info('Using %d nearest fibers', npoints)
         for diss, idxs, point in zip(dis_p, idx_p, points):
             # For each point
@@ -136,6 +136,6 @@ class MOSStandardRecipe(ImageRecipe):
                 colids.append(fiber.fibid - 1)
                 coords.append((fiber.x, fiber.y))
 
-
             flux_total = rssdata[colids].mean(axis=0)
-            return flux_total
+            totals.append(flux_total)
+        return totals

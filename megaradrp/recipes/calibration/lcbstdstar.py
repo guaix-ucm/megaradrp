@@ -19,11 +19,15 @@
 
 """LCB Standard Star Image Recipe for Megara"""
 
+import numpy
+from scipy.interpolate import interp1d
+
 from numina.core import Product
 from numina.core.requirements import Requirement
 
 from megaradrp.recipes.scientific.base import ImageRecipe
 from megaradrp.types import ProcessedRSS, ProcessedFrame, ProcessedSpectrum
+from megaradrp.types import ReferenceSpectrumTable, ReferenceExtinctionTable
 
 
 class LCBStandardRecipe(ImageRecipe):
@@ -67,10 +71,13 @@ class LCBStandardRecipe(ImageRecipe):
 
     position = Requirement(list, "Position of the reference object", default=(0, 0))
     nrings = Requirement(int, "Number of rings to extract the star", default=3)
+    reference_spectrum = Requirement(ReferenceSpectrumTable, "Spectrum of reference star")
+    reference_extinction = Requirement(ReferenceExtinctionTable, "Reference extinction")
+
     reduced_image = Product(ProcessedFrame)
     final_rss = Product(ProcessedRSS)
     reduced_rss = Product(ProcessedRSS)
-    sky = Product(ProcessedRSS)
+    sky_rss = Product(ProcessedRSS)
     star_spectrum = Product(ProcessedSpectrum)
 
     def run(self, rinput):
@@ -91,17 +98,51 @@ class LCBStandardRecipe(ImageRecipe):
         self.logger.debug('adding %d nrings', rinput.nrings)
         npoints = 1 + 3 * rinput.nrings * (rinput.nrings +1)
         self.logger.debug('adding %d fibers', npoints)
-        spectrum = self.extract_star(final, rinput.position, npoints)
+
+        crpix, wlr0, delt = self.read_wcs(final[0].header)
+        wavelen = wlr0 + delt * (numpy.arange(final[0].shape[1]) - crpix)
+
+        spectrum = self.extract_stars(final, rinput.position, npoints)
+        airmass = final[0].header['AIRMASS']
+        exptime = final[0].header['EXPTIME']
+        # interpolate ref star and extinction
+        star_interp = interp1d(rinput.reference_spectrum[:,0], rinput.reference_spectrum[:,1])
+        extinc_interp = interp1d(rinput.reference_extinction[:, 0],
+                               rinput.reference_extinction[:, 1])
+
+        response_b = star_interp(wavelen) + extinc_interp(wavelen) * airmass
+        response_a = numpy.power(10, 0.4 * response_b) / 3631
+        response = spectrum[0] / exptime * response_a
+        import astropy.io.fits as fits
+        import matplotlib.pyplot as plt
+        if True:
+            plt.plot(wavelen, response_b)
+            plt.show()
+            plt.plot(wavelen, response_a)
+            plt.show()
+            plt.plot(wavelen, response)
+            plt.show()
+
+        if True:
+            exptime2 = exptime
+            airmass2 = airmass
+            ext = extinc_interp(wavelen) * airmass2
+            calibrated = spectrum[0] / exptime2 * numpy.power(10, 0.4 * ext) / response
+            plt.plot(wavelen, calibrated, 'b')
+            plt.plot(wavelen, 3631 * numpy.power(10, -0.4 * star_interp(wavelen)), 'r')
+            plt.show()
+            plt.plot(wavelen, 3631 * numpy.power(10, -0.4 * star_interp(wavelen)) / calibrated)
+            plt.show()
 
         return self.create_result(
             reduced_image=reduced2d,
             final_rss=final,
             reduced_rss=origin,
-            sky=sky,
-            star_spectrum=spectrum
+            sky_rss=sky,
+            star_spectrum=fits.PrimaryHDU(spectrum[0])
         )
 
-    def extract_star(self, final, position, npoints):
+    def extract_stars(self, final, position, npoints):
         from scipy.spatial import KDTree
 
         self.logger.info('extracting star')
@@ -126,6 +167,7 @@ class LCBStandardRecipe(ImageRecipe):
         dis_p, idx_p = kdtree.query(points, k=npoints)
 
         self.logger.info('Using %d nearest fibers', npoints)
+        totals = []
         for diss, idxs, point in zip(dis_p, idx_p, points):
             # For each point
             self.logger.info('For point %s', point)
@@ -136,6 +178,12 @@ class LCBStandardRecipe(ImageRecipe):
                 colids.append(fiber.fibid - 1)
                 coords.append((fiber.x, fiber.y))
 
-
             flux_total = rssdata[colids].mean(axis=0)
-            return flux_total
+            totals.append(flux_total)
+        return totals
+
+    def read_wcs(self, hdr):
+        crpix = hdr['CRPIX1']
+        wlr0 =  hdr['CRVAL1']
+        delt = hdr['CDELT1']
+        return crpix, wlr0, delt
