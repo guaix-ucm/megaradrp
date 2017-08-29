@@ -22,6 +22,8 @@
 
 from astropy.io import fits
 import numpy as np
+import numpy
+import matplotlib.pyplot as plt
 
 from numina.core.requirements import ObservationResultRequirement, Requirement
 from numina.flow import SerialFlow
@@ -34,6 +36,7 @@ from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.wavecalibration import WavelengthCalibrator
 from megaradrp.processing.fiberflat import Splitter, FlipLR, FiberFlatCorrector
+from megaradrp.types import ReferenceExtinctionTable
 
 
 class ImageRecipe(MegaraBaseRecipe):
@@ -50,6 +53,8 @@ class ImageRecipe(MegaraBaseRecipe):
     master_fiberflat = reqs.MasterFiberFlatRequirement()
     master_twilight = reqs.MasterTwilightRequirement()
     master_traces = reqs.MasterTraceMapRequirement()
+    master_sensitivity = reqs.SensitivityRequirement()
+    reference_extinction = Requirement(ReferenceExtinctionTable, "Reference extinction", default=None)
 
     def base_run(self, rinput):
 
@@ -88,7 +93,7 @@ class ImageRecipe(MegaraBaseRecipe):
         return reduced2d, reduced_rss
 
     def run_sky_subtraction(self, img):
-        import numpy
+
 
         # Sky subtraction
         self.logger.info('obtain fiber information')
@@ -110,7 +115,7 @@ class ImageRecipe(MegaraBaseRecipe):
             sky_data[rowid] = target_data[rowid]
             sky_map[rowid] = target_map[rowid]
             if False:
-                import matplotlib.pyplot as plt
+
                 plt.plot(sky_data[rowid])
                 plt.title("%d" % fibid)
                 plt.show()
@@ -131,6 +136,12 @@ class ImageRecipe(MegaraBaseRecipe):
             final_img[0].data[rowid, mask] = img[0].data[rowid, mask] - avg_sky[mask]
 
         return final_img, img, sky_img
+
+    def read_wcs(self, hdr):
+        crpix = hdr['CRPIX1']
+        wlr0 = hdr['CRVAL1']
+        delt = hdr['CDELT1']
+        return crpix, wlr0, delt
 
     def get_wcallib(self, lambda1, lambda2, fibras, traces, rss, neigh_info, grid):
 

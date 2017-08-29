@@ -19,12 +19,14 @@
 
 """LCB Direct Image Recipe for Megara"""
 
+import numpy
+from scipy.interpolate import interp1d
 
 from numina.core import Product
 
 from megaradrp.recipes.scientific.base import ImageRecipe
 from megaradrp.types import ProcessedRSS, ProcessedFrame
-
+from megaradrp.processing.fluxcalib import FluxCalibration
 
 class LCBImageRecipe(ImageRecipe):
     """Process LCB images.
@@ -76,6 +78,34 @@ class LCBImageRecipe(ImageRecipe):
         self.logger.info('start sky subtraction')
         final, origin, sky = self.run_sky_subtraction(rss_data)
         self.logger.info('end sky subtraction')
+        # Flux calibration
+        if rinput.master_sensitivity is not None:
+            self.logger.info('start flux calibration')
+            node = FluxCalibration(rinput.master_sensitivity.open(), self.datamodel)
+            final = node(final)
+            self.logger.info('end flux calibration')
+        else:
+            self.logger.info('no flux calibration')
+
+        # Extinction calibration
+        if rinput.reference_extinction is not None:
+            self.logger.info('start extinction correction')
+            extinc_interp = interp1d(rinput.reference_extinction[:, 0],
+                                     rinput.reference_extinction[:, 1])
+
+            crpix, wlr0, delt = self.read_wcs(final[0].header)
+            wavelen = wlr0 + delt * (numpy.arange(final[0].shape[1]) - crpix)
+
+            airmass = final[0].header['AIRMASS']
+
+            extinc_corr = numpy.power(10.0, 0.4 * extinc_interp(wavelen) * airmass)
+
+            final[0].data *= extinc_corr
+
+            self.logger.info('end extinction correction')
+        else:
+            self.logger.info('no extinction correction')
+
         self.logger.info('end LCB reduction')
 
         return self.create_result(

@@ -19,8 +19,12 @@
 
 """LCB Standard Star Image Recipe for Megara"""
 
+
+import uuid
+
 import numpy
 from scipy.interpolate import interp1d
+import astropy.io.fits as fits
 
 from numina.core import Product
 from numina.core.requirements import Requirement
@@ -28,6 +32,7 @@ from numina.core.requirements import Requirement
 from megaradrp.recipes.scientific.base import ImageRecipe
 from megaradrp.types import ProcessedRSS, ProcessedFrame, ProcessedSpectrum
 from megaradrp.types import ReferenceSpectrumTable, ReferenceExtinctionTable
+from megaradrp.types import MasterSensitivity
 
 
 class LCBStandardRecipe(ImageRecipe):
@@ -79,6 +84,7 @@ class LCBStandardRecipe(ImageRecipe):
     reduced_rss = Product(ProcessedRSS)
     sky_rss = Product(ProcessedRSS)
     star_spectrum = Product(ProcessedSpectrum)
+    master_sensitivity = Product(MasterSensitivity)
 
     def run(self, rinput):
 
@@ -103,43 +109,20 @@ class LCBStandardRecipe(ImageRecipe):
         wavelen = wlr0 + delt * (numpy.arange(final[0].shape[1]) - crpix)
 
         spectrum = self.extract_stars(final, rinput.position, npoints)
-        airmass = final[0].header['AIRMASS']
-        exptime = final[0].header['EXPTIME']
-        # interpolate ref star and extinction
+
         star_interp = interp1d(rinput.reference_spectrum[:,0], rinput.reference_spectrum[:,1])
         extinc_interp = interp1d(rinput.reference_extinction[:, 0],
                                rinput.reference_extinction[:, 1])
 
-        response_b = star_interp(wavelen) + extinc_interp(wavelen) * airmass
-        response_a = numpy.power(10, 0.4 * response_b) / 3631
-        response = spectrum[0] / exptime * response_a
-        import astropy.io.fits as fits
-        import matplotlib.pyplot as plt
-        if True:
-            plt.plot(wavelen, response_b)
-            plt.show()
-            plt.plot(wavelen, response_a)
-            plt.show()
-            plt.plot(wavelen, response)
-            plt.show()
-
-        if True:
-            exptime2 = exptime
-            airmass2 = airmass
-            ext = extinc_interp(wavelen) * airmass2
-            calibrated = spectrum[0] / exptime2 * numpy.power(10, 0.4 * ext) / response
-            plt.plot(wavelen, calibrated, 'b')
-            plt.plot(wavelen, 3631 * numpy.power(10, -0.4 * star_interp(wavelen)), 'r')
-            plt.show()
-            plt.plot(wavelen, 3631 * numpy.power(10, -0.4 * star_interp(wavelen)) / calibrated)
-            plt.show()
+        sens = self.generate_sensitivity(final, spectrum, star_interp, extinc_interp)
 
         return self.create_result(
             reduced_image=reduced2d,
             final_rss=final,
             reduced_rss=origin,
             sky_rss=sky,
-            star_spectrum=fits.PrimaryHDU(spectrum[0])
+            star_spectrum=fits.PrimaryHDU(spectrum[0]),
+            master_sensitivity=sens
         )
 
     def extract_stars(self, final, position, npoints):
@@ -166,6 +149,7 @@ class LCBStandardRecipe(ImageRecipe):
 
         dis_p, idx_p = kdtree.query(points, k=npoints)
 
+
         self.logger.info('Using %d nearest fibers', npoints)
         totals = []
         for diss, idxs, point in zip(dis_p, idx_p, points):
@@ -175,6 +159,8 @@ class LCBStandardRecipe(ImageRecipe):
             coords = []
             for dis, idx in zip(diss, idxs):
                 fiber = fibers[idx]
+                key1 = "FIB%03dW1" % fiber.fibid
+                key2 = "FIB%03dW2" % fiber.fibid
                 colids.append(fiber.fibid - 1)
                 coords.append((fiber.x, fiber.y))
 
@@ -187,3 +173,26 @@ class LCBStandardRecipe(ImageRecipe):
         wlr0 =  hdr['CRVAL1']
         delt = hdr['CDELT1']
         return crpix, wlr0, delt
+
+    def generate_sensitivity(self, final, spectrum, star_interp, extinc_interp):
+
+        crpix, wlr0, delt = self.read_wcs(final[0].header)
+        wavelen = wlr0 + delt * (numpy.arange(final[0].shape[1]) - crpix)
+
+        airmass = final[0].header['AIRMASS']
+        exptime = final[0].header['EXPTIME']
+
+        response_0 = spectrum[0] / exptime
+        valid = response_0 > 0
+        # In magAB
+        # f(Jy) = 3631 * 10^-0.4 mAB
+        response_1 = 3631 * numpy.power(10.0, - 0.4 * (star_interp(wavelen) + extinc_interp(wavelen) * airmass))
+
+        # I'm going to filter invalid values anyway
+        with numpy.errstate(invalid='ignore', divide='ignore'):
+            response_2 = numpy.where(valid, response_1 / response_0, 1.0)
+
+        sens = fits.PrimaryHDU(response_2, header=final[0].header)
+        sens.header['uuid'] = str(uuid.uuid1())
+        sens.header['tunit'] = ('Jy', "Final units")
+        return sens

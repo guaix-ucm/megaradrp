@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2016 Universidad Complutense de Madrid
+# Copyright 2015-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -84,5 +84,13 @@ class WavelengthCalibrationRequirement(Requirement):
         super(WavelengthCalibrationRequirement,
               self).__init__(megaradrp.products.WavelengthCalibration, 'Wavelength calibration table')
 
+
+class SensitivityRequirement(Requirement):
+    def __init__(self, optional=True):
+        super(SensitivityRequirement,
+              self).__init__(megaradrp.types.MasterSensitivity,
+                             'Master sensitivity for flux calibration',
+                             optional=optional
+                             )
 
 

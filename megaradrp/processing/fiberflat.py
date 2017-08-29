@@ -69,7 +69,8 @@ class CommonFlatCorrector(Corrector):
 class FiberFlatCorrector(CommonFlatCorrector):
     """A Node that corrects from fiber flat."""
 
-    def __init__(self, fiberflat, datamodel=None, calibid='calibid-unknown', dtype='float32'):
+    def __init__(self, fiberflat, datamodel=None, dtype='float32'):
+        calibid = datamodel.get_imgid(fiberflat)
         super(FiberFlatCorrector, self).__init__(
             flatdata=fiberflat,
             datamodel=datamodel,
