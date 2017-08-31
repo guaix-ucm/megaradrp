@@ -94,3 +94,10 @@ class SensitivityRequirement(Requirement):
                              )
 
 
+class ReferenceExtinction(Requirement):
+    def __init__(self, optional=True):
+        super(ReferenceExtinction,
+              self).__init__(megaradrp.types.ReferenceExtinctionTable,
+                             "Reference extinction",
+                             optional=True
+                             )

@@ -83,6 +83,7 @@ class LCBImageRecipe(ImageRecipe):
             self.logger.info('start flux calibration')
             node = FluxCalibration(rinput.master_sensitivity.open(), self.datamodel)
             final = node(final)
+            origin = node(origin)
             self.logger.info('end flux calibration')
         else:
             self.logger.info('no flux calibration')
@@ -101,7 +102,7 @@ class LCBImageRecipe(ImageRecipe):
             extinc_corr = numpy.power(10.0, 0.4 * extinc_interp(wavelen) * airmass)
 
             final[0].data *= extinc_corr
-
+            origin[0].data *= extinc_corr
             self.logger.info('end extinction correction')
         else:
             self.logger.info('no extinction correction')

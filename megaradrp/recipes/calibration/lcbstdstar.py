@@ -105,11 +105,8 @@ class LCBStandardRecipe(ImageRecipe):
         npoints = 1 + 3 * rinput.nrings * (rinput.nrings +1)
         self.logger.debug('adding %d fibers', npoints)
 
-        crpix, wlr0, delt = self.read_wcs(final[0].header)
-        wavelen = wlr0 + delt * (numpy.arange(final[0].shape[1]) - crpix)
-
         spectrum = self.extract_stars(final, rinput.position, npoints)
-
+        star_spectrum = fits.PrimaryHDU(spectrum[0], header=final[0].header)
         star_interp = interp1d(rinput.reference_spectrum[:,0], rinput.reference_spectrum[:,1])
         extinc_interp = interp1d(rinput.reference_extinction[:, 0],
                                rinput.reference_extinction[:, 1])
@@ -121,58 +118,9 @@ class LCBStandardRecipe(ImageRecipe):
             final_rss=final,
             reduced_rss=origin,
             sky_rss=sky,
-            star_spectrum=fits.PrimaryHDU(spectrum[0]),
+            star_spectrum=star_spectrum,
             master_sensitivity=sens
         )
-
-    def extract_stars(self, final, position, npoints):
-        from scipy.spatial import KDTree
-
-        self.logger.info('extracting star')
-
-        fiberconf = self.datamodel.get_fiberconf(final)
-        self.logger.debug("LCB configuration is %s", fiberconf.conf_id)
-        rssdata = final[0].data
-
-        points = [position]
-        fibers = fiberconf.conected_fibers(valid_only=True)
-        grid_coords = []
-        for fiber in fibers:
-            grid_coords.append((fiber.x, fiber.y))
-        # setup kdtree for searching
-        kdtree = KDTree(grid_coords)
-
-        # Other posibility is
-        # query using radius instead
-        # radius = 1.2
-        # kdtree.query_ball_point(points, k=7, r=radius)
-
-        dis_p, idx_p = kdtree.query(points, k=npoints)
-
-
-        self.logger.info('Using %d nearest fibers', npoints)
-        totals = []
-        for diss, idxs, point in zip(dis_p, idx_p, points):
-            # For each point
-            self.logger.info('For point %s', point)
-            colids = []
-            coords = []
-            for dis, idx in zip(diss, idxs):
-                fiber = fibers[idx]
-                key1 = "FIB%03dW1" % fiber.fibid
-                key2 = "FIB%03dW2" % fiber.fibid
-                colids.append(fiber.fibid - 1)
-                coords.append((fiber.x, fiber.y))
-
-            flux_total = rssdata[colids].mean(axis=0)
-            totals.append(flux_total)
-        return totals
-
-    def read_wcs(self, hdr):
-        crpix = hdr['CRPIX1']
-        wlr0 =  hdr['CRVAL1']
-        delt = hdr['CDELT1']
-        return crpix, wlr0, delt
 
     def generate_sensitivity(self, final, spectrum, star_interp, extinc_interp):
 
@@ -190,7 +138,8 @@ class LCBStandardRecipe(ImageRecipe):
 
         # I'm going to filter invalid values anyway
         with numpy.errstate(invalid='ignore', divide='ignore'):
-            response_2 = numpy.where(valid, response_1 / response_0, 1.0)
+            ratio = response_1 / response_0
+            response_2 = numpy.where(valid, ratio, 1.0)
 
         sens = fits.PrimaryHDU(response_2, header=final[0].header)
         sens.header['uuid'] = str(uuid.uuid1())

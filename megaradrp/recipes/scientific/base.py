@@ -25,7 +25,7 @@ import numpy as np
 import numpy
 import matplotlib.pyplot as plt
 
-from numina.core.requirements import ObservationResultRequirement, Requirement
+from numina.core.requirements import ObservationResultRequirement
 from numina.flow import SerialFlow
 from numina.array import combine
 
@@ -36,7 +36,6 @@ from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.wavecalibration import WavelengthCalibrator
 from megaradrp.processing.fiberflat import Splitter, FlipLR, FiberFlatCorrector
-from megaradrp.types import ReferenceExtinctionTable
 
 
 class ImageRecipe(MegaraBaseRecipe):
@@ -54,7 +53,7 @@ class ImageRecipe(MegaraBaseRecipe):
     master_twilight = reqs.MasterTwilightRequirement()
     master_traces = reqs.MasterTraceMapRequirement()
     master_sensitivity = reqs.SensitivityRequirement()
-    reference_extinction = Requirement(ReferenceExtinctionTable, "Reference extinction", default=None)
+    reference_extinction = reqs.ReferenceExtinction()
 
     def base_run(self, rinput):
 
@@ -386,6 +385,48 @@ class ImageRecipe(MegaraBaseRecipe):
             self.logger.info('2nd order moments, x2=%f, y2=%f, xy=%f', mc2[0,0], mc2[1,1], mc2[0,1])
             return centroid
 
+    def extract_stars(self, final, position, npoints):
+        from scipy.spatial import KDTree
+
+        self.logger.info('extracting star')
+
+        fiberconf = self.datamodel.get_fiberconf(final)
+        self.logger.debug("LCB configuration is %s", fiberconf.conf_id)
+        rssdata = final[0].data
+
+        points = [position]
+        fibers = fiberconf.conected_fibers(valid_only=True)
+        grid_coords = []
+        for fiber in fibers:
+            grid_coords.append((fiber.x, fiber.y))
+        # setup kdtree for searching
+        kdtree = KDTree(grid_coords)
+
+        # Other posibility is
+        # query using radius instead
+        # radius = 1.2
+        # kdtree.query_ball_point(points, k=7, r=radius)
+
+        dis_p, idx_p = kdtree.query(points, k=npoints)
+
+
+        self.logger.info('Using %d nearest fibers', npoints)
+        totals = []
+        for diss, idxs, point in zip(dis_p, idx_p, points):
+            # For each point
+            self.logger.info('For point %s', point)
+            colids = []
+            coords = []
+            for dis, idx in zip(diss, idxs):
+                fiber = fibers[idx]
+                key1 = "FIB%03dW1" % fiber.fibid
+                key2 = "FIB%03dW2" % fiber.fibid
+                colids.append(fiber.fibid - 1)
+                coords.append((fiber.x, fiber.y))
+
+            flux_total = rssdata[colids].mean(axis=0)
+            totals.append(flux_total)
+        return totals
 
 def copy_img(img):
     return fits.HDUList([hdu.copy() for hdu in img])
