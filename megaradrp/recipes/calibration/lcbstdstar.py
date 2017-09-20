@@ -20,9 +20,6 @@
 """LCB Standard Star Image Recipe for Megara"""
 
 
-import uuid
-
-import numpy
 from scipy.interpolate import interp1d
 import astropy.io.fits as fits
 
@@ -73,7 +70,6 @@ class LCBStandardRecipe(ImageRecipe):
     the central spaxel containing the star and returned as `star_spectrum`.
 
     """
-
     position = Requirement(list, "Position of the reference object", default=(0, 0))
     nrings = Requirement(int, "Number of rings to extract the star", default=3)
     reference_spectrum = Requirement(ReferenceSpectrumTable, "Spectrum of reference star")
@@ -105,13 +101,18 @@ class LCBStandardRecipe(ImageRecipe):
         npoints = 1 + 3 * rinput.nrings * (rinput.nrings +1)
         self.logger.debug('adding %d fibers', npoints)
 
-        spectrum = self.extract_stars(final, rinput.position, npoints)
-        star_spectrum = fits.PrimaryHDU(spectrum[0], header=final[0].header)
+        spectra_pack = self.extract_stars(final, rinput.position, npoints)
+        pack = spectra_pack[0]
+        # FIXME: include cover1 and cover2
+        spectrum, cover1, cover2 = pack
+        star_spectrum = fits.PrimaryHDU(spectrum, header=final[0].header)
+
         star_interp = interp1d(rinput.reference_spectrum[:,0], rinput.reference_spectrum[:,1])
         extinc_interp = interp1d(rinput.reference_extinction[:, 0],
                                rinput.reference_extinction[:, 1])
 
-        sens = self.generate_sensitivity(final, spectrum, star_interp, extinc_interp)
+        sens = self.generate_sensitivity(final, spectrum, star_interp, extinc_interp, cover1, cover2)
+        self.logger.info('end LCBStandardRecipe reduction')
 
         return self.create_result(
             reduced_image=reduced2d,
@@ -121,27 +122,3 @@ class LCBStandardRecipe(ImageRecipe):
             star_spectrum=star_spectrum,
             master_sensitivity=sens
         )
-
-    def generate_sensitivity(self, final, spectrum, star_interp, extinc_interp):
-
-        crpix, wlr0, delt = self.read_wcs(final[0].header)
-        wavelen = wlr0 + delt * (numpy.arange(final[0].shape[1]) - crpix)
-
-        airmass = final[0].header['AIRMASS']
-        exptime = final[0].header['EXPTIME']
-
-        response_0 = spectrum[0] / exptime
-        valid = response_0 > 0
-        # In magAB
-        # f(Jy) = 3631 * 10^-0.4 mAB
-        response_1 = 3631 * numpy.power(10.0, - 0.4 * (star_interp(wavelen) + extinc_interp(wavelen) * airmass))
-
-        # I'm going to filter invalid values anyway
-        with numpy.errstate(invalid='ignore', divide='ignore'):
-            ratio = response_1 / response_0
-            response_2 = numpy.where(valid, ratio, 1.0)
-
-        sens = fits.PrimaryHDU(response_2, header=final[0].header)
-        sens.header['uuid'] = str(uuid.uuid1())
-        sens.header['tunit'] = ('Jy', "Final units")
-        return sens

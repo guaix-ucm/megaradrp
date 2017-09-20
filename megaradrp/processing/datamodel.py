@@ -168,6 +168,21 @@ class FibersConf(object):
                 result.append(fiber.fibid)
         return result
 
+    def spectral_coverage(self):
+        lowc = []
+        upperc = []
+        for fibid, r in self.fibers.items():
+            if r.w1:
+                lowc.append(r.w1)
+            if r.w2:
+                upperc.append(r.w2)
+
+        mn = max(lowc)
+        nn = min(lowc)
+
+        mx = min(upperc)
+        nx = max(upperc)
+        return (mn, mx), (nn, nx)
 
 class TargetType(enum.Enum):
     SOURCE = 1
@@ -277,6 +292,9 @@ def read_fibers_extension(hdr, insmode='LCB'):
 
         ff.b = hdr["FIB%03d_B" % fibid]
         ff.name = hdr.get("FIB%03d_N" % fibid, 'unknown')
+
+        ff.w1 = hdr.get("FIB%03dW1" % fibid, None)
+        ff.w2 = hdr.get("FIB%03dW2" % fibid, None)
 
         # Validity
         if ff.inactive:

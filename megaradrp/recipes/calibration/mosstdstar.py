@@ -19,8 +19,7 @@
 
 """MOS Standard Star Image Recipe for Megara"""
 
-import uuid
-import numpy
+
 from scipy.interpolate import interp1d
 import astropy.io.fits as fits
 
@@ -72,6 +71,7 @@ class MOSStandardRecipe(ImageRecipe):
 
     """
     position = Requirement(list, "Position of the reference object", default=(0, 0))
+    # nrings = 1
     reference_spectrum = Requirement(ReferenceSpectrumTable, "Spectrum of reference star")
     reference_extinction = Requirement(ReferenceExtinctionTable, "Reference extinction")
 
@@ -95,16 +95,23 @@ class MOSStandardRecipe(ImageRecipe):
         # 1 + 6  for first ring
         # 1 + 6  + 12  for second ring
         # 1 + 6  + 12  + 18 for third ring
-
+        # 1 + 6 * Sum_i=0^n =  1 + 3 * n * (n +1)
         # In MOS, only 1 ring around central point
+        self.logger.debug('adding %d nrings', 1)
         npoints = 7
-        spectrum = self.extract_stars(final, rinput.position, npoints)
-        star_spectrum = fits.PrimaryHDU(spectrum[0], header=final[0].header)
+        self.logger.debug('adding %d fibers', npoints)
+
+        spectra_pack = self.extract_stars(final, rinput.position, npoints)
+        pack = spectra_pack[0]
+        # FIXME: include cover1 and cover2
+        spectrum, cover1, cover2 = pack
+        star_spectrum = fits.PrimaryHDU(spectrum, header=final[0].header)
+
         star_interp = interp1d(rinput.reference_spectrum[:, 0], rinput.reference_spectrum[:, 1])
         extinc_interp = interp1d(rinput.reference_extinction[:, 0],
                                  rinput.reference_extinction[:, 1])
 
-        sens = self.generate_sensitivity(final, spectrum, star_interp, extinc_interp)
+        sens = self.generate_sensitivity(final, spectrum, star_interp, extinc_interp, cover1, cover2)
         self.logger.info('end MOSStandardRecipe reduction')
 
         return self.create_result(
@@ -115,66 +122,3 @@ class MOSStandardRecipe(ImageRecipe):
             star_spectrum=star_spectrum,
             master_sensitivity=sens
         )
-
-    def extract_stars(self, final, position, npoints):
-        from scipy.spatial import KDTree
-
-        self.logger.info('extracting star')
-
-        fiberconf = self.datamodel.get_fiberconf(final)
-        self.logger.debug("MOS configuration is %s", fiberconf.conf_id)
-        rssdata = final[0].data
-
-        points = [position]
-        fibers = fiberconf.conected_fibers(valid_only=True)
-        grid_coords = []
-        for fiber in fibers:
-            grid_coords.append((fiber.x, fiber.y))
-        # setup kdtree for searching
-        kdtree = KDTree(grid_coords)
-
-        # Other posibility is
-        # query using radius instead
-        # radius = 1.2
-        # kdtree.query_ball_point(points, k=7, r=radius)
-
-        dis_p, idx_p = kdtree.query(points, k=npoints)
-        totals = []
-        self.logger.info('Using %d nearest fibers', npoints)
-        for diss, idxs, point in zip(dis_p, idx_p, points):
-            # For each point
-            self.logger.info('For point %s', point)
-            colids = []
-            coords = []
-            for dis, idx in zip(diss, idxs):
-                fiber = fibers[idx]
-                colids.append(fiber.fibid - 1)
-                coords.append((fiber.x, fiber.y))
-
-            flux_total = rssdata[colids].mean(axis=0)
-            totals.append(flux_total)
-        return totals
-
-    def generate_sensitivity(self, final, spectrum, star_interp, extinc_interp):
-
-        crpix, wlr0, delt = self.read_wcs(final[0].header)
-        wavelen = wlr0 + delt * (numpy.arange(final[0].shape[1]) - crpix)
-
-        airmass = final[0].header['AIRMASS']
-        exptime = final[0].header['EXPTIME']
-
-        response_0 = spectrum[0] / exptime
-        valid = response_0 > 0
-        # In magAB
-        # f(Jy) = 3631 * 10^-0.4 mAB
-        response_1 = 3631 * numpy.power(10.0, - 0.4 * (star_interp(wavelen) + extinc_interp(wavelen) * airmass))
-
-        # I'm going to filter invalid values anyway
-        with numpy.errstate(invalid='ignore', divide='ignore'):
-            ratio = response_1 / response_0
-            response_2 = numpy.where(valid, ratio, 1.0)
-
-        sens = fits.PrimaryHDU(response_2, header=final[0].header)
-        sens.header['uuid'] = str(uuid.uuid1())
-        sens.header['tunit'] = ('Jy', "Final units")
-        return sens

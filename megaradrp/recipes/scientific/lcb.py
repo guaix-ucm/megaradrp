@@ -21,6 +21,7 @@
 
 import numpy
 from scipy.interpolate import interp1d
+import astropy.wcs
 
 from numina.core import Product
 
@@ -94,9 +95,11 @@ class LCBImageRecipe(ImageRecipe):
             extinc_interp = interp1d(rinput.reference_extinction[:, 0],
                                      rinput.reference_extinction[:, 1])
 
-            crpix, wlr0, delt = self.read_wcs(final[0].header)
-            wavelen = wlr0 + delt * (numpy.arange(final[0].shape[1]) - crpix)
-
+            wlcalib = astropy.wcs.WCS(final[0].header)
+            pixrange = numpy.arange(final[0].data.shape[1])
+            yrange = pixrange * 0
+            calcwl = numpy.array([pixrange, yrange]).T
+            wavelen = wlcalib.all_pix2world(calcwl, 0.0)[:,0]
             airmass = final[0].header['AIRMASS']
 
             extinc_corr = numpy.power(10.0, 0.4 * extinc_interp(wavelen) * airmass)

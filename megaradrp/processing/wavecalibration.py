@@ -98,9 +98,9 @@ class WavelengthCalibrator(Corrector):
             map_data[idx, s1:s2+1] = 1
             # Update Fibers
             key = "FIB%03dW1" % fibid
-            fibers_ext_headers[key] =  s1 + 1
+            fibers_ext_headers[key] =  (s1 + 1, "Start of spectral coverage")
             key = "FIB%03dW2" % fibid
-            fibers_ext_headers[key] =  s2 + 1
+            fibers_ext_headers[key] =  (s2 + 1, "End of spectral coverage")
 
         for fibid in self.solutionwl.error_fitting:
             # Update Fibers

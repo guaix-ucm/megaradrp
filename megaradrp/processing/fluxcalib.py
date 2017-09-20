@@ -34,6 +34,10 @@ class FluxCalibration(Corrector):
     def __init__(self, sensitivity, datamodel=None, dtype='float32'):
 
         self.sensp = sensitivity['primary']
+        self.limf = (self.sensp.header['PIXLIMF1'] - 1, self.sensp.header['PIXLIMF2'] - 1)
+        self.limr = (self.sensp.header['PIXLIMR1'] - 1, self.sensp.header['PIXLIMR2'] - 1)
+        self.limm = (self.sensp.header['PIXLIMM1'] - 1, self.sensp.header['PIXLIMM2'] - 1)
+
         calibid = datamodel.get_imgid(sensitivity)
         self.target_unit = self.sensp.header['TUNIT']
         super(FluxCalibration, self).__init__(datamodel=datamodel,
@@ -46,7 +50,11 @@ class FluxCalibration(Corrector):
         hdr = img['primary'].header
         exptime = hdr['EXPTIME']
         img['primary'].data /= exptime
-        img['primary'].data *= self.sensp.data
+        newdata = numpy.zeros_like(img['primary'].data)
+        validr = slice(self.limr[0], self.limr[1] + 1, 1)
+        # with numpy.errstate(invalid='ignore', divide='ignore'):
+        newdata[:, validr] = img['primary'].data[:, validr] / self.sensp.data[validr]
+        img['primary'].data = newdata
         self.header_update(hdr, imgid)
 
         return img
@@ -55,5 +63,11 @@ class FluxCalibration(Corrector):
         hdr['BUNIT'] = self.target_unit
         hdr['NUM-STD'] = self.calibid
         hdr['NUM-FLUX'] = self.calibid
+        hdr['PIXLIMF1'] = (self.limf[0] + 1, "Start of valid flux calibration")
+        hdr['PIXLIMF2'] = (self.limf[1] + 1, "End of valid flux calibration")
+        hdr['PIXLIMR1'] = self.limr[0] + 1
+        hdr['PIXLIMR2'] = self.limr[1] + 1
+        hdr['PIXLIMM1'] = self.limm[0] + 1
+        hdr['PIXLIMM2'] = self.limm[1] + 1
         hdr['history'] = 'Flux calibration in {}'.format(imgid)
         hdr['history'] = 'Flux calibration time {}'.format(datetime.datetime.utcnow().isoformat())

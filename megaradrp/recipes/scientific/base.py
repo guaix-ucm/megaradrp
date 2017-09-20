@@ -20,6 +20,8 @@
 """Base scientific recipe for MEGARA"""
 
 
+import uuid
+
 from astropy.io import fits
 import numpy as np
 import numpy
@@ -388,11 +390,14 @@ class ImageRecipe(MegaraBaseRecipe):
     def extract_stars(self, final, position, npoints):
         from scipy.spatial import KDTree
 
+        import matplotlib.pyplot as plt
+
         self.logger.info('extracting star')
 
         fiberconf = self.datamodel.get_fiberconf(final)
-        self.logger.debug("LCB configuration is %s", fiberconf.conf_id)
+        self.logger.debug("Configuration UUID is %s", fiberconf.conf_id)
         rssdata = final[0].data
+        pdata = final['wlmap'].data
 
         points = [position]
         fibers = fiberconf.conected_fibers(valid_only=True)
@@ -409,7 +414,6 @@ class ImageRecipe(MegaraBaseRecipe):
 
         dis_p, idx_p = kdtree.query(points, k=npoints)
 
-
         self.logger.info('Using %d nearest fibers', npoints)
         totals = []
         for diss, idxs, point in zip(dis_p, idx_p, points):
@@ -419,14 +423,148 @@ class ImageRecipe(MegaraBaseRecipe):
             coords = []
             for dis, idx in zip(diss, idxs):
                 fiber = fibers[idx]
-                key1 = "FIB%03dW1" % fiber.fibid
-                key2 = "FIB%03dW2" % fiber.fibid
                 colids.append(fiber.fibid - 1)
                 coords.append((fiber.x, fiber.y))
 
-            flux_total = rssdata[colids].mean(axis=0)
-            totals.append(flux_total)
+            colids.sort()
+            flux_fiber = rssdata[colids]
+            flux_total = rssdata[colids].sum(axis=0)
+            coverage_total = pdata[colids].sum(axis=0)
+
+            max_cover = coverage_total.max()
+            some_value_region = coverage_total > 0
+            max_value_region = coverage_total == max_cover
+            valid_region = max_value_region
+
+            # Interval with maximum coverage
+            nz_max, = numpy.nonzero(numpy.diff(max_value_region))
+            # Interval with at least 1 fiber
+            nz_some, = numpy.nonzero(numpy.diff(some_value_region))
+
+            # Collapse the flux in the optimal region
+            perf = flux_fiber[:, nz_max[0]+ 1: nz_max[1] + 1].sum(axis=1)
+            # Contribution of each fiber to the total flux, 1D
+            perf_norm = perf / perf.sum()
+            contributions = numpy.zeros(shape=(rssdata.shape[0],))
+            contributions[colids] = perf_norm
+            # Contribution of each fiber to the total flux, 2D
+            flux_per_fiber = pdata * contributions[:, numpy.newaxis]
+            flux_sum = flux_per_fiber.sum(axis=0)
+            # In the region max_value_region, flux_sum == 1
+            # In some_value_region 0 < flux_sum < 1
+            # Outside is flux_sum == 0
+            flux_correction = numpy.zeros_like(flux_sum)
+            flux_correction[some_value_region] = 1.0 / flux_sum[some_value_region]
+
+            # Limit to 10
+            flux_correction = numpy.clip(flux_correction, 0, 10)
+
+            flux_total_c = flux_total * flux_correction
+            # plt.axvspan(nz_some[0], nz_some[1], alpha=0.2, facecolor='r')
+            # plt.axvspan(nz_max[0], nz_max[1], alpha=0.2, facecolor='r')
+            # plt.plot(flux_correction)
+            # plt.show()
+            #
+            # plt.axvspan(nz_some[0], nz_some[1], alpha=0.2)
+            # plt.axvspan(nz_max[0], nz_max[1], alpha=0.2)
+            # plt.plot(flux_total)
+            # plt.plot(flux_total * flux_correction, 'g')
+            # ax2 = plt.gca().twinx()
+            # ax2.plot(coverage_total)
+            #
+            # plt.show()
+            pack = flux_total_c, nz_max, nz_some
+            # pack = flux_total_c
+            totals.append(pack)
+
         return totals
+
+    def generate_sensitivity(self, final, spectrum, star_interp, extinc_interp, cover1, cover2):
+
+        from astropy.wcs import WCS
+        import matplotlib.pyplot as plt
+        from scipy.ndimage.filters import uniform_filter, gaussian_filter
+
+        crpix, wlr0, delt = self.read_wcs(final[0].header)
+
+        wcsl = WCS(final[0].header)
+
+        r1 = numpy.arange(final[0].shape[1])
+        r2 = r1 * 0.0
+        lm = numpy.array([r1, r2])
+        wavelen_ = wcsl.all_pix2world(lm.T, 0.0)
+        wavelen = wavelen_[:, 0]
+
+        airmass = final[0].header['AIRMASS']
+        exptime = final[0].header['EXPTIME']
+
+        response_0 = spectrum / exptime
+        valid = response_0 > 0
+        # In magAB
+        # f(Jy) = 3631 * 10^-0.4 mAB
+
+        response_1 = 3631 * numpy.power(10.0, -0.4 * (star_interp(wavelen) + extinc_interp(wavelen) * airmass))
+        r0max = response_0.max()
+        r1max = response_1.max()
+        r0 = response_0 / r0max
+        r1 = response_1 / r1max
+
+        pixm1, pixm2 = cover1
+        pixr1, pixr2 = cover2
+
+        max_valid = numpy.zeros_like(valid)
+        max_valid[pixm1:pixm2 + 1] = True
+
+        partial_valid = numpy.zeros_like(valid)
+        partial_valid[pixr1:pixr2 + 1] = True
+
+        valid = numpy.ones_like(response_0)
+        valid[pixm2:] = 0
+        valid[:pixm1+1] = 0
+
+        sampling = int(2.0 / delt)
+        print('sampling is', sampling)
+
+        with numpy.errstate(invalid='ignore', divide='ignore'):
+            ratio = r0 / r1
+
+        sigma = 20
+
+        pixf1, pixf2 = pixm1 +  2* sigma, pixm2 - 2 * sigma
+        # calc1 = [[pixm1, pixm2, pixr1, pixr2, pixf1, pixf2], [0, 0, 0, 0, 0, 0]]
+
+        flux_valid = numpy.zeros_like(valid, dtype='bool')
+        flux_valid[pixf1:pixf2 + 1] = True
+
+        # lm2 = numpy.array(calc1)
+        # wavelen_ = wcsl.all_pix2world(lm2.T, 0.0)
+
+        r0_ens = gaussian_filter(r0, sigma=sigma)
+        # mf = uniform_filter(r0, size=resolution)
+        #
+        # plt.plot(wavelen, r0, 'b*-')
+        # plt.plot(wavelen, r0_ens, 'r*-')
+        # plt.axvspan(lm3[0], lm3[1], facecolor='g', alpha=0.2)
+        # plt.axvspan(lm3[2], lm3[3], facecolor='r', alpha=0.2)
+        # plt.axvspan(lm3[4], lm3[5], facecolor='b', alpha=0.2)
+        # #plt.plot(wavelen, r1)
+        # plt.show()
+
+        ratio2 = r0_ens / r1
+        s_response = ratio2 * (r0max / r1max)
+
+        # FIXME: include history
+        sens = fits.PrimaryHDU(s_response, header=final[0].header)
+        sens.header['uuid'] = str(uuid.uuid1())
+        sens.header['tunit'] = ('Jy', "Final units")
+        sens.header['PIXLIMF1'] = (pixf1 + 1, "Start of valid flux calibration")
+        sens.header['PIXLIMF2'] = (pixf2 + 1, "Start of valid flux calibration")
+        sens.header['PIXLIMR1'] = pixr1 + 1
+        sens.header['PIXLIMR2'] = pixr2 + 1
+        sens.header['PIXLIMM1'] = pixm1 + 1
+        sens.header['PIXLIMM2'] = pixm2 + 1
+        return sens
+
 
 def copy_img(img):
     return fits.HDUList([hdu.copy() for hdu in img])
