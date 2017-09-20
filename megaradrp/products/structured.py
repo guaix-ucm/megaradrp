@@ -129,4 +129,24 @@ class BaseStructuredCalibration(numina.core.products.DataProductTag,
         return result
 
     def extract_tags(self, obj):
-        return obj.tags
+        """Extract tags from serialized file"""
+        try:
+            with open(obj, 'r') as fd:
+                state = json.load(fd)
+                return state['tags']
+        except IOError as e:
+            raise e
+
+    def extract_meta_info(self, obj):
+        """Extract tags from serialized file"""
+        try:
+            with open(obj, 'r') as fd:
+                state = json.load(fd)
+                minfo = state['meta_info']
+                origin = minfo['origin']
+                date_obs = origin['date_obs']
+                return {'date_obs': date_obs}
+        except IOError as e:
+            raise e
+
+

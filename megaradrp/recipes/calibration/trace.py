@@ -172,6 +172,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         final.meta_info['origin'] = {}
         final.meta_info['origin']['block_uuid'] = reduced[0].header.get('BLCKUUID', "UNKNOWN")
         final.meta_info['origin']['insconf_uuid'] = reduced[0].header.get('INSCONF', "UNKNOWN")
+        final.meta_info['origin']['date_obs'] = reduced[0].header['DATE-OBS']
 
         final.meta_info['origin']['frames'] = [img['imageid'] for img in obresult_meta]
         # Temperature in Celsius with 2 decimals

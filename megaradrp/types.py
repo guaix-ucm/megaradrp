@@ -32,7 +32,39 @@ class MEGARAProductFrame(DataProductTag, DataFrameType):
 
 class ProcessedFrame(DataFrameType):
     """A processed frame"""
-    pass
+
+    tags_headers = {}
+    meta_info_headers = {'date_obs': 'DATE-OBS'}
+
+    def extract_tags(self, obj):
+        """Extract tags from serialized file"""
+
+        import astropy.io.fits as fits
+        try:
+            with fits.open(obj) as hdulist:
+                # My tags here are
+                header = hdulist[0].header
+                result = {}
+                for tag, keyname in self.tags_headers.items():
+                    result[tag] = header[keyname]
+                return result
+        except IOError as e:
+            raise e
+
+    def extract_meta_info(self, obj):
+        """Extract tags from serialized file"""
+
+        import astropy.io.fits as fits
+        try:
+            with fits.open(obj) as hdulist:
+                # My tags here are
+                header = hdulist[0].header
+                result = {}
+                for tag, keyname in self.meta_info_headers.items():
+                    result[tag] = header[keyname]
+                return result
+        except IOError as e:
+            raise e
 
 
 class ProcessedImage(ProcessedFrame):
@@ -70,15 +102,18 @@ class MasterDark(DataProductTag, ProcessedImage):
 
 
 class MasterFiberFlat(DataProductTag, ProcessedRSS):
-    pass
+    meta_info_headers = {'date_obs': 'DATE_OBS'}
+    tags_headers = {'insmode': 'insmode', 'vph': 'vph'}
 
 
 class MasterSlitFlat(DataProductTag, ProcessedImage):
-    pass
+    meta_info = {'date_obs': 'DATE_OBS'}
+    tags_headers = {'insmode': 'insmode', 'vph': 'vph'}
 
 
 class MasterFiberFlatFrame(DataProductTag, ProcessedRSS):
-    pass
+    meta_info = {'date_obs': 'DATE_OBS'}
+    tags_headers = {'insmode': 'insmode', 'vph': 'vph'}
 
 
 class MasterBPM(DataProductTag, ProcessedImage):
