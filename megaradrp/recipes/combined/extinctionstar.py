@@ -44,10 +44,12 @@ class Recipe(MegaraBaseRecipe):
 
     """
 
-    reference_spectra = Requirement(ListOfType(typs.ReferenceSpectrum), "Reference spectra of Std stars")
+    reference_spectra = Requirement(ListOfType(typs.ReferenceSpectrumTable),
+                                    "Reference spectra of Std stars")
 
     master_sensitivity = Product(typs.MasterSensitivity)
-    master_extinction = Product(typs.Extinction, "Atmospheric extinction")
+    master_extinction = Product(typs.ReferenceExtinctionTable,
+                                "Atmospheric extinction")
 
     def run(self, rinput):
 

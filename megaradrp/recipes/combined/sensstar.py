@@ -46,8 +46,10 @@ class Recipe(MegaraBaseRecipe):
     # Requirements
     obresult = ObservationResultRequirement()
 
-    master_extinction = Requirement(typs.Extinction, "Atmospheric extinction")
-    reference_spectra = Requirement(ListOfType(typs.ReferenceSpectrum), "Reference spectra of Std stars")
+    master_extinction = Requirement(typs.ReferenceExtinctionTable,
+                                    "Atmospheric extinction")
+    reference_spectra = Requirement(ListOfType(typs.ReferenceSpectrumTable),
+                                    "Reference spectra of Std stars")
 
     master_sensitivity = Product(typs.MasterSensitivity)
 
