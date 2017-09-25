@@ -27,6 +27,7 @@ import numpy as np
 import numpy
 import matplotlib.pyplot as plt
 
+from numina.core import Parameter
 from numina.core.requirements import ObservationResultRequirement
 from numina.flow import SerialFlow
 from numina.array import combine
@@ -56,6 +57,7 @@ class ImageRecipe(MegaraBaseRecipe):
     master_traces = reqs.MasterTraceMapRequirement()
     master_sensitivity = reqs.SensitivityRequirement()
     reference_extinction = reqs.ReferenceExtinction()
+    relative_threshold = Parameter(0.3, 'Threshold for peak detection')
 
     def base_run(self, rinput):
 
@@ -479,7 +481,7 @@ class ImageRecipe(MegaraBaseRecipe):
 
         return totals
 
-    def generate_sensitivity(self, final, spectrum, star_interp, extinc_interp, cover1, cover2):
+    def generate_sensitivity(self, final, spectrum, star_interp, extinc_interp, cover1, cover2, sigma=20.0):
 
         from astropy.wcs import WCS
         import matplotlib.pyplot as plt
@@ -527,8 +529,6 @@ class ImageRecipe(MegaraBaseRecipe):
 
         with numpy.errstate(invalid='ignore', divide='ignore'):
             ratio = r0 / r1
-
-        sigma = 20
 
         pixf1, pixf2 = pixm1 +  2* sigma, pixm2 - 2 * sigma
         # calc1 = [[pixm1, pixm2, pixr1, pixr2, pixf1, pixf2], [0, 0, 0, 0, 0, 0]]

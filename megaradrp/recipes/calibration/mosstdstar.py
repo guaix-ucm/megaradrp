@@ -23,7 +23,7 @@
 from scipy.interpolate import interp1d
 import astropy.io.fits as fits
 
-from numina.core import Product
+from numina.core import Product, Parameter
 from numina.core.requirements import Requirement
 
 from megaradrp.recipes.scientific.base import ImageRecipe
@@ -74,6 +74,7 @@ class MOSStandardRecipe(ImageRecipe):
     # nrings = 1
     reference_spectrum = Requirement(ReferenceSpectrumTable, "Spectrum of reference star")
     reference_extinction = Requirement(ReferenceExtinctionTable, "Reference extinction")
+    sigma_resolution = Parameter(20.0, 'sigma Gaussian filter to degrade resolution ')
 
     reduced_image = Product(ProcessedFrame)
     final_rss = Product(ProcessedRSS)
@@ -111,7 +112,8 @@ class MOSStandardRecipe(ImageRecipe):
         extinc_interp = interp1d(rinput.reference_extinction[:, 0],
                                  rinput.reference_extinction[:, 1])
 
-        sens = self.generate_sensitivity(final, spectrum, star_interp, extinc_interp, cover1, cover2)
+        sigma = rinput.sigma_resolution
+        sens = self.generate_sensitivity(final, spectrum, star_interp, extinc_interp, cover1, cover2, sigma)
         self.logger.info('end MOSStandardRecipe reduction')
 
         return self.create_result(
