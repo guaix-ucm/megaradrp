@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2017 Universidad Complutense de Madrid
+# Copyright 2011-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,136 +17,25 @@
 # along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-"""Products of the Megara Pipeline: Wavelength  Calibration"""
-
-import json
-import uuid
-
-import numpy
-import numina.core.types
-import numina.core.products
-from numina.ext.gtc import DF
+"""Products of the Megara Pipeline"""
 
 
-class ExtEncoder(json.JSONEncoder):
-    """"Encode numpy.floats and numpy.integer"""
-    def default(self, obj):
-        if isinstance(obj, numpy.integer):
-            return int(obj)
-        elif isinstance(obj, numpy.floating):
-            return float(obj)
-        elif isinstance(obj, numpy.ndarray):
-            return obj.tolist()
-        else:
-            return super(ExtEncoder, self).default(obj)
+from numina.core.products.structured import BaseStructuredCalibration as _B
 
 
-class BaseStructuredCalibration(numina.core.products.DataProductTag,
-                                numina.core.types.AutoDataType):
-    """Base class for structured calibration data
-
-    Parameters
-    ----------
-
-    instrument: str
-        Instrument name
-
-    Attributes
-    ----------
-    tags: dict
-        dictionary of selection fields
-    uuid: str
-       UUID of the result
-
-    """
+class BaseStructuredCalibration(_B):
     def __init__(self, instrument='unknown'):
-        super(BaseStructuredCalibration, self).__init__()
-        self.instrument = instrument
-        self.tags = {}
-        self.uuid = str(uuid.uuid1())
+        super(BaseStructuredCalibration, self).__init__(instrument)
         self.total_fibers = 0
         self.missing_fibers = []
         self.error_fitting = []
-        self.meta_info = {}
-        #
-        self.add_dialect_info('gtc', DF.TYPE_STRUCT)
-
-    @property
-    def calibid(self):
-        return 'uuid:{}'.format(self.uuid)
-
-    @property
-    def default(self):
-        return None
 
     def __getstate__(self):
-        st = {}
-        keys = ['instrument', 'tags', 'uuid',
-                "meta_info", "total_fibers",
-                "missing_fibers", "error_fitting"]
+        st = super(BaseStructuredCalibration, self).__getstate__()
+
+        keys = ["total_fibers", "missing_fibers", "error_fitting"]
+
         for key in keys:
             st[key] = self.__dict__[key]
 
-        st['type'] = self.name()
         return st
-
-    def __setstate__(self, state):
-        self.instrument = state['instrument']
-        self.tags = state['tags']
-        self.uuid = state['uuid']
-        self.meta_info = {}
-
-        for key in state:
-            if key not in ['contents']:
-                setattr(self, key, state[key])
-
-    def __str__(self):
-        sclass = type(self).__name__
-        if self.instrument != 'unknown':
-            return "{}(instrument={}, uuid={})".format(sclass, self.instrument, self.uuid)
-        else:
-            return "{}()".format(sclass)
-
-    @classmethod
-    def _datatype_dump(cls, obj, where):
-        filename = where.destination + '.json'
-
-        with open(filename, 'w') as fd:
-            json.dump(obj.__getstate__(), fd, indent=2, cls=ExtEncoder)
-
-        return filename
-
-    @classmethod
-    def _datatype_load(cls, obj):
-        try:
-            with open(obj, 'r') as fd:
-                state = json.load(fd)
-        except IOError as e:
-            raise e
-
-        result = cls.__new__(cls)
-        result.__setstate__(state=state)
-        return result
-
-    def extract_tags(self, obj):
-        """Extract tags from serialized file"""
-        try:
-            with open(obj, 'r') as fd:
-                state = json.load(fd)
-                return state['tags']
-        except IOError as e:
-            raise e
-
-    def extract_meta_info(self, obj):
-        """Extract tags from serialized file"""
-        try:
-            with open(obj, 'r') as fd:
-                state = json.load(fd)
-                minfo = state['meta_info']
-                origin = minfo['origin']
-                date_obs = origin['date_obs']
-                return {'date_obs': date_obs}
-        except IOError as e:
-            raise e
-
-

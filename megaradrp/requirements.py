@@ -70,7 +70,10 @@ class MasterSlitFlatRequirement(Requirement):
 class MasterTwilightRequirement(Requirement):
     def __init__(self, optional=True):
         super(MasterTwilightRequirement,
-              self).__init__(megaradrp.types.MasterSlitFlat,'Master slit flat calibration')
+              self).__init__(megaradrp.types.MasterTwilightFlat,
+                             'Master twlight flat calibration',
+                             optional=optional
+                             )
 
 
 class MasterTraceMapRequirement(Requirement):

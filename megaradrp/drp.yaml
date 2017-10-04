@@ -134,6 +134,7 @@ pipelines:
       TraceMap: megaradrp.products.TraceMap
       MasterFiberFlat: megaradrp.types.MasterFiberFlat
       MasterTwilightFlat: megaradrp.types.MasterTwilightFlat
+      LinesCatalog: numina.core.products.LinesCatalog
     provides:
       - name: MasterBias
         mode: MegaraBiasImage

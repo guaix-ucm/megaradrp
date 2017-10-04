@@ -22,6 +22,7 @@
 
 from numina.core import DataFrameType, DataProductType
 from numina.core.types import DataType
+from numina.core.products import convert_date
 from numina.core.products import DataProductTag, ArrayType
 
 
@@ -34,37 +35,6 @@ class ProcessedFrame(DataFrameType):
     """A processed frame"""
 
     tags_headers = {}
-    meta_info_headers = {'date_obs': 'DATE-OBS'}
-
-    def extract_tags(self, obj):
-        """Extract tags from serialized file"""
-
-        import astropy.io.fits as fits
-        try:
-            with fits.open(obj) as hdulist:
-                # My tags here are
-                header = hdulist[0].header
-                result = {}
-                for tag, keyname in self.tags_headers.items():
-                    result[tag] = header[keyname]
-                return result
-        except IOError as e:
-            raise e
-
-    def extract_meta_info(self, obj):
-        """Extract tags from serialized file"""
-
-        import astropy.io.fits as fits
-        try:
-            with fits.open(obj) as hdulist:
-                # My tags here are
-                header = hdulist[0].header
-                result = {}
-                for tag, keyname in self.meta_info_headers.items():
-                    result[tag] = header[keyname]
-                return result
-        except IOError as e:
-            raise e
 
 
 class ProcessedImage(ProcessedFrame):
@@ -87,36 +57,45 @@ class ProcessedSpectrum(ProcessedFrame):
     pass
 
 
-class MasterBias(DataProductTag, ProcessedImage):
+class ProcessedImageProduct(DataProductTag, ProcessedImage):
+    pass
+
+
+class ProcessedRSSProduct(DataProductTag, ProcessedRSS):
+    pass
+
+
+class MasterBias(ProcessedImageProduct):
     """A Master Bias image"""
     pass
 
 
-class MasterTwilightFlat(DataProductTag, ProcessedRSS):
+class MasterTwilightFlat(ProcessedRSSProduct):
     pass
 
 
-class MasterDark(DataProductTag, ProcessedImage):
+class MasterDark(ProcessedImageProduct):
     """A Master Dark image"""
     pass
 
 
-class MasterFiberFlat(DataProductTag, ProcessedRSS):
-    meta_info_headers = {'date_obs': 'DATE_OBS'}
+class MasterFiberFlat(ProcessedRSSProduct):
     tags_headers = {'insmode': 'insmode', 'vph': 'vph'}
 
 
-class MasterSlitFlat(DataProductTag, ProcessedImage):
-    meta_info = {'date_obs': 'DATE_OBS'}
+class MasterSlitFlat(ProcessedImageProduct):
     tags_headers = {'insmode': 'insmode', 'vph': 'vph'}
 
 
-class MasterFiberFlatFrame(DataProductTag, ProcessedRSS):
-    meta_info = {'date_obs': 'DATE_OBS'}
-    tags_headers = {'insmode': 'insmode', 'vph': 'vph'}
+class MasterFiberFlatFrame(ProcessedRSSProduct):
+    tags_headers = {
+        'insmode': 'insmode',
+        'vph': 'vph',
+        'confid': ('confid', 'FIBERS', lambda x: x)
+    }
 
 
-class MasterBPM(DataProductTag, ProcessedImage):
+class MasterBPM(ProcessedImageProduct):
     """Bad Pixel Mask product"""
     pass
 

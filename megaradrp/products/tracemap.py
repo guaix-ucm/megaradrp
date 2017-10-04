@@ -24,7 +24,6 @@ import numpy.polynomial.polynomial as nppol
 
 from .structured import BaseStructuredCalibration
 
-
 class GeometricTrace(object):
     def __init__(self, fibid, boxid, start, stop, fitparms=None):
         self.fibid = fibid

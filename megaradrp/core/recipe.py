@@ -58,19 +58,9 @@ class MegaraBaseRecipe(BaseRecipe):
     """
 
     obresult = ObservationResultRequirement()
-    qc = Product(QualityControlProduct, destination='qc', default=QC.GOOD)
+    qc = Product(QualityControlProduct, destination='qc', default=QC.UNKNOWN)
     logger = logging.getLogger('numina.recipes.megara')
     datamodel = MegaraDataModel()
-
-    def save_intermediate_img(self, img, name):
-        """Save intermediate FITS objects."""
-        if self.intermediate_results:
-            img.writeto(name, clobber=True)
-
-    def save_intermediate_array(self, array, name):
-        """Save intermediate array object as FITS."""
-        if self.intermediate_results:
-            fits.writeto(name, array, clobber=True)
 
     def validate_input(self, recipe_input):
         """Method to customize recipe input validation.
@@ -84,7 +74,12 @@ class MegaraBaseRecipe(BaseRecipe):
         super(MegaraBaseRecipe, self).validate_input(recipe_input)
         self.logger.info('end validating input')
 
-    def resample_rss_flux(self, rss_old, wcalib, wvpar_dict):
+    def run_qc(self, recipe_input, recipe_result):
+        """Run Quality Control checks."""
+        recipe_result.qc = QC.GOOD
+        return recipe_result
+
+    def _resample_rss_flux(self, rss_old, wcalib, wvpar_dict):
         """
 
         :param rss_old: rss image
@@ -135,7 +130,7 @@ class MegaraBaseRecipe(BaseRecipe):
         old_x_borders += crpix  # following FITS criterium
         old_wl_borders = polyval(old_x_borders, wcalib.T)
 
-        new_borders = self.map_borders(new_wl)
+        new_borders = self._map_borders(new_wl)
 
         accum_flux = np.empty((nfibers, nsamples + 1))
         accum_flux[:, 1:] = np.cumsum(rss_old, axis=1)
@@ -151,7 +146,7 @@ class MegaraBaseRecipe(BaseRecipe):
 
         return rss_resampled, (wl_min, wl_max, delts)
 
-    def map_borders(self, wls):
+    def _map_borders(self, wls):
         """Compute borders of pixels for interpolation.
 
         The border of the pixel is assumed to be midway of the wls

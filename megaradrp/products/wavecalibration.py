@@ -19,12 +19,10 @@
 
 """Products of the Megara Pipeline: Wavelength  Calibration"""
 
-import json
 
 from numina.array.wavecalib.arccalibration import SolutionArcCalibration
 import numpy.polynomial.polynomial as nppol
-
-from .structured import BaseStructuredCalibration
+from numina.core.products.structured import BaseStructuredCalibration
 
 
 class FiberSolutionArcCalibration(object):

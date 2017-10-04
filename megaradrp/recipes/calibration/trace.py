@@ -31,6 +31,7 @@ from numina.array.trace.traces import trace
 from numina.core import Product, Parameter
 import matplotlib.pyplot as plt
 
+import numina.core.qc as qc
 from numina.array import combine
 import numina.core.validator
 from skimage.filters import threshold_otsu
@@ -104,6 +105,14 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
     reduced_image = Product(ProcessedFrame)
     master_traces = Product(TraceMap)
+
+    def run_qc(self, recipe_input, recipe_result):
+        """Run quality control checks"""
+        self.logger.info('start trace recipe QC')
+        recipe_result.qc = qc.QC.GOOD
+        recipe_result.master_traces.quality_control = qc.QC.GOOD
+        self.logger.info('end trace recipe QC')
+        return recipe_result
 
     @numina.core.validator.validate
     def run(self, rinput):
