@@ -40,6 +40,9 @@ setup(
         'scikit-image',
         'enum34;python_version<"3.4"',
     ],
+    extras_require={
+        'DB': ['sqlalchemy', 'numinadb']
+    },
     zip_safe=False,
     entry_points={
         'numina.pipeline.1': [
