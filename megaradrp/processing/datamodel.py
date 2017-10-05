@@ -28,28 +28,66 @@ import enum
 import astropy.io.fits as fits
 from six import StringIO
 from numina.flow.datamodel import DataModel
+from numina.core.products import convert_date, convert_qc
 
 
 class MegaraDataModel(DataModel):
-    """Data model of MEGARA.
+    """Data model of MEGARA images"""
 
-    Empty for the moment"""
+    meta_info_headers = [
+        'instrument',
+        'object',
+        'observation_date',
+        'uuid',
+        'type',
+        'mode',
+        'exptime',
+        'darktime',
+        'insconf',
+        'blckuuid',
+        'quality_control',
+        'vph',
+        'insmode'
+    ]
 
     def __init__(self):
-        # Keys
-        self._meta = {
-            'texp': ('EXPTIME', None),
+        self.all_values = {
+            'instrument': 'INSTRUME',
+            'object': 'OBJECT',
+            'observation_date': ('DATE-OBS', 0, convert_date),
+            'uuid': 'uuid',
+            'type': 'numtype',
+            'mode': 'obsmode',
+            'exptime': 'exptime',
+            'darktime': 'darktime',
+            'insconf': 'insconf',
+            'blckuuid': 'blckuuid',
+            'quality_control': ('NUMRQC', 0, convert_qc),
             'vph': ('VPH', 'undefined'),
             'vphpos': ('VPHWHPOS', 'undefined'),
             'insmode': ('INSMODE', 'undefined'),
             'focus': ('FOCUS', 'undefined'),
             'osfilter': ('OSFILTER', 'undefined'),
-            'uuid': ('UUID', 'undefined'),
             'temp': ('SENTEMP4', 0.0),
-            'block_uuid': ('BLCKUUID', "undefined"),
-            'insconf_uuid': ('INSCONF', "undefined"),
             'speclamp': ('SPECLMP', 'undefined')
         }
+
+        super(MegaraDataModel, self).__init__(self.all_values)
+
+        # Keys
+        self._meta = [
+            'texp',
+            'vph',
+            'vphpos',
+            'insmode',
+            'focus',
+            'osfilter',
+            'uuid',
+            'temp',
+            'block_uuid',
+            'insconf_uuid',
+            'speclamp'
+        ]
 
     def get_imgid(self, img):
         hdr = self.get_header(img)
@@ -96,8 +134,10 @@ class MegaraDataModel(DataModel):
         values['n_ext'] = len(hdulist)
         extnames = [hdu.header.get('extname', '') for hdu in hdulist[1:]]
         values['name_ext'] = ['PRIMARY'] + extnames
-        for key, val in self._meta.items():
-            values[key] = hdulist[0].header.get(val[0], val[1])
+
+        for key in self._meta:
+            values[key] = self.extractor.extract(key, hdulist)
+
         values['imageid'] = self.get_imgid(hdulist)
         return values
 
@@ -183,6 +223,7 @@ class FibersConf(object):
         mx = min(upperc)
         nx = max(upperc)
         return (mn, mx), (nn, nx)
+
 
 class TargetType(enum.Enum):
     SOURCE = 1

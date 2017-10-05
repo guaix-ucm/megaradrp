@@ -25,13 +25,19 @@ from numina.core.types import DataType
 from numina.core.products import convert_date
 from numina.core.products import DataProductTag, ArrayType
 
-
-class MEGARAProductFrame(DataProductTag, DataFrameType):
-    """A MEGARA product image"""
-    pass
+from .processing.datamodel import MegaraDataModel
 
 
-class ProcessedFrame(DataFrameType):
+class MegaraFrame(DataFrameType):
+    """A processed frame"""
+
+    tags_headers = {}
+
+    def __init__(self):
+        super(MegaraFrame, self).__init__(datamodel=MegaraDataModel())
+
+
+class ProcessedFrame(MegaraFrame):
     """A processed frame"""
 
     tags_headers = {}
@@ -64,6 +70,9 @@ class ProcessedImageProduct(DataProductTag, ProcessedImage):
 class ProcessedRSSProduct(DataProductTag, ProcessedRSS):
     pass
 
+
+class ProcessedSpectrumProduct(DataProductTag, ProcessedSpectrum):
+    pass
 
 class MasterBias(ProcessedImageProduct):
     """A Master Bias image"""
@@ -100,7 +109,7 @@ class MasterBPM(ProcessedImageProduct):
     pass
 
 
-class MasterSensitivity(MEGARAProductFrame):
+class MasterSensitivity(ProcessedSpectrumProduct):
     """Sensitivity correction."""
     pass
 
