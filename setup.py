@@ -46,7 +46,10 @@ setup(
     zip_safe=False,
     entry_points={
         'numina.pipeline.1': [
-        '   MEGARA = megaradrp.loader:load_drp',
+            'MEGARA = megaradrp.loader:load_drp',
+        ],
+        'numinadb.extra.1': [
+            'MEGARA = megaradrp.db [DB]',
             ],
         },
         classifiers=[
