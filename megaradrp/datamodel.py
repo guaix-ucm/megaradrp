@@ -27,7 +27,7 @@ import enum
 
 import astropy.io.fits as fits
 from six import StringIO
-from numina.flow.datamodel import DataModel
+from numina.datamodel import DataModel
 from numina.core.products import convert_date, convert_qc
 
 
@@ -72,7 +72,7 @@ class MegaraDataModel(DataModel):
             'speclamp': ('SPECLMP', 'undefined')
         }
 
-        super(MegaraDataModel, self).__init__(self.all_values)
+        super(MegaraDataModel, self).__init__('MEGARA', self.all_values)
 
         # Keys
         self._meta = [

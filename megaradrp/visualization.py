@@ -1,14 +1,12 @@
 
 import math
 
-import numpy as np
-
 import matplotlib.cbook as cbook
 import matplotlib.collections as mcoll
 import matplotlib.colors as mcolors
-import matplotlib.transforms as mtransforms
 import matplotlib.transforms as mtrans
-
+import matplotlib.transforms as mtransforms
+import numpy as np
 
 M_SQRT3 = math.sqrt(3)
 
@@ -100,7 +98,7 @@ def hexplot(axis, x, y, z, scale=1.0, extent=None,
 
 def _demo():
     import matplotlib.pyplot as plt
-    import megaradrp.processing.datamodel as dm
+    import megaradrp.datamodel as dm
     import pkgutil
     from six import StringIO
     import astropy.io.fits as fits
@@ -143,7 +141,7 @@ if __name__ == '__main__':
     import astropy.io.fits as fits
     from astropy.wcs import WCS
 
-    import megaradrp.processing.datamodel as dm
+    import megaradrp.datamodel as dm
 
     PLATESCALE = 1.2120  # arcsec / mm
     SCALE = 0.443  # mm from center to center, upwards

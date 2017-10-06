@@ -20,13 +20,12 @@
 """Products of the Megara Pipeline"""
 
 
+
 from numina.core import DataFrameType, DataProductType
-from numina.core.types import DataType
-from numina.core.products import convert_date
 from numina.core.products import DataProductTag, ArrayType
+from numina.core.types import DataType
 
-from .processing.datamodel import MegaraDataModel
-
+from megaradrp.datamodel import MegaraDataModel
 
 class MegaraFrame(DataFrameType):
     """A processed frame"""

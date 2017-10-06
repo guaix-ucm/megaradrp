@@ -1,6 +1,6 @@
 
-import pytest
 import astropy.io.fits as fits
+import pytest
 
 from ..datamodel import MegaraDataModel, FibersConf
 

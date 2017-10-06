@@ -21,15 +21,16 @@
 """Combination routines"""
 
 from __future__ import division
-#
-import logging
+
 import datetime
+import logging
 import uuid
 
 from astropy.io import fits
+
 from numina.array import combine
 
-import megaradrp.processing.datamodel
+import megaradrp.datamodel
 
 
 def basic_processing_with_combination(rinput, flow,
@@ -53,7 +54,7 @@ def basic_processing_with_combination_frames(frames,
     odata = []
     cdata = []
 
-    datamodel = megaradrp.processing.datamodel.MegaraDataModel()
+    datamodel = megaradrp.datamodel.MegaraDataModel()
     try:
         _logger.info('processing input images')
         for frame in frames:

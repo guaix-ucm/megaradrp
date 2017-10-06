@@ -21,7 +21,7 @@ import math
 
 import numpy
 
-from megaradrp.processing.datamodel import TargetType
+from megaradrp.datamodel import TargetType
 from .device import HWDevice
 
 

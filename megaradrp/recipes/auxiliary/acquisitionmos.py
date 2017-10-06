@@ -22,15 +22,15 @@
 
 import math
 
-from numina.core import Product
-from numina.array.offrot import fit_offset_and_rotation
 import numpy as np
-from numina.core.qc import QC
 
-from megaradrp.utils import add_collapsed_mos_extension
-from megaradrp.processing.datamodel import TargetType
-from megaradrp.types import ProcessedRSS, ProcessedFrame
+from megaradrp.datamodel import TargetType
 from megaradrp.recipes.scientific.base import ImageRecipe
+from megaradrp.types import ProcessedRSS, ProcessedFrame
+from megaradrp.utils import add_collapsed_mos_extension
+from numina.array.offrot import fit_offset_and_rotation
+from numina.core import Product
+from numina.core.qc import QC
 
 
 class AcquireMOSRecipe(ImageRecipe):
