@@ -24,8 +24,8 @@ import json
 import pytest
 import numpy
 import numpy.polynomial.polynomial as nppol
-
-import megaradrp.products
+import numina.core.qc
+import numina.core.products.structured as structured
 import megaradrp.products.tracemap as tm
 
 
@@ -33,7 +33,7 @@ def create_test_tracemap():
     instrument = 'TEST1'
     tags = {}
     uuid = '123456789'
-    data = megaradrp.products.TraceMap(instrument=instrument)
+    data = tm.TraceMap(instrument=instrument)
     data.tags = tags
     data.uuid = uuid
     data.total_fibers = 623
@@ -48,7 +48,8 @@ def create_test_tracemap():
                  boxes_positions=[],
                  type=data.name(),
                  ref_column=2000,
-                 global_offset=[0.0]
+                 global_offset=[0.0],
+                 quality_control=numina.core.qc.QC.UNKNOWN
                  )
 
     return data, state
@@ -142,7 +143,7 @@ def test_setstate_traceMap():
 
     data, state = create_test_tracemap()
 
-    result = megaradrp.products.TraceMap(instrument='unknown')
+    result = tm.TraceMap(instrument='unknown')
     result.__setstate__(state)
 
     assert (state['instrument'] == result.instrument)
@@ -153,7 +154,7 @@ def test_setstate_traceMap():
 
 @pytest.mark.xfail
 def test_fail_traceMap():
-    my_obj = megaradrp.products.TraceMap()
+    my_obj = tm.TraceMap()
     my_obj._datatype_load('')
 
 
@@ -163,10 +164,9 @@ def test_load_traceMap():
     my_file = NamedTemporaryFile()
 
     with open(my_file.name, 'w') as fd:
-        json.dump(state, fd)
+        json.dump(state, fd, cls=structured.ExtEncoder)
 
-    my_obj = megaradrp.products.TraceMap()
-    my_open_file = my_obj._datatype_load(my_file.name)
+    my_open_file = tm.TraceMap._datatype_load(my_file.name)
 
     assert (my_open_file.instrument == state['instrument'])
     assert (my_open_file.tags == state['tags'])
@@ -182,13 +182,12 @@ def test_dump_traceMap(benchmark=None):
 
     data, state = create_test_tracemap()
 
-    my_obj = megaradrp.products.TraceMap()
     my_file = NamedTemporaryFile()
     work_env = Aux(my_file.name)
-    my_open_file = my_obj._datatype_dump(data, work_env)
+    my_open_file = tm.TraceMap._datatype_dump(data, work_env)
 
-    with open(my_open_file, 'r') as fd:
-        traces = json.load(fd)
+    final = tm.TraceMap._datatype_load(my_open_file)
+    traces = final.__getstate__()
 
     assert (traces == state)
 

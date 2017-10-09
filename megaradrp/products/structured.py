@@ -20,10 +20,10 @@
 """Products of the Megara Pipeline"""
 
 
-from numina.core.products.structured import BaseStructuredCalibration as _B
+import numina.core.products.structured as structured
 
 
-class BaseStructuredCalibration(_B):
+class BaseStructuredCalibration(structured.BaseStructuredCalibration):
     def __init__(self, instrument='unknown'):
         super(BaseStructuredCalibration, self).__init__(instrument)
         self.total_fibers = 0

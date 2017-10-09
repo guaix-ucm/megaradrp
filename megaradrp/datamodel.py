@@ -61,7 +61,9 @@ class MegaraDataModel(DataModel):
             'exptime': 'exptime',
             'darktime': 'darktime',
             'insconf': 'insconf',
+            'insconf_uuid': 'insconf',
             'blckuuid': 'blckuuid',
+            'block_uuid': 'blckuuid',
             'quality_control': ('NUMRQC', 0, convert_qc),
             'vph': ('VPH', 'undefined'),
             'vphpos': ('VPHWHPOS', 'undefined'),
@@ -76,7 +78,7 @@ class MegaraDataModel(DataModel):
 
         # Keys
         self._meta = [
-            'texp',
+            'exptime',
             'vph',
             'vphpos',
             'insmode',

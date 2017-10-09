@@ -23,8 +23,11 @@ from tempfile import NamedTemporaryFile
 import pytest
 import json
 
+import numina.core.qc
+import numina.core.products.structured as structured
 from numina.array.wavecalib.arccalibration import SolutionArcCalibration, WavecalFeature, CrLinear
-import megaradrp.products.wavecalibration as wc
+
+import megaradrp.products.wavecalibration as wcal
 
 
 # FIXME: copied from numina, this should be a fixture
@@ -62,7 +65,7 @@ def create_test_wavecalib():
     instrument = 'TEST1'
     tags = {'insmode': 'LCB', 'vph': 'LR-I'}
     uuid = '123456789'
-    data = megaradrp.products.WavelengthCalibration(instrument=instrument)
+    data = wcal.WavelengthCalibration(instrument=instrument)
     data.tags = tags
     data.uuid = uuid
     data.error_fitting =  []
@@ -73,14 +76,14 @@ def create_test_wavecalib():
     for key in range(10):
         fibid = key + 1
         solution = create_solution(orig)
-        fibersolution = wc.FiberSolutionArcCalibration(fibid, solution)
+        fibersolution = wcal.FiberSolutionArcCalibration(fibid, solution)
         data.contents.append(fibersolution)
         contents.append(data.contents[-1].__getstate__())
 
     for key in range(100, 101):
         fibid = key + 1
         solution = create_solution(orig)
-        fibersolution = wc.FiberSolutionArcCalibration(fibid, solution)
+        fibersolution = wcal.FiberSolutionArcCalibration(fibid, solution)
         data.contents.append(fibersolution)
         contents.append(data.contents[-1].__getstate__())
 
@@ -93,7 +96,8 @@ def create_test_wavecalib():
                  meta_info={},
                  type=data.name(),
                  contents=contents,
-                 global_offset=[0.0]
+                 global_offset=[0.0],
+                 quality_control=numina.core.qc.QC.UNKNOWN
                  )
     return data, state
 
@@ -130,14 +134,14 @@ def test_load_wavecalib():
     my_file = NamedTemporaryFile()
 
     with open(my_file.name, 'w') as fd:
-        json.dump(state, fd)
+        json.dump(state, fd, cls=structured.ExtEncoder)
 
-    my_obj = megaradrp.products.WavelengthCalibration()
-    my_open_file = my_obj._datatype_load(my_file.name)
+    my_open_file = wcal.WavelengthCalibration._datatype_load(my_file.name)
 
     assert (my_open_file.instrument == state['instrument'])
     assert (my_open_file.tags == state['tags'])
     assert (my_open_file.uuid == state['uuid'])
+
     for idx, cont in enumerate(my_open_file.contents):
         assert (cont.__getstate__() == state['contents'][idx])
 
@@ -150,13 +154,12 @@ def test_dump_wavecalib():
 
     data, state = create_test_wavecalib()
 
-    my_obj = megaradrp.products.WavelengthCalibration()
     my_file = NamedTemporaryFile()
     work_env = Aux(my_file.name)
-    my_open_file = my_obj._datatype_dump(data, work_env)
+    my_open_file = wcal.WavelengthCalibration._datatype_dump(data, work_env)
 
-    with open(my_open_file, 'r') as fd:
-        traces = json.load(fd)
+    final = wcal.WavelengthCalibration._datatype_load(my_open_file)
+    traces = final.__getstate__()
 
     assert (traces == state)
 
