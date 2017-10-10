@@ -28,7 +28,7 @@ import enum
 import astropy.io.fits as fits
 from six import StringIO
 from numina.datamodel import DataModel
-from numina.core.products import convert_date, convert_qc
+from numina.util.convert import convert_date, convert_qc
 
 
 class MegaraDataModel(DataModel):

@@ -20,7 +20,7 @@
 """Products of the Megara Pipeline"""
 
 
-import numina.core.products.structured as structured
+import numina.types.structured as structured
 
 
 class BaseStructuredCalibration(structured.BaseStructuredCalibration):

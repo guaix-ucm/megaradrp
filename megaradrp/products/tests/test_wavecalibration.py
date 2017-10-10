@@ -23,8 +23,8 @@ from tempfile import NamedTemporaryFile
 import pytest
 import json
 
-import numina.core.qc
-import numina.core.products.structured as structured
+import numina.types.qc
+import numina.types.structured as structured
 from numina.array.wavecalib.arccalibration import SolutionArcCalibration, WavecalFeature, CrLinear
 
 import megaradrp.products.wavecalibration as wcal
@@ -97,7 +97,7 @@ def create_test_wavecalib():
                  type=data.name(),
                  contents=contents,
                  global_offset=[0.0],
-                 quality_control=numina.core.qc.QC.UNKNOWN
+                 quality_control=numina.types.qc.QC.UNKNOWN
                  )
     return data, state
 

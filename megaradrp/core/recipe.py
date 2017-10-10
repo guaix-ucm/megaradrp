@@ -24,8 +24,8 @@ import numpy as np
 from numina.core import BaseRecipe
 from numina.core import DataFrame, ObservationResult
 from numina.core.dataholders import Product
-from numina.core.products import QualityControlProduct
-from numina.core.qc import QC
+from numina.types.obsresult import QualityControlProduct
+from numina.types.qc import QC
 from numina.core.requirements import ObservationResultRequirement
 from numina.flow import SerialFlow
 

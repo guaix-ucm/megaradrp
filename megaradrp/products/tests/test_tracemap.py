@@ -24,8 +24,9 @@ import json
 import pytest
 import numpy
 import numpy.polynomial.polynomial as nppol
-import numina.core.qc
-import numina.core.products.structured as structured
+import numina.types.qc
+import numina.types.structured as structured
+
 import megaradrp.products.tracemap as tm
 
 
@@ -49,7 +50,7 @@ def create_test_tracemap():
                  type=data.name(),
                  ref_column=2000,
                  global_offset=[0.0],
-                 quality_control=numina.core.qc.QC.UNKNOWN
+                 quality_control=numina.types.qc.QC.UNKNOWN
                  )
 
     return data, state
