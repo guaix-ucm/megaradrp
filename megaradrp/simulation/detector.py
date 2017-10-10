@@ -226,6 +226,7 @@ class MegaraDetector(DetectorBase):
 
     def base_readout(self, elec_f):
         # Output image
+        print(self.fshape)
         final = numpy.zeros(self.fshape)
         self.virt1.readout_in_buffer(elec_f, final)
         self.virt2.readout_in_buffer(elec_f, final)
@@ -234,20 +235,20 @@ class MegaraDetector(DetectorBase):
     def saturate(self, x):
         """Compute non-linearity and saturation."""
         a = -1.2 / 45000.0
-        #b = 1.0
-        #c = -7000.0
-        #det = math.sqrt(b**2-4*a*c)
-        #u1 = (-b+det) / (2*a)
+        # b = 1.0
+        # c = -7000.0
+        # det = math.sqrt(b**2-4*a*c)
+        # u1 = (-b+det) / (2*a)
 
         f1 = lambda x:x
 
-        def f2(x):
-            return x + a* (x - 45000)**2
+        def f2(xx):
+            return xx + a* (xx - 45000)**2
 
         f3 = lambda x: 52000
 
         p1 = x < 45000
-        p3 = x >= 54312 # 45000 + u1
+        p3 = x >= 54312  # 45000 + u1
         p2 = numpy.logical_and(~p1, ~p3)
 
         return numpy.piecewise(x, [p1, p2, p3], [f1, f2, f3])
@@ -267,12 +268,12 @@ class MegaraDetector(DetectorBase):
         nr2 = 2 * nr
         nc2 = 2 * nc
 
-        oscan1 = base_oscan / bng[0]
+        oscan1 = base_oscan // bng[0]
         oscan2 = oscan1 * 2
 
-        psc1 = base_pscan / bng[0]
+        psc1 = base_pscan // bng[0]
         psc2 = 2 * psc1
-
+        print(nr2, oscan2, nc2, psc2)
         fshape = (nr2 + oscan2, nc2 + psc2)
 
         # Row block 1
@@ -307,8 +308,8 @@ class MegaraDetector(DetectorBase):
         ocol2 = (rb2, cbl)
         orow2 = (rb2m, cbf)
 
-        base1 = (slice(0, nr), slice(0,nc2))
-        base2 = (slice(nr, nr2), slice(0,nc2))
+        base1 = (slice(0, nr), slice(0, nc2))
+        base2 = (slice(nr, nr2), slice(0, nc2))
 
         geom1 = trim1, pcol1, ocol1, orow1
         geom2 = trim2, pcol2, ocol2, orow2
