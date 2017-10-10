@@ -226,7 +226,6 @@ class MegaraDetector(DetectorBase):
 
     def base_readout(self, elec_f):
         # Output image
-        print(self.fshape)
         final = numpy.zeros(self.fshape)
         self.virt1.readout_in_buffer(elec_f, final)
         self.virt2.readout_in_buffer(elec_f, final)
@@ -273,7 +272,6 @@ class MegaraDetector(DetectorBase):
 
         psc1 = base_pscan // bng[0]
         psc2 = 2 * psc1
-        print(nr2, oscan2, nc2, psc2)
         fshape = (nr2 + oscan2, nc2 + psc2)
 
         # Row block 1
