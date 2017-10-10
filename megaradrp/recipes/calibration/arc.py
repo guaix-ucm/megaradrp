@@ -27,11 +27,12 @@ from datetime import datetime
 
 import numpy
 from astropy.io import fits
-import matplotlib.pyplot as plt
 
 from numina.core import Requirement, Product, Parameter, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import LinesCatalog
+from numina.array.display.pause_debugplot import pause_debugplot
+from numina.array.display.ximplot import ximplot
 from numina.array.wavecalib.arccalibration import arccalibration_direct
 from numina.array.wavecalib.arccalibration import fit_list_of_wvfeatures
 from numina.array.wavecalib.arccalibration import gen_triplets_master
@@ -284,16 +285,23 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 self.logger.debug('ipeaks_int_filtered: %s', ipeaks_int_filtered)
                 ipeaks_float = refine_peaks(row, ipeaks_int_filtered, nwinwidth)[0]
 
-                # if idx==299:
-                if debugplot:
-                    plt.title('fibid %d' % fibid)
-                    plt.plot(row)
-                    plt.plot(ipeaks_int, row[ipeaks_int], 'ro', alpha=.9, ms=7,
-                             label="ipeaks_int")
-                    plt.plot(ipeaks_int_filtered, row[ipeaks_int_filtered], 'ro', alpha=.9, ms=7,
-                             label="ipeaks_int_filtered")
-                    plt.legend()
-                    plt.show()
+                # if 43 <= fibid <= 44:
+                #    debugplot = 12
+                #else:
+                #    debugplot = 0
+                if abs(debugplot) > 10:
+                    print('ipeaks_float:\n', ipeaks_float)
+                    ax = ximplot(row, show=False, debugplot=debugplot)
+                    ax.set_title('fibid %d' % fibid)
+                    ax.plot(row)
+                    ax.plot(ipeaks_int, row[ipeaks_int], 'b+', alpha=.9, ms=7,
+                            label="ipeaks_int")
+                    ax.plot(ipeaks_int_filtered, row[ipeaks_int_filtered],
+                            'ro', alpha=.9, ms=7, label="ipeaks_int_filtered")
+                    ax.plot(ipeaks_float, row[ipeaks_int_filtered], 'go',
+                            alpha=.9, ms=7, label="ipeaks_float")
+                    ax.legend()
+                    pause_debugplot(debugplot, pltshow=True)
 
                 # FIXME: xchannel ???
                 naxis1 = row.shape[0]
@@ -396,15 +404,17 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     traceback.print_exc()
                     data_wlcalib.error_fitting.append(fibid)
 
-                    if debugplot:
-                        plt.title('fibid %d' % fibid)
+                    if abs(debugplot) > 10:
                         rrow = row[::-1]
                         rpeaks = 4096-ipeaks_int_filtered[::-1]
-                        plt.plot(rrow)
-                        plt.plot(rpeaks, rrow[rpeaks], 'ro', alpha=.9, ms=7, label="ipeaks_int_filtered")
-                        # # plt.plot(ipeaks_int2, row[ipeaks_int2],'gs', alpha=.5 , ms=10)
-                        plt.legend()
-                        plt.show()
+                        ax = ximplot(rrow, show=False, debugplot=debugplot)
+                        ax.set_title('fibid %d' % fibid)
+                        ax.plot(rpeaks, rrow[rpeaks], 'ro', alpha=.9, ms=7,
+                                label="ipeaks_int_filtered")
+                        # ax.plot(ipeaks_int2, row[ipeaks_int2],'gs',
+                        #         alpha=.5 , ms=10)
+                        ax.legend()
+                        pause_debugplot(debugplot, pltshow=True)
                     error_contador += 1
 
             else:
