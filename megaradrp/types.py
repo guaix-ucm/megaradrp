@@ -22,18 +22,20 @@
 
 
 from numina.core import DataFrameType, DataProductType
-from numina.core.products import DataProductTag, ArrayType
-from numina.core.types import DataType
+from numina.types.product import DataProductTag
+from numina.types.datatype import DataType
+from numina.types.array import ArrayType
 
 from megaradrp.datamodel import MegaraDataModel
+
 
 class MegaraFrame(DataFrameType):
     """A processed frame"""
 
     tags_headers = {}
 
-    def __init__(self):
-        super(MegaraFrame, self).__init__(datamodel=MegaraDataModel())
+    def __init__(self, *args, **kwds):
+        super(MegaraFrame, self).__init__(datamodel=MegaraDataModel)
 
 
 class ProcessedFrame(MegaraFrame):
@@ -72,6 +74,7 @@ class ProcessedRSSProduct(DataProductTag, ProcessedRSS):
 
 class ProcessedSpectrumProduct(DataProductTag, ProcessedSpectrum):
     pass
+
 
 class MasterBias(ProcessedImageProduct):
     """A Master Bias image"""
