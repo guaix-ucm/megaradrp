@@ -489,6 +489,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         refine_arccalibration(sp=row,
                                               poly_initial=wlpol,
                                               wv_master=wv_master_all,
+                                              poldeg=poldeg,
                                               times_sigma_reject=5)
                     if poly_refined is not None:
                         # compute approximate linear values
