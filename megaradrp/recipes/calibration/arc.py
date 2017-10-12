@@ -32,6 +32,8 @@ from numina.core import Requirement, Product, Parameter, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import LinesCatalog
 from numina.array.display.pause_debugplot import pause_debugplot
+from numina.array.display.polfit_residuals import polfit_residuals
+from numina.array.display.polfit_residuals import polfit_residuals_with_sigma_rejection
 from numina.array.display.ximplot import ximplot
 from numina.array.wavecalib.arccalibration import arccalibration_direct
 from numina.array.wavecalib.arccalibration import fit_list_of_wvfeatures
@@ -224,7 +226,18 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                      min_distance=30,
                      debugplot=0):
 
-        wv_master = lines_catalog[:, 0]
+        wv_master_all = lines_catalog[:, 0]
+        if lines_catalog.shape[1] == 2:  # assume old format
+            wv_master = numpy.copy(wv_master_all)
+            refine_wv_calibration = False
+        elif lines_catalog.shape[1] == 3:  # assume new format
+            wv_flag = lines_catalog[:, 1]
+            wv_master = wv_master_all[numpy.where(wv_flag == 1)]
+            refine_wv_calibration = True
+        else:
+            raise ValueError('lines_catalog file does not have the expected '
+                             'number of columns')
+
         ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
             gen_triplets_master(wv_master)
 
@@ -234,7 +247,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         data_wlcalib = WavelengthCalibration(instrument='MEGARA')
         data_wlcalib.total_fibers = tracemap.total_fibers
-        for trace in tracemap.contents:
+        for trace in tracemap.contents[:10]:  # ToDo: remove [:10]
             fibid = trace.fibid
             idx = trace.fibid - 1
 
@@ -317,10 +330,10 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 # xpeaks_refined = finterp_channel(ipeaks_float)
                 xpeaks_refined = ipeaks_float + 1.0
 
-                wv_range_catalog = lines_catalog[-1][0] - lines_catalog[0][0]
+                wv_range_catalog = wv_master_all[-1] - wv_master_all[0]
                 delta_wv = 0.20 * wv_range_catalog
-                wv_ini_search = int(lines_catalog[0][0] - delta_wv)
-                wv_end_search = int(lines_catalog[-1][0] + delta_wv)
+                wv_ini_search = int(wv_master_all[0] - delta_wv)
+                wv_end_search = int(wv_master_all[-1] + delta_wv)
 
                 try:
 
@@ -430,6 +443,21 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         fwhm_image = fits.PrimaryHDU(image)
         fwhm_hdulist = fits.HDUList([fwhm_image])
 
+        if refine_wv_calibration:
+            self.logger.info('Improving wavelength calibration...')
+            # model polynomial coefficients vs. fiber number
+            poly_list = self.model_coeff_vs_fiber(data_wlcalib, poldeg,
+                                                  debugplot=12)
+            for item in (data_wlcalib.contents):
+                # estimate polynomial coefficients for each fiber
+                pass
+                # refine polynomial fit using the full set of arc lines
+                # in master list
+                pass
+
+            #print(data_wlcalib.contents[0].solution.coeff)
+            raw_input("Stop here!")
+
         self.logger.info('End arc calibration')
 
         return data_wlcalib, fwhm_hdulist
@@ -467,3 +495,71 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         final_image = test_point_regions.reshape((4112, 4096)).astype('float32')
         final_image[:, :] = final[final_image[:, :].astype('int16'), 2]
         return (final_image)
+
+    def model_coeff_vs_fiber(self, data_wlcalib, poldeg, debugplot=0):
+        """Model polynomial coefficients vs. fiber number.
+
+        For each polynomial coefficient, a smooth polynomial dependence
+        with fiber number is also computed, rejecting information from
+        fibers which coefficients depart from that smooth variation.
+        """
+
+        list_fibid = []
+        list_coeffs = []
+        for item in (data_wlcalib.contents):
+            list_fibid.append(item.fibid)
+            if len(item.solution.coeff) != poldeg + 1:
+                raise ValueError('Unexpected number of polynomial '
+                                 'coefficients')
+            list_coeffs.append(item.solution.coeff)
+
+        # determine bad fits from each independent polynomial coefficient
+        poldeg_coeff_vs_fiber = 5
+        reject_all = None  # avoid PyCharm warning
+        fibid = numpy.array(list_fibid)
+        for i in range(poldeg + 1):
+            coeff = numpy.array([coeff[i] for coeff in list_coeffs])
+            poly, yres, reject = polfit_residuals_with_sigma_rejection(
+                x=fibid,
+                y=coeff,
+                deg=poldeg_coeff_vs_fiber,
+                times_sigma_reject=5,
+            )
+            if abs(debugplot) % 10 != 0:
+                polfit_residuals(
+                    x=fibid,
+                    y=coeff,
+                    deg=poldeg_coeff_vs_fiber,
+                    reject=reject,
+                    xlabel='fibid',
+                    ylabel='coeff a_' + str(i),
+                    title='Identifying bad fits',
+                    debugplot=debugplot
+                )
+            if i == 0:
+                reject_all = numpy.copy(reject)
+                if abs(debugplot) >= 10:
+                    print('coeff a_' + str(i) + ': ', sum(reject_all))
+            else:
+                # add new bad fits
+                reject_all = numpy.logical_or(reject_all, reject)
+                if abs(debugplot) >= 10:
+                    print('coeff a_' + str(i) + ': ', sum(reject_all))
+
+        # determine new fits excluding all fibers with bad fits
+        poly_list = []
+        for i in range(poldeg + 1):
+            coeff = numpy.array([coeff[i] for coeff in list_coeffs])
+            poly, yres = polfit_residuals(
+                x=fibid,
+                y=coeff,
+                deg=poldeg_coeff_vs_fiber,
+                reject=reject_all,
+                xlabel='fibid',
+                ylabel='coeff a_' + str(i),
+                title='Computing filtered fits',
+                debugplot=debugplot
+            )
+            poly_list.append(poly)
+
+        return poly_list
