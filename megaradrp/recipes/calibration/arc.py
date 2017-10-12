@@ -38,6 +38,9 @@ from numina.array.display.ximplot import ximplot
 from numina.array.wavecalib.arccalibration import arccalibration_direct
 from numina.array.wavecalib.arccalibration import fit_list_of_wvfeatures
 from numina.array.wavecalib.arccalibration import gen_triplets_master
+from numina.array.wavecalib.arccalibration import refine_arccalibration
+from numina.array.wavecalib.solutionarc import CrLinear
+from numina.array.wavecalib.solutionarc import SolutionArcCalibration
 from numina.array.peaks.peakdet import refine_peaks
 from numina.array.peaks.detrend import detrend
 from numina.flow import SerialFlow
@@ -230,10 +233,14 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         if lines_catalog.shape[1] == 2:  # assume old format
             wv_master = numpy.copy(wv_master_all)
             refine_wv_calibration = False
+            if abs(debugplot) >= 10:
+                print('wv_master:\n', wv_master)
         elif lines_catalog.shape[1] == 3:  # assume new format
             wv_flag = lines_catalog[:, 1]
             wv_master = wv_master_all[numpy.where(wv_flag == 1)]
             refine_wv_calibration = True
+            if abs(debugplot) >= 10:
+                print('wv_master:\n', wv_master)
         else:
             raise ValueError('lines_catalog file does not have the expected '
                              'number of columns')
@@ -247,7 +254,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         data_wlcalib = WavelengthCalibration(instrument='MEGARA')
         data_wlcalib.total_fibers = tracemap.total_fibers
-        for trace in tracemap.contents[:10]:  # ToDo: remove [:10]
+        for trace in tracemap.contents:
             fibid = trace.fibid
             idx = trace.fibid - 1
 
@@ -261,6 +268,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
                 row = fibdata_detrend
 
+                self.logger.info('-' * 40)
                 self.logger.info('Starting row %d, fibid %d', idx, fibid)
 
                 # find peaks (initial search providing integer numbers)
@@ -445,18 +453,82 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         if refine_wv_calibration:
             self.logger.info('Improving wavelength calibration...')
-            # model polynomial coefficients vs. fiber number
-            poly_list = self.model_coeff_vs_fiber(data_wlcalib, poldeg,
-                                                  debugplot=12)
-            for item in (data_wlcalib.contents):
-                # estimate polynomial coefficients for each fiber
-                pass
-                # refine polynomial fit using the full set of arc lines
-                # in master list
-                pass
+            # model polynomial coefficients vs. fiber number using
+            # previous results stored in data_wlcalib
+            list_poly_vs_fiber = self.model_coeff_vs_fiber(
+                data_wlcalib, poldeg,
+                times_sigma_reject=5,
+                debugplot=0)
+            # recompute data_wlcalib from scratch
+            missing_fib = 0
+            error_contador = 0
+            data_wlcalib = WavelengthCalibration(instrument='MEGARA')
+            data_wlcalib.total_fibers = tracemap.total_fibers
+            # refine wavelength calibration polynomial for each valid fiber
+            for trace in tracemap.contents:
+                fibid = trace.fibid
+                idx = trace.fibid - 1
+                if trace.valid:
+                    self.logger.info('-' * 40)
+                    self.logger.info('Starting row %d, fibid %d', idx, fibid)
+                    # select spectrum for current fiber
+                    row = rss[idx]
+                    trend = detrend(row)
+                    fibdata_detrend = row - trend
+                    row = fibdata_detrend
+                    naxis1 = row.shape[0]
+                    # estimate polynomial coefficients for current fiber
+                    coeff = numpy.zeros(poldeg + 1)
+                    for k in range(poldeg + 1):
+                        dumpol = list_poly_vs_fiber[k]
+                        coeff[k] = dumpol(fibid)
+                    wlpol = numpy.polynomial.Polynomial(coeff)
+                    # refine polynomial fit using the full set of arc lines
+                    # in master list
+                    poly_refined, npoints_eff, residual_std = \
+                        refine_arccalibration(sp=row,
+                                              poly_initial=wlpol,
+                                              wv_master=wv_master_all,
+                                              times_sigma_reject=5)
+                    if poly_refined is not None:
+                        # compute approximate linear values
+                        crmin1_linear = poly_refined(1)
+                        crmax1_linear = poly_refined(naxis1)
+                        cdelt1_linear = (crmax1_linear - crmin1_linear) / \
+                                        (naxis1 - 1)
+                        self.logger.info('linear crval1, cdelt1: %f %f',
+                                         crmin1_linear, cdelt1_linear)
+                        self.logger.info('fitted coefficients %s',
+                                         poly_refined.coef)
+                        self.logger.info('npoints_eff, residual_std: %d %f',
+                                         npoints_eff, residual_std)
+                        cr_linear = CrLinear(
+                            crpix=1.0,
+                            crval=crmin1_linear,
+                            crmin=crmin1_linear,
+                            crmax=crmax1_linear,
+                            cdelt=cdelt1_linear
+                        )
+                        solution_wv = SolutionArcCalibration(
+                            features=[],  # empty list!
+                            coeff=poly_refined.coef,
+                            residual_std=residual_std,
+                            cr_linear=cr_linear
+                        )
+                        solution_wv.npoints_eff = npoints_eff  # add also this
+                        new = FiberSolutionArcCalibration(fibid, solution_wv)
+                        data_wlcalib.contents.append(new)
+                    else:
+                        self.logger.error('error in row %d, fibid %d',
+                                          idx, fibid)
+                        data_wlcalib.error_fitting.append(fibid)
+                else:
+                    self.logger.info('skipping row %d, fibid %d, not extracted', idx, fibid)
+                    missing_fib += 1
+                    data_wlcalib.missing_fibers.append(fibid)
 
-            #print(data_wlcalib.contents[0].solution.coeff)
-            raw_input("Stop here!")
+            self.logger.info('Errors in fitting: %s', error_contador)
+            self.logger.info('Missing fibers: %s', missing_fib)
 
         self.logger.info('End arc calibration')
 
@@ -496,7 +568,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         final_image[:, :] = final[final_image[:, :].astype('int16'), 2]
         return (final_image)
 
-    def model_coeff_vs_fiber(self, data_wlcalib, poldeg, debugplot=0):
+    def model_coeff_vs_fiber(self, data_wlcalib, poldeg,
+                             times_sigma_reject=5,
+                             debugplot=0):
         """Model polynomial coefficients vs. fiber number.
 
         For each polynomial coefficient, a smooth polynomial dependence
@@ -523,7 +597,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 x=fibid,
                 y=coeff,
                 deg=poldeg_coeff_vs_fiber,
-                times_sigma_reject=5,
+                times_sigma_reject=times_sigma_reject,
             )
             if abs(debugplot) % 10 != 0:
                 polfit_residuals(
@@ -539,15 +613,15 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             if i == 0:
                 reject_all = numpy.copy(reject)
                 if abs(debugplot) >= 10:
-                    print('coeff a_' + str(i) + ': ', sum(reject_all))
+                    print('coeff a_' + str(i) + ': nreject=', sum(reject_all))
             else:
                 # add new bad fits
                 reject_all = numpy.logical_or(reject_all, reject)
                 if abs(debugplot) >= 10:
-                    print('coeff a_' + str(i) + ': ', sum(reject_all))
+                    print('coeff a_' + str(i) + ': nreject=', sum(reject_all))
 
         # determine new fits excluding all fibers with bad fits
-        poly_list = []
+        list_poly_vs_fiber = []
         for i in range(poldeg + 1):
             coeff = numpy.array([coeff[i] for coeff in list_coeffs])
             poly, yres = polfit_residuals(
@@ -560,6 +634,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 title='Computing filtered fits',
                 debugplot=debugplot
             )
-            poly_list.append(poly)
+            list_poly_vs_fiber.append(poly)
 
-        return poly_list
+        if abs(debugplot) >= 10:
+            print("list_poly_vs_fiber:\n", list_poly_vs_fiber)
+
+        return list_poly_vs_fiber
