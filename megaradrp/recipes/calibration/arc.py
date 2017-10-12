@@ -245,6 +245,13 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             raise ValueError('lines_catalog file does not have the expected '
                              'number of columns')
 
+        # allow to skip the refinement of the wavelength calibration
+        # polynomial using, as input, a negative degree (note that in any
+        # case the polynomial degree is assumed to be positive)
+        if poldeg < 0:
+            refine_wv_calibration = False
+            poldeg = abs(poldeg)
+
         ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
             gen_triplets_master(wv_master)
 
