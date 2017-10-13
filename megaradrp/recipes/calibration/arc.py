@@ -28,6 +28,8 @@ from datetime import datetime
 import numpy
 from astropy.io import fits
 
+from copy import deepcopy
+
 from numina.core import Requirement, Product, Parameter, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import LinesCatalog
@@ -124,6 +126,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     # Products
     reduced_image = Product(ProcessedFrame)
     reduced_rss = Product(ProcessedRSS)
+    initial_master_wlcalib = Product(WavelengthCalibration)
     master_wlcalib = Product(WavelengthCalibration)
     fwhm_image = Product(DataFrameType)
 
@@ -180,17 +183,19 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         else:
             nlines = [rinput.nlines]
 
-        data_wlcalib, fwhm_image = self.calibrate_wl(reduced_rss[0].data,
-                                                     rinput.lines_catalog,
-                                                     rinput.polynomial_degree,
-                                                     rinput.master_traces,
-                                                     nlines,
-                                                     threshold=threshold,
-                                                     min_distance=min_distance,
-                                                     debugplot=debugplot)
+        # WL calibration goes here
+        initial_data_wlcalib, data_wlcalib, fwhm_image = self.calibrate_wl(
+            reduced_rss[0].data,
+            rinput.lines_catalog,
+            rinput.polynomial_degree,
+            rinput.master_traces, nlines,
+            threshold=threshold,
+            min_distance=min_distance,
+            debugplot=debugplot
+        )
 
-        data_wlcalib.tags = rinput.obresult.tags
-        final = data_wlcalib
+        initial_data_wlcalib.tags = rinput.obresult.tags
+        final = initial_data_wlcalib
         final.meta_info['creation_date'] = datetime.utcnow().isoformat()
         final.meta_info['mode_name'] = self.mode
         final.meta_info['instrument_name'] = self.instrument
@@ -209,10 +214,24 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             cdata.append(fname)
 
         final.meta_info['origin']['frames'] = cdata
-        # WL calibration goes here
-        return self.create_result(reduced_image=reduced2d, reduced_rss=reduced_rss,
-                                  master_wlcalib=data_wlcalib,
-                                  fwhm_image=fwhm_image)
+
+        if data_wlcalib is None:
+            return self.create_result(
+                reduced_image=reduced2d,
+                reduced_rss=reduced_rss,
+                master_wlcalib=initial_data_wlcalib,
+                fwhm_image=fwhm_image
+            )
+        else:
+            data_wlcalib.tags = deepcopy(initial_data_wlcalib.tags)
+            data_wlcalib.meta_info = deepcopy(initial_data_wlcalib.meta_info)
+            return self.create_result(
+                reduced_image=reduced2d,
+                reduced_rss=reduced_rss,
+                initial_master_wlcalib=initial_data_wlcalib,
+                master_wlcalib=data_wlcalib,
+                fwhm_image=fwhm_image
+            )
 
     def calc_fwhm_of_line(self, row, peak_int, lwidth=20):
         """
@@ -245,13 +264,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             raise ValueError('lines_catalog file does not have the expected '
                              'number of columns')
 
-        # allow to skip the refinement of the wavelength calibration
-        # polynomial using, as input, a negative degree (note that in any
-        # case the polynomial degree is assumed to be positive)
-        if poldeg < 0:
-            refine_wv_calibration = False
-            poldeg = abs(poldeg)
-
         ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
             gen_triplets_master(wv_master)
 
@@ -259,8 +271,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         error_contador = 0
         missing_fib = 0
 
-        data_wlcalib = WavelengthCalibration(instrument='MEGARA')
-        data_wlcalib.total_fibers = tracemap.total_fibers
+        initial_data_wlcalib = WavelengthCalibration(instrument='MEGARA')
+        initial_data_wlcalib.total_fibers = tracemap.total_fibers
         for trace in tracemap.contents:
             fibid = trace.fibid
             idx = trace.fibid - 1
@@ -275,7 +287,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
                 row = fibdata_detrend
 
-                self.logger.info('-' * 40)
+                self.logger.info('-' * 52)
                 self.logger.info('Starting row %d, fibid %d', idx, fibid)
 
                 # find peaks (initial search providing integer numbers)
@@ -424,13 +436,13 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     #     plt.show()
 
                     new = FiberSolutionArcCalibration(fibid, solution_wv)
-                    data_wlcalib.contents.append(new)
+                    initial_data_wlcalib.contents.append(new)
 
                 except (ValueError, TypeError, IndexError) as error:
                     self.logger.error("%s", error)
                     self.logger.error('error in row %d, fibid %d', idx, fibid)
                     traceback.print_exc()
-                    data_wlcalib.error_fitting.append(fibid)
+                    initial_data_wlcalib.error_fitting.append(fibid)
 
                     if abs(debugplot) > 10:
                         rrow = row[::-1]
@@ -448,13 +460,13 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             else:
                 self.logger.info('skipping row %d, fibid %d, not extracted', idx, fibid)
                 missing_fib += 1
-                data_wlcalib.missing_fibers.append(fibid)
+                initial_data_wlcalib.missing_fibers.append(fibid)
 
         self.logger.info('Errors in fitting: %s', error_contador)
         self.logger.info('Missing fibers: %s', missing_fib)
 
         self.logger.info('Generating fwhm_image...')
-        image = self.generate_fwhm_image(data_wlcalib.contents)
+        image = self.generate_fwhm_image(initial_data_wlcalib.contents)
         fwhm_image = fits.PrimaryHDU(image)
         fwhm_hdulist = fits.HDUList([fwhm_image])
 
@@ -463,7 +475,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             # model polynomial coefficients vs. fiber number using
             # previous results stored in data_wlcalib
             list_poly_vs_fiber = self.model_coeff_vs_fiber(
-                data_wlcalib, poldeg,
+                initial_data_wlcalib, poldeg,
                 times_sigma_reject=5,
                 debugplot=0)
             # recompute data_wlcalib from scratch
@@ -476,7 +488,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 fibid = trace.fibid
                 idx = trace.fibid - 1
                 if trace.valid:
-                    self.logger.info('-' * 40)
+                    self.logger.info('-' * 52)
                     self.logger.info('Starting row %d, fibid %d', idx, fibid)
                     # select spectrum for current fiber
                     row = rss[idx]
@@ -537,10 +549,12 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
             self.logger.info('Errors in fitting: %s', error_contador)
             self.logger.info('Missing fibers: %s', missing_fib)
+        else:
+            data_wlcalib = None
 
         self.logger.info('End arc calibration')
 
-        return data_wlcalib, fwhm_hdulist
+        return initial_data_wlcalib, data_wlcalib, fwhm_hdulist
 
     def generate_fwhm_image(self, solutions):
         from scipy.spatial import cKDTree
