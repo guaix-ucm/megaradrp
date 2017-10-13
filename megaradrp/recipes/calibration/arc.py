@@ -216,13 +216,16 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         final.meta_info['origin']['frames'] = cdata
 
         if data_wlcalib is None:
+            # make initial_master_wlcalib = master_wlcalib in output
             return self.create_result(
                 reduced_image=reduced2d,
                 reduced_rss=reduced_rss,
+                initial_master_wlcalib=initial_data_wlcalib,
                 master_wlcalib=initial_data_wlcalib,
                 fwhm_image=fwhm_image
             )
         else:
+            # copy metadata from initial_master_wlcalib to master_wlcalib
             data_wlcalib.tags = deepcopy(initial_data_wlcalib.tags)
             data_wlcalib.meta_info = deepcopy(initial_data_wlcalib.meta_info)
             return self.create_result(
