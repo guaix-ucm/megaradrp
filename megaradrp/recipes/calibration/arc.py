@@ -126,7 +126,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     # Products
     reduced_image = Product(ProcessedFrame)
     reduced_rss = Product(ProcessedRSS)
-    initial_master_wlcalib = Product(WavelengthCalibration)
     master_wlcalib = Product(WavelengthCalibration)
     fwhm_image = Product(DataFrameType)
 
@@ -221,11 +220,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         )
 
         if data_wlcalib is None:
-            # make initial_master_wlcalib = master_wlcalib in output
             return self.create_result(
                 reduced_image=reduced2d,
                 reduced_rss=reduced_rss,
-                initial_master_wlcalib=initial_data_wlcalib,
                 master_wlcalib=initial_data_wlcalib,
                 fwhm_image=fwhm_image
             )
@@ -236,7 +233,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             return self.create_result(
                 reduced_image=reduced2d,
                 reduced_rss=reduced_rss,
-                initial_master_wlcalib=initial_data_wlcalib,
                 master_wlcalib=data_wlcalib,
                 fwhm_image=fwhm_image
             )
