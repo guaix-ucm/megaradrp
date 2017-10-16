@@ -215,6 +215,11 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         final.meta_info['origin']['frames'] = cdata
 
+        self.save_structured_as_json(
+            initial_data_wlcalib,
+            'initial_master_wlcalib.json'
+        )
+
         if data_wlcalib is None:
             # make initial_master_wlcalib = master_wlcalib in output
             return self.create_result(
