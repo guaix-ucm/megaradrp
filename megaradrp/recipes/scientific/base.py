@@ -21,6 +21,7 @@
 
 
 import uuid
+import math
 
 from astropy.io import fits
 import numpy as np
@@ -288,7 +289,6 @@ class ImageRecipe(MegaraBaseRecipe):
         for c in range(ccenter, cut2, delt):
             c1 = c - delt // 2
             c2 = c + delt // 2
-            print(c1, c2)
             z = rssdata[colids, c1:c2].mean(axis=1)
             centroid = self.centroid(rssdata, fiberconf, c1, c2, point)
             cols.append(c)
@@ -525,12 +525,12 @@ class ImageRecipe(MegaraBaseRecipe):
         valid[:pixm1+1] = 0
 
         sampling = int(2.0 / delt)
-        print('sampling is', sampling)
+        # print('sampling is', sampling)
 
-        with numpy.errstate(invalid='ignore', divide='ignore'):
-            ratio = r0 / r1
+        # with numpy.errstate(invalid='ignore', divide='ignore'):
+        #    ratio = r0 / r1
 
-        pixf1, pixf2 = pixm1 +  2* sigma, pixm2 - 2 * sigma
+        pixf1, pixf2 = int(math.floor(pixm1 +  2* sigma)), int(math.ceil(pixm2 - 2 * sigma))
         # calc1 = [[pixm1, pixm2, pixr1, pixr2, pixf1, pixf2], [0, 0, 0, 0, 0, 0]]
 
         flux_valid = numpy.zeros_like(valid, dtype='bool')
