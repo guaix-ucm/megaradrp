@@ -56,6 +56,11 @@ class GeometricModel(object):
                 params[key] =  convert_function(val)
             model['params'] = params
 
+    @property
+    def polynomial(self):
+        # FIXME: this is a workaround
+        return self.model['params']['mean']
+
 
 class ModelMap(BaseStructuredCalibration):
     def __init__(self, instrument='unknown'):
@@ -85,6 +90,7 @@ class ModelMap(BaseStructuredCalibration):
         self.boxes_positions = state.get('boxes_positions', [])
         self.global_offset = nppol.Polynomial(state.get('global_offset', [0.0]))
         self.ref_column = state.get('ref_column', 2000)
+        self._wcols = None
 
     def calculate_matrices(self, shape, processes=0):
         if self._wcols is None:

@@ -117,7 +117,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
-    master_traces = reqs.MasterTraceMapRequirement()
+    master_apertures = reqs.MasterAperturesRequirement()
     lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
     polynomial_degree = Parameter(5, 'Polynomial degree of arc calibration')
     nlines = Parameter(20, "Use the 'nlines' brigthest lines of the spectrum")
@@ -152,7 +152,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         self.save_intermediate_img(img, 'reduced_image.fits')
 
         splitter1 = Splitter()
-        calibrator_aper = ApertureExtractor(rinput.master_traces, self.datamodel)
+        calibrator_aper = ApertureExtractor(rinput.master_apertures, self.datamodel, processes=20)
         flipcor = FlipLR()
 
         flow2 = SerialFlow([splitter1, calibrator_aper, flipcor])
@@ -162,7 +162,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         reduced2d = splitter1.out
 
-        self.logger.info('extract fibers, %i', len(rinput.master_traces.contents))
+        self.logger.info('extract fibers, %i', len(rinput.master_apertures.contents))
 
         current_vph = rinput.obresult.tags['vph']
         current_insmode = rinput.obresult.tags['insmode']
@@ -187,7 +187,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             reduced_rss[0].data,
             rinput.lines_catalog,
             rinput.polynomial_degree,
-            rinput.master_traces, nlines,
+            rinput.master_apertures, nlines,
             threshold=threshold,
             min_distance=min_distance,
             debugplot=debugplot

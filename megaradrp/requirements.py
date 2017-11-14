@@ -20,9 +20,11 @@
 """Typical requirements of recipes"""
 
 from numina.core import Requirement
+from numina.types.multitype import MultiType
 
 import megaradrp.types
 import megaradrp.products
+import megaradrp.products.modelmap
 
 
 class MasterBiasRequirement(Requirement):
@@ -80,6 +82,13 @@ class MasterTraceMapRequirement(Requirement):
     def __init__(self):
         super(MasterTraceMapRequirement,
               self).__init__(megaradrp.products.TraceMap, 'Trace information of the Apertures')
+
+
+class MasterAperturesRequirement(Requirement):
+    def __init__(self):
+        super(MasterAperturesRequirement, self).__init__(MultiType(
+            megaradrp.products.modelmap.ModelMap,
+            megaradrp.products.TraceMap), 'Apertures information for extraction')
 
 
 class WavelengthCalibrationRequirement(Requirement):
