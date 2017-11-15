@@ -7,11 +7,9 @@
 # License-Filename: LICENSE.txt
 #
 
-""" Trace model recipes for Megara"""
+""" Trace model recipe for Megara"""
 
 from __future__ import division, print_function
-
-import copy
 
 import math
 import bisect
@@ -19,7 +17,7 @@ import multiprocessing as mp
 
 import numpy as np
 from astropy.modeling import fitting
-from numina.core import Product, Requirement
+from numina.core import Product, Requirement, Parameter
 from numina.array import combine
 from numina.modeling.gaussbox import GaussBox, gauss_box_model
 from scipy.interpolate import UnivariateSpline
@@ -33,7 +31,6 @@ from megaradrp.core.recipe import MegaraBaseRecipe
 import megaradrp.requirements as reqs
 
 
-
 class ModelMapRecipe(MegaraBaseRecipe):
     # Requirements
     master_bpm = reqs.MasterBPMRequirement()
@@ -43,6 +40,8 @@ class ModelMapRecipe(MegaraBaseRecipe):
     # FIXME: this is not really necessary, it can be computed
     # from the data
     master_traces = reqs.MasterTraceMapRequirement()
+    processes = Parameter(0, 'Number of processes used for fitting')
+    debug_plot = Parameter(0, 'Save intermediate tracing plots')
     # Products
     reduced_image = Product(ProcessedImage)
     reduced_rss = Product(ProcessedRSS)
@@ -53,9 +52,16 @@ class ModelMapRecipe(MegaraBaseRecipe):
         self.logger.info('starting model map recipe')
 
         obresult = rinput.obresult
-        obresult_meta = self.datamodel.gather_info_oresult(obresult)
-
-        processes = 20
+        obresult_meta = obresult.metadata_with(self.datamodel)
+        if rinput.processes == 0:
+            have = mp.cpu_count()
+            if have >= 4:
+                processes = mp.cpu_count() - 2
+            else:
+                processes = 1
+        else:
+            processes = rinput.processes
+        self.logger.debug('using %d processes', processes)
 
         self.logger.info('start basic reduction')
         flow1 = self.init_filters(rinput, rinput.obresult.configuration)
@@ -84,13 +90,14 @@ class ModelMapRecipe(MegaraBaseRecipe):
         model_map.update_metadata(self)
         fiberconf = self.datamodel.get_fiberconf(reduced)
         model_map.total_fibers = fiberconf.nfibers
+        model_map.missing_fibers = rinput.master_traces.missing_fibers
         model_map.tags = obresult.tags
         # model_map.boxes_positions = box_borders
         # model_map.ref_column = cstart
         model_map.update_metadata(self)
         model_map.update_metadata_origin(obresult_meta)
         # Temperature in Celsius with 2 decimals
-        model_map.tags['temp'] = round(obresult_meta[0]['temp'] - 273.15, 2)
+        model_map.tags['temp'] = round(obresult_meta['info'][0]['temp'] - 273.15, 2)
 
         self.logger.info('perform model fitting')
 
