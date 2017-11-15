@@ -123,8 +123,7 @@ class ModelMapRecipe(MegaraBaseRecipe):
             g_mean = []
             g_col = []
 
-            for r in results_get:
-                calc_col, vals, wcol = r
+            for calc_col, vals in results_get:
                 param = vals[fibid]
                 g_col.append(calc_col)
                 g_std.append(param['stddev'])
@@ -356,9 +355,8 @@ def calc_para_2(data, calc_col, tracemap, valid, nrow, ncol, sigma,
     print ('calc_col is', calc_col)
 
     final = calc2_base(yl, centers, valid, sigma, nloop=nloop, do_plot=False)
-    # wcol = calc_wcol(final, valid, nrow, ncol, clip=clip, extra=extra, data=yl)
-    wcol = None
-    return calc_col, final, wcol
+
+    return calc_col, final
 
 
 def fit_model(data, tracemap, valid, nrow, ncol, sigma, cols, processes=20):
