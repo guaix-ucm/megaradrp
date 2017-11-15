@@ -27,14 +27,18 @@ def create_test_tracemap():
     data.tags = tags
     data.uuid = uuid
     data.total_fibers = 623
+    meta_info = tm.TraceMap.create_meta_info()
+    meta_info['instrument_name'] = instrument
+    meta_info['creation_date'] = data.meta_info['creation_date']
     state = dict(instrument=instrument,
                  tags=tags,
                  uuid=uuid,
                  error_fitting=[],
                  missing_fibers=[],
                  total_fibers=623,
-                 meta_info={},
+                 meta_info=meta_info,
                  contents=[],
+                 type_fqn='megaradrp.products.tracemap.TraceMap',
                  boxes_positions=[],
                  type=data.name(),
                  ref_column=2000,

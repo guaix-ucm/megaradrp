@@ -37,7 +37,7 @@ def test_dark():
     exptime = 3600.0
     dark_s = dark / exptime
     qe = 0.8 * numpy.ones(DSHAPE)
-
+    config_uuid = '4fd05b24-2ed9-457b-b563-a3c618bb1d4c'
     temporary_path = mkdtemp()
     fits.writeto('%s/eq.fits' % temporary_path, qe, clobber=True)
 
@@ -54,16 +54,20 @@ def test_dark():
     fs = simulate_dark_fits(factory, detector, exposure=3600, repeat=number)
 
     for idx, aux in enumerate(fs):
-        aux.writeto('%s/dark_%s.fits' % (temporary_path, idx),clobber=True)
+        aux.writeto('%s/dark_%s.fits' % (temporary_path, idx), clobber=True)
 
+    header = fits.Header()
+    header['DATE-OBS'] = '2017-11-09T11:00:00.0'
     master_bias_data = numpy.zeros(DSHAPE)
-    master_bias_hdul = fits.HDUList(fits.PrimaryHDU(data=master_bias_data))
+    master_bias_hdul = fits.HDUList(fits.PrimaryHDU(
+        master_bias_data, header=header)
+    )
     #master_bias_data = master_bias.master_bias.frame[0].data
 
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'MegaraDarkImage'
-    ob.configuration = build_instrument_config('4fd05b24-2ed9-457b-b563-a3c618bb1d4c', loader=Loader())
+    ob.configuration = build_instrument_config(config_uuid, loader=Loader())
 
     names = []
     for aux in range(number):

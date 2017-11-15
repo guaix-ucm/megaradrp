@@ -60,6 +60,9 @@ def create_test_wavecalib():
     data.error_fitting =  []
     data.missing_fibers = []
     data.total_fibers = 623
+    meta_info = wcal.WavelengthCalibration.create_meta_info()
+    meta_info['instrument_name'] = instrument
+    meta_info['creation_date'] = data.meta_info['creation_date']
     contents = []
 
     for key in range(10):
@@ -82,10 +85,11 @@ def create_test_wavecalib():
                  total_fibers=623,
                  missing_fibers=[],
                  error_fitting=[],
-                 meta_info={},
+                 meta_info=meta_info,
                  type=data.name(),
                  contents=contents,
                  global_offset=[0.0],
+                 type_fqn='megaradrp.products.wavecalibration.WavelengthCalibration',
                  quality_control=numina.types.qc.QC.UNKNOWN
                  )
     return data, state

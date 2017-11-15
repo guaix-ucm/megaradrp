@@ -144,13 +144,12 @@ class MegaraImageFactory(object):
 
     def create_from_instrument(self, data, name, instrument, mode=''):
         meta = instrument.config_info()
-
         pheader = fits.Header(self.CARDS_P)
 
         # pheader['FILENAME'] = name
         # OBS mode
         pheader['OBSMODE'] = mode
-
+        pheader['DATE-OBS'] = datetime.utcnow().isoformat()
         exptime = meta[instrument.name].get('exposed', 1.0)
         pheader['EXPTIME'] = exptime
         pheader['EXPOSED'] = exptime

@@ -54,7 +54,7 @@ class DerivedRecipe(MegaraBaseRecipe):
         fits.writeto(self.directorio + '/reduced_flat_bpm.fits',
                      reduced1[0].data, clobber=True)
 
-        return True
+        return self.create_result()
 
 
 def test_bpm_corrector():
