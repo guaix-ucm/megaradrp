@@ -98,7 +98,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
-    master_traces = reqs.MasterTraceMapRequirement()
+    master_traces = reqs.MasterAperturesRequirement()
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
 
     nfibers = Parameter(10, "The results are sampled every nfibers")

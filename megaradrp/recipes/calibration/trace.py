@@ -37,10 +37,11 @@ import numina.core.validator
 from skimage.filters import threshold_otsu
 from skimage.feature import peak_local_max
 
+from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.products import TraceMap
 from megaradrp.products.tracemap import GeometricTrace
-from megaradrp.types import ProcessedFrame
+from megaradrp.types import ProcessedImage, ProcessedRSS
 from megaradrp.core.recipe import MegaraBaseRecipe
 import megaradrp.requirements as reqs
 import megaradrp.products
@@ -103,7 +104,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
     relative_threshold = Parameter(0.3, 'Threshold for peak detection')
     debug_plot = Parameter(0, 'Save intermediate tracing plots')
 
-    reduced_image = Product(ProcessedFrame)
+    reduced_image = Product(ProcessedImage)
+    reduced_rss = Product(ProcessedRSS)
     master_traces = Product(TraceMap)
 
     def run_qc(self, recipe_input, recipe_result):
@@ -173,17 +175,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
         final.boxes_positions = box_borders
         final.ref_column = cstart
 
-        final.meta_info['creation_date'] = datetime.utcnow().isoformat()
-        final.meta_info['mode_name'] = self.mode
-        final.meta_info['instrument_name'] = self.instrument
-        final.meta_info['recipe_name'] = self.__class__.__name__
-        final.meta_info['recipe_version'] = self.__version__
-        final.meta_info['origin'] = {}
-        final.meta_info['origin']['block_uuid'] = reduced[0].header.get('BLCKUUID', "UNKNOWN")
-        final.meta_info['origin']['insconf_uuid'] = reduced[0].header.get('INSCONF', "UNKNOWN")
-        final.meta_info['origin']['date_obs'] = reduced[0].header['DATE-OBS']
-
-        final.meta_info['origin']['frames'] = [img['imageid'] for img in obresult_meta]
+        final.update_metadata(self)
+        final.update_metadata_origin(obresult_meta)
         # Temperature in Celsius with 2 decimals
         final.tags['temp'] = round(obresult_meta[0]['temp'] - 273.15, 2)
 
@@ -200,6 +193,10 @@ class TraceMapRecipe(MegaraBaseRecipe):
         final.contents = contents
         final.error_fitting = error_fitting
 
+        # Perform extraction with own traces
+        calibrator_aper = ApertureExtractor(final, self.datamodel)
+        reduced_rss = calibrator_aper(reduced)
+
         if self.intermediate_results:
             with open('ds9.reg', 'w') as ds9reg:
                 final.to_ds9_reg(ds9reg, rawimage=False,
@@ -211,6 +208,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         self.logger.info('end trace spectra recipe')
         return self.create_result(reduced_image=reduced,
+                                  reduced_rss = reduced_rss,
                                   master_traces=final)
 
     def obtain_boxes(self, insconf, tags):

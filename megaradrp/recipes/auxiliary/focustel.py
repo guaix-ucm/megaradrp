@@ -69,7 +69,7 @@ class FocusTelescopeRecipe(ImageRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
-    master_traces = reqs.MasterTraceMapRequirement()
+    master_traces = reqs.MasterAperturesRequirement()
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
     position = Requirement(list, "Position of the reference object", default=(0, 0))
     # Products

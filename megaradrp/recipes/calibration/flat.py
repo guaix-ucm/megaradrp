@@ -85,8 +85,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
     master_slitflat = reqs.MasterSlitFlatRequirement()
-    # master_weights = Requirement(MasterWeights, 'Set of files')
-    master_traces = reqs.MasterTraceMapRequirement()
+    master_traces = reqs.MasterAperturesRequirement()
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
 
     # Products

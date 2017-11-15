@@ -51,7 +51,7 @@ class RecipeInput(recipeio.RecipeInput):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
     master_slitflat = reqs.MasterSlitFlatRequirement()
-    master_traces = reqs.MasterTraceMapRequirement()
+    master_traces = reqs.MasterAperturesRequirement()
     # master_weights = Requirement(MasterWeights, 'Set of files with extraction weights')
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
     master_fiberflat = reqs.MasterFiberFlatRequirement()
