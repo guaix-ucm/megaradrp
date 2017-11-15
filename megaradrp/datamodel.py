@@ -45,6 +45,7 @@ class MegaraDataModel(DataModel):
             'instrument': 'INSTRUME',
             'object': 'OBJECT',
             'observation_date': ('DATE-OBS', 0, convert_date),
+            'date_obs': ('DATE-OBS', 0, convert_date),
             'uuid': 'uuid',
             'type': 'numtype',
             'mode': 'obsmode',
@@ -61,7 +62,8 @@ class MegaraDataModel(DataModel):
             'focus': ('FOCUS', 'undefined'),
             'osfilter': ('OSFILTER', 'undefined'),
             'temp': ('SENTEMP4', 0.0),
-            'speclamp': ('SPECLMP', 'undefined')
+            'speclamp': ('SPECLMP', 'undefined'),
+            'imgid': self.get_imgid
         }
 
         super(MegaraDataModel, self).__init__('MEGARA', self.all_values)
@@ -69,6 +71,7 @@ class MegaraDataModel(DataModel):
         # Keys
         self._meta = [
             'exptime',
+            'observation_date',
             'vph',
             'vphpos',
             'insmode',
@@ -130,7 +133,7 @@ class MegaraDataModel(DataModel):
         for key in self._meta:
             values[key] = self.extractor.extract(key, hdulist)
 
-        values['imageid'] = self.get_imgid(hdulist)
+        values['imgid'] = self.get_imgid(hdulist)
         return values
 
 
