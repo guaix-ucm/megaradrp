@@ -13,8 +13,8 @@ be able to be installed and work properly:
  - `setuptools <http://peak.telecommunity.com/DevCenter/setuptools>`_
  - `numpy <http://www.numpy.org/>`_ >= 1.7
  - `scipy <http://www.scipy.org/>`_
- - `astropy <http://www.astropy.org/>`_ >= 1.0
- - `numina <https://pypi.python.org/pypi/numina/>`_ >= 0.14
+ - `astropy <http://www.astropy.org/>`_ >= 1.1
+ - `numina <https://pypi.python.org/pypi/numina/>`_ >= 0.15
  - `scikit-image <http://scikit-image.org/>`_
 
 Additional packages are optionally required:
