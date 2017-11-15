@@ -64,6 +64,11 @@ modes:
   description: Weights
   key: MegaraWeights
   tagger: megaradrp.taggers.tagger_base_image
+- name: ModelMap
+  summary: Computes a ModelMap
+  description: Computes a ModelMap from FlatImages
+  key: MegaraModelMap
+  tagger: megaradrp.taggers.tagger_base_image
 - key: MegaraFocusSpectrograph
   name: Focus Spectrograph
   tagger: megaradrp.taggers.tagger_base_image
@@ -133,6 +138,7 @@ pipelines:
       WavelengthCalibration: megaradrp.products.WavelengthCalibration
       MasterSlitFlat: megaradrp.types.MasterSlitFlat
       TraceMap: megaradrp.products.TraceMap
+      ModelMap: megaradrp.products.ModelMap
       MasterFiberFlat: megaradrp.types.MasterFiberFlat
       MasterTwilightFlat: megaradrp.types.MasterTwilightFlat
       LinesCatalog: numina.core.products.LinesCatalog
@@ -161,6 +167,9 @@ pipelines:
       - name: MasterTwilightFlat
         mode: MegaraTwilightFlatImage
         field: master_twilightflat
+      - name: ModelMap
+        mode: MegaraModelMap
+        field: master_model
     recipes:
       MegaraSuccess: numina.core.utils.AlwaysSuccessRecipe
       MegaraFail: 
@@ -176,6 +185,7 @@ pipelines:
       MegaraSlitFlat: megaradrp.recipes.calibration.slitflat.SlitFlatRecipe
       MegaraTraceMap: megaradrp.recipes.calibration.trace.TraceMapRecipe
       MegaraWeights: megaradrp.recipes.calibration.weights.WeightsRecipe
+      MegaraModelMap: megaradrp.recipes.calibration.modelmap.ModelMapRecipe
       MegaraFiberFlatImage: megaradrp.recipes.calibration.flat.FiberFlatRecipe
       MegaraTwilightFlatImage: megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe
       MegaraFocusSpectrograph: megaradrp.recipes.auxiliary.focusspec.FocusSpectrographRecipe
