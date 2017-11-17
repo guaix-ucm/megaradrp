@@ -161,6 +161,15 @@ def calc_matrix_cols(model_map, datashape, processes=0):
             array_mean[row] = params['mean'](xcol)
             array_std[row] = params['stddev'](xcol)
 
+    # shift array_mean according to global_offset
+    mask = numpy.zeros((model_map.total_fibers,), dtype='bool')
+    valid_r = [(f.fibid - 1) for f in model_map.contents if f.valid]
+    mask[valid_r] = True
+
+    mean_at_ref = array_mean[mask, model_map.ref_column]
+    offset = model_map.global_offset(mean_at_ref)
+    array_mean[mask, :] = array_mean[mask, :] + offset[:, numpy.newaxis]
+
     wcols = {}
     valid = [f.fibid for f in model_map.contents if f.valid]
     if processes < 2:
