@@ -25,16 +25,17 @@ class TwilightCorrector(Corrector):
 
     def __init__(self, twilight, datamodel=None, calibid='calibid-unknown', dtype='float32'):
 
-        super(TwilightCorrector, self).__init__(datamodel=datamodel,
-                                                calibid=calibid,
-                                                dtype=dtype)
-
         if isinstance(twilight, fits.HDUList):
             self.corr = twilight[0].data
+            calibid = datamodel.get_imgid(twilight)
         elif isinstance(twilight, fits.ImageHDU):
             self.corr = twilight.data
         else:
             self.corr = numpy.asarray(twilight)
+
+        super(TwilightCorrector, self).__init__(datamodel=datamodel,
+                                                calibid=calibid,
+                                                dtype=dtype)
 
         self.corrmean = self.corr.mean()
         self.flattag = 'twilight'
