@@ -30,6 +30,7 @@ from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.wavecalibration import WavelengthCalibrator
 from megaradrp.processing.fiberflat import Splitter, FlipLR, FiberFlatCorrector
+from megaradrp.processing.twilight import TwilightCorrector
 
 
 class ImageRecipe(MegaraBaseRecipe):
@@ -59,35 +60,34 @@ class ImageRecipe(MegaraBaseRecipe):
 
         self.save_intermediate_img(img, 'reduced_image.fits')
 
+        reduced2d = copy_img(img)
+
         # 1D, extraction, Wl calibration, Flat fielding
-        reduced2d, reduced_rss = self.run_reduction_1d(
-            img,
-            rinput.master_traces,
-            rinput.master_wlcalib,
-            rinput.master_fiberflat
+        reduced_rss = self.run_reduction_1d(img,
+            rinput.master_traces, rinput.master_wlcalib,
+            rinput.master_fiberflat, rinput.master_twlight
         )
         self.save_intermediate_img(reduced_rss, 'reduced_rss.fits')
 
         return reduced2d, reduced_rss
 
-    def run_reduction_1d(self, img, tracemap, wlcalib, fiberflat):
+    def run_reduction_1d(self, img, tracemap, wlcalib, fiberflat, twflat=None):
         # 1D, extraction, Wl calibration, Flat fielding
+        correctors = []
+        correctors.append(ApertureExtractor(tracemap, self.datamodel))
+        correctors.append(FlipLR())
+        correctors.append(WavelengthCalibrator(wlcalib, self.datamodel))
+        correctors.append(FiberFlatCorrector(fiberflat.open(), self.datamodel))
 
-        splitter1 = Splitter()
-        calibrator_aper = ApertureExtractor(tracemap, self.datamodel)
-        calibrator_wl = WavelengthCalibrator(wlcalib, self.datamodel)
-        flipcor = FlipLR()
-        calibrator_flat = FiberFlatCorrector(fiberflat.open(), self.datamodel)
+        if twflat:
+            correctors.append(TwilightCorrector(twflat.open(), self.datamodel))
 
-        flow2 = SerialFlow([splitter1, calibrator_aper, flipcor, calibrator_wl, calibrator_flat])
+        flow2 = SerialFlow(correctors)
 
         reduced_rss =  flow2(img)
-        reduced2d = splitter1.out
-        return reduced2d, reduced_rss
+        return reduced_rss
 
     def run_sky_subtraction(self, img):
-
-
         # Sky subtraction
         self.logger.info('obtain fiber information')
         sky_img = copy_img(img)

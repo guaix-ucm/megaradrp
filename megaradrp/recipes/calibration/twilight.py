@@ -17,6 +17,7 @@ from astropy.io import fits
 
 from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
+from numina.flow import SerialFlow
 
 import megaradrp.requirements as reqs
 from megaradrp.core.recipe import MegaraBaseRecipe
@@ -96,10 +97,25 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
 
     def process_flat2d(self, rinput):
         flow = self.init_filters(rinput, rinput.obresult.configuration)
-        final_image = basic_processing_with_combination(rinput, flow, method=self.combine_median_scaled)
+        final_image = basic_processing_with_combination(
+            rinput, flow, method=self.combine_median_scaled
+        )
         hdr = final_image[0].header
         self.set_base_headers(hdr)
         return final_image
+
+    def run_reduction_1d(self, img, tracemap, wlcalib, fiberflat):
+        # 1D, extraction, Wl calibration, Flat fielding
+        correctors = []
+        correctors.append(ApertureExtractor(tracemap, self.datamodel))
+        correctors.append(FlipLR())
+        correctors.append(WavelengthCalibrator(wlcalib, self.datamodel))
+        correctors.append(FiberFlatCorrector(fiberflat.open(), self.datamodel))
+
+        flow_1d = SerialFlow(correctors)
+
+        reduced_rss =  flow_1d(img)
+        return reduced_rss
 
     def run(self, rinput):
         # Basic processing
@@ -107,47 +123,55 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
         self.logger.info('twilight fiber flat reduction started')
 
         img = self.process_flat2d(rinput)
-        self.save_intermediate_img(img, 'reduced_image.fits')
+        # Copy image
+        reduced_image = [hdu.copy() for hdu in img]
+        self.save_intermediate_img(reduced_image, 'reduced_image.fits')
 
-        splitter1 = Splitter()
-        calibrator_aper = ApertureExtractor(rinput.master_traces, self.datamodel)
-        splitter2 = Splitter()
-        calibrator_wl = WavelengthCalibrator(rinput.master_wlcalib, self.datamodel)
-        flipcor = FlipLR()
-        calibrator_ff = FiberFlatCorrector(rinput.master_fiberflat.open(), self.datamodel)
+        reduced_rss = self.run_reduction_1d(img,
+                                            rinput.tracemap,
+                                            rinput.wlcalib,
+                                            rinput.fiberflat
+                                            )
 
-        img = splitter1(img)
-        flat2d = splitter1.out # Copy before extraction
-        img = calibrator_aper(img)
-        img = splitter2(img)
-        rss_base = splitter2.out # Copy before el calibration
-        self.logger.debug('Flip RSS left-rigtht, before WL calibration')
-        img = flipcor.run(img)
-        # Calibrate in WL
-        rss_wl = calibrator_wl(img)
-        # Calibrate fiber flat
-        rss_wl = calibrator_ff(rss_wl)
-
-        self.save_intermediate_img(rss_wl, 'reduced_rss.fits')
+        self.save_intermediate_img(reduced_rss, 'reduced_rss.fits')
         # Measure values in final
-        start = 1900
-        end = 2100
+        start, end = 1900, 2100
         self.logger.info('doing mean between columns %d-%d', start, end)
-        rss_wl_data = rss_wl[0].data
+        rss_wl_data = reduced_rss[0].data
+
+        mask = self.good_ids_mask(rinput.wlcalib)
         colapse = rss_wl_data[:, start:end].mean(axis=1)
+        # Normalize the colapsed array
+        colapse_good = colapse[mask]
+        colapse_norm = colapse / colapse_good.mean()
+        normalized = numpy.tile(colapse_norm[:, numpy.newaxis], rss_wl_data.data.shape[1])
 
-        normalized = numpy.tile(colapse[:, numpy.newaxis], 4096)
-
-        template_header = flat2d[0].header
+        template_header = reduced_image[0].header
         master_t_hdu = fits.PrimaryHDU(normalized, header=template_header)
         master_t = fits.HDUList([master_t_hdu])
         self.set_base_headers(master_t[0].header)
 
         self.logger.info('twilight fiber flat reduction ended')
-        result = self.create_result(reduced_image=flat2d, reduced_rss=rss_wl,
-                                    master_twilightflat=master_t)
+        result = self.create_result(reduced_image=reduced_image,
+                                    reduced_rss=reduced_rss,
+                                    master_twilightflat=master_t
+                                    )
 
         return result
+
+    def good_ids_mask(self, calibration):
+
+        # Bad fibers, join:
+        bad_fibers = calibration.missing_fibers
+        bad_fibers.extend(calibration.error_fitting)
+
+        # print(bad_fibers)
+        bad_idxs = [fibid - 1 for fibid in bad_fibers]
+        # print(bad_idxs)
+
+        good_idxs_mask = numpy.ones((calibration.total_fibers,), dtype='bool')
+        good_idxs_mask[bad_idxs] = False
+        return good_idxs_mask
 
     def set_base_headers(self, hdr):
         """Set metadata in FITS headers."""
