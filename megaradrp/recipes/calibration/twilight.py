@@ -43,7 +43,6 @@ class RecipeInput(recipeio.RecipeInput):
     master_bpm = reqs.MasterBPMRequirement()
     master_slitflat = reqs.MasterSlitFlatRequirement()
     master_traces = reqs.MasterAperturesRequirement()
-    # master_weights = Requirement(MasterWeights, 'Set of files with extraction weights')
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
     master_fiberflat = reqs.MasterFiberFlatRequirement()
 
@@ -124,13 +123,13 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
 
         img = self.process_flat2d(rinput)
         # Copy image
-        reduced_image = [hdu.copy() for hdu in img]
+        reduced_image = fits.HDUList([hdu.copy() for hdu in img])
         self.save_intermediate_img(reduced_image, 'reduced_image.fits')
 
         reduced_rss = self.run_reduction_1d(img,
-                                            rinput.tracemap,
-                                            rinput.wlcalib,
-                                            rinput.fiberflat
+                                            rinput.master_traces,
+                                            rinput.master_wlcalib,
+                                            rinput.master_fiberflat
                                             )
 
         self.save_intermediate_img(reduced_rss, 'reduced_rss.fits')
@@ -139,16 +138,15 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
         self.logger.info('doing mean between columns %d-%d', start, end)
         rss_wl_data = reduced_rss[0].data
 
-        mask = self.good_ids_mask(rinput.wlcalib)
+        mask = self.good_ids_mask(rinput.master_wlcalib)
         colapse = rss_wl_data[:, start:end].mean(axis=1)
         # Normalize the colapsed array
         colapse_good = colapse[mask]
         colapse_norm = colapse / colapse_good.mean()
-        normalized = numpy.tile(colapse_norm[:, numpy.newaxis], rss_wl_data.data.shape[1])
+        normalized = numpy.tile(colapse_norm[:, numpy.newaxis], rss_wl_data.shape[1])
 
-        template_header = reduced_image[0].header
-        master_t_hdu = fits.PrimaryHDU(normalized, header=template_header)
-        master_t = fits.HDUList([master_t_hdu])
+        master_t = fits.HDUList([hdu.copy() for hdu in reduced_rss])
+        master_t[0].data = normalized
         self.set_base_headers(master_t[0].header)
 
         self.logger.info('twilight fiber flat reduction ended')
@@ -165,9 +163,7 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
         bad_fibers = calibration.missing_fibers
         bad_fibers.extend(calibration.error_fitting)
 
-        # print(bad_fibers)
         bad_idxs = [fibid - 1 for fibid in bad_fibers]
-        # print(bad_idxs)
 
         good_idxs_mask = numpy.ones((calibration.total_fibers,), dtype='bool')
         good_idxs_mask[bad_idxs] = False
