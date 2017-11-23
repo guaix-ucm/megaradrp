@@ -65,7 +65,7 @@ class ImageRecipe(MegaraBaseRecipe):
         # 1D, extraction, Wl calibration, Flat fielding
         reduced_rss = self.run_reduction_1d(img,
             rinput.master_traces, rinput.master_wlcalib,
-            rinput.master_fiberflat, rinput.master_twlight
+            rinput.master_fiberflat, rinput.master_twilight
         )
         self.save_intermediate_img(reduced_rss, 'reduced_rss.fits')
 
