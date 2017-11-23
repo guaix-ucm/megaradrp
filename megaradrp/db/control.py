@@ -17,8 +17,8 @@ def function(session, some, meta):
     newframe.completion_time = newframe.start_time + datetime.timedelta(seconds=meta['darktime'])
     newframe.exposure_time = meta['exptime']
     newframe.object = meta['object']
-    newframe.insmode = meta['insmode']
-    newframe.vph = meta['vph']
+    newframe.insmode = meta.get('insmode', 'unknown')
+    newframe.vph = meta.get('vph', 'unknown')
     # ob.frames.append(newframe)
     # ob.object = meta['object']
     session.add(newframe)
