@@ -129,7 +129,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         obresult = rinput.obresult
         current_vph = obresult.tags['vph']
         current_insmode = obresult.tags['insmode']
-        obresult_meta = self.datamodel.gather_info_oresult(obresult)
+        obresult_meta = obresult.metadata_with(self.datamodel)
 
         debug_plot = rinput.debug_plot if self.intermediate_results else 0
 
@@ -168,7 +168,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         final.update_metadata(self)
         final.update_metadata_origin(obresult_meta)
         # Temperature in Celsius with 2 decimals
-        final.tags['temp'] = round(obresult_meta[0]['temp'] - 273.15, 2)
+        final.tags['temp'] = round(obresult_meta['info'][0]['temp'] - 273.15, 2)
 
         contents, error_fitting = self.search_traces(
             reduced,

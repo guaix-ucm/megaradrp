@@ -52,7 +52,8 @@ class MegaraDataModel(DataModel):
         'temp',
         'block_uuid',
         'insconf_uuid',
-        'speclamp'
+        'speclamp',
+        'imgid'
     ]
 
     def __init__(self):
