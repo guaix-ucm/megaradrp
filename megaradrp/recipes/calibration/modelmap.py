@@ -133,6 +133,11 @@ class ModelMapRecipe(MegaraBaseRecipe):
             g_mean = []
             g_col = []
 
+            dolog = (fibid % 100 == 0)
+
+            if dolog:
+                self.logger.debug('compute fibid %d', fibid)
+
             for calc_col, vals in results_get:
                 param = vals[fibid]
                 g_col.append(calc_col)
@@ -144,6 +149,8 @@ class ModelMapRecipe(MegaraBaseRecipe):
             interpol_mean = UnivariateSpline(g_col, g_mean, k=3)
 
             if self.intermediate_results:
+                if dolog:
+                    self.logger.debug('saving plots')
                 plt.title('std %s' % fibid)
                 plt.plot(g_col, g_std, 'b*')
                 plt.plot(g_col, interpol_std(g_col), 'r')
@@ -154,6 +161,8 @@ class ModelMapRecipe(MegaraBaseRecipe):
                 plt.plot(g_col, interpol_mean(g_col), 'r')
                 plt.savefig('fib_{}_mean.png'.format(fibid))
                 plt.close()
+                if dolog:
+                    self.logger.debug('saving plots end')
 
             mean_splines[fibid] = interpol_mean
             std_splines[fibid] = interpol_std
@@ -182,6 +191,15 @@ class ModelMapRecipe(MegaraBaseRecipe):
         calibrator_aper = ApertureExtractor(model_map, self.datamodel)
         reduced_copy = copy_img(reduced)
         reduced_rss = calibrator_aper(reduced_copy)
+
+        if self.intermediate_results:
+            with open('ds9.reg', 'w') as ds9reg:
+                model_map.to_ds9_reg(ds9reg, rawimage=False,
+                                     numpix=100, fibid_at=2048)
+
+            with open('ds9_raw.reg', 'w') as ds9reg:
+                model_map.to_ds9_reg(ds9reg, rawimage=True,
+                                     numpix=100, fibid_at=2048)
 
         self.logger.info('ending model map recipe')
         result = self.create_result(reduced_image=reduced,
