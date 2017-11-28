@@ -16,11 +16,13 @@ import bisect
 import multiprocessing as mp
 
 import numpy as np
+from scipy.interpolate import UnivariateSpline
+import matplotlib.pyplot as plt
 from astropy.modeling import fitting
+from astropy.modeling.functional_models import Const1D
 from numina.core import Product, Requirement, Parameter
 from numina.array import combine
 from numina.modeling.gaussbox import GaussBox, gauss_box_model
-from scipy.interpolate import UnivariateSpline
 
 from megaradrp.products.modelmap import ModelMap
 from megaradrp.products.modelmap import GeometricModel
@@ -140,6 +142,18 @@ class ModelMapRecipe(MegaraBaseRecipe):
             interpol_std = UnivariateSpline(g_col, g_std, k=5)
             interpol_mean = UnivariateSpline(g_col, g_mean, k=3)
 
+            if self.intermediate_results:
+                plt.title('std %s' % fibid)
+                plt.plot(g_col, g_std, 'b*')
+                plt.plot(g_col, interpol_std(g_col), 'r')
+                plt.savefig('fib_{}_std.png'.format(fibid))
+                plt.close()
+                plt.title('mean %s' % fibid)
+                plt.plot(g_col, g_mean, 'b*')
+                plt.plot(g_col, interpol_mean(g_col), 'r')
+                plt.savefig('fib_{}_mean.png'.format(fibid))
+                plt.close()
+
             mean_splines[fibid] = interpol_mean
             std_splines[fibid] = interpol_std
 
@@ -159,17 +173,6 @@ class ModelMapRecipe(MegaraBaseRecipe):
             )
 
             model_map.contents.append(m)
-            if False:
-                import matplotlib.pyplot as plt
-                plt.title('std %s' % fibid)
-                plt.plot(g_col, g_std, 'b*')
-                plt.plot(g_col, interpol_std(g_col), 'r')
-                plt.show()
-
-                plt.title('position %s' % fibid)
-                plt.plot(g_col, g_mean, 'b*')
-                plt.plot(g_col, interpol_mean(g_col), 'r')
-                plt.show()
 
         self.logger.info('interpolate parameters end')
 
@@ -206,37 +209,36 @@ def initial_base(boxd1d, ecenters, npix=5):
     return ampl, mu, sig2
 
 
-def calc1d_N(boxd1d, valid, centers1d, sigma, lateral=0, reject=3, nloop=1, fixed_centers=False):
-    # initial(boxd1d, valid, centers1d)
-
-    from astropy.modeling.functional_models import Const1D
+def calc1d_N(boxd1d, valid, centers1d, sigma, lateral=0, reject=3, nloop=1,
+             fixed_centers=False, init_simple=False):
 
     ecenters = np.ceil(centers1d - 0.5).astype('int')
     nfib = len(centers1d)
+
     # FIXME, hardcoded
     xl = np.arange(4112.0)
-    ampl, mu, sig2 = initial_base(boxd1d, ecenters, npix=5)
-    sig_calc = np.sqrt(sig2)
-    yl = boxd1d
-    init_simple = True
+
+    if init_simple:
+        ampl, mu, sig2 = initial_base(boxd1d, ecenters, npix=5)
+        sig_calc = np.sqrt(sig2)
+    else:
+        sig_calc = sigma * np.ones((nfib,))
+        ampl = [boxd1d[ecenters[i]] / 0.25 for i in range(nfib)]
+
     init = {}
     for i in range(nfib):
         fibid = valid[i]
         init[fibid] = {}
-        if init_simple:
-            init[fibid]['amplitude'] = boxd1d[ecenters[i]] / 0.25
-            init[fibid]['stddev'] = sigma
-            init[fibid]['mean'] = centers1d[i]
-        else:
-            init[fibid]['amplitude'] = ampl[i]
-            init[fibid]['mean'] = centers1d[i]
-            init[fibid]['stddev'] = sig_calc[i]
+        init[fibid]['mean'] = centers1d[i]
+        init[fibid]['stddev'] = sig_calc[i]
+        init[fibid]['amplitude'] = ampl[i]
 
     # plt.plot(sig_calc / sigma)
     # plt.show()
 
     # total fits is 2 * lateral + 1
     total = reject + lateral
+    yl = boxd1d
 
     for il in range(nloop):
 
@@ -352,7 +354,7 @@ def calc2_base(column, centers, valid, sigma, nloop=10, do_plot=False):
 
 
 def calc_para_2(data, calc_col, tracemap, valid, nrow, ncol, sigma,
-                nloop=10, clip=1.0e-6, extra=10, average=0, calc_init=True):
+                nloop=10, average=0, calc_init=True):
     if average > 0:
         yl = data[:, calc_col - average:calc_col - average + 1].mean(axis=1)
     else:
@@ -373,7 +375,7 @@ def fit_model(data, tracemap, valid, nrow, ncol, sigma, cols, processes=20):
     results = [pool.apply_async(
         calc_para_2,
         args=(data, col, tracemap, valid, nrow, ncol, sigma),
-        kwds={'nloop': 3, 'average': 2, 'calc_init': True}
+        kwds={'nloop': 3, 'average': 2}
     ) for col in cols]
 
     results_get = [p.get() for p in results]
