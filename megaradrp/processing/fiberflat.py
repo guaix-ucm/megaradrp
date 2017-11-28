@@ -14,6 +14,8 @@ from astropy.io import fits
 import numpy
 from numina.flow.processing import Corrector
 
+from megaradrp.utils import copy_img
+
 _logger = logging.getLogger(__name__)
 
 
@@ -86,7 +88,7 @@ class Splitter(Corrector):
         return img
 
     def copy_img(self, img):
-        return fits.HDUList([hdu.copy() for hdu in img])
+        return copy_img(img)
 
 
 class FlipLR(Corrector):

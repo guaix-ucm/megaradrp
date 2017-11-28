@@ -26,7 +26,7 @@ from numina.array import combine
 from megaradrp.core.recipe import MegaraBaseRecipe
 import megaradrp.requirements as reqs
 from megaradrp.processing.combine import basic_processing_with_combination
-
+from megaradrp.utils import copy_img
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.wavecalibration import WavelengthCalibrator
 from megaradrp.processing.fiberflat import Splitter, FlipLR, FiberFlatCorrector
@@ -553,7 +553,3 @@ class ImageRecipe(MegaraBaseRecipe):
         sens.header['PIXLIMM1'] = pixm1 + 1
         sens.header['PIXLIMM2'] = pixm2 + 1
         return sens
-
-
-def copy_img(img):
-    return fits.HDUList([hdu.copy() for hdu in img])

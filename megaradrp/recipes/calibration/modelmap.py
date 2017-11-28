@@ -24,6 +24,7 @@ from numina.core import Product, Requirement, Parameter
 from numina.array import combine
 from numina.modeling.gaussbox import GaussBox, gauss_box_model
 
+from megaradrp.utils import copy_img
 from megaradrp.products.modelmap import ModelMap
 from megaradrp.products.modelmap import GeometricModel
 from megaradrp.processing.aperture import ApertureExtractor
@@ -179,7 +180,8 @@ class ModelMapRecipe(MegaraBaseRecipe):
         # perform extraction with our own calibration
         self.logger.info('perform extraction with computed calibration')
         calibrator_aper = ApertureExtractor(model_map, self.datamodel)
-        reduced_rss = calibrator_aper(reduced)
+        reduced_copy = copy_img(reduced)
+        reduced_rss = calibrator_aper(reduced_copy)
 
         self.logger.info('ending model map recipe')
         result = self.create_result(reduced_image=reduced,

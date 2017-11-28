@@ -13,6 +13,11 @@
 import astropy.io.fits as fits
 
 
+def copy_img(img):
+    """Copy an HDUList"""
+    return fits.HDUList([hdu.copy() for hdu in img])
+
+
 def add_collapsed_mos_extension(img, size=7, axis=0):
     """Add a collapsed image extension
 
