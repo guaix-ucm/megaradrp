@@ -217,7 +217,8 @@ class MegaraBaseRecipe(BaseRecipe):
             val = getattr(recipeinput, key)
             if isinstance(val, DataFrame):
                 metadata[key] = self.datamodel.gather_info_dframe(val)
-            elif isinstance(val, ObservationResult):
+            # elif isinstance(val, ObservationResult):
+            elif hasattr(val, 'frames'):
                 metadata[key] = self.datamodel.gather_info_oresult(val)
             else:
                 pass

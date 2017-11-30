@@ -40,6 +40,27 @@ class MegaraDataModel(DataModel):
         'insmode'
     ]
 
+    db_info_keys = [
+        'instrument',
+        'object',
+        'observation_date',
+        'uuid',
+        'type',
+        'mode',
+        'exptime',
+        'darktime',
+        'insconf',
+        'blckuuid',
+        'quality_control',
+        'vph',
+        'insmode'
+    ]
+
+    db_info_keys_extra = [
+        'vph',
+        'insmode'
+    ]
+
     meta_dinfo_headers = [
         'exptime',
         'observation_date',

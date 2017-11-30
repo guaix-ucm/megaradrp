@@ -23,7 +23,7 @@ class MegaraFrame(Base):
     __tablename__ = 'megara_frames'
     id = Column(Integer, primary_key=True)
     uuid = Column(CHAR(32), nullable=True)
-    name = Column(String(100), nullable=False)
+    name = Column(String(100), nullable=False, unique=True)
     # name = Column(String(100), unique=True, nullable=False)
     ob_id = Column(String,  ForeignKey("obs.id"), nullable=False)
     object = Column(String)
@@ -32,9 +32,7 @@ class MegaraFrame(Base):
     insmode = Column(String)
     vph = Column(String)
     completion_time = Column(DateTime)
-    # ob = relationship("MyOb", back_populates='frames')
-    #
-    # filename = synonym("name")
+
 
 
 

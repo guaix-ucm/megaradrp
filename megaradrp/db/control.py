@@ -1,13 +1,24 @@
 
 import datetime
 
-from numinadb.event import manage, on_event
+from numinadb.event import on_event
 
 from .model import MegaraFrame
 
 
 @on_event('on_ingest_raw_fits')
 def function(session, some, meta):
+
+    if meta['instrument'] != 'MEGARA':
+        # only for MEGARA images
+        return None
+
+    res = session.query(MegaraFrame).filter_by(name=meta['path']).first()
+
+    if res:
+        # alreay inserted
+        return res
+
     newframe = MegaraFrame()
     newframe.name = meta['path']
     newframe.uuid = meta['uuid']
@@ -22,6 +33,4 @@ def function(session, some, meta):
     # ob.frames.append(newframe)
     # ob.object = meta['object']
     session.add(newframe)
-
-
-# manage('on_ingest_raw_fits', function)
+    return newframe
