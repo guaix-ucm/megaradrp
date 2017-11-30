@@ -13,7 +13,7 @@ from __future__ import division, print_function
 
 import numpy
 from astropy.io import fits
-
+import matplotlib.pyplot as plt
 from numina.core import Product
 
 from megaradrp.core.recipe import MegaraBaseRecipe
@@ -130,6 +130,14 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         # Smooting works bad very near the border (overshooting)
         collapse_smooth = savgol_filter(collapse, window, degree)
         collapse_smooth[mask_noinfo] = 1.0
+
+        if self.intermediate_results:
+            xx = numpy.arange(collapse.shape[0])
+            plt.scatter(xx, collapse)
+            plt.plot(xx, collapse_smooth)
+            plt.savefig('collapsed_smooth.png')
+            plt.close()
+
         # Divide each fiber in rss_wl by spectrum
         gmean = col_good_mean.mean()
         data1 = rss_wl[0].data / collapse_smooth
