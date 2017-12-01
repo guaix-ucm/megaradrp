@@ -14,7 +14,7 @@ from __future__ import division, print_function
 import numpy
 from astropy.io import fits
 import matplotlib.pyplot as plt
-from numina.core import Product
+from numina.core import Product, Parameter
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.types import MasterFiberFlat
@@ -76,6 +76,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     master_bpm = reqs.MasterBPMRequirement()
     master_slitflat = reqs.MasterSlitFlatRequirement()
     master_traces = reqs.MasterAperturesRequirement()
+    extraction_offset = Parameter([0.0], 'Offset traces for extraction')
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
 
     # Products
@@ -165,9 +166,12 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
         img = self.process_flat2d(rinput)
         self.save_intermediate_img(img, 'reduced_image.fits')
-
         splitter1 = Splitter()
-        calibrator_aper = ApertureExtractor(rinput.master_traces, self.datamodel)
+        calibrator_aper = ApertureExtractor(
+            rinput.master_traces,
+            self.datamodel,
+            offset=rinput.extraction_offset
+        )
         splitter2 = Splitter()
         calibrator_wl = WavelengthCalibrator(rinput.master_wlcalib, self.datamodel)
         flipcor = FlipLR()

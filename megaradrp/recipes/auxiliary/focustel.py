@@ -14,7 +14,7 @@ from __future__ import division, print_function
 import numpy
 from numina.array import combine
 from numina.core.dataholders import Product
-from numina.core.requirements import Requirement, ObservationResultRequirement
+from numina.core.requirements import Requirement, ObservationResultRequirement, Parameter
 from numina.exceptions import RecipeError
 
 from megaradrp.recipes.scientific.base import ImageRecipe
@@ -60,6 +60,7 @@ class FocusTelescopeRecipe(ImageRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
     master_traces = reqs.MasterAperturesRequirement()
+    extraction_offset = Parameter([0.0], 'Offset traces for extraction')
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
     position = Requirement(list, "Position of the reference object", default=(0, 0))
     # Products
@@ -106,7 +107,8 @@ class FocusTelescopeRecipe(ImageRecipe):
                     img,
                     rinput.master_traces,
                     rinput.master_wlcalib,
-                    rinput.master_fiberflat
+                    rinput.master_fiberflat,
+                    offset=rinput.extraction_offset
                 )
 
                 do_sky_subtraction = True

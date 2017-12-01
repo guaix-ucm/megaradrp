@@ -12,6 +12,7 @@ import datetime
 
 import astropy.io.fits as fits
 from numina.flow.processing import Corrector
+import numpy.polynomial.polynomial as nppol
 
 from megaradrp.core.processing import apextract_tracemap_2
 
@@ -21,7 +22,10 @@ _logger = logging.getLogger(__name__)
 class ApertureExtractor(Corrector):
     """A Node that extracts apertures."""
 
-    def __init__(self, tracemap, datamodel=None, dtype='float32', processes=0):
+    def __init__(self, tracemap, datamodel=None, dtype='float32', processes=0, offset=None):
+
+        if offset:
+            tracemap.global_offset = tracemap.global_offset + nppol.Polynomial(offset)
 
         self.tracemap = tracemap
         self.processes = processes

@@ -46,6 +46,7 @@ class ImageRecipe(MegaraBaseRecipe):
     master_fiberflat = reqs.MasterFiberFlatRequirement()
     master_twilight = reqs.MasterTwilightRequirement()
     master_traces = reqs.MasterAperturesRequirement()
+    extraction_offset = Parameter([0.0], 'Offset traces for extraction')
     master_sensitivity = reqs.SensitivityRequirement()
     reference_extinction = reqs.ReferenceExtinction()
     relative_threshold = Parameter(0.3, 'Threshold for peak detection')
@@ -65,16 +66,17 @@ class ImageRecipe(MegaraBaseRecipe):
         # 1D, extraction, Wl calibration, Flat fielding
         reduced_rss = self.run_reduction_1d(img,
             rinput.master_traces, rinput.master_wlcalib,
-            rinput.master_fiberflat, rinput.master_twilight
+            rinput.master_fiberflat, rinput.master_twilight,
+            offset=rinput.extraction_offset
         )
         self.save_intermediate_img(reduced_rss, 'reduced_rss.fits')
 
         return reduced2d, reduced_rss
 
-    def run_reduction_1d(self, img, tracemap, wlcalib, fiberflat, twflat=None):
+    def run_reduction_1d(self, img, tracemap, wlcalib, fiberflat, twflat=None, offset=None):
         # 1D, extraction, Wl calibration, Flat fielding
         correctors = []
-        correctors.append(ApertureExtractor(tracemap, self.datamodel))
+        correctors.append(ApertureExtractor(tracemap, self.datamodel, offset=offset))
         correctors.append(FlipLR())
         correctors.append(WavelengthCalibrator(wlcalib, self.datamodel))
         correctors.append(FiberFlatCorrector(fiberflat.open(), self.datamodel))
@@ -547,7 +549,7 @@ class ImageRecipe(MegaraBaseRecipe):
         sens.header['uuid'] = str(uuid.uuid1())
         sens.header['tunit'] = ('Jy', "Final units")
         sens.header['PIXLIMF1'] = (pixf1 + 1, "Start of valid flux calibration")
-        sens.header['PIXLIMF2'] = (pixf2 + 1, "Start of valid flux calibration")
+        sens.header['PIXLIMF2'] = (pixf2 + 1, "End of valid flux calibration")
         sens.header['PIXLIMR1'] = pixr1 + 1
         sens.header['PIXLIMR2'] = pixr2 + 1
         sens.header['PIXLIMM1'] = pixm1 + 1

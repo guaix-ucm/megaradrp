@@ -108,6 +108,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
     master_apertures = reqs.MasterAperturesRequirement()
+    extraction_offset = Parameter([0.0], 'Offset traces for extraction')
     lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
     polynomial_degree = Parameter(5, 'Polynomial degree of arc calibration')
     nlines = Parameter(20, "Use the 'nlines' brigthest lines of the spectrum")
@@ -142,7 +143,11 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         self.save_intermediate_img(img, 'reduced_image.fits')
 
         splitter1 = Splitter()
-        calibrator_aper = ApertureExtractor(rinput.master_apertures, self.datamodel, processes=20)
+        calibrator_aper = ApertureExtractor(
+            rinput.master_apertures,
+            self.datamodel,
+            offset=rinput.extraction_offset
+        )
         flipcor = FlipLR()
 
         flow2 = SerialFlow([splitter1, calibrator_aper, flipcor])

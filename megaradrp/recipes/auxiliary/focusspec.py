@@ -89,6 +89,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
     master_traces = reqs.MasterAperturesRequirement()
+    extraction_offset = Parameter([0.0], 'Offset traces for extraction')
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
 
     nfibers = Parameter(10, "The results are sampled every nfibers")
@@ -161,7 +162,11 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
 
             try:
                 img = basic_processing_with_combination_frames(frames, flow, method=combine.median, errors=False)
-                calibrator_aper = ApertureExtractor(rinput.master_traces, self.datamodel)
+                calibrator_aper = ApertureExtractor(
+                    rinput.master_traces,
+                    self.datamodel,
+                    offset=rinput.extraction_offset
+                )
 
                 self.save_intermediate_img(img, 'focus2d-%s.fits' % (focus,))
                 img1d = calibrator_aper(img)

@@ -15,7 +15,7 @@ from __future__ import division, print_function
 import numpy
 from astropy.io import fits
 
-from numina.core import Product
+from numina.core import Product, Parameter
 from numina.core.requirements import ObservationResultRequirement
 from numina.flow import SerialFlow
 
@@ -43,6 +43,7 @@ class RecipeInput(recipeio.RecipeInput):
     master_bpm = reqs.MasterBPMRequirement()
     master_slitflat = reqs.MasterSlitFlatRequirement()
     master_traces = reqs.MasterAperturesRequirement()
+    extraction_offset = Parameter([0.0], 'Offset traces for extraction')
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
     master_fiberflat = reqs.MasterFiberFlatRequirement()
 
@@ -103,10 +104,10 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
         self.set_base_headers(hdr)
         return final_image
 
-    def run_reduction_1d(self, img, tracemap, wlcalib, fiberflat):
+    def run_reduction_1d(self, img, tracemap, wlcalib, fiberflat, offset=None):
         # 1D, extraction, Wl calibration, Flat fielding
         correctors = []
-        correctors.append(ApertureExtractor(tracemap, self.datamodel))
+        correctors.append(ApertureExtractor(tracemap, self.datamodel, offset=offset))
         correctors.append(FlipLR())
         correctors.append(WavelengthCalibrator(wlcalib, self.datamodel))
         correctors.append(FiberFlatCorrector(fiberflat.open(), self.datamodel))
@@ -129,7 +130,8 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
         reduced_rss = self.run_reduction_1d(img,
                                             rinput.master_traces,
                                             rinput.master_wlcalib,
-                                            rinput.master_fiberflat
+                                            rinput.master_fiberflat,
+                                            offset=rinput.extraction_offset
                                             )
 
         self.save_intermediate_img(reduced_rss, 'reduced_rss.fits')
