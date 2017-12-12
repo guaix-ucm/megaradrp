@@ -9,6 +9,8 @@
 
 """Products of the Megara Pipeline"""
 
+import itertools
+
 import numpy
 
 
@@ -47,9 +49,10 @@ def to_ds9_reg(obj, ds9reg, rawimage=False, numpix=100, fibid_at=0):
     ds9reg.write('# vph: {0}\n'.format(obj.tags['vph']))
     ds9reg.write('# uuid: {0}\n'.format(obj.uuid))
     colorbox = ['#ff77ff', '#4444ff']
+    itercolors = itertools.cycle(colorbox)
     for fiberdict in obj.contents:
         fibid = fiberdict.fibid
-        boxid = fiberdict.boxid
+        # boxid = fiberdict.boxid
         xmin = fiberdict.start
         xmax = fiberdict.stop
         ds9reg.write('#\n# fibid: {0}\n'.format(fibid))
@@ -66,7 +69,9 @@ def to_ds9_reg(obj, ds9reg, rawimage=False, numpix=100, fibid_at=0):
                 x2 = xp[i + 1] + ix_offset
                 y2 = yp[i + 1] + 1
                 ds9reg.write('line {0} {1} {2} {3}'.format(x1, y1, x2, y2))
-                ds9reg.write(' # color={0}\n'.format(colorbox[boxid % 2]))
+                # Alternate colors
+                next_color = next(itercolors)
+                ds9reg.write(' # color={0}\n'.format(next_color))
                 if fibid_at != 0:
                     if x1 <= fibid_at <= x2:
                         ds9reg.write('text {0} {1} {{{2}}} # color=green '
