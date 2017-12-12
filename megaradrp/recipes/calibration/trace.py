@@ -27,6 +27,7 @@ import numina.core.validator
 from skimage.filters import threshold_otsu
 from skimage.feature import peak_local_max
 
+from megaradrp.utils import copy_img
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.products import TraceMap
@@ -185,7 +186,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         # Perform extraction with own traces
         calibrator_aper = ApertureExtractor(final, self.datamodel)
-        reduced_rss = calibrator_aper(reduced)
+        reduced_copy = copy_img(reduced)
+        reduced_rss = calibrator_aper(reduced_copy)
 
         if self.intermediate_results:
             with open('ds9.reg', 'w') as ds9reg:
