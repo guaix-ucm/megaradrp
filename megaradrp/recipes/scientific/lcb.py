@@ -19,6 +19,7 @@ from megaradrp.recipes.scientific.base import ImageRecipe
 from megaradrp.types import ProcessedRSS, ProcessedFrame
 from megaradrp.processing.fluxcalib import FluxCalibration
 
+
 class LCBImageRecipe(ImageRecipe):
     """Process LCB images.
 
@@ -67,7 +68,10 @@ class LCBImageRecipe(ImageRecipe):
         reduced2d, rss_data = super(LCBImageRecipe,self).base_run(rinput)
 
         self.logger.info('start sky subtraction')
-        final, origin, sky = self.run_sky_subtraction(rss_data)
+        isb = rinput.ignored_sky_bundles
+        if isb:
+            self.logger.info('sky bundles ignored: %s', isb)
+        final, origin, sky = self.run_sky_subtraction(rss_data, ignored_sky_bundles=isb)
         self.logger.info('end sky subtraction')
         # Flux calibration
         if rinput.master_sensitivity is not None:

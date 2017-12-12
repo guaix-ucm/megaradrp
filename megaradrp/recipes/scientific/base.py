@@ -47,6 +47,7 @@ class ImageRecipe(MegaraBaseRecipe):
     master_twilight = reqs.MasterTwilightRequirement()
     master_traces = reqs.MasterAperturesRequirement()
     extraction_offset = Parameter([0.0], 'Offset traces for extraction')
+    ignored_sky_bundles = Parameter([], 'Ignore these sky bundles')
     master_sensitivity = reqs.SensitivityRequirement()
     reference_extinction = reqs.ReferenceExtinction()
     relative_threshold = Parameter(0.3, 'Threshold for peak detection')
@@ -89,14 +90,16 @@ class ImageRecipe(MegaraBaseRecipe):
         reduced_rss =  flow2(img)
         return reduced_rss
 
-    def run_sky_subtraction(self, img):
+    def run_sky_subtraction(self, img, ignored_sky_bundles):
         # Sky subtraction
         self.logger.info('obtain fiber information')
         sky_img = copy_img(img)
         final_img = copy_img(img)
         fiberconf = self.datamodel.get_fiberconf(sky_img)
         # Sky fibers
-        self.logger.debug('sky fibers are: %s', fiberconf.sky_fibers(valid_only=True))
+        skyfibs = fiberconf.sky_fibers(valid_only=True,
+                                       ignored_bundles=ignored_sky_bundles)
+        self.logger.debug('sky fibers are: %s', )
         # Create empty sky_data
         target_data = img[0].data
 
@@ -105,7 +108,7 @@ class ImageRecipe(MegaraBaseRecipe):
         sky_map = numpy.zeros_like(img['WLMAP'].data)
         sky_img[0].data = sky_data
 
-        for fibid in fiberconf.sky_fibers(valid_only=True):
+        for fibid in skyfibs:
             rowid = fibid - 1
             sky_data[rowid] = target_data[rowid]
             sky_map[rowid] = target_map[rowid]

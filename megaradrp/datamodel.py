@@ -144,9 +144,14 @@ class FibersConf(object):
         self.bundles = {}
         self.fibers = {}
 
-    def sky_fibers(self, valid_only=False):
+    def sky_fibers(self, valid_only=False, ignored_bundles=None):
         result = []
+        if ignored_bundles is None:
+            ignored_bundles = []
+
         for bundle in self.bundles.values():
+            if bundle.id in ignored_bundles:
+                continue
             if bundle.target_type is TargetType.SKY:
                 if valid_only:
                     for fib in bundle.fibers.values():
