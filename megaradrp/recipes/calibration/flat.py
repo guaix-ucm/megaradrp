@@ -76,6 +76,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     master_bpm = reqs.MasterBPMRequirement()
     master_slitflat = reqs.MasterSlitFlatRequirement()
     master_traces = reqs.MasterAperturesRequirement()
+    smoothing_window = Parameter(31, 'Window for smoothing (must be odd)')
     extraction_offset = Parameter([0.0], 'Offset traces for extraction')
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
 
@@ -134,8 +135,8 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
         if self.intermediate_results:
             xx = numpy.arange(collapse.shape[0])
-            plt.scatter(xx, collapse)
-            plt.plot(xx, collapse_smooth)
+            plt.plot(xx, collapse, '.')
+            plt.plot(xx, collapse_smooth, '-')
             plt.savefig('collapsed_smooth.png')
             plt.close()
 
@@ -189,7 +190,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
         # Obtain flat field
         self.logger.info('Normalize flat field')
-        rss_wl2 = self.obtain_fiber_flat(rss_wl, rinput.master_wlcalib)
+        rss_wl2 = self.obtain_fiber_flat(rss_wl, rinput.master_wlcalib, window=rinput.smooting_window)
         rss_wl2[0].header = self.set_base_headers(rss_wl2[0].header)
         result = self.create_result(
             master_fiberflat=rss_wl2,
