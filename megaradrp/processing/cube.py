@@ -15,6 +15,7 @@ import math
 from scipy import signal
 from scipy.interpolate import RectBivariateSpline
 from megaradrp.simulation.convolution import hex_c, square_c, setup_grid
+from megaradrp.utils import copy_img
 
 
 M_SQRT3 = math.sqrt(3)
@@ -109,8 +110,6 @@ def create_cube(zval, target_scale=1.0):
     R1 = scale * np.array([[1.0 ,0], [0,1]]) # Unit scale
     detR1 = np.linalg.det(R1)
 
-    # In[7]:
-
     G_TYPE = 2
     ncol = 27
     nrow = 21
@@ -174,6 +173,19 @@ def create_cube(zval, target_scale=1.0):
     # scale with areas
     dk *= (scale**2 / ha_hex)
     return dk
+
+
+def create_cube_from_rss(rss, target_scale=1.0):
+    rss_data = rss[0].data
+    cube_data = create_cube(rss_data, target_scale)
+
+    cube = copy_img(rss)
+    cube[0].data = cube_data.T
+    # Merge headers
+    # 2D from FIBERS
+    # WL from PRIMARY
+    # done
+    return cube
 
 
 if __name__ == '__main__':
