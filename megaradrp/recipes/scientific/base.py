@@ -553,8 +553,8 @@ class ImageRecipe(MegaraBaseRecipe):
         sens.header['tunit'] = ('Jy', "Final units")
         sens.header['PIXLIMF1'] = (pixf1 + 1, "Start of valid flux calibration")
         sens.header['PIXLIMF2'] = (pixf2 + 1, "End of valid flux calibration")
-        sens.header['PIXLIMR1'] = pixr1 + 1
-        sens.header['PIXLIMR2'] = pixr2 + 1
-        sens.header['PIXLIMM1'] = pixm1 + 1
-        sens.header['PIXLIMM2'] = pixm2 + 1
+        sens.header['PIXLIMR1'] = (pixr1 + 1, 'Start of region with at least one fiber')
+        sens.header['PIXLIMR2'] = (pixr2 + 1, 'End of region with at least one fiber')
+        sens.header['PIXLIMM1'] = (pixm1 + 1, 'Start of region with all fibers')
+        sens.header['PIXLIMM2'] = (pixm2 + 1, 'End of region with all fibers')
         return sens

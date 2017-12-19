@@ -55,9 +55,9 @@ class FluxCalibration(Corrector):
         hdr['NUM-FLUX'] = self.calibid
         hdr['PIXLIMF1'] = (self.limf[0] + 1, "Start of valid flux calibration")
         hdr['PIXLIMF2'] = (self.limf[1] + 1, "End of valid flux calibration")
-        hdr['PIXLIMR1'] = self.limr[0] + 1
-        hdr['PIXLIMR2'] = self.limr[1] + 1
-        hdr['PIXLIMM1'] = self.limm[0] + 1
-        hdr['PIXLIMM2'] = self.limm[1] + 1
+        hdr['PIXLIMR1'] = (self.limr[0] + 1, 'Start of region with at least one fiber')
+        hdr['PIXLIMR2'] = (self.limr[1] + 1, 'End of region with at least one fiber')
+        hdr['PIXLIMM1'] = (self.limm[0] + 1, 'Start of region with all fibers')
+        hdr['PIXLIMM2'] = (self.limm[1] + 1, 'End of region with all fibers')
         hdr['history'] = 'Flux calibration in {}'.format(imgid)
         hdr['history'] = 'Flux calibration time {}'.format(datetime.datetime.utcnow().isoformat())
