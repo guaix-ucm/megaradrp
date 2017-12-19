@@ -190,7 +190,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
         # Obtain flat field
         self.logger.info('Normalize flat field')
-        rss_wl2 = self.obtain_fiber_flat(rss_wl, rinput.master_wlcalib, window=rinput.smooting_window)
+        rss_wl2 = self.obtain_fiber_flat(rss_wl, rinput.master_wlcalib, window=rinput.smoothing_window)
         rss_wl2[0].header = self.set_base_headers(rss_wl2[0].header)
         result = self.create_result(
             master_fiberflat=rss_wl2,
