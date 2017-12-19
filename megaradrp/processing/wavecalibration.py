@@ -108,14 +108,20 @@ class WavelengthCalibrator(Corrector):
         return rss
 
     def add_wcs(self, hdr, wlr0, delt, crpix=1.0):
-        hdr['CRPIX1'] = crpix
-        hdr['CRVAL1'] = wlr0
-        hdr['CDELT1'] = delt
+        c_crpix = 'Pixel coordinate of reference point'
+        c_cunit = 'Units of coordinate increment and value'
+        unit = 'Angstrom'
+        c_crval = '[{}] Coordinate value at reference point'.format(unit)
+        c_cdelt = '[{}] Coordinate increment at reference point'.format(unit)
+        hdr['CRPIX1'] = (crpix, c_crpix)
+        hdr['CRVAL1'] = wlr0, c_crval
+        hdr['CDELT1'] = delt, c_cdelt
+        hdr['CUNIT1'] = unit, c_cunit
         hdr['CTYPE1'] = 'WAVELENGTH'
-        hdr['CRPIX2'] = 1
-        hdr['CRVAL2'] = 1
+        hdr['CRPIX2'] = (0.0, c_crpix)
+        hdr['CRVAL2'] = 0.0
         hdr['CDELT2'] = 1
-        hdr['CTYPE2'] = 'PIXEL'
+        hdr['CTYPE2'] = ''
         return hdr
 
     def resample_rss_flux(self, rss_old, wvpar_dict):
