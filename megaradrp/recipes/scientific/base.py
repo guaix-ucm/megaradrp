@@ -90,7 +90,7 @@ class ImageRecipe(MegaraBaseRecipe):
         reduced_rss =  flow2(img)
         return reduced_rss
 
-    def run_sky_subtraction(self, img, ignored_sky_bundles):
+    def run_sky_subtraction(self, img, ignored_sky_bundles=None):
         # Sky subtraction
         self.logger.info('obtain fiber information')
         sky_img = copy_img(img)
