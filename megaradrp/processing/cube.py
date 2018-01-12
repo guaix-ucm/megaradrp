@@ -330,43 +330,43 @@ def merge_wcs(hdr_sky, hdr_spec, out=None):
     hdr.set('PC3_3', value=1.0, comment=c_pc, after='PC3_2')
 
     # Mapping, which keyword comes from each header
-    mappings = [('CRPIX3', 'CRPIX1', 0),
-                ('CDELT3', 'CDELT1', 0),
-                ('CRVAL3', 'CRVAL1', 0),
-                ('CTYPE3', 'CTYPE1', 0),
-                ('CRPIX1', 'CRPIX1', 1),
-                ('CDELT1', 'CDELT1', 1),
-                ('CRVAL1', 'CRVAL1', 1),
-                ('CTYPE1', 'CTYPE1', 1),
-                ('CUNIT1', 'CUNIT1', 1),
-                ('PC1_1', 'PC1_1', 1),
-                ('PC1_2', 'PC1_2', 1),
-                ('CRPIX2', 'CRPIX2', 1),
-                ('CDELT2', 'CDELT2', 1),
-                ('CRVAL2', 'CRVAL2', 1),
-                ('CTYPE2', 'CTYPE2', 1),
-                ('CUNIT2', 'CUNIT2', 1),
-                ('PC2_1', 'PC2_1', 1),
-                ('PC2_2', 'PC2_2', 1),
+    mappings = [('CRPIX3', 'CRPIX1', 0, 0.0),
+                ('CDELT3', 'CDELT1', 0, 1.0),
+                ('CRVAL3', 'CRVAL1', 0, 0.0),
+                ('CTYPE3', 'CTYPE1', 0, ' '),
+                ('CRPIX1', 'CRPIX1', 1, 0.0),
+                ('CDELT1', 'CDELT1', 1, 1.0),
+                ('CRVAL1', 'CRVAL1', 1, 0.0),
+                ('CTYPE1', 'CTYPE1', 1, ' '),
+                ('CUNIT1', 'CUNIT1', 1, ' '),
+                ('PC1_1', 'PC1_1', 1 , 1.0),
+                ('PC1_2', 'PC1_2', 1 , 0.0),
+                ('CRPIX2', 'CRPIX2', 1, 0.0),
+                ('CDELT2', 'CDELT2', 1, 1.0),
+                ('CRVAL2', 'CRVAL2', 1, 0.0),
+                ('CTYPE2', 'CTYPE2', 1, ' '),
+                ('CUNIT2', 'CUNIT2', 1, ' '),
+                ('PC2_1', 'PC2_1', 1, 0.0),
+                ('PC2_2', 'PC2_2', 1, 1.0),
                 ]
 
     idem_keys = [
-        'LONPOLE',
+        ('LONPOLE', 0.0),
     #    'LATPOLE',
-        'RADESYS',
+        ('RADESYS', 'FK5')
     #    'EQUINOX'
     ]
-    for key in idem_keys:
-        mp = (key, key, 1)
+    for key, default in idem_keys:
+        mp = (key, key, 1, default)
         mappings.append(mp)
 
     hdr_in = {}
     hdr_in[0] = hdr_spec
     hdr_in[1] = hdr_sky
 
-    for dest, orig, idx in mappings:
+    for dest, orig, idx, default in mappings:
         hdr_orig = hdr_in[idx]
-        hdr[dest] = (hdr_orig[orig], hdr_orig.comments[orig])
+        hdr[dest] = (hdr_orig.get(orig, default), hdr_orig.comments[orig])
 
     return hdr
 
