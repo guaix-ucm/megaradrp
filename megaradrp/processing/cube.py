@@ -446,9 +446,14 @@ def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser(prog='convert_rss_cube')
     # positional parameters
+
+    #parser.add_argument("rss",
+    #                    help="RSS file with fiber traces",
+    #                    type=argparse.FileType('r'))
+    # Using plain str instead of FileType (see astropy/astropy#7078)
     parser.add_argument("rss",
                         help="RSS file with fiber traces",
-                        type=argparse.FileType('r'))
+                        )
     parser.add_argument('-p', '--pixel-size', type=float, default=0.3,
                         metavar='PIXEL_SIZE',
                         help="Pixel size in arc seconds")
