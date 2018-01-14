@@ -1,5 +1,5 @@
 #
-# Copyright 2017 Universidad Complutense de Madrid
+# Copyright 2017-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -447,13 +447,9 @@ def main(args=None):
     parser = argparse.ArgumentParser(prog='convert_rss_cube')
     # positional parameters
 
-    #parser.add_argument("rss",
-    #                    help="RSS file with fiber traces",
-    #                    type=argparse.FileType('r'))
-    # Using plain str instead of FileType (see astropy/astropy#7078)
     parser.add_argument("rss",
                         help="RSS file with fiber traces",
-                        )
+                        type=argparse.FileType('rb'))
     parser.add_argument('-p', '--pixel-size', type=float, default=0.3,
                         metavar='PIXEL_SIZE',
                         help="Pixel size in arc seconds")
