@@ -15,30 +15,13 @@ import astropy.io.fits as fits
 
 from numina.core import Product, Parameter
 from numina.core.requirements import Requirement
+from numina.core.validator import range_validator
 
-from megaradrp.processing.extractobj import extract_star
+from megaradrp.processing.extractobj import extract_star, generate_sensitivity
 from megaradrp.recipes.scientific.base import ImageRecipe
 from megaradrp.types import ProcessedRSS, ProcessedFrame, ProcessedSpectrum
 from megaradrp.types import ReferenceSpectrumTable, ReferenceExtinctionTable
 from megaradrp.types import MasterSensitivity
-
-
-def min_max_validator(minval=None, maxval=None):
-
-    def checker_func(value):
-        import numina.exceptions
-        if minval is not None and value < minval:
-            msg = "must be >= {}".format(minval)
-            raise numina.exceptions.ValidationError(msg)
-        if maxval is not None and value > maxval:
-            msg = "must be <= {}".format(maxval)
-            raise numina.exceptions.ValidationError(msg)
-        return value
-
-    return checker_func
-
-
-nrings_check = min_max_validator(minval=1)
 
 
 class LCBStandardRecipe(ImageRecipe):
@@ -80,7 +63,8 @@ class LCBStandardRecipe(ImageRecipe):
 
     """
     position = Requirement(list, "Position of the reference object", default=(0, 0))
-    nrings = Parameter(3, "Number of rings to extract the star", validator=nrings_check)
+    nrings = Parameter(3, "Number of rings to extract the star",
+                       validator=range_validator(minval=1))
     reference_spectrum = Requirement(ReferenceSpectrumTable, "Spectrum of reference star")
     reference_extinction = Requirement(ReferenceExtinctionTable, "Reference extinction")
     sigma_resolution = Parameter(20.0, 'sigma Gaussian filter to degrade resolution ')
@@ -123,7 +107,7 @@ class LCBStandardRecipe(ImageRecipe):
                                rinput.reference_extinction[:, 1])
 
         sigma = rinput.sigma_resolution
-        sens = self.generate_sensitivity(final, spectrum, star_interp, extinc_interp, cover1, cover2, sigma)
+        sens = generate_sensitivity(final, spectrum, star_interp, extinc_interp, cover1, cover2, sigma)
         self.logger.info('end LCBStandardRecipe reduction')
 
         return self.create_result(

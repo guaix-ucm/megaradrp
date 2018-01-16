@@ -9,9 +9,19 @@
 
 """Extract objects from RSS images"""
 
+import math
+import uuid
+import logging
+
 import numpy
 import astropy.wcs
+import astropy.io.fits as fits
+
 from scipy.spatial import KDTree
+from scipy.ndimage.filters import gaussian_filter
+
+from megaradrp.utils import copy_img
+from megaradrp.processing.fluxcalib import update_flux_limits
 
 
 def extract_star(rssimage, position, npoints, fiberconf, logger=None):
@@ -254,3 +264,116 @@ def compute_dar(img, datamodel, logger=None, debug_plot=False):
         plt.show()
 
     return world[:, 0], xdar, ydar
+
+
+def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
+                         cover1, cover2, sigma=20.0):
+
+        wcsl = astropy.wcs.WCS(final[0].header)
+
+        r1 = numpy.arange(final[0].shape[1])
+        r2 = r1 * 0.0
+        lm = numpy.array([r1, r2])
+        # Values are 0-based
+        wavelen_ = wcsl.all_pix2world(lm.T, 0)
+        wavelen = wavelen_[:, 0]
+
+        airmass = final[0].header['AIRMASS']
+        exptime = final[0].header['EXPTIME']
+
+        response_0 = spectrum / exptime
+        valid = response_0 > 0
+        # In magAB
+        # f(Jy) = 3631 * 10^-0.4 mAB
+
+        response_1 = 3631 * numpy.power(10.0, -0.4 * (star_interp(wavelen) + extinc_interp(wavelen) * airmass))
+        r0max = response_0.max()
+        r1max = response_1.max()
+        r0 = response_0 / r0max
+        r1 = response_1 / r1max
+
+        pixm1, pixm2 = cover1
+        pixr1, pixr2 = cover2
+
+        pixlims = {}
+        pixlims['PIXLIMR1'] = pixr1
+        pixlims['PIXLIMR2'] = pixr2
+        pixlims['PIXLIMM1'] = pixm1
+        pixlims['PIXLIMM2'] = pixm2
+
+        max_valid = numpy.zeros_like(valid)
+        max_valid[pixm1:pixm2 + 1] = True
+
+        partial_valid = numpy.zeros_like(valid)
+        partial_valid[pixr1:pixr2 + 1] = True
+
+        valid = numpy.ones_like(response_0)
+        valid[pixm2:] = 0
+        valid[:pixm1+1] = 0
+
+        pixf1, pixf2 = int(math.floor(pixm1 +  2* sigma)), int(math.ceil(pixm2 - 2 * sigma))
+
+        pixlims['PIXLIMF1'] = pixf1
+        pixlims['PIXLIMF2'] = pixf2
+
+        flux_valid = numpy.zeros_like(valid, dtype='bool')
+        flux_valid[pixf1:pixf2 + 1] = True
+
+        r0_ens = gaussian_filter(r0, sigma=sigma)
+
+        ratio2 = r0_ens / r1
+        s_response = ratio2 * (r0max / r1max)
+
+        # FIXME: add history
+        sens = fits.PrimaryHDU(s_response, header=final[0].header)
+        sens.header['uuid'] = str(uuid.uuid1())
+        sens.header['tunit'] = ('Jy', "Final units")
+
+        update_flux_limits(sens.header, pixlims, wcs=wcsl, ref=0)
+
+        return sens
+
+
+def subtract_sky(img, datamodel, ignored_sky_bundles=None, logger=None):
+    # Sky subtraction
+
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
+    logger.info('obtain fiber information')
+    sky_img = copy_img(img)
+    final_img = copy_img(img)
+    fiberconf = datamodel.get_fiberconf(sky_img)
+    # Sky fibers
+    skyfibs = fiberconf.sky_fibers(valid_only=True,
+                                   ignored_bundles=ignored_sky_bundles)
+    logger.debug('sky fibers are: %s', skyfibs)
+    # Create empty sky_data
+    target_data = img[0].data
+
+    target_map = img['WLMAP'].data
+    sky_data = numpy.zeros_like(img[0].data)
+    sky_map = numpy.zeros_like(img['WLMAP'].data)
+    sky_img[0].data = sky_data
+
+    for fibid in skyfibs:
+        rowid = fibid - 1
+        sky_data[rowid] = target_data[rowid]
+        sky_map[rowid] = target_map[rowid]
+    # Sum
+    coldata = sky_data.sum(axis=0)
+    colsum = sky_map.sum(axis=0)
+
+    # Divide only where map is > 0
+    mask = colsum > 0
+    avg_sky = numpy.zeros_like(coldata)
+    avg_sky[mask] = coldata[mask] / colsum[mask]
+
+    # This should be done only on valid fibers
+    # The information of which fiber is valid
+    # is in the tracemap, not in the header
+    for fibid in fiberconf.valid_fibers():
+        rowid = fibid - 1
+        final_img[0].data[rowid, mask] = img[0].data[rowid, mask] - avg_sky[mask]
+
+    return final_img, img, sky_img

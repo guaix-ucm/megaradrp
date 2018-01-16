@@ -16,7 +16,7 @@ import astropy.io.fits as fits
 from numina.core import Product, Parameter
 from numina.core.requirements import Requirement
 
-from megaradrp.processing.extractobj import extract_star
+from megaradrp.processing.extractobj import extract_star, generate_sensitivity
 from megaradrp.recipes.scientific.base import ImageRecipe
 from megaradrp.types import ProcessedRSS, ProcessedFrame, ProcessedSpectrum
 from megaradrp.types import ReferenceSpectrumTable, ReferenceExtinctionTable
@@ -100,12 +100,13 @@ class MOSStandardRecipe(ImageRecipe):
         spectrum, coldids, cover1, cover2 = spectra_pack
         star_spectrum = fits.PrimaryHDU(spectrum, header=final[0].header)
 
-        star_interp = interp1d(rinput.reference_spectrum[:, 0], rinput.reference_spectrum[:, 1])
+        star_interp = interp1d(rinput.reference_spectrum[:, 0],
+                               rinput.reference_spectrum[:, 1])
         extinc_interp = interp1d(rinput.reference_extinction[:, 0],
                                  rinput.reference_extinction[:, 1])
 
         sigma = rinput.sigma_resolution
-        sens = self.generate_sensitivity(final, spectrum, star_interp, extinc_interp, cover1, cover2, sigma)
+        sens = generate_sensitivity(final, spectrum, star_interp, extinc_interp, cover1, cover2, sigma)
         self.logger.info('end MOSStandardRecipe reduction')
 
         return self.create_result(
