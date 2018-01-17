@@ -73,6 +73,7 @@ MEGARA team.
    dark
    slitflat
    trace
+   model
    arc
    fiberflat
    twilight

@@ -1,17 +1,28 @@
 
+==================================================================
 :mod:`megaradrp.products` --- Data products of the MEGARA pipeline
 ==================================================================
 
 .. module:: megaradrp.products
    :synopsis:  Data products of the MEGARA pipeline
 
-.. autoclass:: megaradrp.types.MEGARAProductFrame
+.. autoclass:: megaradrp.types.MegaraFrame
 
 .. autoclass:: megaradrp.types.ProcessedFrame
 
+.. autoclass:: megaradrp.types.ProcessedImage
+
 .. autoclass:: megaradrp.types.ProcessedRSS
 
+.. autoclass:: megaradrp.types.ProcessedMultiRSS
+
 .. autoclass:: megaradrp.types.ProcessedSpectrum
+
+.. autoclass:: megaradrp.types.ProcessedImageProduct
+
+.. autoclass:: megaradrp.types.ProcessedRSSProduct
+
+.. autoclass:: megaradrp.types.ProcessedSpectrumProduct
 
 .. autoclass:: megaradrp.types.MasterBPM
 
@@ -29,12 +40,14 @@
 
 .. autoclass:: megaradrp.products.tracemap.TraceMap
 
+.. autoclass:: megaradrp.products.modelmap.ModelMap
 
 .. autoclass:: megaradrp.products.wavecalibration.WavelengthCalibration
 
-
 .. autoclass:: megaradrp.types.MasterSensitivity
 
-.. autoclass:: megaradrp.types.Extinction
+.. autoclass:: megaradrp.types.ReferenceExtinctionTable
 
-.. autoclass:: megaradrp.types.ReferenceSpectrum
+.. autoclass:: megaradrp.types.ReferenceSpectrumTable
+
+

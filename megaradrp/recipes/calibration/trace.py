@@ -51,6 +51,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
     See Also
     --------
     megaradrp.products.tracemap.TraceMap: description of TraceMap product
+    megaradrp.recipes.calibration.modelmap.ModelMapRecipe: description of ModelMap recipe
     numina.array.trace.traces: tracing algorithm
     megaradrp.instrument.configs: instrument configuration
 

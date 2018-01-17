@@ -35,6 +35,52 @@ import megaradrp.requirements as reqs
 
 
 class ModelMapRecipe(MegaraBaseRecipe):
+    """Provides fiber profile information from continuum flat images.
+
+    This recipe process a set of continuum flat images obtained in
+    *Trace Map* mode and returns the fiber profile information required
+    to perform advanced fiber extraction in other recipes. The recipe also
+    returns the result of processing the input images upto dark correction.
+
+    See Also
+    --------
+    megaradrp.products.modelmap.ModelMap: description of ModelMap product
+    megaradrp.recipes.calibration.tracemap.TraceMapRecipe: description of TraceMap recipe
+    megaradrp.instrument.configs: instrument configuration
+
+    Notes
+    -----
+    Images provided in `obresult` are trimmed and corrected from overscan,
+    bad pixel mask (if `master_bpm` is not None), bias and dark current
+    (if `master_dark` is not None).
+    Images thus corrected are the stacked using the median.
+
+    The result of the combination is saved as an intermediate result, named
+    'reduced_image.fits'. This combined image is also returned in the field
+    `reduced_image` of the recipe result and will be used for
+    fiting the profiles of the fibers.
+
+    The approximate central position of the fibers is obtained from
+    `master_traces`. Then, for each 100 columns of the reduced image, a vertical
+    cut in the image is fitted to a sum of fiber profiles, being the profile
+    a gaussian convolved with a square.
+
+    The fits are made in parallel, being the number of processes controlled
+    by the parameter `processes`, with the default value of 0 meaning to use
+    the number of cores minus 2 if the number of cores is greater or equal to 4,
+    one process otherwise.
+
+    After the columns are fitted, the profiles (central position and sigma)
+    are interpolated to all columns using splines. The coefficientes of the
+    splines are stored in the final `master_traces` object.
+
+    The recipe returns also the RSS obtained by applying advanced extraction
+    to `reduced_image`. As an intermediate result, the recipe proceduces DS9
+    reg files with the position of the center of the profiles, that can be
+    used with raw and reduced images.
+
+    """
+
     # Requirements
     master_bpm = reqs.MasterBPMRequirement()
     master_bias = reqs.MasterBiasRequirement()
