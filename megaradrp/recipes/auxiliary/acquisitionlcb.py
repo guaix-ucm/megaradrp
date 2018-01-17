@@ -161,7 +161,7 @@ class AcquireLCBRecipe(ImageRecipe):
             scf0 = scf - centroid[:, np.newaxis] * flux_per_cell_norm
             mc2 = np.dot(scf0, c_coords)
             self.logger.info('2nd order moments, x2=%f, y2=%f, xy=%f arcsec^2', mc2[0,0], mc2[1,1], mc2[0,1])
-            self.logger.info('FWHM , x=%f, y=%f, xy=%f arcsec',
+            self.logger.info('FWHM , x=%f, y=%f arcsec',
                              FWHM_G * math.sqrt(mc2[0,0]),
                              FWHM_G * math.sqrt(mc2[1,1])
                              )
