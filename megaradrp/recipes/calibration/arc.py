@@ -503,13 +503,16 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     wlpol = numpy.polynomial.Polynomial(coeff)
                     # refine polynomial fit using the full set of arc lines
                     # in master list
-                    poly_refined, npoints_eff, residual_std = \
+                    poly_refined, yres_summary  = \
                         refine_arccalibration(sp=row,
                                               poly_initial=wlpol,
                                               wv_master=wv_master_all,
                                               poldeg=poldeg,
                                               times_sigma_reject=5)
-                    if poly_refined is not None:
+
+                    if poly_refined != numpy.polynomial.Polynomial([0.0]):
+                        npoints_eff = yres_summary['npoints']
+                        residual_std = yres_summary['robust_std']
                         # compute approximate linear values
                         crmin1_linear = poly_refined(1)
                         crmax1_linear = poly_refined(naxis1)
