@@ -181,8 +181,8 @@ Figure:
         a0 [label="MegaraBiasImage"];
         a1 [label="MegaraTraceMap"];
         a2 [label="MegaraArcCalibration"];
-        a3 [label="MegaraWeights"];
-        a4 [label="MegaraWeights"];
+        a3 [label="MegaraModelMap"];
+        a4 [label="MegaraFiberFlat"];
         a5 [label="MegaraSlitFlat"];
 
     }
@@ -199,11 +199,11 @@ next Recipe if it is needed. Taking this in mind, the content of the
       MEGARA:
       - {id: 1, type: 'LinesCatalog', tags: {}, content: 'ThAr_arc_LR-U.txt'}
       - {id: 2, type: 'MasterBias', tags: {}, content: 'master_bias.fits'}
-      - {id: 3, type: 'TraceMap', tags: {}, content: 'master_traces.yaml'}
+      - {id: 3, type: 'TraceMap', tags: {}, content: 'master_traces.json'}
       - {id: 4, type: 'MasterFiberFlat', tags: {}, content: 'master_fiberflat.fits'}
       - {id: 5, type: 'WavelengthCalibration', tags: {}, content: 'master_wlcalib.json'}
       - {id: 6, type: 'MasterFiberFlatFrame', tags: {}, content: 'fiberflat_frame.fits'}
-      - {id: 7, type: 'MasterWeights', tags: {}, content: 'master_weights.tar'}
+      - {id: 7, type: 'ModelMap', tags: {}, content: 'master_model.json'}
       - {id: 8, type: 'MasterSlitFlat', tags: {}, content: 'master_slitflat.fits'}
     requirements: {}
 
@@ -223,7 +223,6 @@ MegaraBiasImage file, obsresult-1.yaml:
     id: 1
     instrument: MEGARA
     mode: MegaraBiasImage
-    configuration: science
     images:
       - bias1.fits
       - bias2.fits
@@ -238,7 +237,6 @@ MegaraTraceMap, obsresult-2.yaml:
     id: 2
     instrument: MEGARA
     mode: MegaraTraceMap
-    configuration: science
     images:
       - flat1.fits
       - flat2.fits
@@ -253,7 +251,6 @@ MegaraArcCalibration, obsresult-3.yaml:
     id: 3
     instrument: MEGARA
     mode: MegaraArcCalibration
-    configuration: science
     images:
       - arc1.fits
       - arc2.fits
@@ -268,7 +265,6 @@ MegaraSlitFlat, obsresult-4.yaml:
     id: 4
     instrument: MEGARA
     mode: MegaraSlitFlat
-    configuration: science
     images:
       - flat1.fits
       - flat2.fits
@@ -276,14 +272,13 @@ MegaraSlitFlat, obsresult-4.yaml:
       - flat4.fits
       - flat5.fits
 
-MegaraWeights, obsresult-5.yaml:
+MegaraModel, obsresult-5.yaml:
 
 .. code-block:: yaml
 
     id: 5
     instrument: MEGARA
-    mode: MegaraWeights
-    configuration: science
+    mode: MegaraModelMap
     images:
       - flat1.fits
       - flat2.fits
@@ -291,14 +286,13 @@ MegaraWeights, obsresult-5.yaml:
       - flat4.fits
       - flat5.fits
 
-Mega:wraWeights, obsresult-6.yaml:
+MegaraFiberFlat, obsresult-6.yaml:
 
 .. code-block:: yaml
 
     id: 6
     instrument: MEGARA
-    mode: Mega:wraWeights
-    configuration: science
+    mode: MegaraFiberFlat
     images:
       - flat1.fits
       - flat2.fits
