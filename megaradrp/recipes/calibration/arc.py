@@ -247,6 +247,27 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                      min_distance=30,
                      debugplot=0):
 
+        if type(poldeg) is int:
+            poldeg_initial = poldeg
+            poldeg_refined = poldeg
+        elif type(poldeg) is list:
+            if len(poldeg) == 1:
+                poldeg_initial = poldeg[0]
+                poldeg_refined = poldeg[0]
+            elif len(poldeg) == 2:
+                poldeg_initial = poldeg[0]
+                poldeg_refined = poldeg[1]
+            else:
+                raise ValueError("Unexpected list length for "
+                                 "polynomial_degree")
+        else:
+            raise ValueError("Unexpected type(poldeg)=", type(poldeg))
+
+        if poldeg_initial > poldeg_refined:
+            raise ValueError("Unexpected poldeg_initial (" +
+                             str(poldeg_initial) + ") > poldeg_refined (" +
+                             str(poldeg_refined) + ")")
+
         wv_master_all = lines_catalog[:, 0]
         if lines_catalog.shape[1] == 2:  # assume old format
             wv_master = numpy.copy(wv_master_all)
@@ -380,7 +401,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         times_sigma_r=3.0,
                         frac_triplets_for_sum=0.50,
                         times_sigma_theil_sen=10.0,
-                        poly_degree_wfit=poldeg,
+                        poly_degree_wfit=poldeg_initial,
                         times_sigma_polfilt=10.0,
                         times_sigma_cook=10.0,
                         times_sigma_inclusion=5.0,
@@ -393,7 +414,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                             list_of_wvfeatures,
                             naxis1_arc=naxis1,
                             crpix1=crpix1,
-                            poly_degree_wfit=poldeg,
+                            poly_degree_wfit=poldeg_initial,
                             weighted=False,
                             debugplot=0,
                             plot_title=None
@@ -474,7 +495,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             # model polynomial coefficients vs. fiber number using
             # previous results stored in data_wlcalib
             list_poly_vs_fiber = self.model_coeff_vs_fiber(
-                initial_data_wlcalib, poldeg,
+                initial_data_wlcalib, poldeg_initial,
                 times_sigma_reject=5,
                 debugplot=0)
             # recompute data_wlcalib from scratch
@@ -496,8 +517,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     row = fibdata_detrend
                     naxis1 = row.shape[0]
                     # estimate polynomial coefficients for current fiber
-                    coeff = numpy.zeros(poldeg + 1)
-                    for k in range(poldeg + 1):
+                    coeff = numpy.zeros(poldeg_initial + 1)
+                    for k in range(poldeg_initial + 1):
                         dumpol = list_poly_vs_fiber[k]
                         coeff[k] = dumpol(fibid)
                     wlpol = numpy.polynomial.Polynomial(coeff)
@@ -507,7 +528,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         refine_arccalibration(sp=row,
                                               poly_initial=wlpol,
                                               wv_master=wv_master_all,
-                                              poldeg=poldeg,
+                                              poldeg=poldeg_refined,
                                               times_sigma_reject=5)
 
                     if poly_refined != numpy.polynomial.Polynomial([0.0]):
