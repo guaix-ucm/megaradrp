@@ -99,7 +99,7 @@ class ImageRecipe(MegaraBaseRecipe):
         # Sky fibers
         skyfibs = fiberconf.sky_fibers(valid_only=True,
                                        ignored_bundles=ignored_sky_bundles)
-        self.logger.debug('sky fibers are: %s', )
+        self.logger.debug('sky fibers are: %s', skyfibs)
         # Create empty sky_data
         target_data = img[0].data
 
