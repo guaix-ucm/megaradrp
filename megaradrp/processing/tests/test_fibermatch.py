@@ -89,6 +89,6 @@ def test_count_peaks():
         expected.append(t)
         idx += 1
 
-    result, measured_dists = count_peaks(PEAKS, tol=1.2, distance=6.0)
+    result = count_peaks(PEAKS, tol=1.2, distance=6.0)
 
     assert result == expected

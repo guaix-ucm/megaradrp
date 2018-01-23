@@ -50,13 +50,12 @@ def generate_box_model(nfibers, start=1,
     return result
 
 
-def count_peaks(peaks, tol=1.2, distance=6.0, start=1):
+def count_peaks(peaks, tol=1.2, distance=6.0, start=1, max_scale_jump=3):
     """Count the peaks and valleys of an array"""
 
     expected_distance = distance
-    scale = 1
-    max_scale_jum = 3
 
+    scale = 1
     pidx = 0
     pid = start
 
@@ -66,7 +65,6 @@ def count_peaks(peaks, tol=1.2, distance=6.0, start=1):
     p1, rest = peaks[0], peaks[1:]
     # pref = p1
     values = [(pid, p1, FOUND_PEAK, 0)]
-    measured_dists = []
 
     while len(rest) > 0:
         # print('im peak:', p1, ' next peak should be around:', p1 + scale * expected_distance)
@@ -82,11 +80,6 @@ def count_peaks(peaks, tol=1.2, distance=6.0, start=1):
                 # print('p2 is within expected distance with tol:', tol)
                 # print('p2 is next peak, with scale', scale)
                 pidx += 1
-                new_exp = dist / scale
-                if abs(new_exp - expected_distance) < 1:
-                    expected_distance = dist / scale
-
-                measured_dists.append(expected_distance)
                 values.append((pid, p2, FOUND_PEAK, pidx))
                 scale = 1
                 break
@@ -96,12 +89,12 @@ def count_peaks(peaks, tol=1.2, distance=6.0, start=1):
                 values.append((pid, pex, FOUND_VALLEY, None))
                 scale += 1
                 # print('increase scale to:', scale)
-                if scale > max_scale_jum:
+                if scale > max_scale_jump:
                     # print('moving to far')
                     raise ValueError('moving too far apart')
 
         p1, rest = rest[0], rest[1:]
-    return values, measured_dists
+    return values
 
 
 # matching
