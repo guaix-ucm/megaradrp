@@ -60,7 +60,8 @@
      {
       "nfibers": 77,
       "bundles": [41,42,43,44,45,46,47,48,49,50,51],
-      "name": "0"
+      "name": "0",
+      "missing": [41]
      },
      {
       "nfibers": 77,
@@ -105,7 +106,8 @@
      {
       "nfibers": 14,
       "bundles": [91, 92],
-      "name": "9a"
+      "name": "9a",
+      "missing": [7]
      }
     ],
     "LCB": [
