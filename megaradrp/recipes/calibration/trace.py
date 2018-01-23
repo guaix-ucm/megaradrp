@@ -444,9 +444,22 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
 
     _logger.debug('initial pairing fibers in column %d', center)
 
+    lastid = 0
+    counted_fibers = 0
+
     for boxid, box in enumerate(boxes):
         nfibers = box['nfibers']
         mfibers = box.get('missing', [])
+        sfibers = box.get('skipcount', [])
+
+        startid = lastid + 1
+        fiber_model = fibermatch.generate_box_model(nfibers,
+                                                    start=startid,
+                                                    missing_relids=mfibers,
+                                                    skip_fibids=sfibers
+                                                    )
+        lastid = fiber_model[-1].fibid
+        counted_fibers += nfibers
 
         mask_fibers = (box_match == (boxid + 1))
         # Peaks in this box
@@ -457,11 +470,11 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         #    total_peaks_pos.append(elem.tolist())
 
         _logger.debug('pseudoslit box: %s, id: %d, nfibers: %d, missing: %s', box['name'], boxid, nfibers, mfibers)
+        _logger.debug('pseudoslit box: %s, skip fibids when counting: %s', box['name'], sfibers)
         _logger.debug('pseudoslit box: %s, npeaks: %d', box['name'], npeaks)
         if npeaks == 0:
             # skip everything, go to next box
             _logger.debug('no peaks, go to next box')
-            counted_fibers += nfibers
             continue
         matched_peaks, measured_dists = fibermatch.count_peaks(thispeaks[:, 1])
         nmatched = len(matched_peaks)
@@ -469,11 +482,8 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         _logger.debug('matched %s missing: %s', nmatched, missing)
         measured_scale = numpy.median(measured_dists)
         _logger.debug('median distance between peaks: %s', measured_scale)
-        startid = counted_fibers + 1
+
         _logger.debug('startid: %s', startid)
-        fiber_model = fibermatch.generate_box_model(nfibers, startid=startid,
-                                                    scale=measured_scale,
-                                                    missing=mfibers)
 
         borders = [box_borders[boxid], box_borders[boxid + 1]]
         _logger.debug('borders: %s \t %s',borders[0], borders[1])
@@ -487,8 +497,6 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
             if match is not None:
                 fti.start = (center, thispeaks[match, 1], thispeaks[match, 2])
             fiber_traces.append(fti)
-
-        counted_fibers += nfibers
 
         # import matplotlib.pyplot as plt
         # plt.xlim([box_borders[boxid], box_borders[boxid + 1]])

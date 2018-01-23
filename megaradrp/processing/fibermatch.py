@@ -11,6 +11,8 @@
 """Match and identify fibers"""
 
 import itertools
+import collections
+
 
 from six.moves import filter as ifilter
 
@@ -19,34 +21,32 @@ FIBER_PEAK, FIBER_DEAD = (0, 1)
 FOUND_PEAK, FOUND_VALLEY, EXPECT_VALLEY = (0, 1, 2)
 
 
-def generate_box_model(nfibers, startid=1, scale=6.0, start=0.0,
-                   missing=None, skipid=None,
-                   missing_count='rel'):
+FiberModelElement = collections.namedtuple('FiberModelElement', ['fibid', 'mode'])
+
+
+def generate_box_model(nfibers, start=1,
+                       missing_relids=None,
+                       skip_fibids=None
+                       ):
     """Generate a model of the expected peaks in a box"""
 
-    if missing_count == 'rel':
-        off = 1
-    elif missing_count == 'abs':
-        off = 0
-    else:
-        raise ValueError('missing_count must be either "rel" or "abs"')
+    if skip_fibids is None:
+        skip_fibids = []
 
-    if skipid is None:
-        skipid = []
+    if missing_relids is None:
+        missing_relids = []
 
-    if missing is None:
-        missing = []
-
-    iter1 = itertools.count(startid)
-    iter2 = ifilter(lambda x:x not in skipid, iter1)
+    iter1 = itertools.count(start)
+    iter2 = ifilter(lambda x:x not in skip_fibids, iter1)
     iter3 = itertools.islice(iter2, nfibers)
 
     result = []
-    for idx, val in zip(iter3, range(nfibers)):
+    for idx, fibid in enumerate(iter3, 1):
         key = FIBER_PEAK
-        if off and (val + 1) in missing:
+        if idx in missing_relids:
             key = FIBER_DEAD
-        result.append((idx, val, start + scale * val , key))
+        tok = FiberModelElement(fibid=fibid, mode=key)
+        result.append(tok)
     return result
 
 
@@ -77,10 +77,11 @@ def count_peaks(peaks, tol=1.2, distance=6.0, start=1):
             # print('next peak is:', p2, 'distance from p1 is', dist)
             # print('expected distance is:', sed)
             pid += 1
-            pidx += 1
+
             if abs(dist - sed) < scale * tol:
                 # print('p2 is within expected distance with tol:', tol)
                 # print('p2 is next peak, with scale', scale)
+                pidx += 1
                 new_exp = dist / scale
                 if abs(new_exp - expected_distance) < 1:
                     expected_distance = dist / scale
@@ -107,7 +108,7 @@ def count_peaks(peaks, tol=1.2, distance=6.0, start=1):
 def valid_match(model, values):
     """Match a model with found peaks"""
     for m, v in zip(model, values):
-        field_m = m[3]
+        field_m = m.mode
         field_v = v[2]
         if field_m == FIBER_DEAD and field_v == FOUND_PEAK:
             # print(m, v, 'must be empty')
