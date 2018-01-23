@@ -26,6 +26,7 @@ from numina.array import combine
 import numina.core.validator
 from skimage.filters import threshold_otsu
 from skimage.feature import peak_local_max
+from scipy.ndimage.filters import minimum_filter
 
 from megaradrp.utils import copy_img
 from megaradrp.processing.aperture import ApertureExtractor
@@ -415,42 +416,75 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
     cut_region = slice(center-hs, center+hs)
     cut = image[:, cut_region]
     colcut = cut.mean(axis=1)
-
-    counted_fibers = 0
-    fiber_traces = []
-    total_peaks = 0
-    # total_peaks_pos = []
-
-    # ipeaks_int = peak_local_max(colcut, min_distance=2, threshold_rel=0.2)[:, 0]
-    ipeaks_int = peak_local_max(colcut, min_distance=3, threshold_rel=threshold)[:, 0] # All VPH
-    # We always want the result sorted. The order changes in different versions
-    # of scikit-image
-    ipeaks_int.sort()
-
-    if debug_plot:
-        plt.plot(colcut)
-        plt.plot(ipeaks_int, colcut[ipeaks_int], 'r*')
-        for border in box_borders:
-            plt.axvline(border, color='k')
-        plt.savefig('central_cut.png')
-        plt.close()
-
-    ipeaks_float = refine_peaks(colcut, ipeaks_int, 3)[0]
-    peaks_y = numpy.ones((ipeaks_int.shape[0], 3))
-    peaks_y[:, 0] = ipeaks_int
-    peaks_y[:, 1] = ipeaks_float
-    peaks_y[:, 2] = colcut[ipeaks_int]
-    box_match = numpy.digitize(peaks_y[:, 0], box_borders)
+    # trace local background with a min filter
+    mincol = minimum_filter(colcut, size=7)
 
     _logger.debug('initial pairing fibers in column %d', center)
 
+    fiber_traces = []
+    total_peaks = 0
     lastid = 0
     counted_fibers = 0
+    boxes_with_missing_fibers = []
 
     for boxid, box in enumerate(boxes):
         nfibers = box['nfibers']
         mfibers = box.get('missing', [])
+        nfibers_max = nfibers - len(mfibers)
         sfibers = box.get('skipcount', [])
+        _logger.debug('pseudoslit box: %s, id: %d', box['name'], boxid)
+        _logger.debug('nfibers: %d, missing: %s',nfibers, mfibers)
+
+        counted_fibers += nfibers
+        b1 = int(box_borders[boxid])
+        b2 = int(box_borders[boxid + 1])
+        _logger.debug('box borders: %s %s', b1, b2)
+        borders = [b1, b2]
+
+        region = colcut[borders[0]:borders[1]+1]
+        # Region for background computation
+        # Remove the space of 1.5 fibers
+        bb1 = b1 + 9
+        bb2 = b2 - 9
+        # a conservative background
+        lowt = numpy.min(mincol[bb1:bb2+1])
+        _logger.debug('conservative background in box is %f', lowt)
+
+        # Find exactly the number of peaks expected
+        _logger.debug('find %d peaks (max)', nfibers_max)
+        ipeaks_int = peak_local_max(region, min_distance=3,
+                                    threshold_abs=lowt,
+                                    threshold_rel=threshold,
+                                    num_peaks=nfibers_max,
+                                    )[:, 0]
+
+        npeaks = len(ipeaks_int)
+        total_peaks += npeaks
+
+        if npeaks == 0:
+            # skip everything, go to next box
+            boxes_with_missing_fibers.append((box['name'], nfibers))
+            _logger.debug('no peaks detected, go to next box')
+            continue
+
+        # We always want the result sorted. The order changes in different versions
+        # of scikit-image
+        ipeaks_int.sort()
+        ipeaks_float = refine_peaks(region, ipeaks_int, 3)[0]
+        peaks_dist = numpy.diff(ipeaks_float)
+        measured_scale = numpy.median(peaks_dist)
+        _logger.debug('median distance between peaks is %s', measured_scale)
+
+        peaks_y = numpy.ones((ipeaks_int.shape[0], 3))
+        peaks_y[:, 0] = ipeaks_int + b1
+        peaks_y[:, 1] = ipeaks_float + b1
+        peaks_y[:, 2] = region[ipeaks_int]
+
+        if debug_plot:
+            plt.plot(region)
+            plt.plot(ipeaks_int, region[ipeaks_int], 'r*')
+            plt.savefig('central_cut_%d.png' % boxid)
+            plt.close()
 
         startid = lastid + 1
         fiber_model = fibermatch.generate_box_model(nfibers,
@@ -459,34 +493,16 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
                                                     skip_fibids=sfibers
                                                     )
         lastid = fiber_model[-1].fibid
-        counted_fibers += nfibers
+        _logger.debug('fibids %s - %s', startid, lastid)
 
-        mask_fibers = (box_match == (boxid + 1))
-        # Peaks in this box
-        thispeaks = peaks_y[mask_fibers]
-        npeaks = len(thispeaks)
-        total_peaks += npeaks
-        #for elem in thispeaks:
-        #    total_peaks_pos.append(elem.tolist())
-
-        _logger.debug('pseudoslit box: %s, id: %d, nfibers: %d, missing: %s', box['name'], boxid, nfibers, mfibers)
-        _logger.debug('pseudoslit box: %s, skip fibids when counting: %s', box['name'], sfibers)
-        _logger.debug('pseudoslit box: %s, npeaks: %d', box['name'], npeaks)
-        if npeaks == 0:
-            # skip everything, go to next box
-            _logger.debug('no peaks, go to next box')
-            continue
-        matched_peaks, measured_dists = fibermatch.count_peaks(thispeaks[:, 1])
+        matched_peaks = fibermatch.count_peaks(peaks_y[:, 1])
         nmatched = len(matched_peaks)
         missing = nfibers - nmatched
-        _logger.debug('matched %s missing: %s', nmatched, missing)
-        measured_scale = numpy.median(measured_dists)
-        _logger.debug('median distance between peaks: %s', measured_scale)
 
-        _logger.debug('startid: %s', startid)
+        if missing != 0:
+            boxes_with_missing_fibers.append((box['name'], missing))
 
-        borders = [box_borders[boxid], box_borders[boxid + 1]]
-        _logger.debug('borders: %s \t %s',borders[0], borders[1])
+        _logger.debug('matched %s, missing: %s', nmatched, missing)
         pos_solutions = fibermatch.complete_solutions(fiber_model, matched_peaks,
                                                       borders, scale=measured_scale)
 
@@ -495,26 +511,14 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
                                                pos_solutions):
             fti = FiberTraceInfo(fibid, boxid)
             if match is not None:
-                fti.start = (center, thispeaks[match, 1], thispeaks[match, 2])
+                fti.start = (center, peaks_y[match, 1], peaks_y[match, 2])
             fiber_traces.append(fti)
-
-        # import matplotlib.pyplot as plt
-        # plt.xlim([box_borders[boxid], box_borders[boxid + 1]])
-        # plt.plot(colcut, 'b-')
-        # plt.plot(thispeaks[:, 1], thispeaks[:, 2], 'ro')
-        # plt.plot(peaks_y[:,1], peaks_y[:, 2], 'ro')
-        # plt.title('Box %s' %box['id'])
-        # plt.show()
-
-    # import matplotlib.pyplot as plt
-    # total_peaks_pos = np.array(total_peaks_pos)
-    # plt.plot(colcut, 'b-')
-    # plt.plot(total_peaks_pos[:, 1], total_peaks_pos[:, 2], 'ro')
-    # plt.show()
 
     _logger.debug('total found peaks: %d', total_peaks)
     _logger.debug('total found + recovered peaks: %d', counted_fibers)
-
+    if boxes_with_missing_fibers:
+        for m1, n2 in boxes_with_missing_fibers:
+            _logger.debug('missing %d fibers in box %s', n2, m1)
     return fiber_traces
 
 
