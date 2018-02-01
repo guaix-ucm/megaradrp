@@ -94,6 +94,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
     def obtain_fiber_flat(self, rss_wl, wlcalib, col1=1900, col2=2100, window=31, degree=3):
         from scipy.signal import savgol_filter
+        from scipy.interpolate import UnivariateSpline
 
         # Bad fibers, join:
         bad_fibers = wlcalib.missing_fibers
@@ -133,16 +134,26 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         collapse_smooth = savgol_filter(collapse, window, degree)
         collapse_smooth[mask_noinfo] = 1.0
 
+        xx = numpy.arange(collapse.shape[0])
+        xx_v = xx[~mask_noinfo]
+        collapse_v = collapse[~mask_noinfo]
+
+        interpol_univ = UnivariateSpline(xx_v, collapse_v, k=5)
+        collapse_smooth_s = collapse_smooth.copy()
+        collapse_smooth_s[~mask_noinfo] = interpol_univ(xx_v)
+        collapse_smooth_s[mask_noinfo] = 1.0
+
         if self.intermediate_results:
-            xx = numpy.arange(collapse.shape[0])
+            numpy.savetxt('collapse.txt', collapse)
+            numpy.savetxt('mask_noinfo.txt', mask_noinfo)
             plt.plot(xx, collapse, '.')
             plt.plot(xx, collapse_smooth, '-')
+            plt.plot(xx, collapse_smooth_s, '--')
             plt.savefig('collapsed_smooth.png')
-            plt.close()
 
         # Divide each fiber in rss_wl by spectrum
         gmean = col_good_mean.mean()
-        data1 = rss_wl[0].data / collapse_smooth
+        data1 = rss_wl[0].data / collapse_smooth_s
         data1 /= gmean
         # Fill values with ones to avoid NaNs
         data2 = numpy.where(wlmap > 0, data1, 1.0)
