@@ -133,7 +133,8 @@ class AcquireMOSRecipe(ImageRecipe):
                 # centroid
                 scf = coords.T * flux_per_cell_norm
                 centroid = scf.sum(axis=1)
-                self.logger.info('centroid: %s arcsec', centroid)
+                self.logger.info('centroid: %s arcsec', list(centroid))
+                self.logger.info('centroid: %s mm', list(centroid / platescale))
                 # central coords
                 c_coords = coords - centroid
                 scf0 = scf - centroid[:, np.newaxis] * flux_per_cell_norm

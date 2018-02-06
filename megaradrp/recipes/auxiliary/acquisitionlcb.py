@@ -139,7 +139,10 @@ class AcquireLCBRecipe(ImageRecipe):
         self.logger.info('Using %d nearest fibers', npoints)
         for diss, idxs, point in zip(dis_p, idx_p, points):
             # For each point
-            self.logger.info('For point %s arcsec', [p * scale for p in point])
+            value = [p * scale for p in point]
+            value_mm = [(v / platescale) for v in value]
+            self.logger.info('For point %s arcsec', value)
+            self.logger.info('For point %s mm', value_mm)
             colids = []
             coords = []
             for dis, idx in zip(diss, idxs):
@@ -155,7 +158,8 @@ class AcquireLCBRecipe(ImageRecipe):
             # centroid
             scf = coords.T * flux_per_cell_norm
             centroid = scf.sum(axis=1)
-            self.logger.info('centroid: %s arcsec', centroid)
+            self.logger.info('centroid: %s arcsec', list(centroid))
+            self.logger.info('centroid: %s mm', list(centroid / platescale))
             # central coords
             c_coords = coords - centroid
             scf0 = scf - centroid[:, np.newaxis] * flux_per_cell_norm
