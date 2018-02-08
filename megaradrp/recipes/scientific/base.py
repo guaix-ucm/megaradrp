@@ -420,6 +420,8 @@ class ImageRecipe(MegaraBaseRecipe):
             for dis, idx in zip(diss, idxs):
                 fiber = fibers[idx]
                 colids.append(fiber.fibid - 1)
+                self.logger.debug('adding fibid %d', fiber.fibid)
+
                 coords.append((fiber.x, fiber.y))
 
             colids.sort()
