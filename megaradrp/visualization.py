@@ -16,7 +16,11 @@ import matplotlib.transforms as mtrans
 import matplotlib.transforms as mtransforms
 import numpy as np
 
+
 M_SQRT3 = math.sqrt(3)
+
+PLATESCALE = 1.2120  # arcsec / mm
+SCALE = 0.443  # mm from center to center, upwards
 
 
 def hexplot(axis, x, y, z, scale=1.0, extent=None,
@@ -148,10 +152,10 @@ def _demo():
     plt.show()
 
 
-if __name__ == '__main__':
+def main(argv=None):
+    """Process command line"""
 
-    import sys
-    import math
+    import argparse
 
     import matplotlib.pyplot as plt
     import astropy.io.fits as fits
@@ -159,11 +163,13 @@ if __name__ == '__main__':
 
     import megaradrp.datamodel as dm
 
-    PLATESCALE = 1.2120  # arcsec / mm
-    SCALE = 0.443  # mm from center to center, upwards
-    SIZE = SCALE * PLATESCALE
+    parser = argparse.ArgumentParser(description='Display MEGARA RSS images')
+    parser.add_argument('rss', metavar='RSS', nargs='+',
+                        help='RSS images to process')
 
-    for fname in sys.argv[1:]:
+    args = parser.parse_args(args=argv)
+
+    for fname in args.rss:
         with fits.open(fname) as img:
             datamodel = dm.MegaraDataModel()
             fiberconf = datamodel.get_fiberconf(img)
@@ -177,18 +183,6 @@ if __name__ == '__main__':
             z = img[0].data[:, cut1:cut2].mean(axis=1)
 
             wcs2 = WCS(img['FIBERS'].header)
-
-            wcs3 = WCS(naxis=2)
-            wcs3.wcs.crpix = [0, 0]
-            wcs3.wcs.ctype = ['RA---TAN', 'DEC--TAN']
-            wcs3.wcs.cdelt = [1.0 / 3600.0, 1.0/ 3600.0]
-            wcs3.wcs.crval = [75.906999999999996,  74.848500000000001]
-            # Rotation around (0,0)
-
-            ang = 20.0 / 180 * math.pi
-            cs = math.cos(ang)
-            ss = math.sin(ang)
-            wcs3.wcs.pc = [[cs, -ss], [ss, cs]]
 
             fig = plt.figure()
 
@@ -204,3 +198,8 @@ if __name__ == '__main__':
             cb = plt.colorbar(col)
             cb.set_label('counts')
             plt.show()
+
+
+if __name__ == '__main__':
+
+    main()
