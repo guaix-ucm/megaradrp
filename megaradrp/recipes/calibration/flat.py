@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -15,7 +15,7 @@ import numpy
 from astropy.io import fits
 import matplotlib.pyplot as plt
 from numina.core import Product, Parameter
-
+import numina.exceptions
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.types import MasterFiberFlat
 import megaradrp.requirements as reqs
@@ -28,6 +28,16 @@ from numina.array import combine
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.wavecalibration import WavelengthCalibrator
 from megaradrp.processing.fiberflat import Splitter, FlipLR
+
+
+def _smoothing_window_check(val):
+    """Check 'smoothing_window' """
+    #raise ValueError("something")
+    if val < 5:
+        raise numina.exceptions.ValidationError("must be >= 5")
+    if val % 2 == 0:
+        raise numina.exceptions.ValidationError("must be odd")
+    return val
 
 
 class FiberFlatRecipe(MegaraBaseRecipe):
@@ -76,7 +86,9 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     master_bpm = reqs.MasterBPMRequirement()
     master_slitflat = reqs.MasterSlitFlatRequirement()
     master_traces = reqs.MasterAperturesRequirement()
-    smoothing_window = Parameter(31, 'Window for smoothing (must be odd)')
+    smoothing_window = Parameter(31, 'Window for smoothing (must be odd)',
+                                 validator=_smoothing_window_check
+                                 )
     extraction_offset = Parameter([0.0], 'Offset traces for extraction')
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
 
