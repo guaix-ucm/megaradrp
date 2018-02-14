@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -18,6 +18,7 @@ from astropy.io import fits
 from numina.core import Product, Parameter
 from numina.core.requirements import ObservationResultRequirement
 from numina.flow import SerialFlow
+from numina.exceptions import ValidationError
 
 import megaradrp.requirements as reqs
 from megaradrp.core.recipe import MegaraBaseRecipe
@@ -35,6 +36,14 @@ import numina.core.recipeinout as recipeio
 from numina.core.metarecipes import generate_docs
 
 
+def pixel_2d_check(value):
+    """Check this is a valid 2D pixel list"""
+    if len(value) != 2:
+        raise ValidationError("must have 2 elements")
+
+    return value
+
+
 @generate_docs
 class RecipeInput(recipeio.RecipeInput):
     obresult = ObservationResultRequirement()
@@ -44,6 +53,8 @@ class RecipeInput(recipeio.RecipeInput):
     master_slitflat = reqs.MasterSlitFlatRequirement()
     master_traces = reqs.MasterAperturesRequirement()
     extraction_offset = Parameter([0.0], 'Offset traces for extraction')
+    normalize_region = Parameter([1900, 2100], 'Region used to normalize the flat-field',
+                                 validator=pixel_2d_check)
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
     master_fiberflat = reqs.MasterFiberFlatRequirement()
 
@@ -90,7 +101,7 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
     `reduced_rss` of the recipe result.
 
     To normalize the `master_twilight_flat`, each fiber is divided by the average
-    of the 200 central columns. This RSS
+    of the column range given in `normalize_region`. This RSS
     image is returned in the field `master_twilightflat` of the recipe result.
 
     """
@@ -136,7 +147,7 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
 
         self.save_intermediate_img(reduced_rss, 'reduced_rss.fits')
         # Measure values in final
-        start, end = 1900, 2100
+        start, end = rinput.normalize_region
         self.logger.info('doing mean between columns %d-%d', start, end)
         rss_wl_data = reduced_rss[0].data
 
