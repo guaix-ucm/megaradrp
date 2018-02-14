@@ -16,6 +16,7 @@ import astropy.io.fits as fits
 from numina.core import Product, Parameter
 from numina.core.requirements import Requirement
 
+from megaradrp.processing.extractobj import extract_star
 from megaradrp.recipes.scientific.base import ImageRecipe
 from megaradrp.types import ProcessedRSS, ProcessedFrame, ProcessedSpectrum
 from megaradrp.types import ReferenceSpectrumTable, ReferenceExtinctionTable
@@ -92,10 +93,11 @@ class MOSStandardRecipe(ImageRecipe):
         npoints = 7
         self.logger.debug('adding %d fibers', npoints)
 
-        spectra_pack = self.extract_stars(final, rinput.position, npoints)
-        pack = spectra_pack[0]
-        # FIXME: include cover1 and cover2
-        spectrum, cover1, cover2 = pack
+        fiberconf = self.datamodel.get_fiberconf(final)
+        spectra_pack = extract_star(final, rinput.position, npoints,
+                                    fiberconf, logger=self.logger)
+
+        spectrum, coldids, cover1, cover2 = spectra_pack
         star_spectrum = fits.PrimaryHDU(spectrum, header=final[0].header)
 
         star_interp = interp1d(rinput.reference_spectrum[:, 0], rinput.reference_spectrum[:, 1])

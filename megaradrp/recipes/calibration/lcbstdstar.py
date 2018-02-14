@@ -16,10 +16,29 @@ import astropy.io.fits as fits
 from numina.core import Product, Parameter
 from numina.core.requirements import Requirement
 
+from megaradrp.processing.extractobj import extract_star
 from megaradrp.recipes.scientific.base import ImageRecipe
 from megaradrp.types import ProcessedRSS, ProcessedFrame, ProcessedSpectrum
 from megaradrp.types import ReferenceSpectrumTable, ReferenceExtinctionTable
 from megaradrp.types import MasterSensitivity
+
+
+def min_max_validator(minval=None, maxval=None):
+
+    def checker_func(value):
+        import numina.exceptions
+        if minval is not None and value < minval:
+            msg = "must be >= {}".format(minval)
+            raise numina.exceptions.ValidationError(msg)
+        if maxval is not None and value > maxval:
+            msg = "must be <= {}".format(maxval)
+            raise numina.exceptions.ValidationError(msg)
+        return value
+
+    return checker_func
+
+
+nrings_check = min_max_validator(minval=1)
 
 
 class LCBStandardRecipe(ImageRecipe):
@@ -61,7 +80,7 @@ class LCBStandardRecipe(ImageRecipe):
 
     """
     position = Requirement(list, "Position of the reference object", default=(0, 0))
-    nrings = Requirement(int, "Number of rings to extract the star", default=3)
+    nrings = Parameter(3, "Number of rings to extract the star", validator=nrings_check)
     reference_spectrum = Requirement(ReferenceSpectrumTable, "Spectrum of reference star")
     reference_extinction = Requirement(ReferenceExtinctionTable, "Reference extinction")
     sigma_resolution = Parameter(20.0, 'sigma Gaussian filter to degrade resolution ')
@@ -92,10 +111,11 @@ class LCBStandardRecipe(ImageRecipe):
         npoints = 1 + 3 * rinput.nrings * (rinput.nrings +1)
         self.logger.debug('adding %d fibers', npoints)
 
-        spectra_pack = self.extract_stars(final, rinput.position, npoints)
-        pack = spectra_pack[0]
-        # FIXME: include cover1 and cover2
-        spectrum, cover1, cover2 = pack
+        fiberconf = self.datamodel.get_fiberconf(final)
+        spectra_pack = extract_star(final, rinput.position, npoints,
+                                    fiberconf, logger=self.logger)
+
+        spectrum, colids, cover1, cover2 = spectra_pack
         star_spectrum = fits.PrimaryHDU(spectrum, header=final[0].header)
 
         star_interp = interp1d(rinput.reference_spectrum[:,0], rinput.reference_spectrum[:,1])
