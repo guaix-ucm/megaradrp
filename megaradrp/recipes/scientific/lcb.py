@@ -79,6 +79,7 @@ class LCBImageRecipe(ImageRecipe):
             node = FluxCalibration(rinput.master_sensitivity.open(), self.datamodel)
             final = node(final)
             origin = node(origin)
+            sky = node(sky)
             self.logger.info('end flux calibration')
         else:
             self.logger.info('no flux calibration')
@@ -100,6 +101,7 @@ class LCBImageRecipe(ImageRecipe):
 
             final[0].data *= extinc_corr
             origin[0].data *= extinc_corr
+            # sky is not corrected from extinction
             self.logger.info('end extinction correction')
         else:
             self.logger.info('no extinction correction')
