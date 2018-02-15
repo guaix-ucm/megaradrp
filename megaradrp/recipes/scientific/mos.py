@@ -52,8 +52,13 @@ class MOSImageRecipe(ImageRecipe):
     `reduced_rss` of the recipe result.
 
     The sky is subtracted by combining the the fibers marked as `SKY`
-    in the fibers configuration. The RSS with sky subtracted is returned ini the
+    in the fibers configuration. The RSS with sky subtracted is returned in the
     field `final_rss` of the recipe result.
+
+    If a `master_sensitivity` is provided (optional), RSS products will be
+    flux calibrated. If `reference_extinction` is provided (optional),
+    `final_rss` and `reduced_rss` will be extinction corrected. Notice that
+    `sky_rss` is not corrected from extinction.
 
     """
 
