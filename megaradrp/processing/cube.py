@@ -292,12 +292,38 @@ def create_cube_from_rss(rss, target_scale_arcsec=1.0):
     #
     cube[0].header['CRPIX1'] = crpix_x
     cube[0].header['CRPIX2'] = crpix_y
-    cube[0].header['CDELT1'] = target_scale_arcsec / (3600.0)
+    cube[0].header['CDELT1'] = -target_scale_arcsec / (3600.0)
     cube[0].header['CDELT2'] = target_scale_arcsec / (3600.0)
     # 2D from FIBERS
     # WL from PRIMARY
     # done
     return cube
+
+
+def recompute_wcs(hdr):
+    """Recompute the WCS rotations from IPA """
+    # get IPA keyword
+    insAngle = -163.256
+    print('insAngle is:', insAngle)
+    ipa = hdr['IPA']
+    pa = -insAngle + ipa
+    print('IPA angle is:', ipa, 'PA angle is', math.fmod(pa, 360))
+    x = hdr['PC1_1']
+    y = hdr['PC1_2']
+    print('PA from header is:',np.rad2deg(math.atan2(y, x)))
+    pa_rad = np.deg2rad(pa)
+    cos_pa = math.cos(pa_rad)
+    sin_pa = math.sin(pa_rad)
+    # Update PC_ keywords
+    print('PC1_1 was {}, is {}'.format(hdr['PC1_1'], cos_pa))
+    hdr['PC1_1'] = cos_pa
+    print('PC2_2 was {}, is {}'.format(hdr['PC2_2'], cos_pa))
+    hdr['PC2_2'] = cos_pa
+    print('PC1_2 was {}, is {}'.format(hdr['PC1_2'], sin_pa))
+    hdr['PC1_2'] = sin_pa
+    print('PC2_1 was {}, is {}'.format(hdr['PC2_1'], -sin_pa))
+    hdr['PC2_1'] = -sin_pa
+    return hdr
 
 
 def merge_wcs(hdr_sky, hdr_spec, out=None):
@@ -455,6 +481,8 @@ def main(args=None):
                         help="Pixel size in arc seconds")
     parser.add_argument('-o', '--outfile', default='cube.fits',
                         help="Name of the output cube file")
+    parser.add_argument('--wcs-pa-from-header', action='store_true',
+                        help="Use PA angle from header", dest='pa_from_header')
 
     args = parser.parse_args(args=args)
 
@@ -464,6 +492,10 @@ def main(args=None):
 
     with fits.open(args.rss) as rss:
         cube = create_cube_from_rss(rss, target_scale)
+
+    if not args.pa_from_header:
+        print('recompute WCS from IPA')
+        cube[0].header = recompute_wcs(cube[0].header)
 
     cube.writeto(args.outfile, clobber=True)
 
