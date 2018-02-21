@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2017 Universidad Complutense de Madrid
+# Copyright 2016-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -223,6 +223,7 @@ class FibersConf(object):
 
 
 class TargetType(enum.Enum):
+    """Possible targest in a fiber bundle"""
     SOURCE = 1
     UNKNOWN = 2
     UNASSIGNED = 3

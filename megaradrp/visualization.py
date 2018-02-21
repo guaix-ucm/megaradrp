@@ -1,5 +1,5 @@
 #
-# Copyright 2017 Universidad Complutense de Madrid
+# Copyright 2017-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -23,6 +23,14 @@ def hexplot(axis, x, y, z, scale=1.0, extent=None,
             cmap=None, norm=None, vmin=None, vmax=None,
             alpha=None, linewidths=None, edgecolors='none',
             **kwargs):
+    """
+    Make a hexagonal grid plot.
+
+    Returns
+    =======
+    object: matplotlib.collections.PolyCollection
+
+    """
     if not axis._hold:
         axis.cla()
 

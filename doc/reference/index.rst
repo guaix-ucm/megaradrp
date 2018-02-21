@@ -23,8 +23,14 @@ Reference
 
    core
    instrument
+   processing
    products
    recipes
+   types
+   datamodel
+   utils
+   validators
+   visualization
    simulation
 
    
