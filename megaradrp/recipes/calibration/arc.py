@@ -110,8 +110,11 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     master_apertures = reqs.MasterAperturesRequirement()
     extraction_offset = Parameter([0.0], 'Offset traces for extraction')
     lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
-    polynomial_degree = Parameter(5, 'Polynomial degree of arc calibration')
-    nlines = Parameter(20, "Use the 'nlines' brigthest lines of the spectrum")
+    polynomial_degree = Parameter(5, 'Polynomial degree of arc calibration',
+                                  as_list=True
+                                  )
+    nlines = Parameter(20, "Use the 'nlines' brigthest lines of the spectrum",
+                       as_list=True)
     debug_plot = Parameter(0, 'Save intermediate tracing plots')
 
     # Products
