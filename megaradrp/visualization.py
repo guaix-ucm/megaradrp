@@ -185,21 +185,30 @@ def main(argv=None):
     parser.add_argument('--wcs-pa-from-header', action='store_true',
                         help="Use PA angle from PC keys", dest='pa_from_header')
     parser.add_argument('--average-region', nargs=2, default=[1000, 3000],
-                        type=int)
-    parser.add_argument('--extname', '-e', default='PRIMARY')
-    parser.add_argument('--column', '-c', type=int)
+                        type=int, help='Region of the RSS averaged on display')
+    parser.add_argument('--extname', '-e', default='PRIMARY',
+                        help='Name of the extension used')
+    parser.add_argument('--column', '-c', type=int,
+                        help='Column of the RSS on display')
     parser.add_argument('--continuum-region', nargs=2,
-                        type=int)
+                        type=int,
+                        help='Region of the RSS used for continuum subtraction')
     parser.add_argument('--coordinate-type', choices=['pixel', 'wcs'],
-                        default='pixel')
-    parser.add_argument('--colormap', type=plt.get_cmap)
-    parser.add_argument('--title')
-    parser.add_argument('--min-cut', type=float)
-    parser.add_argument('--max-cut', type=float)
-    parser.add_argument('--percent', type=float)
+                        default='pixel',
+                        help='Types of coordinates used')
+    parser.add_argument('--colormap', type=plt.get_cmap,
+                        help='Name of a valid matplotlib colormap')
+    parser.add_argument('--title', help='Title of the plot')
+    parser.add_argument('--min-cut', type=float,
+                        help='Inferior cut level')
+    parser.add_argument('--max-cut', type=float,
+                        help='Superiorcut level')
+    parser.add_argument('--percent', type=float,
+                        help='Compute cuts using percentiles')
     parser.add_argument('--stretch',
                         choices=['linear', 'sqrt', 'power', 'log', 'asinh'],
-                        default='linear'
+                        default='linear',
+                        help='Name of the strech method used for display'
                         )
     parser.add_argument('rss', metavar='RSS', nargs='+',
                         help='RSS images to process')
