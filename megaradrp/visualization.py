@@ -163,6 +163,33 @@ def extract_column(wcs_wl, col, rssdata):
         raise ValueError('column is outside image')
 
 
+def extract_zval(rssdata, wcs_wl, coordinate_type, column=None, average_region=None, continuum_region=None):
+
+    if continuum_region is None and average_region is None:
+        raise ValueError('continuum_region and average_region are None')
+
+    if rssdata.ndim == 1:
+        # data is 1d
+        print('RSS is 1D')
+        zval = rssdata
+    elif rssdata.ndim == 2:
+        print('world coordinates in', coordinate_type)
+        if column is not None:
+            print('use column', column)
+            zval = extract_column(wcs_wl, column, rssdata)
+        else:
+            print('compute average in', average_region)
+            zval = extract_region(wcs_wl, average_region, rssdata)
+        # Subtract continuum
+        if continuum_region:
+            print('compute continuum in', continuum_region)
+            z0 = extract_region(wcs_wl, continuum_region, rssdata)
+            zval -= z0
+    else:
+        raise ValueError('image must be 1D or 2D')
+    return zval
+
+
 def main(argv=None):
     """Process command line"""
 
@@ -211,7 +238,7 @@ def main(argv=None):
     parser.add_argument('--min-cut', type=float,
                         help='Inferior cut level')
     parser.add_argument('--max-cut', type=float,
-                        help='Superiorcut level')
+                        help='Superior cut level')
     parser.add_argument('--percent', type=float,
                         help='Compute cuts using percentiles')
     parser.add_argument('--stretch',
@@ -222,12 +249,21 @@ def main(argv=None):
     if has_contours:
         parser.set_defaults(has_contours=True)
         group_c = parser.add_argument_group('contouring')
-        group_c.add_argument('--pixel-size', type=float, default=0.4,
+        group_c.add_argument('--contour-pixel-size', type=float, default=0.4,
                              help="Pixel size in arc seconds for image reconstruction")
         group_c.add_argument('--contour-levels',
                              help="Contour levels")
         group_c.add_argument('--contour', action='store_true',
                              help="Draw contours")
+        group_c.add_argument('--contour-image',
+                             help="Image for computing contours")
+        parser.add_argument('--contour-image-column', type=int,
+                            help='Column of image used for contouring')
+        parser.add_argument('--contour-image-save',
+                            help='Save image used for contouring')
+        parser.add_argument('--contour-image-region', nargs=2, default=[1000, 3000],
+                            type=int, help='Region of the image used for contouring')
+
     else:
         parser.set_defaults(has_contours=False)
 
@@ -238,13 +274,6 @@ def main(argv=None):
 
     for fname in args.rss:
         with fits.open(fname) as img:
-            extname = args.extname
-
-            if args.coordinate_type == 'wcs':
-                # read WCS from extname
-                wcs_wl = WCS(img[extname].header)
-            else:
-                wcs_wl = WCS(naxis=len(img[extname].shape))
 
             datamodel = dm.MegaraDataModel()
             fiberconf = datamodel.get_fiberconf(img)
@@ -256,31 +285,22 @@ def main(argv=None):
                 x.append(fiber.x)
                 y.append(fiber.y)
 
+            extname = args.extname
+            if args.coordinate_type == 'wcs':
+                # read WCS from extname
+                wcs_wl = WCS(img[extname].header)
+            else:
+                wcs_wl = WCS(naxis=len(img[extname].shape))
+
             rssdata = np.squeeze(img[extname].data)
 
-            # Handle different dimensionality
-            if rssdata.ndim == 1:
-                # data is 1d
-                print('RSS is 1D')
-                zval = rssdata
-            elif rssdata.ndim == 2:
-                print('world coordinates in', args.coordinate_type)
-                if args.column is not None:
-                    print('use column', args.column)
-                    zval = extract_column(wcs_wl, args.column, rssdata)
-                else:
-                    print('compute average in', args.average_region)
-                    zval = extract_region(wcs_wl, args.average_region,
-                                          img[extname].data)
-                # Subtract continuum
-                if args.continuum_region:
-                    print('compute continuum in', args.continuum_region)
-                    z0 = extract_region(wcs_wl, args.continuum_region,
-                                        img[extname].data)
-                    zval -= z0
-            else:
-                raise ValueError('image must be 1D or 2D')
-
+            zval = extract_zval(rssdata,
+                                wcs_wl,
+                                args.coordinate_type,
+                                args.column,
+                                args.average_region,
+                                args.continuum_region
+                                )
             fig = plt.figure()
 
             projection = None
@@ -300,10 +320,9 @@ def main(argv=None):
 
             # plt.subplots_adjust(hspace=0.5)
             ax = fig.add_axes([0.15, 0.1, 0.8, 0.8], projection=projection)
+
             ax.set_xlim([-6.5, 6.5])
-            ax.set_ylim([-6.5, 6.5])
-            ax.set_xlim([-7, 7])
-            ax.set_ylim([-7, 7])
+            ax.set_ylim([-6, 6])
 
             if args.wcs_grid:
                 ax.coords.grid(color='black', alpha=1.0, linestyle='solid')
@@ -333,10 +352,35 @@ def main(argv=None):
                 cb.set_label(args.label)
 
             if args.has_contours and args.contour:
-                target_scale_arcsec = args.pixel_size
+                target_scale_arcsec = args.contour_pixel_size
+
+                if args.contour_image is not None:
+                    with fits.open(args.contour_image) as hdu_con:
+                        extname = args.extname
+
+                        if args.coordinate_type == 'wcs':
+                            # read WCS from extname
+                            wcs_wl_c = WCS(hdu_con[extname].header)
+                        else:
+                            wcs_wl_c = WCS(naxis=len(hdu_con[extname].shape))
+
+                        rssdata_con = np.squeeze(hdu_con[extname].data)
+
+                        zval_c = extract_zval(rssdata_con,
+                                              wcs_wl_c,
+                                              args.coordinate_type,
+                                              column=args.contour_image_column,
+                                              average_region=args.contour_image_region,
+                                              continuum_region=None)
+                else:
+                    zval_c = zval
+
                 # Build synthetic rss... for reconstruction
-                primary = fits.PrimaryHDU(data=zval[:, np.newaxis], header=img[extname].header)
+                primary = fits.PrimaryHDU(data=zval_c[:, np.newaxis], header=img[extname].header)
                 synt = fits.HDUList([primary, img['FIBERS']])
+
+                if args.contour_image_save is not None:
+                    synt.writeto(args.contour_image_save)
 
                 s_cube = create_cube_from_rss(synt, target_scale_arcsec)
                 cube_wcs = WCS(s_cube[0].header).celestial
