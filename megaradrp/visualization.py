@@ -211,6 +211,12 @@ def main(argv=None):
         create_cube_from_rss = None
         has_contours = False
 
+    try:
+        from megaradrp.processing.cube import create_cube_from_rss
+        has_contours = True
+    except ImportError:
+        has_contours = False
+
     parser = argparse.ArgumentParser(description='Display MEGARA RSS images')
     parser.add_argument('--wcs-grid', action='store_true',
                         help='Display WCS grid')
@@ -409,6 +415,27 @@ def main(argv=None):
 
                 conserve_flux = not args.contour_is_density
                 s_cube = create_cube_from_rss(synt, target_scale_arcsec, conserve_flux=conserve_flux)
+                cube_wcs = WCS(s_cube[0].header).celestial
+                px, py = cube_wcs.wcs.crpix
+                interp = np.squeeze(s_cube[0].data)
+                td = mtransforms.Affine2D().translate(-px, -py).scale(target_scale_arcsec, target_scale_arcsec)
+                tt_d = td + ax.transData
+                # im = ax.imshow(interp, alpha=0.9, cmap='jet', transform=tt_d)
+                # im = ax.imshow(interp, alpha=0.9, cmap='jet', transform=ax.get_transform(cube_wcs))
+                if args.contour_levels is not None:
+                    levels = json.loads(args.contour_levels)
+                    mm = ax.contour(interp, levels, transform=tt_d)
+                else:
+                    mm = ax.contour(interp, transform=tt_d)
+                print('contour levels', mm.levels)
+
+            if args.has_contours and args.contour:
+                target_scale_arcsec = args.pixel_size
+                # Build synthetic rss... for reconstruction
+                primary = fits.PrimaryHDU(data=zval[:, np.newaxis], header=img[extname].header)
+                synt = fits.HDUList([primary, img['FIBERS']])
+
+                s_cube = create_cube_from_rss(synt, target_scale_arcsec)
                 cube_wcs = WCS(s_cube[0].header).celestial
                 px, py = cube_wcs.wcs.crpix
                 interp = np.squeeze(s_cube[0].data)
