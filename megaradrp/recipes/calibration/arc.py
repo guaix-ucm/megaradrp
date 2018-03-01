@@ -12,7 +12,6 @@
 from __future__ import division, print_function
 
 import traceback
-import collections
 from datetime import datetime
 
 import numpy
@@ -35,6 +34,7 @@ from numina.array.wavecalib.solutionarc import CrLinear
 from numina.array.wavecalib.solutionarc import SolutionArcCalibration
 from numina.array.peaks.peakdet import refine_peaks
 from numina.array.peaks.detrend import detrend
+from numina.core.validator import range_validator
 from numina.flow import SerialFlow
 from numina.array import combine
 from skimage.feature import peak_local_max
@@ -111,10 +111,12 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     extraction_offset = Parameter([0.0], 'Offset traces for extraction')
     lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
     polynomial_degree = Parameter(5, 'Polynomial degree of arc calibration',
-                                  as_list=True
+                                  as_list=True, nelem='+',
+                                  validator=range_validator(minval=1)
                                   )
     nlines = Parameter(20, "Use the 'nlines' brigthest lines of the spectrum",
-                       as_list=True)
+                       as_list=True, nelem='+',
+                       validator=range_validator(minval=0))
     debug_plot = Parameter(0, 'Save intermediate tracing plots')
 
     # Products
@@ -175,17 +177,12 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             self.logger.info('rel threshold not defined for %s, using %4.2f', current_vph, threshold)
             self.logger.info('min dist not defined for %s, using %4.2f', current_vph, min_distance)
 
-        if isinstance(rinput.nlines, collections.Iterable):
-            nlines = rinput.nlines
-        else:
-            nlines = [rinput.nlines]
-
         # WL calibration goes here
         initial_data_wlcalib, data_wlcalib, fwhm_image = self.calibrate_wl(
             reduced_rss[0].data,
             rinput.lines_catalog,
             rinput.polynomial_degree,
-            rinput.master_apertures, nlines,
+            rinput.master_apertures, rinput.nlines,
             threshold=threshold,
             min_distance=min_distance,
             debugplot=debugplot
@@ -250,21 +247,14 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                      min_distance=30,
                      debugplot=0):
 
-        if type(poldeg) is int:
-            poldeg_initial = poldeg
-            poldeg_refined = poldeg
-        elif type(poldeg) is list:
-            if len(poldeg) == 1:
-                poldeg_initial = poldeg[0]
-                poldeg_refined = poldeg[0]
-            elif len(poldeg) == 2:
-                poldeg_initial = poldeg[0]
-                poldeg_refined = poldeg[1]
-            else:
-                raise ValueError("Unexpected list length for "
-                                 "polynomial_degree")
+        if len(poldeg) == 1:
+            poldeg_initial = poldeg[0]
+            poldeg_refined = poldeg[0]
+        elif len(poldeg) == 2:
+            poldeg_initial = poldeg[0]
+            poldeg_refined = poldeg[1]
         else:
-            raise ValueError("Unexpected type(poldeg)=", type(poldeg))
+            raise ValueError("Unexpected list length for polynomial_degree")
 
         if poldeg_initial > poldeg_refined:
             raise ValueError("Unexpected poldeg_initial (" +
