@@ -77,6 +77,8 @@ class MegaraDataModel(DataModel):
         'imgid'
     ]
 
+    PLATESCALE = 1.120 # arcsec / mm
+
     def __init__(self):
 
         instrument_mappings = {
@@ -133,6 +135,17 @@ class MegaraDataModel(DataModel):
     def gather_info_oresult(self, val):
         return [self.gather_info_dframe(f) for f in val.images]
 
+    def fiber_scale_unit(self, img, unit=False):
+        funit = img['FIBERS'].header.get("FUNIT", "arcsec")
+
+        if funit == "arcsec":
+            scale = 1
+        else:
+            scale = self.PLATESCALE
+        if unit:
+            return (scale, funit)
+        else:
+            return scale
 
 class FibersConf(object):
     """Global configuration of the fibers"""

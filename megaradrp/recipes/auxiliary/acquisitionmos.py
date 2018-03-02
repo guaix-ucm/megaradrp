@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -13,14 +13,14 @@
 import math
 
 import numpy as np
+from numina.array.offrot import fit_offset_and_rotation
+from numina.core import Product, Parameter
+from numina.core.qc import QC
 
 from megaradrp.datamodel import TargetType
 from megaradrp.recipes.scientific.base import ImageRecipe
 from megaradrp.types import ProcessedRSS, ProcessedFrame
 from megaradrp.utils import add_collapsed_mos_extension
-from numina.array.offrot import fit_offset_and_rotation
-from numina.core import Product
-from numina.core.qc import QC
 
 
 class AcquireMOSRecipe(ImageRecipe):
@@ -66,6 +66,11 @@ class AcquireMOSRecipe(ImageRecipe):
     """
 
     # Requirements are defined in base class
+    extraction_region = Parameter(
+        [1000, 3000],
+        description='Region used to compute a mean flux',
+        nelem=2
+    )
 
     reduced_image = Product(ProcessedFrame)
     reduced_rss = Product(ProcessedRSS)
@@ -91,19 +96,13 @@ class AcquireMOSRecipe(ImageRecipe):
 
         fiberconf = self.datamodel.get_fiberconf(final)
 
-        cut1 = 1000
-        cut2 = 3000
+        cut1, cut2 = rinput.extraction_region
+
         self.logger.debug("MOS configuration is %s", fiberconf.conf_id)
         rssdata = final[0].data
-        funit = final['FIBERS'].header.get("FUNIT", "arcsec")
-        platescale = 1.2120
-
-        if funit == "arcsec":
-            self.logger.debug("unit is arcsec")
-            scale = 1
-        else:
-            self.logger.debug("unit is mm")
-            scale = platescale
+        scale, funit = self.datamodel.fiber_scale_unit(final, unit=True)
+        self.logger.debug('unit is %s', funit)
+        platescale = self.datamodel.PLATESCALE
 
         p1 = []
         q1 = []
@@ -125,7 +124,8 @@ class AcquireMOSRecipe(ImageRecipe):
                 for fiber in sorted_fibers:
                     colids.append(fiber.fibid - 1)
                     coords.append((fiber.x, fiber.y))
-
+                self.logger.debug('nearest fibers')
+                self.logger.debug('%s', [col + 1 for col in colids])
                 coords = np.asarray(coords) * scale
                 flux_per_cell = rssdata[colids, cut1:cut2].mean(axis=1)
                 flux_per_cell_total = flux_per_cell.sum()

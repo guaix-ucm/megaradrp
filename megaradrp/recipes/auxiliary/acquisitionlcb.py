@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -65,6 +65,13 @@ class AcquireLCBRecipe(ImageRecipe):
 
     # Requirements are defined in base class
     points = Parameter([(0, 0)], "Coordinates")
+    extraction_region = Parameter(
+        [1000, 3000],
+        description='Region used to compute a mean flux',
+        nelem=2
+    )
+
+
     reduced_image = Product(ProcessedFrame)
     reduced_rss = Product(ProcessedRSS)
     final_rss = Product(ProcessedRSS)
@@ -92,18 +99,12 @@ class AcquireLCBRecipe(ImageRecipe):
         self.logger.debug("LCB configuration is %s", fiberconf.conf_id)
 
         rssdata = final[0].data
-        funit = final['FIBERS'].header.get("FUNIT", "arcsec")
-        platescale = 1.2120
 
-        if funit == "arcsec":
-            self.logger.debug("unit is arcsec")
-            scale = 1
-        else:
-            self.logger.debug("unit is mm")
-            scale = platescale
+        scale, funit = self.datamodel.fiber_scale_unit(final, unit=True)
+        self.logger.debug('unit is %s', funit)
+        platescale = self.datamodel.PLATESCALE
 
-        cut1 = 1000
-        cut2 = 3000
+        cut1, cut2 = rinput.extraction_region
 
         # points = [(0, 0)] # Center of fiber 313
         points = list(rinput.points)
@@ -149,7 +150,8 @@ class AcquireLCBRecipe(ImageRecipe):
                 fiber = fibers[idx]
                 colids.append(fiber.fibid - 1)
                 coords.append((fiber.x, fiber.y))
-
+            self.logger.debug('nearest fibers')
+            self.logger.debug('%s', [col + 1 for col in colids])
             coords = np.asarray(coords) * scale
             # flux_per_cell = flux_per_cell_all[colids]
             flux_per_cell = rssdata[colids, cut1:cut2].mean(axis=1)
