@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -15,6 +15,7 @@ import astropy.io.fits as fits
 
 from numina.core import Product, Parameter
 from numina.core.requirements import Requirement
+from numina.types.array import ArrayType
 
 from megaradrp.processing.extractobj import extract_star, generate_sensitivity
 from megaradrp.recipes.scientific.base import ImageRecipe
@@ -73,6 +74,7 @@ class MOSStandardRecipe(ImageRecipe):
     sky_rss = Product(ProcessedRSS)
     star_spectrum = Product(ProcessedSpectrum)
     master_sensitivity = Product(MasterSensitivity)
+    fiber_ids = Product(ArrayType)
 
     def run(self, rinput):
 
@@ -97,7 +99,7 @@ class MOSStandardRecipe(ImageRecipe):
         spectra_pack = extract_star(final, rinput.position, npoints,
                                     fiberconf, logger=self.logger)
 
-        spectrum, coldids, cover1, cover2 = spectra_pack
+        spectrum, colids, cover1, cover2 = spectra_pack
         star_spectrum = fits.PrimaryHDU(spectrum, header=final[0].header)
 
         star_interp = interp1d(rinput.reference_spectrum[:, 0],
@@ -105,6 +107,7 @@ class MOSStandardRecipe(ImageRecipe):
         extinc_interp = interp1d(rinput.reference_extinction[:, 0],
                                  rinput.reference_extinction[:, 1])
 
+        fiber_ids = [colid + 1 for colid in colids]
         sigma = rinput.sigma_resolution
         sens = generate_sensitivity(final, spectrum, star_interp, extinc_interp, cover1, cover2, sigma)
         self.logger.info('end MOSStandardRecipe reduction')
@@ -115,5 +118,6 @@ class MOSStandardRecipe(ImageRecipe):
             reduced_rss=origin,
             sky_rss=sky,
             star_spectrum=star_spectrum,
-            master_sensitivity=sens
+            master_sensitivity=sens,
+            fiber_ids=fiber_ids
         )
