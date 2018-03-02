@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -69,95 +69,6 @@ class MegaraBaseRecipe(BaseRecipe):
         """Run Quality Control checks."""
         recipe_result.qc = QC.GOOD
         return recipe_result
-
-    def _resample_rss_flux(self, rss_old, wcalib, wvpar_dict):
-        """
-
-        :param rss_old: rss image
-        :param wcalib: ndarray of the coefficients
-        :param wvpar_dict: dictionary containing wavelength calibration parameters
-        :return:
-        """
-        from numpy.polynomial.polynomial import polyval
-        from numina.array.interpolation import SteffenInterpolator
-
-        nfibers = rss_old.shape[0]
-        nsamples = rss_old.shape[1]
-
-        # print nfibers, nsamples
-        # z = [0, nsamples - 1]
-        # res = polyval(z, wcalib.T)
-        # print res
-        # all_delt = (res[:, 1] - res[:, 0]) / nsamples
-        # print all_delt.max(), all_delt.min(), np.median(all_delt)
-        #
-        # delts = all_delt.min()
-        # delts = np.median(all_delt)
-        # delts = 0.37
-        # print 'median of delts', delts
-        #
-        # # first pixel is
-        # wl_min = res[:, 0].min()
-        # wl_min = 7140.0 #res[:, 0].min()
-        # # last pixel is
-        # wl_max = res[:, 1].max()
-        # wl_max = 8730.63
-        # print 'pixel range', wl_min, wl_max
-        #
-        # npix = int(math.ceil((wl_max - wl_min) / delts))
-
-        npix = wvpar_dict['npix']
-        delts = wvpar_dict['cdelt']
-        wl_min = wvpar_dict['crval']
-        crpix = wvpar_dict['crpix']
-
-        wl_max = wl_min + (npix - crpix) * delts
-
-        new_x = np.arange(npix)
-        new_wl = wl_min + delts * new_x
-
-        old_x_borders = np.arange(-0.5, nsamples)
-        old_x_borders += crpix  # following FITS criterium
-        old_wl_borders = polyval(old_x_borders, wcalib.T)
-
-        new_borders = self._map_borders(new_wl)
-
-        accum_flux = np.empty((nfibers, nsamples + 1))
-        accum_flux[:, 1:] = np.cumsum(rss_old, axis=1)
-        accum_flux[:, 0] = 0.0
-        rss_resampled = np.zeros((nfibers, npix))
-
-        for idx  in range(nfibers):
-            # We need a monotonic interpolator
-            # linear would work, we use a cubic interpolator
-            interpolator = SteffenInterpolator(old_wl_borders[idx],accum_flux[idx], extrapolate='border')
-            fl_borders = interpolator(new_borders)
-            rss_resampled[idx] = fl_borders[1:] - fl_borders[:-1]
-
-        return rss_resampled, (wl_min, wl_max, delts)
-
-    def _map_borders(self, wls):
-        """Compute borders of pixels for interpolation.
-
-        The border of the pixel is assumed to be midway of the wls
-        """
-        midpt_wl = 0.5 * (wls[1:] + wls[:-1])
-        all_borders = np.zeros((wls.shape[0] + 1,))
-        all_borders[1:-1] = midpt_wl
-        all_borders[0] = 2 * wls[0] - midpt_wl[0]
-        all_borders[-1] = 2 * wls[-1] - midpt_wl[-1]
-        return all_borders
-
-    def add_wcs(self, hdr, wlr0, delt, crpix=1.0):
-        hdr['CRPIX1'] = crpix
-        hdr['CRVAL1'] = wlr0
-        hdr['CDELT1'] = delt
-        hdr['CTYPE1'] = 'WAVELENGTH'
-        hdr['CRPIX2'] = 1
-        hdr['CRVAL2'] = 1
-        hdr['CDELT2'] = 1
-        hdr['CTYPE2'] = 'PIXEL'
-        return hdr
 
     def types_getter(self):
         from megaradrp.types import MasterBias, MasterDark, MasterBPM, MasterSlitFlat
