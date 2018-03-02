@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2017 Universidad Complutense de Madrid
+# Copyright 2016-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -107,7 +107,7 @@ class WavelengthCalibrator(Corrector):
         rss.append(rss_map)
         return rss
 
-    def add_wcs(self, hdr, wlr0, delt, crpix=1.0):
+    def add_wcs(self, hdr, wlr0, delt, crpix=0.0):
         c_crpix = 'Pixel coordinate of reference point'
         c_cunit = 'Units of coordinate increment and value'
         unit = 'Angstrom'
@@ -120,7 +120,7 @@ class WavelengthCalibrator(Corrector):
         hdr['CTYPE1'] = 'WAVELENGTH'
         hdr['CRPIX2'] = (0.0, c_crpix)
         hdr['CRVAL2'] = 0.0
-        hdr['CDELT2'] = 1
+        hdr['CDELT2'] = 1.0
         hdr['CTYPE2'] = ''
         return hdr
 
