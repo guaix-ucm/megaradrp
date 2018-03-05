@@ -22,22 +22,18 @@ from copy import deepcopy
 from numina.core import Requirement, Product, Parameter, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 from numina.core.products import LinesCatalog
-from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.polfit_residuals import polfit_residuals
 from numina.array.display.polfit_residuals import polfit_residuals_with_sigma_rejection
-from numina.array.display.ximplot import ximplot
+from numina.array.wavecalib.__main__ import find_fxpeaks
 from numina.array.wavecalib.arccalibration import arccalibration_direct
 from numina.array.wavecalib.arccalibration import fit_list_of_wvfeatures
 from numina.array.wavecalib.arccalibration import gen_triplets_master
 from numina.array.wavecalib.arccalibration import refine_arccalibration
 from numina.array.wavecalib.solutionarc import CrLinear
 from numina.array.wavecalib.solutionarc import SolutionArcCalibration
-from numina.array.peaks.peakdet import refine_peaks
-from numina.array.peaks.detrend import detrend
 from numina.core.validator import range_validator
 from numina.flow import SerialFlow
 from numina.array import combine
-from skimage.feature import peak_local_max
 
 from megaradrp.types import ProcessedFrame, ProcessedRSS
 from megaradrp.processing.combine import basic_processing_with_combination
@@ -277,12 +273,21 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             raise ValueError('lines_catalog file does not have the expected '
                              'number of columns')
 
+        # minimum and maximum wavelength
+        wv_range_catalog = wv_master_all[-1] - wv_master_all[0]
+        delta_wv = 0.20 * wv_range_catalog
+        wv_ini_search = int(wv_master_all[0] - delta_wv)
+        wv_end_search = int(wv_master_all[-1] + delta_wv)
+        self.logger.info('wv_ini_search %s', wv_ini_search)
+        self.logger.info('wv_end_search %s', wv_end_search)
+
         ntriplets_master, ratios_master_sorted, triplets_master_sorted_list = \
             gen_triplets_master(wv_master)
 
-        nwinwidth = 5
         error_contador = 0
         missing_fib = 0
+        crpix1 = 1.0
+        naxis1 = rss.shape[1]
 
         initial_data_wlcalib = WavelengthCalibration(instrument='MEGARA')
         initial_data_wlcalib.total_fibers = tracemap.total_fibers
@@ -291,102 +296,39 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             idx = trace.fibid - 1
 
             if trace.valid:
-                row = rss[idx]
-
-                trend = detrend(row)
-                fibdata_detrend = row - trend
-                # A fix for LR-V Jun 2016 test images
-                # that only have lines there
-
-                row = fibdata_detrend
-
                 self.logger.info('-' * 52)
                 self.logger.info('Starting row %d, fibid %d', idx, fibid)
 
-                # find peaks (initial search providing integer numbers)
-                ipeaks_int = peak_local_max(row, threshold_rel=threshold,
-                                             min_distance=min_distance)[:, 0]
+                row = rss[idx]
 
-                self.logger.debug('ipeaks_int.........: %s', ipeaks_int)
-
-                # Filter by flux, selecting a maximum number of brightest
-                # lines in each region
-                region_size = (len(row)-1)/(len(nlines))
-                ipeaks_int_filtered = numpy.array([], dtype=int)
-                for iregion, nlines_in_region in enumerate(nlines):
-                    if nlines_in_region > 0:
-                        imin = int(iregion * region_size)
-                        imax = int((iregion + 1) * region_size)
-                        if iregion > 0:
-                            imin += 1
-                        ipeaks_int_region = ipeaks_int[numpy.logical_and(
-                            ipeaks_int >= imin, ipeaks_int <= imax
-                        )]
-                        if len(ipeaks_int_region) > 0:
-                            peak_fluxes = row[ipeaks_int_region]
-                            spos = peak_fluxes.argsort()
-                            ipeaks_tmp = ipeaks_int_region[
-                                spos[-nlines_in_region:]
-                            ]
-                            ipeaks_tmp.sort()  # in-place sort
-                            self.logger.debug('ipeaks_in_region...: %s',
-                                              ipeaks_tmp)
-                            ipeaks_int_filtered=numpy.concatenate(
-                                (ipeaks_int_filtered, ipeaks_tmp)
-                            )
-
-                self.logger.debug('ipeaks_int_filtered: %s', ipeaks_int_filtered)
-                ipeaks_float = refine_peaks(row, ipeaks_int_filtered, nwinwidth)[0]
-
-                # if 43 <= fibid <= 44:
-                #    debugplot = 12
-                #else:
-                #    debugplot = 0
-                if abs(debugplot) > 10:
-                    print('ipeaks_float:\n', ipeaks_float)
-                    ax = ximplot(row, show=False, debugplot=debugplot)
-                    ax.set_title('fibid %d' % fibid)
-                    ax.plot(row)
-                    ax.plot(ipeaks_int, row[ipeaks_int], 'b+', alpha=.9, ms=7,
-                            label="ipeaks_int")
-                    ax.plot(ipeaks_int_filtered, row[ipeaks_int_filtered],
-                            'ro', alpha=.9, ms=7, label="ipeaks_int_filtered")
-                    ax.plot(ipeaks_float, row[ipeaks_int_filtered], 'go',
-                            alpha=.9, ms=7, label="ipeaks_float")
-                    ax.legend()
-                    pause_debugplot(debugplot, pltshow=True)
-
-                # FIXME: xchannel ???
-                naxis1 = row.shape[0]
-                crpix1 = 1.0
-                # This comes from Nico's code, so probably pixels
-                # will start in 1
-                # xchannel = numpy.arange(1, naxis1 + 1)
-                #
-                # finterp_channel = interp1d(range(xchannel.size), xchannel,
-                #                            kind='linear',
-                #                            bounds_error=False,
-                #                            fill_value=0.0)
-                # xpeaks_refined = finterp_channel(ipeaks_float)
-                xpeaks_refined = ipeaks_float + 1.0
-
-                wv_range_catalog = wv_master_all[-1] - wv_master_all[0]
-                delta_wv = 0.20 * wv_range_catalog
-                wv_ini_search = int(wv_master_all[0] - delta_wv)
-                wv_end_search = int(wv_master_all[-1] + delta_wv)
+                fxpeaks, sxpeaks = find_fxpeaks(
+                    sp=row,
+                    times_sigma_threshold=0.0,
+                    minimum_threshold=0,
+                    nwinwidth_initial=7,
+                    nwinwidth_refined=5,
+                    npix_avoid_border=6,
+                    nbrightlines=nlines,
+                    sigma_gaussian_filtering=0,
+                    minimum_gaussian_filtering=0
+                )
+                self.logger.info('number of peaks (expected): %s',
+                                 str(nlines))
+                self.logger.info('number of peaks (found)...: %d',
+                                 len(fxpeaks))
 
                 try:
 
-                    self.logger.info('wv_ini_search %s', wv_ini_search)
-                    self.logger.info('wv_end_search %s', wv_end_search)
+                    # use channels (pixels from 1 to naxis1)
+                    xchannel = fxpeaks + 1.0
 
                     list_of_wvfeatures = arccalibration_direct(
-                        wv_master,
-                        ntriplets_master,
-                        ratios_master_sorted,
-                        triplets_master_sorted_list,
-                        xpeaks_refined,
-                        naxis1,
+                        wv_master=wv_master,
+                        ntriplets_master=ntriplets_master,
+                        ratios_master_sorted=ratios_master_sorted,
+                        triplets_master_sorted_list=triplets_master_sorted_list,
+                        xpos_arc=xchannel,
+                        naxis1_arc=naxis1,
                         crpix1=crpix1,
                         wv_ini_search=wv_ini_search,
                         wv_end_search=wv_end_search,
@@ -397,7 +339,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         poly_degree_wfit=poldeg_initial,
                         times_sigma_polfilt=10.0,
                         times_sigma_cook=10.0,
-                        times_sigma_inclusion=5.0,
+                        times_sigma_inclusion=10.0,
                         debugplot=debugplot
                     )
 
@@ -421,7 +363,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                      solution_wv.coeff)
 
                     trace_pol = trace.polynomial
-                    # Update feature with measurements of Y coord in original image
+                    # Update feature with measurements of Y coord in original
+                    # image
                     # Peak and FWHM in RSS
                     for feature in solution_wv.features:
                         # Compute Y
@@ -429,7 +372,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         # FIXME: check here FITS vs PYTHON coordinates, etc
                         peak_int = int(feature.xpos)
                         try:
-                            peak, fwhm = self.calc_fwhm_of_line(row, peak_int, lwidth=20)
+                            peak, fwhm = self.calc_fwhm_of_line(row, peak_int,
+                                                                lwidth=20)
                         except Exception as error:
                             self.logger.error("%s", error)
                             self.logger.error('error in feature %s', feature)
@@ -440,14 +384,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         feature.peak = peak
                         feature.fwhm = fwhm
 
-                    # if True:
-                    #     plt.title('fibid %d' % fibid)
-                    #     plt.plot(row)
-                    #     plt.plot(ipeaks_int, row[ipeaks_int],'ro', alpha=.9, ms=7, label="ipeaks_int")
-                    #     # # plt.plot(ipeaks_int2, row[ipeaks_int2],'gs', alpha=.5 , ms=10)
-                    #     plt.legend()
-                    #     plt.show()
-
                     new = FiberSolutionArcCalibration(fibid, solution_wv)
                     initial_data_wlcalib.contents.append(new)
 
@@ -456,22 +392,11 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     self.logger.error('error in row %d, fibid %d', idx, fibid)
                     traceback.print_exc()
                     initial_data_wlcalib.error_fitting.append(fibid)
-
-                    if abs(debugplot) > 10:
-                        rrow = row[::-1]
-                        rpeaks = 4096-ipeaks_int_filtered[::-1]
-                        ax = ximplot(rrow, show=False, debugplot=debugplot)
-                        ax.set_title('fibid %d' % fibid)
-                        ax.plot(rpeaks, rrow[rpeaks], 'ro', alpha=.9, ms=7,
-                                label="ipeaks_int_filtered")
-                        # ax.plot(ipeaks_int2, row[ipeaks_int2],'gs',
-                        #         alpha=.5 , ms=10)
-                        ax.legend()
-                        pause_debugplot(debugplot, pltshow=True)
                     error_contador += 1
 
             else:
-                self.logger.info('skipping row %d, fibid %d, not extracted', idx, fibid)
+                self.logger.info('skipping row %d, fibid %d, not extracted',
+                                 idx, fibid)
                 missing_fib += 1
                 initial_data_wlcalib.missing_fibers.append(fibid)
 
@@ -505,9 +430,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     self.logger.info('Starting row %d, fibid %d', idx, fibid)
                     # select spectrum for current fiber
                     row = rss[idx]
-                    trend = detrend(row)
-                    fibdata_detrend = row - trend
-                    row = fibdata_detrend
                     naxis1 = row.shape[0]
                     # estimate polynomial coefficients for current fiber
                     coeff = numpy.zeros(poldeg_initial + 1)
@@ -521,8 +443,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         refine_arccalibration(sp=row,
                                               poly_initial=wlpol,
                                               wv_master=wv_master_all,
-                                              poldeg=poldeg_refined,
-                                              times_sigma_reject=5)
+                                              poldeg=poldeg_refined)
 
                     if poly_refined != numpy.polynomial.Polynomial([0.0]):
                         npoints_eff = yres_summary['npoints']
