@@ -46,7 +46,7 @@ class FluxCalibration(Corrector):
         img['primary'].data /= exptime
         newdata = numpy.zeros_like(img['primary'].data)
         limr1 = self.pixlims['PIXLIMR1']
-        limr2 = self.pixlims['PIXLIMR1']
+        limr2 = self.pixlims['PIXLIMR2']
         validr = slice(limr1, limr2 + 1, 1)
         # with numpy.errstate(invalid='ignore', divide='ignore'):
         newdata[:, validr] = img['primary'].data[:, validr] / self.sensp.data[validr]
