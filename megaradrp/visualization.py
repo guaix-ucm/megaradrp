@@ -235,6 +235,9 @@ def main(argv=None):
                         help='Do not show values out of range')
     parser.add_argument('--title', help='Title of the plot')
     parser.add_argument('--label', help='Legend of the colorbar')
+    parser.add_argument('--hex-size', type=float,
+                        help='Size of the hexagons (default is {})'.format(SCALE),
+                        default=SCALE)
     parser.add_argument('--min-cut', type=float,
                         help='Inferior cut level')
     parser.add_argument('--max-cut', type=float,
@@ -342,7 +345,7 @@ def main(argv=None):
             else:
                 zdisp = zval
 
-            col = hexplot(ax, x, y, zdisp, scale=SCALE, cmap=args.colormap, norm=norm)
+            col = hexplot(ax, x, y, zdisp, scale=args.hex_size, cmap=args.colormap, norm=norm)
 
             if args.title is not None:
                 ax.set_title(args.title)
