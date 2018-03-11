@@ -34,6 +34,12 @@ SCALE = 0.443 # mm
 
 HEX_SCALE = PLATESCALE * SCALE
 
+# Normalized hexagon geometry
+H_HEX = 0.5
+R_HEX = 1 / M_SQRT3
+A_HEX = 0.5 * H_HEX * R_HEX
+HA_HEX = 6 * A_HEX # detR0 == ha
+
 
 def my_atleast_2d(*arys):
     """Equivalent to atleast_2d, adding the newaxis at the end"""
@@ -120,18 +126,15 @@ def calc_grid(scale=1.0):
 
 def hexgrid_extremes(r0l, target_scale):
     # geometry
-    h_hex = 0.5
-    r_hex = 1 / M_SQRT3
-    a_hex = 0.5 * h_hex * r_hex
     # ha_hex = 6 * a_hex # detR0 == ha
     # compute extremes of hexgrid to rectangular grid
     # with pixel size 'scale'
     x0min, y0min = r0l.min(axis=1)
     x0max, y0max = r0l.max(axis=1)
-    y1min = y0min - h_hex
-    y1max = y0max + h_hex
-    x1min = x0min - r_hex
-    x1max = x0max + r_hex
+    y1min = y0min - H_HEX
+    y1max = y0max + H_HEX
+    x1min = x0min - R_HEX
+    x1max = x0max + R_HEX
 
     j1min = int(math.floor(x1min / target_scale + 0.5))
     i1min = int(math.floor(y1min / target_scale + 0.5))
@@ -142,10 +145,6 @@ def hexgrid_extremes(r0l, target_scale):
 
 def create_cube(r0l, zval, target_scale=1.0):
     # geometry
-    h_hex = 0.5
-    r_hex = 1 / M_SQRT3
-    a_hex = 0.5 * h_hex * r_hex
-    ha_hex = 6 * a_hex # detR0 == ha
 
     R1 = target_scale * np.array([[1.0 ,0], [0,1]]) # Unit scale
     detR1 = np.linalg.det(R1)
@@ -176,7 +175,7 @@ def create_cube(r0l, zval, target_scale=1.0):
     xsize = ysize = 3.0
     xx, yy, xs, ys, xl, yl = setup_grid(xsize, ysize, Dx, Dy)
 
-    hex_kernel = hex_c(xx, yy, rad=r_hex, ang=0.0)
+    hex_kernel = hex_c(xx, yy, rad=R_HEX, ang=0.0)
     square_kernel = square_c(xx, yy, target_scale)
     convolved = signal.fftconvolve(hex_kernel, square_kernel, mode='same')
     kernel = convolved *(Dx *Dy)  / (detR1)
@@ -191,12 +190,11 @@ def create_cube(r0l, zval, target_scale=1.0):
         we = np.abs((rbs.ev(allpos[1], allpos[0])))
         we[we<0] = 0.0
         dk[s[1] - i1min, s[0] - j1min] = np.sum(we[:, np.newaxis] * zval2, axis=0)
-    # scale with areas
-    dk *= (target_scale**2 / ha_hex)
+
     return dk
 
 
-def create_cube_from_array(rss_data, fiberconf, target_scale_arcsec=1.0):
+def create_cube_from_array(rss_data, fiberconf, target_scale_arcsec=1.0, conserve_flux=True):
 
     target_scale = target_scale_arcsec / HEX_SCALE
     conected = fiberconf.conected_fibers()
@@ -208,12 +206,15 @@ def create_cube_from_array(rss_data, fiberconf, target_scale_arcsec=1.0):
 
     r0l, (refx, refy) = calc_matrix_from_fiberconf(fiberconf)
     cube_data = create_cube(r0l, region[:, :], target_scale)
+    # scale with areas
+    if conserve_flux:
+        cube_data *= (target_scale ** 2 / HA_HEX)
     result = np.moveaxis(cube_data, 2, 0)
     result.astype('float32')
     return result
 
 
-def create_cube_from_rss(rss, target_scale_arcsec=1.0):
+def create_cube_from_rss(rss, target_scale_arcsec=1.0, conserve_flux=True):
 
     target_scale = target_scale_arcsec / HEX_SCALE
     # print('target scale is', target_scale)
@@ -247,6 +248,10 @@ def create_cube_from_rss(rss, target_scale_arcsec=1.0):
 
     (i1min, i1max), (j1min, j1max) = hexgrid_extremes(r0l, target_scale)
     cube_data = create_cube(r0l, region[:, :], target_scale)
+
+    if conserve_flux:
+        # scale with areas
+        cube_data *= (target_scale ** 2 / HA_HEX)
 
     cube = copy_img(rss)
     # Move axis to put WL first
@@ -367,8 +372,7 @@ def _simulate(seeing_fwhm=1.0, hex_scale=HEX_SCALE):
     from megaradrp.simulation.atmosphere import generate_gaussian_profile
     from megaradrp.simulation.actions import simulate_point_like_profile
 
-    r_hex = 1 / M_SQRT3
-    FIBRAD_ANG = r_hex * hex_scale
+    FIBRAD_ANG = R_HEX * hex_scale
 
     fibrad = FIBRAD_ANG  # arcsec
     seeing_profile = generate_gaussian_profile(seeing_fwhm)
@@ -444,6 +448,8 @@ def main(args=None):
                         help="Pixel size in arc seconds")
     parser.add_argument('-o', '--outfile', default='cube.fits',
                         help="Name of the output cube file")
+    parser.add_argument('-d', '--disable-scaling', action='store_true',
+                        help="Disable flux conservation")
     parser.add_argument('--wcs-pa-from-header', action='store_true',
                         help="Use PA angle from header", dest='pa_from_header')
 
@@ -452,9 +458,9 @@ def main(args=None):
     target_scale = args.pixel_size # Arcsec
 
     print('target scale is', target_scale, 'arcsec')
-
+    conserve_flux = not args.disable_scaling
     with fits.open(args.rss) as rss:
-        cube = create_cube_from_rss(rss, target_scale)
+        cube = create_cube_from_rss(rss, target_scale, conserve_flux=conserve_flux)
 
     if not args.pa_from_header:
         print('recompute WCS from IPA')
