@@ -16,6 +16,7 @@ import pkgutil
 import enum
 
 import astropy.io.fits as fits
+import astropy.table
 from six import StringIO
 from numina.datamodel import DataModel
 from numina.util.convert import convert_date
@@ -147,6 +148,7 @@ class MegaraDataModel(DataModel):
         else:
             return scale
 
+
 class FibersConf(object):
     """Global configuration of the fibers"""
     def __init__(self):
@@ -156,6 +158,7 @@ class FibersConf(object):
         self.nfibers = 0
         self.bundles = {}
         self.fibers = {}
+        self.funit = "mm"
 
     def sky_fibers(self, valid_only=False, ignored_bundles=None):
         result = []
@@ -234,6 +237,37 @@ class FibersConf(object):
         nx = max(upperc)
         return (mn, mx), (nn, nx)
 
+    def bundles_to_table(self):
+        """Convert bundles to a Table"""
+        attrnames = ['id', 'x', 'y', 'pa', 'enabled',
+                  'target_type', 'target_priority', 'target_name']
+        cnames = ['bundle_id', 'x', 'y', 'pa', 'enabled',
+                  'target_type', 'target_priority', 'target_name']
+        obj_data = {}
+        for a, c in zip(attrnames, cnames):
+            obj_data[c] = [getattr(ob, a) for ob in self.bundles.values()]
+        result = astropy.table.Table(obj_data, names=cnames)
+        result['x'].unit = self.funit
+        result['y'].unit = self.funit
+        result['pa'].unit = 'deg'
+        return result
+
+    def fibers_to_table(self):
+        """Convert fibers to a Table"""
+        attrnames = ['fibid', 'name', 'x', 'y', 'inactive', 'valid',
+                     'bundle_id']
+        cnames = ['fibid', 'name', 'x', 'y', 'inactive', 'valid',
+                  'bundle_id']
+        obj_data = {}
+
+        for a, c in zip(attrnames, cnames):
+            obj_data[c] = [getattr(ob, a) for ob in self.fibers.values()]
+        result = astropy.table.Table(obj_data, names=cnames)
+        result['x'].unit = self.funit
+        result['y'].unit = self.funit
+        return result
+
+
 
 class TargetType(enum.Enum):
     """Possible targest in a fiber bundle"""
@@ -260,14 +294,19 @@ class BundleConf(object):
         self.x = 0
         self.y = 0
         self.pa = 0
+        self.enabled = True
 
 
 class FiberConf(object):
     """Description of the fiber"""
     def __init__(self):
         self.fibid = 0
+        self.name = 'unknown'
+        self.bundle_id = None
         self.inactive = False
         self.valid = True
+        self.x = 0.0
+        self.y = 0.0
 
 
 def read_fibers_extension(hdr, insmode='LCB'):
@@ -288,7 +327,7 @@ def read_fibers_extension(hdr, insmode='LCB'):
     """
     conf = FibersConf()
     defaults = {}
-    defaults['LCB'] = (89, 623)
+    defaults['LCB'] = (9, 623)
     defaults['MOS'] = (92, 644)
 
     if insmode not in ['LCB', 'MOS']:
@@ -298,6 +337,7 @@ def read_fibers_extension(hdr, insmode='LCB'):
     conf.conf_id = hdr.get('CONFID', 1)
     conf.nbundles = hdr.get('NBUNDLES', defaults[insmode][0])
     conf.nfibers = hdr.get('NFIBERS', defaults[insmode][1])
+    conf.funit = funit = hdr.get("FUNIT", "arcsec")
     # Read bundles
 
     bun_ids = []
@@ -324,6 +364,10 @@ def read_fibers_extension(hdr, insmode='LCB'):
         bb.target_priority = hdr["BUN%03d_P" % i]
         bb.target_name = hdr["BUN%03d_I" % i]
         bb.target_type = TargetType[hdr["BUN%03d_T" % i]]
+        bb.enabled = hdr.get("BUN%03d_E" % i, True)
+        bb.x = hdr.get("BUN%03d_X" % i, 0.0)
+        bb.y = hdr.get("BUN%03d_Y" % i, 0.0)
+        bb.pa = hdr.get("BUN%03d_O" % i, 0.0)
         bb.fibers = {}
         bundles[i] = bb
 
@@ -342,7 +386,7 @@ def read_fibers_extension(hdr, insmode='LCB'):
         ff.x = hdr["FIB%03d_X" % fibid]
         ff.y = hdr["FIB%03d_Y" % fibid]
 
-        ff.b = hdr["FIB%03d_B" % fibid]
+        ff.bundle_id = hdr["FIB%03d_B" % fibid]
         ff.name = hdr.get("FIB%03d_N" % fibid, 'unknown')
 
         ff.w1 = hdr.get("FIB%03dW1" % fibid, None)
@@ -354,7 +398,7 @@ def read_fibers_extension(hdr, insmode='LCB'):
         else:
             ff.valid = hdr.get("FIB%03d_V" % fibid, True)
 
-        bundles[ff.b].fibers[ff.fibid] = ff
+        bundles[ff.bundle_id].fibers[ff.fibid] = ff
         fibers[ff.fibid] = ff
 
     return conf
