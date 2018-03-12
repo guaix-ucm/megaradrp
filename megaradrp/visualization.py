@@ -238,6 +238,9 @@ def main(argv=None):
     parser.add_argument('--hex-size', type=float,
                         help='Size of the hexagons (default is {})'.format(SCALE),
                         default=SCALE)
+    parser.add_argument('--hex-rel-size', type=float,
+                        help='Scale the size of hexagons by a factor',
+                        default=1.0)
     parser.add_argument('--min-cut', type=float,
                         help='Inferior cut level')
     parser.add_argument('--max-cut', type=float,
@@ -260,12 +263,14 @@ def main(argv=None):
                              help="Draw contours")
         group_c.add_argument('--contour-image',
                              help="Image for computing contours")
-        parser.add_argument('--contour-image-column', type=int,
-                            help='Column of image used for contouring')
-        parser.add_argument('--contour-image-save',
-                            help='Save image used for contouring')
-        parser.add_argument('--contour-image-region', nargs=2, default=[1000, 3000],
-                            type=int, help='Region of the image used for contouring')
+        group_c.add_argument('--contour-image-column', type=int,
+                             help='Column of image used for contouring')
+        group_c.add_argument('--contour-image-save',
+                             help='Save image used for contouring')
+        group_c.add_argument('--contour-image-region', nargs=2, default=[1000, 3000],
+                             type=int, help='Region of the image used for contouring')
+        group_c.add_argument('--contour-is-density', action='store_true',
+                             help='The data is a magnitude that does not require scaling')
 
     else:
         parser.set_defaults(has_contours=False)
@@ -344,8 +349,8 @@ def main(argv=None):
                     zdisp[zval > norm.vmax] = np.nan
             else:
                 zdisp = zval
-
-            col = hexplot(ax, x, y, zdisp, scale=args.hex_size, cmap=args.colormap, norm=norm)
+            scale = args.hex_rel_size * args.hex_size
+            col = hexplot(ax, x, y, zdisp, scale=scale, cmap=args.colormap, norm=norm)
 
             if args.title is not None:
                 ax.set_title(args.title)
@@ -385,7 +390,8 @@ def main(argv=None):
                 if args.contour_image_save is not None:
                     synt.writeto(args.contour_image_save)
 
-                s_cube = create_cube_from_rss(synt, target_scale_arcsec)
+                conserve_flux = not args.contour_is_density
+                s_cube = create_cube_from_rss(synt, target_scale_arcsec, conserve_flux=conserve_flux)
                 cube_wcs = WCS(s_cube[0].header).celestial
                 px, py = cube_wcs.wcs.crpix
                 interp = np.squeeze(s_cube[0].data)
