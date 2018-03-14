@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2017 Universidad Complutense de Madrid
+# Copyright 2016-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -10,8 +10,8 @@
 import numpy
 import scipy.interpolate as ii
 from astropy import units as u
+from numina.simulation.efficiency import Efficiency
 
-from .efficiency import Efficiency
 
 class MegaraVPH(object):
 

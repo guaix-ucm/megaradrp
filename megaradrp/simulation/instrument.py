@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2017 Universidad Complutense de Madrid
+# Copyright 2016-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -13,9 +13,8 @@ import numpy as np
 from scipy.stats import norm
 import scipy.interpolate as ii
 from scipy.ndimage.filters import convolve1d
-
-from .efficiency import Efficiency
-from .device import HWDevice
+from numina.simulation.device import HWDevice
+from numina.simulation.efficiency import Efficiency
 
 
 class InternalOptics(object):

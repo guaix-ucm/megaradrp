@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2017 Universidad Complutense de Madrid
+# Copyright 2016-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -7,7 +7,8 @@
 # License-Filename: LICENSE.txt
 #
 
-from .wheel import Wheel
+from numina.simulation.wheel import Wheel
+
 
 class MegaraCalibrationUnit(Wheel):
     pass

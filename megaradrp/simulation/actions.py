@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -18,6 +18,7 @@ from scipy import signal
 import scipy.spatial
 from astropy import units as u
 import astropy.constants as cons
+from numina.simulation.actions import Sequence
 
 from .convolution import rect_c, hex_c, setup_grid
 
@@ -31,11 +32,13 @@ def simulate_bias(detector):
     final = detector.readout()
     return final
 
+
 def simulate_dark(detector, exposure):
     """Simulate a DARK array,"""
     detector.expose(source=0.0, time=exposure)
     final = detector.readout()
     return final
+
 
 def simulate_flat(detector, exposure, source):
     """Simulate a FLAT array,"""
@@ -63,18 +66,6 @@ def simulate_dark_fits(factory, instrument, exposure, repeat=1):
                                                   )
 
         yield fitsfile
-
-
-class Sequence(object):
-    def __init__(self, instrument, mode):
-        self.instrument = instrument
-        self.mode = mode
-
-    def setup_instrument(self, instrument):
-        pass
-
-    def run(self, **kwds):
-        raise NotImplemented
 
 
 class MegaraSequence(Sequence):
