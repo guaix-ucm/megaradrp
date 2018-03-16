@@ -12,6 +12,8 @@
 
 from scipy.interpolate import interp1d
 import astropy.io.fits as fits
+import astropy.units as u
+from astropy import constants as const
 
 from numina.core import Product, Parameter
 from numina.core.requirements import Requirement
@@ -67,6 +69,7 @@ class LCBStandardRecipe(ImageRecipe):
     nrings = Parameter(3, "Number of rings to extract the star",
                        validator=range_validator(minval=1))
     reference_spectrum = Requirement(ReferenceSpectrumTable, "Spectrum of reference star")
+    reference_spectrum_velocity = Parameter(0.0, 'Radial velocity (km/s) of reference spectrum')
     reference_extinction = Requirement(ReferenceExtinctionTable, "Reference extinction")
     sigma_resolution = Parameter(20.0, 'sigma Gaussian filter to degrade resolution ')
 
@@ -104,7 +107,11 @@ class LCBStandardRecipe(ImageRecipe):
         spectrum, colids, cover1, cover2 = spectra_pack
         star_spectrum = fits.PrimaryHDU(spectrum, header=final[0].header)
 
-        star_interp = interp1d(rinput.reference_spectrum[:,0], rinput.reference_spectrum[:,1])
+        rad_vel = rinput.reference_spectrum_velocity * u.km / u.s
+        factor = 1 + rad_vel / const.c
+        star_interp = interp1d(rinput.reference_spectrum[:,0] / factor,
+                               rinput.reference_spectrum[:,1])
+
         extinc_interp = interp1d(rinput.reference_extinction[:, 0],
                                rinput.reference_extinction[:, 1])
 
