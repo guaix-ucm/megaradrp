@@ -8,40 +8,9 @@
 #
 
 import six
-import numpy
 
 from numina.simulation.wheel import Wheel
-
-
-#
-# These are optical elements, they should be implemented
-# elsewhere
-
-
-class Stop(object):
-    def __init__(self, name):
-        self.name = name
-
-    def transmission(self, wl):
-        return numpy.zeros_like(wl)
-
-
-class Open(object):
-    def __init__(self, name):
-        self.name = name
-
-    def transmission(self, wl):
-        return numpy.ones_like(wl)
-
-
-class Filter(object):
-    def __init__(self, name, transmission=None):
-        self.name = name
-
-    def transmission(self, wl):
-        # FIXME: implement this with a proper
-        # transmission
-        return numpy.ones_like(wl)
+from numina.simulation.optics import Open, Stop, Filter
 
 
 class MegaraShutter(Wheel):
