@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -21,7 +21,7 @@ from megaradrp.recipes.calibration.bias import BiasRecipe
 from megaradrp.loader import load_drp
 
 @pytest.mark.remote
-def test_bias(drpmocker):
+def test_bias():
 
     BASE_URL = 'http://guaix.fis.ucm.es/~spr/megara_test/BIAS/%s'
     images = ['e99d2937d2c29a27c0ba4eebfcf7918e',
@@ -32,29 +32,23 @@ def test_bias(drpmocker):
 
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
-    ob.mode = 'bias_image'
+    ob.mode = 'MegaraBiasImage'
     ob.frames = [DataFrame(filename=f.name) for f in fs]
 
-    drpmocker.add_drp('MEGARA', load_drp)
-
-    # Here we could directly import the required pipeline,
-    # but the idea is to test all the process
-    insdrp = numina.drps.get_system_drps().query_by_name(ob.instrument)
+    insdrp = load_drp()
     pipeline = insdrp.pipelines.get('default')
-    recipe_fqn = pipeline.recipes.get(ob.mode)
-    RecipeClass = import_object(recipe_fqn)
+    recipe = pipeline.get_recipe_object(ob.mode)
 
-    assert RecipeClass is BiasRecipe
-
+    assert isinstance(recipe, BiasRecipe)
     # TODO: these should be created by a build_recipe_input method
-    recipe = BiasRecipe()
+    ob.configuration = insdrp.configuration_selector(ob)
     ri = recipe.create_input(obresult=ob)
 
     result = recipe.run(ri)
     # assert result.qc >= QC.UNKNOWN
 
     # Checks on the image
-    hdulist = result.biasframe.open()
+    hdulist = result.master_bias.open()
     assert len(hdulist) == 1
 
     hdu = hdulist[0]
@@ -73,5 +67,3 @@ def test_bias(drpmocker):
     for f in fs:
         os.remove(f.name)
 
-if __name__ == "__main__":
-    test_bias()
