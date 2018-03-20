@@ -27,8 +27,8 @@ import numina.core.validator
 from skimage.filters import threshold_otsu
 from skimage.feature import peak_local_max
 from scipy.ndimage.filters import minimum_filter
+from numina.frame.utils import copy_img
 
-from megaradrp.utils import copy_img
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.products import TraceMap

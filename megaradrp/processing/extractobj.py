@@ -19,8 +19,8 @@ import astropy.io.fits as fits
 
 from scipy.spatial import KDTree
 from scipy.ndimage.filters import gaussian_filter
+from numina.frame.utils import copy_img
 
-from megaradrp.utils import copy_img
 from megaradrp.processing.fluxcalib import update_flux_limits
 
 

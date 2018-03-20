@@ -23,8 +23,8 @@ from astropy.modeling.functional_models import Const1D
 from numina.core import Product, Requirement, Parameter
 from numina.array import combine
 from numina.modeling.gaussbox import GaussBox, gauss_box_model
+from numina.frame.utils import copy_img
 
-from megaradrp.utils import copy_img
 from megaradrp.products.modelmap import ModelMap
 from megaradrp.products.modelmap import GeometricModel
 from megaradrp.processing.aperture import ApertureExtractor
