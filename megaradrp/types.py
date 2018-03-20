@@ -115,26 +115,6 @@ class ReferenceSpectrumTable(DataProductTag, ArrayType):
     pass
 
 
-class WeightsMap(DataProductType):
-    def __init__(self, default=None):
-        super(WeightsMap, self).__init__(ptype=dict, default=default)
-
-    def _datatype_dump(self, obj, where):
-        import shutil
-
-        filename = where.destination + '.tar'
-
-        shutil.copy(obj, filename)
-        return filename
-
-    def _datatype_load(self, obj):
-        try:
-            import tarfile
-            return tarfile.open(obj, 'r')
-        except IOError as e:
-            raise e
-
-
 class JSONstorage(DataType):
     def __init__(self, default=None):
         super(JSONstorage, self).__init__(ptype=dict, default=default)
