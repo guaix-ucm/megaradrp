@@ -36,7 +36,7 @@ def add_collapsed_mos_extension(img, size=7, axis=0):
 
     shape = img[0].data.shape
     if axis == 0:
-        reshaped = img[0].data.reshape((-1, 7, 1, shape[1])).mean(axis=(1, 2))
+        reshaped = img[0].data.reshape((-1, size, 1, shape[1])).mean(axis=(1, 2))
     elif axis == 1:
         reshaped = img[0].data.reshape((shape[0], size, 1, -1)).mean(axis=(1, 2))
     else:
