@@ -1,6 +1,5 @@
 name: MEGARA
 configurations:
-  tagger: megaradrp.taggers.selector_insconf
   values:
   - 9a86b2b2-3f7d-48ec-8f4f-3780ec967c90
   - 4fd05b24-2ed9-457b-b563-a3c618bb1d4c

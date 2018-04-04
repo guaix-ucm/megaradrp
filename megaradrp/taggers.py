@@ -30,26 +30,3 @@ def tagger_vph(obsres):
 
 def tagger_base_image(obsres):
     return get_tags_from_full_ob(obsres, reqtags=['vph', 'insmode'])
-
-
-def selector_insconf(obsres):
-    return get_conf_from_first(obsres, "insconf", default='default')
-
-
-def get_conf_from_first(ob, reqtag, default='default'):
-
-    # each instrument should have one
-    # perhaps each mode...
-    files = ob.frames
-    cfiles = ob.children
-
-    # Init alltags...
-    # Open first image
-    if files:
-        with files[0].open() as fd:
-            header = fd[0].header
-            return header.get(reqtag, default)
-    else:
-        with cfiles[0].open() as fd:
-            header = fd[0].header
-            return header.get(reqtag, default)

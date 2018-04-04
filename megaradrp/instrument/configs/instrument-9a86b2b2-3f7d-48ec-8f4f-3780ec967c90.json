@@ -1,8 +1,8 @@
 {
  "description": "Configuration at LICA",
  "uuid": "9a86b2b2-3f7d-48ec-8f4f-3780ec967c90",
- "date_start": "2016-11-08", 
- "date_end": "2017-03-31",
+ "date_start": "2016-11-08T12:00:00.0",
+ "date_end": "2017-03-31T12:00:00.0",
  "type": "instrument",
  "name": "MEGARA", 
  "components": 
