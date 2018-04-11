@@ -186,11 +186,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         initial_data_wlcalib.tags = rinput.obresult.tags
         final = initial_data_wlcalib
+        final.update_metadata(self)
+
         final.meta_info['creation_date'] = datetime.utcnow().isoformat()
-        final.meta_info['mode_name'] = self.mode
-        final.meta_info['instrument_name'] = self.instrument
-        final.meta_info['recipe_name'] = self.__class__.__name__
-        final.meta_info['recipe_version'] = self.__version__
         final.meta_info['origin'] = {}
         final.meta_info['origin']['block_uuid'] = reduced2d[0].header.get('BLCKUUID', "UNKNOWN")
         final.meta_info['origin']['insconf_uuid'] = reduced2d[0].header.get('INSCONF', "UNKNOWN")
