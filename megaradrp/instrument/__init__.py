@@ -136,7 +136,7 @@ vph_thr_arc = {
 WLCALIB_PARAMS = {
     'LCB': {
         'LR-U': {
-            'crval': 3640,
+            'crval': 3620,
             'cdelt': 0.186,
             'crpix': 1.0,
             'npix': 4300
@@ -246,7 +246,7 @@ WLCALIB_PARAMS = {
     },
     'MOS': {
         'LR-U': {
-            'crval': 3640,
+            'crval': 3620,
             'cdelt': 0.186,
             'crpix': 1.0,
             'npix': 4300
