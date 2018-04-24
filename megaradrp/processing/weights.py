@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -12,7 +12,7 @@ import multiprocessing as mp
 from astropy.io import fits
 
 import numpy as np
-from numina.flow.processing import Corrector
+from numina.processing import Corrector
 
 _logger = logging.getLogger('numina.processing')
 

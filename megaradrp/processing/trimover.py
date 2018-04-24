@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -13,7 +13,7 @@ import datetime
 import numpy as np
 
 from megaradrp.core.processing import trimOut, get_conf_value
-from numina.flow.processing import Corrector
+from numina.processing import Corrector
 
 _logger = logging.getLogger(__name__)
 

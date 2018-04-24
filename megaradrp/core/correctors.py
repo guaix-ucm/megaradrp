@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -12,9 +12,9 @@
 
 import logging
 
-from numina.flow.node import IdNode
-from numina.flow.processing import BiasCorrector, BadPixelCorrector
-from numina.flow.processing import DarkCorrector
+
+import numina.util.node as node
+import numina.processing as proc
 
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
 from megaradrp.processing.trimover import GainCorrector
@@ -32,12 +32,14 @@ def get_corrector_bpm(rinput, meta, ins, datamodel):
             mbpm = hdul[0].data
             calibid = datamodel.get_imgid(hdul)
             _logger.debug('BPM image: %s', calibid)
-            bpm_corrector = BadPixelCorrector(mbpm,
-                                              datamodel=datamodel,
-                                              calibid=calibid)
+            bpm_corrector = proc.BadPixelCorrector(
+                mbpm,
+                datamodel=datamodel,
+                calibid=calibid
+            )
     else:
         _logger.info('BPM not provided, ignored')
-        bpm_corrector = IdNode()
+        bpm_corrector = node.IdNode()
 
     return bpm_corrector
 
@@ -55,20 +57,20 @@ def get_corrector_super(rinput, meta, key, correctorclass, datamodel):
                                        calibid=calibid)
     else:
         _logger.info('%s not provided, ignored', key)
-        corrector = IdNode()
+        corrector = node.IdNode()
 
     return corrector
 
 
 def get_corrector_bias(rinput, meta, ins, datamodel):
     key = 'master_bias'
-    correctorclass = BiasCorrector
+    correctorclass = proc.BiasCorrector
     return get_corrector_super(rinput, meta, key, correctorclass, datamodel)
 
 
 def get_corrector_dark(rinput, meta, ins, datamodel):
     key = 'master_dark'
-    correctorclass = DarkCorrector
+    correctorclass = proc.DarkCorrector
     return get_corrector_super(rinput, meta, key, correctorclass, datamodel)
 
 
@@ -85,7 +87,7 @@ def get_corrector_slit_flat(rinput, meta, ins, datamodel):
             corrector = SlitFlatCorrector(mbpm, datamodel, calibid=calibid)
     else:
         _logger.info('%s not provided, ignored', key)
-        corrector = IdNode()
+        corrector = node.IdNode()
 
     return corrector
 
@@ -115,4 +117,3 @@ def get_corrector_gain(rinput, meta, ins, datamodel):
         datamodel=datamodel,
         calibid=ins.components['detector'].uuid
     )
-

@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -11,7 +11,7 @@ import logging
 import datetime
 
 import astropy.io.fits as fits
-from numina.flow.processing import Corrector
+from numina.processing import Corrector
 import numpy.polynomial.polynomial as nppol
 
 from megaradrp.core.processing import apextract_tracemap_2
@@ -81,4 +81,3 @@ class ApertureExtractor(Corrector):
 
         newimg = fits.HDUList([img[0], fibers_ext])
         return newimg
-

@@ -1,5 +1,5 @@
 #
-# Copyright 2017 Universidad Complutense de Madrid
+# Copyright 2017-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -14,7 +14,7 @@ import datetime
 import astropy.wcs
 
 import numpy
-from numina.flow.processing import Corrector
+from numina.processing import Corrector
 
 
 _logger = logging.getLogger(__name__)

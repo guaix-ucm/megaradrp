@@ -12,7 +12,7 @@ import datetime
 
 from astropy.io import fits
 import numpy
-from numina.flow.processing import Corrector
+from numina.processing import Corrector
 from numina.frame.utils import copy_img
 
 

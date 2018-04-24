@@ -17,7 +17,7 @@ from numina.core.dataholders import Product
 from numina.types.obsresult import QualityControlProduct
 from numina.types.qc import QC
 from numina.core.requirements import ObservationResultRequirement
-from numina.flow import SerialFlow
+import numina.util.flow as flowmod
 
 
 import megaradrp.core.correctors as cor
@@ -113,7 +113,7 @@ class MegaraBaseRecipe(BaseRecipe):
             self.logger.debug('frame info is %s', entry)
         correctors = [getter(rinput, meta, ins, self.datamodel) for getter in getters]
 
-        flow = SerialFlow(correctors)
+        flow = flowmod.SerialFlow(correctors)
 
         return flow
 

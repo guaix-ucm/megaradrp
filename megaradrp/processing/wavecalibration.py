@@ -16,7 +16,7 @@ import numpy
 from numpy.polynomial.polynomial import polyval
 from astropy.io import fits
 import numina.array.utils as u
-from numina.flow.processing import Corrector
+from numina.processing import Corrector
 from numina.array.interpolation import SteffenInterpolator
 
 from megaradrp.instrument import WLCALIB_PARAMS
