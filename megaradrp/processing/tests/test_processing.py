@@ -6,8 +6,8 @@ import astropy.io.fits as fits
 import numpy as np
 import pytest
 
-from megaradrp.core.processing import trimOut
-from megaradrp.core.processing import apextract_weights
+from megaradrp.processing.trimover import trimOut
+from megaradrp.processing.trimover import apextract_weights
 from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.actions import simulate_flat
 
