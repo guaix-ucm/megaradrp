@@ -17,7 +17,7 @@ from astropy.io import fits
 
 from numina.core import Product, Parameter
 from numina.core.requirements import ObservationResultRequirement
-from numina.flow import SerialFlow
+from numina.util.flow import SerialFlow
 from numina.exceptions import ValidationError
 
 import megaradrp.requirements as reqs

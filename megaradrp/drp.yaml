@@ -58,11 +58,6 @@ modes:
   description: Slit Flat
   key: MegaraSlitFlat
   tagger: megaradrp.taggers.tagger_base_image
-- name: Weights
-  summary: Weights
-  description: Weights
-  key: MegaraWeights
-  tagger: megaradrp.taggers.tagger_base_image
 - name: ModelMap
   summary: Computes a ModelMap
   description: Computes a ModelMap from FlatImages
@@ -183,7 +178,6 @@ pipelines:
       MegaraArcCalibration: megaradrp.recipes.calibration.arc.ArcCalibrationRecipe
       MegaraSlitFlat: megaradrp.recipes.calibration.slitflat.SlitFlatRecipe
       MegaraTraceMap: megaradrp.recipes.calibration.trace.TraceMapRecipe
-      MegaraWeights: megaradrp.recipes.calibration.weights.WeightsRecipe
       MegaraModelMap: megaradrp.recipes.calibration.modelmap.ModelMapRecipe
       MegaraFiberFlatImage: megaradrp.recipes.calibration.flat.FiberFlatRecipe
       MegaraTwilightFlatImage: megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe

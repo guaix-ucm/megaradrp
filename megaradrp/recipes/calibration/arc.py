@@ -32,7 +32,7 @@ from numina.array.wavecalib.arccalibration import refine_arccalibration
 from numina.array.wavecalib.solutionarc import CrLinear
 from numina.array.wavecalib.solutionarc import SolutionArcCalibration
 from numina.core.validator import range_validator
-from numina.flow import SerialFlow
+from numina.util.flow import SerialFlow
 from numina.array import combine
 
 from megaradrp.types import ProcessedFrame, ProcessedRSS

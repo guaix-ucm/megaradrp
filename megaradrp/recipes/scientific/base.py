@@ -12,7 +12,7 @@
 
 from numina.core import Parameter
 from numina.core.requirements import ObservationResultRequirement
-from numina.flow import SerialFlow
+from numina.util.flow import SerialFlow
 from numina.array import combine
 from numina.frame.utils import copy_img
 
