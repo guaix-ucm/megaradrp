@@ -13,8 +13,6 @@ import pytest
 
 from numina.tests.testcache import download_cache
 
-from numina.core import import_object
-import numina.drps
 from numina.core import ObservationResult
 from numina.core import DataFrame
 from megaradrp.recipes.calibration.bias import BiasRecipe

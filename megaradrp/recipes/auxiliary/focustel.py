@@ -13,8 +13,8 @@ from __future__ import division, print_function
 
 import numpy
 from numina.array import combine
-from numina.core.dataholders import Product
-from numina.core.requirements import Requirement, ObservationResultRequirement, Parameter
+from numina.core.dataholders import Result, Parameter, Requirement
+from numina.core.requirements import ObservationResultRequirement
 from numina.exceptions import RecipeError
 
 from megaradrp.recipes.scientific.base import ImageRecipe
@@ -64,7 +64,7 @@ class FocusTelescopeRecipe(ImageRecipe):
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
     position = Requirement(list, "Position of the reference object", default=(0, 0))
     # Products
-    focus_table = Product(float)
+    focus_table = Result(float)
 
     # @numina.core.validator.validate
     def run(self, rinput):

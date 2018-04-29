@@ -9,9 +9,6 @@
 
 """Calibrate the non linearity correciont of MEGARA Detector"""
 
-import logging
-
-from numina.core import RecipeError
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 
