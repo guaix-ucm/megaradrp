@@ -32,93 +32,64 @@ def apextract(data, trace):
     return rss
 
 
-def apextract_tracemap_old(data, tracemap):
-    """Extract apertures using a tracemap."""
-
-    pols = [t.polynomial for t in tracemap.contents]
-
-    borders = []
-
-    # These are polynomial, they can be summed
-
-    # Estimate left border for the first trace
-    pix_12 = 0.5 * (pols[0] + pols[1])
-    # Use the half distance in the first trace
-    pix_01 = 1.5 * pols[0] - 0.5 * pols[1]
-
-    borders.append((pix_01, pix_12))
-
-    for idx in range(1, len(pols)-1):
-        if pols[idx].order!=0:
-            pix_01 = pix_12
-            pix_12 = 0.5 * (pols[idx] + pols[idx+1])
-            borders.append((pix_01, pix_12))
-        else:
-            empty = nppol.Polynomial([0.0])
-            borders.append((empty, empty))
-        # else:
-        #     if pols[idx].order==0:
-        #         borders.append((pix_01, pols[idx+1]))
-        #     else:
-        #         borders.append((pix_01, pols[idx+1]))
-
-        # borders.append((pix_01, pix_12))
-    # Estimate right border for the last trace
-    pix_01 = pix_12
-    # Use the half distance in last trace
-    pix_12 = 1.5 * pols[-1] - 0.5 * pols[-2]
-
-    borders.append((pix_01, pix_12))
-
-    out = numpy.zeros((len(pols), data.shape[1]), dtype='float')
-
-    rss = extract.extract_simple_rss(data, borders, out=out)
-
-    return rss
-
-
 def apextract_tracemap(data, tracemap):
     """Extract apertures using a tracemap.
 
     Consider that the nearest fiber could be far away if there
     are missing fibers.
+
+    Parameters
+    ----------
+
+    data: ndarray
+    tracemap: TraceMap
+
     """
 
     existing = [None]
     for t in tracemap.contents:
-        if t.fitparms: # This is a check if the trace is valid
+        if t.valid:
             existing.append(t)
 
     existing.append(None)
     # Compute borders
     borders = []
+    far_dist = 100
 
     # Handle the first and last using centinels
     for t1, t2, t3 in zip(existing, existing[1:], existing[2:]):
         # Distance to contfibers # in box
         if t1 is None:
-            d21 = 100
+            d21 = far_dist
         else:
             d21 = (t2.fibid - t1.fibid) + (t2.boxid - t1.boxid)
         if t3 is None:
-            d32 = 100
+            d32 = far_dist
         else:
             d32 = (t3.fibid - t2.fibid) + (t3.boxid - t2.boxid)
 
+        y2_off = t2.polynomial(tracemap.ref_column)
+        t2_off = tracemap.global_offset(y2_off)
+        t2_pol_off = t2.polynomial + t2_off
+
         # Right border
-        if d32 == 1:
-            pix_32 = 0.5 * (t2.polynomial + t3.polynomial)
-        elif d32 == 2:
-            pix_32 = 0.5 * (t2.polynomial + t3.polynomial)
-            pix_32 = 0.5 * (pix_32 + t2.polynomial)
+        pix_32 = None
+        if d32 <= 2:
+            y3_off = t3.polynomial(tracemap.ref_column)
+            t3_off = tracemap.global_offset(y3_off)
+            pix_32 = 0.5 * (t2_pol_off + t3.polynomial + t3_off)
+            if d32 == 2:
+                pix_32 = 0.5 * (pix_32 + t2_pol_off)
         elif d32 > 2:
             pix_32 = None
 
-        if d21 == 1:
-            pix_21 = 0.5 * (t2.polynomial + t1.polynomial)
-        elif d21 == 2:
-            pix_21 = 0.5 * (t2.polynomial + t1.polynomial)
-            pix_21 = 0.5 * (pix_21 + t2.polynomial)
+        pix_21 = None
+        if d21 <= 2:
+            y1_off = t1.polynomial(tracemap.ref_column)
+            t1_off = tracemap.global_offset(y1_off)
+            pix_21 = 0.5 * (t2_pol_off + t1.polynomial + t1_off)
+            if d21 == 2:
+                pix_21 = 0.5 * (pix_21 + t2_pol_off)
         elif d21 > 2:
             pix_21 = None
 
@@ -127,20 +98,54 @@ def apextract_tracemap(data, tracemap):
 
         if pix_32 is None:
             # Recompute pix32 using pix_21
-            pix_32 = t2.polynomial + (t2.polynomial - pix_21)
+            pix_32 = t2_pol_off + (t2_pol_off - pix_21)
 
         if pix_21 is None:
             # Recompute pix21 using pix_32
-            pix_21 = t2.polynomial - (pix_32 - t2.polynomial)
+            pix_21 = t2_pol_off - (pix_32 - t2_pol_off)
 
-        #
-        borders.append((t2.fibid - 1, (pix_21, pix_32)))
+        borders.append((t2.fibid, pix_21, pix_32))
 
-    mm = 623 # FIXME, hardcoded
-    out = numpy.zeros((mm, data.shape[1]), dtype='float32')
-    rss = extract.extract_simple_rss(data, borders, out=out)
+    nfibers = tracemap.total_fibers
+    out = numpy.zeros((nfibers, data.shape[1]), dtype='float')
+    rss = extract_simple_rss2(data, borders, out=out)
 
     return rss
+
+
+def extract_simple_rss(arr, borders2, axis=0, out=None):
+
+    # FIXME, this should be changed in numina
+    # If arr is not in native byte order, the C-extension won't work
+    if arr.dtype.byteorder != '=':
+        arr2 = arr.byteswap().newbyteorder()
+    else:
+        arr2 = arr
+
+    if axis == 0:
+        arr3 = arr2
+    elif axis == 1:
+        arr3 = arr2.T
+    else:
+        raise ValueError("'axis' must be 0 or 1")
+
+    if out is None:
+        out = numpy.zeros((borders2[-1][0], arr3.shape[1]), dtype='float')
+
+    xx = numpy.arange(arr3.shape[1])
+
+    # Borders contains a list of function objects
+    for idx, b1, b2 in borders2:
+        bb1 = b1(xx)
+        bb1[bb1 < -0.5] = -0.5
+        bb2 = b2(xx)
+        bb2[bb2 > arr3.shape[0] - 0.5] = arr3.shape[0] - 0.5
+        extract.extract_simple_intl(arr3, xx, bb1, bb2, out[idx-1])
+    return out
+
+
+apextract_tracemap_2 = apextract_tracemap
+extract_simple_rss2 = extract_simple_rss
 
 
 class ApertureExtractor(numina.processing.Corrector):
