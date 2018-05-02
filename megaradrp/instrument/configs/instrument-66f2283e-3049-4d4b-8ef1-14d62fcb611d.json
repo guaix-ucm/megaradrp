@@ -1,0 +1,14 @@
+{
+ "description": "Configuration for the Simulator",
+ "uuid": "66f2283e-3049-4d4b-8ef1-14d62fcb611d",
+ "date_start": "2015-11-08T12:00:00.0",
+ "date_end": null, 
+ "type": "instrument",
+ "name": "MEGARA", 
+ "components": 
+  {
+     "detector": "2e02e135-2325-47c9-9975-466b445b0b8b",
+     "pseudoslit": "715c7ced-f989-42a6-bb74-a5b5cda0495c",
+     "LCB": "06fc5d6d-d20b-4eba-b3fa-57696f0a1103"
+  }
+}

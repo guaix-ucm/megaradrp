@@ -1,64 +1,70 @@
 #
-# Copyright 2014-2015 Universidad Complutense de Madrid
+# Copyright 2014-2017 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
-# Megara DRP is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Megara DRP is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
-import logging
+from numina.core import Product
+from numina.array import combine
 
-from astropy.io import fits
-
-from numina.core import Product, RecipeError
-from numina.core.requirements import ObservationResultRequirement
-
+from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import MasterBias
+from megaradrp.types import MasterBias
 from megaradrp.requirements import MasterBPMRequirement
-
-_logger = logging.getLogger('numina.recipes.megara')
 
 
 class BiasRecipe(MegaraBaseRecipe):
-    """Process BIAS images and create MASTER_BIAS."""
-    obresult = ObservationResultRequirement()
+    """Process BIAS images and create a MASTER_BIAS product.
 
+    This recipe process a set of bias images obtained in
+    **Bias Image** mode and returns a combined product image,
+    trimmed to the physical size of the detector.
+
+    Notes
+    -----
+    Images are corrected from overscan and trimmed to the physical size of the detector.
+    Then, they corrected from Bad Pixel Mask, if the BPM is available,
+    Finally, images are stacked using the median.
+
+    See Also
+    --------
+    megaradrp.types.MasterBias: description of the MasterBias product
+
+    """
+
+    master_bpm = MasterBPMRequirement()
     master_bias = Product(MasterBias)
 
-    def __init__(self):
-        super(BiasRecipe, self).__init__(version="0.1.0")
-
     def run(self, rinput):
+        """Execute the recipe.
 
-        _logger.info('starting bias reduction')
+        Parameters
+        ----------
 
-        if not rinput.obresult.images:
-            raise RecipeError('Frame list is empty')
+        rinput : BiasRecipe.RecipeInput
 
-        hdu, data = self.hdu_creation(rinput.obresult)
+        Returns
+        -------
+        BiasRecipe.RecipeResult
 
-        hdr = hdu[0].header
-        hdr = self.set_base_headers(hdr)
-        hdr['IMGTYP'] = ('BIAS', 'Image type')
-        hdr['NUMTYP'] = ('MASTER_BIAS', 'Data product type')
-        hdr['CCDMEAN'] = data[0].mean()
-
-        varhdu = fits.ImageHDU(data[1], name='VARIANCE')
-        num = fits.ImageHDU(data[2], name='MAP')
-        hdulist = fits.HDUList(hdu + [varhdu, num])
-        _logger.info('bias reduction ended')
-
+        """
+        self.logger.info('start bias recipe')
+        flow = self.init_filters(rinput, rinput.obresult.configuration)
+        errors  = False
+        if not errors:
+            self.logger.info('not computing errors')
+        hdulist = basic_processing_with_combination(rinput, flow, method=combine.median, errors=errors)
+        hdr = hdulist[0].header
+        self.set_base_headers(hdr)
         result = self.create_result(master_bias=hdulist)
+        self.logger.info('end bias recipe')
         return result
+
+    def set_base_headers(self, hdr):
+        """Set metadata in FITS headers."""
+        hdr = super(BiasRecipe, self).set_base_headers(hdr)
+        hdr['NUMTYPE'] = ('MasterBias', 'Product type')
+        return hdr

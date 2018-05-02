@@ -1,48 +1,201 @@
 #
-# Copyright 2015 Universidad Complutense de Madrid
+# Copyright 2015-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
-# Megara DRP is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# Megara DRP is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with Megara DRP.  If not, see <http://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
 #
 
 """ Twilight fiber flat Calibration Recipes for Megara"""
 
 from __future__ import division, print_function
 
-from numina.core import Product
-from numina.core.products import ArrayType
+
+import numpy
+from astropy.io import fits
+
+from numina.core import Product, Parameter
 from numina.core.requirements import ObservationResultRequirement
+from numina.util.flow import SerialFlow
+from numina.exceptions import ValidationError
 
+import megaradrp.requirements as reqs
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.products import MasterFiberFlat
-from megaradrp.requirements import MasterBiasRequirement
+from megaradrp.types import MasterTwilightFlat
+from megaradrp.types import ProcessedRSS, ProcessedFrame
+# Flat 2D
+from megaradrp.processing.combine import basic_processing_with_combination
+from numina.array import combine
+# Create RSS
+from megaradrp.processing.aperture import ApertureExtractor
+from megaradrp.processing.wavecalibration import WavelengthCalibrator
+from megaradrp.processing.fiberflat import Splitter, FlipLR, FiberFlatCorrector
+
+import numina.core.recipeinout as recipeio
+from numina.core.metarecipes import generate_docs
 
 
-class TwilightFiberFlatRecipe(MegaraBaseRecipe):
+def pixel_2d_check(value):
+    """Check this is a valid 2D pixel list"""
+    if len(value) != 2:
+        raise ValidationError("must have 2 elements")
 
-    master_bias = MasterBiasRequirement()
+    return value
+
+
+@generate_docs
+class RecipeInput(recipeio.RecipeInput):
     obresult = ObservationResultRequirement()
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_bpm = reqs.MasterBPMRequirement()
+    master_slitflat = reqs.MasterSlitFlatRequirement()
+    master_traces = reqs.MasterAperturesRequirement()
+    extraction_offset = Parameter([0.0], 'Offset traces for extraction')
+    normalize_region = Parameter([1900, 2100], 'Region used to normalize the flat-field',
+                                 validator=pixel_2d_check)
+    master_wlcalib = reqs.WavelengthCalibrationRequirement()
+    master_fiberflat = reqs.MasterFiberFlatRequirement()
 
-    fiberflat_frame = Product(MasterFiberFlat)
-    fiberflat_rss = Product(MasterFiberFlat)
-    traces = Product(ArrayType)
 
-    def __init__(self):
-        super(TwilightFiberFlatRecipe, self).__init__(
-            version="0.1.0"
+@generate_docs
+class RecipeResult(recipeio.RecipeResult):
+    reduced_image = Product(ProcessedFrame)
+    reduced_rss = Product(ProcessedRSS)
+    master_twilightflat = Product(MasterTwilightFlat)
+
+
+@recipeio.define_input(RecipeInput)
+@recipeio.define_result(RecipeResult)
+class TwilightFiberFlatRecipe(MegaraBaseRecipe):
+    """Process TWILIGHT_FLAT images and create MASTER_TWILIGHT_FLAT product.
+
+    This recipe process a set of continuum flat images obtained in
+    **Twilight Fiber Flat** mode and returns the master twilight flat product
+    The recipe also returns the result of processing the input images up to
+    slitflat correction. and the result RSS of the processing
+    up to wavelength calibration.
+
+    See Also
+    --------
+    megaradrp.types.MasterTwilightFlat: description of MasterTwilightFlat product
+
+    Notes
+    -----
+    Images provided in `obresult` are trimmed and corrected from overscan,
+    bad pixel mask (if `master_bpm` is not None), bias and dark current
+    (if `master_dark` is not None) and corrected from pixel-to-pixel flat
+    if `master_slitflat` is not None.
+    Images thus corrected are the stacked using the median.
+
+    The result of the combination is saved as an intermediate result, named
+    'reduced_image.fits'. This combined image is also returned in the field
+    `reduced_image` of the recipe result.
+
+    The apertures in the 2D image are extracted, using the information in
+    `master_traces` and resampled according to the wavelength calibration in
+    `master_wlcalib`. Then is divided by the `master_fiberflat`.
+    The resulting RSS is saved as an intermediate
+    result named 'reduced_rss.fits'. This RSS is also returned in the field
+    `reduced_rss` of the recipe result.
+
+    To normalize the `master_twilight_flat`, each fiber is divided by the average
+    of the column range given in `normalize_region`. This RSS
+    image is returned in the field `master_twilightflat` of the recipe result.
+
+    """
+
+    def process_flat2d(self, rinput):
+        flow = self.init_filters(rinput, rinput.obresult.configuration)
+        final_image = basic_processing_with_combination(
+            rinput, flow, method=self.combine_median_scaled
         )
+        hdr = final_image[0].header
+        self.set_base_headers(hdr)
+        return final_image
+
+    def run_reduction_1d(self, img, tracemap, wlcalib, fiberflat, offset=None):
+        # 1D, extraction, Wl calibration, Flat fielding
+        correctors = []
+        correctors.append(ApertureExtractor(tracemap, self.datamodel, offset=offset))
+        correctors.append(FlipLR())
+        correctors.append(WavelengthCalibrator(wlcalib, self.datamodel))
+        correctors.append(FiberFlatCorrector(fiberflat.open(), self.datamodel))
+
+        flow_1d = SerialFlow(correctors)
+
+        reduced_rss =  flow_1d(img)
+        return reduced_rss
 
     def run(self, rinput):
-        pass
+        # Basic processing
+
+        self.logger.info('twilight fiber flat reduction started')
+
+        img = self.process_flat2d(rinput)
+        # Copy image
+        reduced_image = fits.HDUList([hdu.copy() for hdu in img])
+        self.save_intermediate_img(reduced_image, 'reduced_image.fits')
+
+        reduced_rss = self.run_reduction_1d(img,
+                                            rinput.master_traces,
+                                            rinput.master_wlcalib,
+                                            rinput.master_fiberflat,
+                                            offset=rinput.extraction_offset
+                                            )
+
+        self.save_intermediate_img(reduced_rss, 'reduced_rss.fits')
+        # Measure values in final
+        start, end = rinput.normalize_region
+        self.logger.info('doing mean between columns %d-%d', start, end)
+        rss_wl_data = reduced_rss[0].data
+
+        mask = self.good_ids_mask(rinput.master_wlcalib)
+        colapse = rss_wl_data[:, start:end].mean(axis=1)
+        # Normalize the colapsed array
+        colapse_good = colapse[mask]
+        colapse_norm = colapse / colapse_good.mean()
+        normalized = numpy.tile(colapse_norm[:, numpy.newaxis], rss_wl_data.shape[1])
+
+        master_t = fits.HDUList([hdu.copy() for hdu in reduced_rss])
+        master_t[0].data = normalized
+        self.set_base_headers(master_t[0].header)
+
+        self.logger.info('twilight fiber flat reduction ended')
+        result = self.create_result(reduced_image=reduced_image,
+                                    reduced_rss=reduced_rss,
+                                    master_twilightflat=master_t
+                                    )
+
+        return result
+
+    def good_ids_mask(self, calibration):
+
+        # Bad fibers, join:
+        bad_fibers = calibration.missing_fibers
+        bad_fibers.extend(calibration.error_fitting)
+
+        bad_idxs = [fibid - 1 for fibid in bad_fibers]
+
+        good_idxs_mask = numpy.ones((calibration.total_fibers,), dtype='bool')
+        good_idxs_mask[bad_idxs] = False
+        return good_idxs_mask
+
+    def set_base_headers(self, hdr):
+        """Set metadata in FITS headers."""
+        hdr = super(TwilightFiberFlatRecipe, self).set_base_headers(hdr)
+        hdr['NUMTYPE'] = ('MasterTwilightFlat', 'Product type')
+        return hdr
+
+    def combine_median_scaled(self, arrays, masks=None, dtype=None, out=None,
+                                    zeros=None, scales=None,
+                                    weights=None):
+
+        median_vals = numpy.array([numpy.median(arr) for arr in arrays])
+        self.logger.info("median values are %s", median_vals)
+        # normalize by max value
+        median_max = numpy.max(median_vals)
+        scales = median_max / median_vals
+        self.logger.info("scale values are %s", scales)
+        return combine.median(arrays, scales=scales, dtype=dtype)

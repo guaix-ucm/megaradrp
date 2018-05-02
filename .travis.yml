@@ -4,11 +4,11 @@ sudo: false
 matrix:
   include:
     - python: "2.7"
-      env: DEPS="numpy scipy astropy=1.0" COVERAGE=true
-    - python: "3.3"
-      env: DEPS="numpy scipy astropy=1.0"
-    - python: "3.4"
-      env: DEPS="numpy scipy astropy=1.0"
+      env: DEPS="numpy scipy astropy enum34"
+    - python: "3.5"
+      env: DEPS="numpy scipy astropy"
+    - python: "3.6"
+      env: DEPS="numpy scipy astropy"
 
 cache:
   apt: true
@@ -36,12 +36,13 @@ install:
   - conda update --yes conda
   - >
     conda create -n testenv --yes python=$TRAVIS_PYTHON_VERSION
-    $DEPS pip pytest setuptools Cython six>=1.7
+    $DEPS scikit-image pip pytest setuptools Cython six>=1.7
     pyyaml
   - source activate testenv
   - pip install pytest-benchmark pytest-cov
   - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
-  - pip install -e git+git://github.com/guaix-ucm/numina.git#egg=numina
+  - if [[ $COVERAGE == true ]]; then pip install codeclimate-test-reporter; fi
+  - pip install numina
   # Build in place so we can run tests
   - python setup.py build_ext --inplace
 
@@ -51,3 +52,4 @@ script:
 
 after_success:
   - if [[ $COVERAGE == true ]]; then coveralls; fi
+  - if [[ $COVERAGE == true ]]; then codeclimate-test-reporter; fi

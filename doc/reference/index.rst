@@ -1,9 +1,9 @@
 
 .. _reference:
 
-=====================
-API Reference
-=====================
+=========
+Reference
+=========
 
 
 :Release: |version|
@@ -21,8 +21,17 @@ API Reference
 .. toctree::
    :maxdepth: 2
 
+   core
+   instrument
+   processing
+   products
    recipes
-   dataproducts
+   types
+   datamodel
+   utils
+   validators
+   visualization
+   simulation
 
    
 Indices and tables

@@ -1,0 +1,15 @@
+MEGARA.MOS.RoboticPositioner_12:
+  position_relative: [5, 0, 0]
+  target_priority: 10
+  target_name: TARGET12
+  target_type: STAR
+MEGARA.MOS.RoboticPositioner_34:
+  position_relative: [0, 0, 0]
+  target_name: TARGET1
+  target_priority: 10
+  target_type: STAR
+MEGARA.MOS.RoboticPositioner_50:
+  position_relative: [0, 0, 0]
+  target_name: TARGET2
+  target_priority: 10
+  target_type: STAR

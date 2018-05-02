@@ -1,18 +1,30 @@
-from tempfile import mkdtemp
-import numpy as np
-import astropy.io.fits as fits
-import pytest
-import shutil
+#
+# Copyright 2015-2017 Universidad Complutense de Madrid
+#
+# This file is part of Megara DRP
+#
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
+#
 
-from megaradrp.tests.simulation import simulate_dark, simulate_dark_fits
-from megaradrp.tests.simulation import ReadParams, MegaraDetectorSat, MegaraImageFactory
+import shutil
+from tempfile import mkdtemp
+
+import astropy.io.fits as fits
+import numpy
 from numina.core import DataFrame, ObservationResult
 
-from megaradrp.recipes.calibration.tests.test_bpm_common import generate_bias
 from megaradrp.recipes.calibration.dark import DarkRecipe
+from megaradrp.simulation.factory import MegaraImageFactory
+from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
+from megaradrp.simulation.actions import simulate_dark_fits
+from megaradrp.instrument.loader import build_instrument_config, Loader
 
 
 def test_dark():
+
+    numpy.random.seed(422992983)
+
     PSCAN = 50
     DSHAPE = (2056 * 2, 2048 * 2)
     OSCAN = 50
@@ -21,53 +33,60 @@ def test_dark():
     ron = 0.001
     gain = 1.0
     bias = 1000.0
-
-    eq = 0.8 * np.ones(DSHAPE)
-
+    dark = 3.0 # In 1 hour
+    exptime = 3600.0
+    dark_s = dark / exptime
+    qe = 0.8 * numpy.ones(DSHAPE)
+    config_uuid = '4fd05b24-2ed9-457b-b563-a3c618bb1d4c'
     temporary_path = mkdtemp()
-    print ('Path: %s' %temporary_path)
-    fits.writeto('%s/eq.fits' % temporary_path, eq, clobber=True)
+    fits.writeto('%s/eq.fits' % temporary_path, qe, clobber=True)
 
     readpars1 = ReadParams(gain=gain, ron=ron, bias=bias)
     readpars2 = ReadParams(gain=gain, ron=ron, bias=bias)
 
-    detector = MegaraDetectorSat(DSHAPE, OSCAN, PSCAN, eq=eq,
-                                 dark=(3.0 / 3600.0),
+    detector = MegaraDetectorSat('megara_test_detector', DSHAPE, OSCAN, PSCAN, qe=qe,
+                                 dark=dark_s,
                                  readpars1=readpars1, readpars2=readpars2,
                                  bins='11')
 
-    number = 10
-
+    number = 3
     factory = MegaraImageFactory()
-    fs = [simulate_dark_fits(factory, detector, exposure=3600) for i in range(number)]
+    fs = simulate_dark_fits(factory, detector, exposure=3600, repeat=number)
 
-    for aux in range(len(fs)):
-        fs[aux].writeto('%s/dark_%s.fits' % (temporary_path, aux),clobber=True)
+    for idx, aux in enumerate(fs):
+        aux.writeto('%s/dark_%s.fits' % (temporary_path, idx), clobber=True)
 
-    master_bias = generate_bias(detector, number, temporary_path)
-    master_bias_data = master_bias.master_bias.frame[0].data
-
-    fits.writeto('%s/master_bias_data0.fits' % temporary_path,
-                 master_bias_data, clobber=True)  # Master Bias
+    header = fits.Header()
+    header['DATE-OBS'] = '2017-11-09T11:00:00.0'
+    master_bias_data = numpy.zeros(DSHAPE)
+    master_bias_hdul = fits.HDUList(fits.PrimaryHDU(
+        master_bias_data, header=header)
+    )
+    #master_bias_data = master_bias.master_bias.frame[0].data
 
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
-    ob.mode = 'bias_image'
-    names = []
+    ob.mode = 'MegaraDarkImage'
+    ob.configuration = build_instrument_config(config_uuid, loader=Loader())
 
+    names = []
     for aux in range(number):
         names.append('%s/dark_%s.fits' % (temporary_path, aux))
     ob.frames = [DataFrame(filename=open(nombre).name) for nombre in names]
 
     recipe = DarkRecipe()
-    ri = recipe.create_input(obresult=ob, master_bias=DataFrame(
-        filename=open(temporary_path + '/master_bias_data0.fits').name))
+    ri = recipe.create_input(
+        obresult=ob,
+        master_bias=DataFrame(frame=master_bias_hdul),
+    )
     aux = recipe.run(ri)
 
-    fits.writeto('%s/master_dark.fits' % temporary_path, aux.master_dark.frame[0].data, clobber=True)
-    truncate_data = np.around(aux.master_dark.frame[0].data, decimals=2)
+    mean_dark_value = aux.master_dark.frame[0].data.mean()
+
     shutil.rmtree(temporary_path)
-    assert np.all(truncate_data == np.zeros(truncate_data.shape))
+
+    assert numpy.allclose(mean_dark_value, dark, atol=0, rtol=1e-1)
+
 
 if __name__ == "__main__":
     test_dark()

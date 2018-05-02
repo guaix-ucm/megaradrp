@@ -13,8 +13,9 @@ be able to be installed and work properly:
  - `setuptools <http://peak.telecommunity.com/DevCenter/setuptools>`_
  - `numpy <http://www.numpy.org/>`_ >= 1.7
  - `scipy <http://www.scipy.org/>`_
- - `astropy <http://www.astropy.org/>`_ >= 1.0
- - `numina <https://pypi.python.org/pypi/numina/>`_ >= 0.13
+ - `astropy <http://www.astropy.org/>`_ >= 1.1
+ - `numina <https://pypi.python.org/pypi/numina/>`_ >= 0.15
+ - `scikit-image <http://scikit-image.org/>`_
 
 Additional packages are optionally required:
 
@@ -26,8 +27,18 @@ Additional packages are optionally required:
 Installing MEGARA DRP
 *********************
 
+Using Conda
+===========
+
+`megaradrp` can be installed with conda using a custom channel.
+
+From the shell, execute:::
+
+ conda install -c sergiopasra/label/dev megaradrp
+
+
 Using pip
----------
+=========
 To install with pip, simply run:::
 
    pip install --no-deps megaradrp
@@ -38,29 +49,13 @@ To install with pip, simply run:::
     have Numpy installed, since otherwise pip will sometimes try to upgrade 
     your Numpy installation, which may not always be desired.
 
-MEGARA DRP is registered in the Python Package Index. That means (among 
-other things) that can be installed inside the environment with one command.
 
 
-  (myenv) $ pip install megaradrp
-  
-The requirements of megaradrp will be downloaded and installed inside
-the virtual environment. Once the installation is finished, you can check
-by listing the installed recipes with the command line interface tool ``numina``::
 
-  (myenv) $ ./bin/numina show-instruments
-  INFO: Numina simple recipe runner version 0.13.0
-  Instrument: MEGARA
-   has configuration 'default'
-   has pipeline 'default', version 1
-   has pipeline 'experimental', version 1
-
-********************
 Building from source
-********************
+====================
 
-
-The latest stable version of MEGARA DRP can be downloaded from  
+The latest stable version of MEGARA DRP can be downloaded from
 https://pypi.python.org/pypi/megaradrp
 
 To install MEGARA DRP, use the standard installation procedure::
@@ -74,7 +69,21 @@ default installation requires administrative privileges. The different
 installation options can be checked with::
 
    $ python setup.py install --help
-   
+
+
+Checking the installation
+=========================
+Once the installation is finished, you can check
+by listing the installed recipes with the command line interface tool ``numina``::
+
+  (myenv) $ ./bin/numina show-instruments
+  INFO: Numina simple recipe runner version 0.13.0
+  Instrument: MEGARA
+   has configuration 'default'
+   has pipeline 'default', version 1
+   has pipeline 'experimental', version 1
+
+
 Development version
 -------------------
 
@@ -100,9 +109,9 @@ The documentation will be copied to a directory under `build/sphinx`.
 The documentation can be built in different formats. The complete list will appear
 if you type `make` 
 
-**************************
+
 Deployment with Virtualenv
-**************************
+==========================
 
 `Virtualenv`_ is a tool to build isolated Python environments.
 
@@ -184,7 +193,7 @@ Please refer to :ref:`Numina manual <numina:solaris10>` to install Numina
 and its dependences under Solaris 10.
 
 Install numina
---------------
+==============
 
 First, install all the dependencies:
 
@@ -222,7 +231,7 @@ And then build and install using `nmk`::
     $ nmk -t module.install
 
 Install megaradrp
------------------
+=================
 
 Change directory to `/work/gcsop/src_python/gtc/AL/` and download the source code
 of `megaradrp`, either from `PyPI <https://pypi.python.org/pypi/megaradrp>`_

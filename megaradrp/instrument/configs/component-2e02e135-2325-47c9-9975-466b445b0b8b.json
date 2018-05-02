@@ -1,0 +1,27 @@
+{
+ "name": "detector", 
+ "type": "component",
+ "description": "Detector configuration",
+ "uuid": "2e02e135-2325-47c9-9975-466b445b0b8b",
+ "date_start": "2016-11-08", 
+ "date_end": null, 
+ "configurations": {
+   "scan": {
+    "depends": [
+    ],
+    "values": {
+     "trim1": [[0,2056],[50,4146]],
+     "trim2": [[2156,4212],[50,4146]],
+     "bng": [1,1],
+     "overscan1": [[0,2056],[4149,4196]],
+     "overscan2": [[2156,4212],[0,50]],
+     "prescan1": [[0,2056],[0,50]],
+     "prescan2": [[2156,4212],[4145,4196]],
+     "middle1": [[2056,2106],[50,4146]],
+     "middle2": [[2106,2156],[50,4146]],
+     "gain1": 1.73,
+     "gain2": 1.6
+    }
+   }
+  }
+}

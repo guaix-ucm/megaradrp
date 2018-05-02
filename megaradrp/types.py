@@ -1,0 +1,144 @@
+#
+# Copyright 2011-2017 Universidad Complutense de Madrid
+#
+# This file is part of Megara DRP
+#
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
+#
+
+"""Products of the Megara Pipeline"""
+
+
+from numina.core import DataFrameType, DataProductType
+from numina.types.product import DataProductTag
+from numina.types.datatype import DataType
+from numina.types.array import ArrayType
+
+from megaradrp.datamodel import MegaraDataModel
+
+
+class MegaraFrame(DataFrameType):
+    """A processed frame"""
+
+    tags_headers = {}
+
+    def __init__(self, *args, **kwds):
+        super(MegaraFrame, self).__init__(datamodel=MegaraDataModel)
+
+
+class ProcessedFrame(MegaraFrame):
+    """A processed frame"""
+
+    tags_headers = {}
+
+
+class ProcessedImage(ProcessedFrame):
+    """A processed image"""
+    pass
+
+
+class ProcessedRSS(ProcessedFrame):
+    """A processed RSS image"""
+    pass
+
+
+class ProcessedMultiRSS(ProcessedFrame):
+    """A processed RSS image not to be stored"""
+    pass
+
+
+class ProcessedSpectrum(ProcessedFrame):
+    """A 1d spectrum"""
+    pass
+
+
+class ProcessedImageProduct(DataProductTag, ProcessedImage):
+    pass
+
+
+class ProcessedRSSProduct(DataProductTag, ProcessedRSS):
+    pass
+
+
+class ProcessedSpectrumProduct(DataProductTag, ProcessedSpectrum):
+    pass
+
+
+class MasterBias(ProcessedImageProduct):
+    """A Master Bias image"""
+    pass
+
+
+class MasterTwilightFlat(ProcessedRSSProduct):
+    pass
+
+
+class MasterDark(ProcessedImageProduct):
+    """A Master Dark image"""
+    pass
+
+
+class MasterFiberFlat(ProcessedRSSProduct):
+    tags_headers = {'insmode': 'insmode', 'vph': 'vph'}
+
+
+class MasterSlitFlat(ProcessedImageProduct):
+    tags_headers = {'insmode': 'insmode', 'vph': 'vph'}
+
+
+class MasterFiberFlatFrame(ProcessedRSSProduct):
+    tags_headers = {
+        'insmode': 'insmode',
+        'vph': 'vph',
+        'confid': ('confid', 'FIBERS', lambda x: x)
+    }
+
+
+class MasterBPM(ProcessedImageProduct):
+    """Bad Pixel Mask product"""
+    pass
+
+
+class MasterSensitivity(ProcessedSpectrumProduct):
+    """Sensitivity correction."""
+    pass
+
+
+class ReferenceExtinctionTable(DataProductTag, ArrayType):
+    """Atmospheric Extinction."""
+    pass
+
+
+class ReferenceSpectrumTable(DataProductTag, ArrayType):
+    """The spectrum of a reference star"""
+    pass
+
+
+class JSONstorage(DataType):
+    def __init__(self, default=None):
+        super(JSONstorage, self).__init__(ptype=dict, default=default)
+
+    def _datatype_dump(self, obj, where):
+        import json
+        filename = where.destination + '.json'
+
+        with open(filename, 'w') as fd:
+            fd.write(json.dumps(obj, sort_keys=True, indent=2,
+                                separators=(',', ': ')))
+
+        return filename
+
+    def _datatype_load(self, obj):
+        import json
+        try:
+            with open(obj, 'r') as fd:
+                data = json.load(fd)
+        except IOError as e:
+            raise e
+        return data
+
+
+class FocusWavelength(JSONstorage):
+    """Rich table with focus and wavelength"""
+    pass

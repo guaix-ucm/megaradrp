@@ -23,15 +23,14 @@ User documentation
    testing
    running
    modes
-
+   products
 
 Developer documentation
--------------------------
+-----------------------
 
 .. toctree::
    :maxdepth: 2
 
    recipes
-   products
    reference/index
    glossary

@@ -13,24 +13,33 @@
 
 import sys, os
 
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.intersphinx',
-              'sphinx.ext.todo', 'sphinx.ext.coverage', 'sphinx.ext.mathjax']
+# This is required by autodoc to work
+sys.path.insert(0, os.path.abspath('../'))
+
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
+              'sphinx.ext.intersphinx', 'sphinx.ext.inheritance_diagram',
+              'sphinx.ext.todo', 'sphinx.ext.graphviz','sphinx.ext.coverage',
+              'sphinx.ext.mathjax', 'numpydoc']
 
 master_doc = 'index'
 templates_path = ['_templates']
 exclude_patterns = ['_build']
 
 project = u'MEGARA Data Reduction Pipeline'
-copyright = u'2013-2015, Universidad Complutense de Madrid'
-version = '0.5'
-release = '0.5'
+copyright = u'2013-2018, Universidad Complutense de Madrid'
+version = '0.6'
+release = '0.6'
 show_authors = True
+
+numpydoc_show_class_members = False
+numpydoc_show_inherited_class_members = False
+
 
 # -- Options for HTML output ---------------------------------------------------
 html_theme = 'default'
 #html_theme_path = []
 #html_theme_options = {}
-html_static_path = ['_static']
+#html_static_path = ['_static']
 #html_logo = None
 #html_last_updated_fmt = '%b %d, %Y'
 #html_use_smartypants = True
@@ -47,19 +56,15 @@ latex_documents = [
 ]
 latex_logo = '_static/megara.png'
 latex_elements = {
-'papersize': 'a4paper',
-#'pointsize': '10pt',
-#'preamble': '',
-}
-
-latex_elements = {
+    'papersize': 'a4paper',
+    #'pointsize': '10pt',
+    #'preamble': '',
     'fontpkg': '\\usepackage{palatino}',
     }
-latex_show_urls = 'footnote'
 latex_show_urls = 'footnote'
 #latex_appendices = []
 #latex_domain_indices = True
 
 intersphinx_mapping = {
-  'numina': ('http://numina.readthedocs.org/en/latest/', None)
+  'numina': ('http://numina.readthedocs.io/en/latest/', None)
 }

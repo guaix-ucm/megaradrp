@@ -1,0 +1,13 @@
+{
+ "description": "Configuration at GTC, AIV",
+ "uuid": "ca3558e3-e50d-4bbc-86bd-da50a0998a48",
+ "date_start": "2017-05-07T12:00:00.0",
+ "date_end": null, 
+ "type": "instrument",
+ "name": "MEGARA", 
+ "components": 
+  {
+     "detector": "2e02e135-2325-47c9-9975-466b445b0b8b",
+     "pseudoslit": "78f6d437-85d6-4d7a-bdb7-1e043368b442"
+  }
+}

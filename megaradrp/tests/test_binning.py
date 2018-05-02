@@ -1,7 +1,15 @@
+#
+# Copyright 2015-2017 Universidad Complutense de Madrid
+#
+# This file is part of Megara DRP
+#
+# SPDX-License-Identifier: GPL-3.0+
+# License-Filename: LICENSE.txt
+#
 
 import numpy as np
 
-from megaradrp.tests.simulation import binning
+from megaradrp.simulation.detector import binning
 
 def test_binning():
     nr = 6

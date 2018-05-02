@@ -1,4 +1,10 @@
 
+==========
+MEGARA DRP
+==========
+
+|zenodo|
+
 .. image:: https://readthedocs.org/projects/megara-drp/badge/?version=latest
    :target: https://readthedocs.org/projects/megara-drp/?badge=latest
    :alt: Documentation Status
@@ -24,7 +30,11 @@ be able to be installed and work properly:
  - scipy (http://www.scipy.org)
  - astropy >= 1.0 (http://www.astropy.org/)
  - numina >= 0.14 (http://guaix.fis.ucm.es/projects/numina/)
+ - scikit-image (http://scikit-image.org/)
 
 Webpage: https://guaix.fis.ucm.es/megara
 Maintainer: sergiopr@fis.ucm.es
+
+.. |zenodo| image:: https://zenodo.org/badge/13088/guaix-ucm/megaradrp.svg
+   :target: https://zenodo.org/badge/latestdoi/13088/guaix-ucm/megaradrp
 
