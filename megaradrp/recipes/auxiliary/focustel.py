@@ -13,8 +13,8 @@ from __future__ import division, print_function
 
 import numpy
 from numina.array import combine
-from numina.core.dataholders import Product
-from numina.core.requirements import Requirement, ObservationResultRequirement, Parameter
+from numina.core.dataholders import Product, Requirement, Parameter
+from numina.core.requirements import ObservationResultRequirement
 from numina.exceptions import RecipeError
 
 from megaradrp.recipes.scientific.base import ImageRecipe
