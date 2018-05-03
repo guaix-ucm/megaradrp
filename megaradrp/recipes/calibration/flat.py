@@ -89,7 +89,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     smoothing_window = Parameter(31, 'Window for smoothing (must be odd)',
                                  validator=_smoothing_window_check
                                  )
-    extraction_offset = Parameter([0.0], 'Offset traces for extraction')
+    extraction_offset = Parameter([0.0], 'Offset traces for extraction', accept_scalar=True)
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
 
     # Products
