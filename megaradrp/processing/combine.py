@@ -172,7 +172,7 @@ def main(args=None):
     with contextlib.nested(*[fits.open(fname) for fname in args.image]) as hduls:
         result = combination_hdul(hduls, method=method, errors=errors, prolog=None)
 
-    result.writeto(args.output, clobber=True)
+    result.writeto(args.output, overwrite=True)
     # with contextlib.ExitStack() as stack:
     #    hduls = [stack.enter_context(fits.open(fname)) for fname in args.image]
     #    combination_hdul(hduls, method=combine.mean, errors=False, prolog=None)

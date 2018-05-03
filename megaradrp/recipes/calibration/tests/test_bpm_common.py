@@ -26,7 +26,7 @@ def generate_bias(detector, number, temporary_path):
     for aux in range(len(fs)):
         fits.writeto('%s/bias_%s.fits' % (temporary_path, aux), fs[aux],
                      header=header,
-                     clobber=True)
+                     overwrite=True)
 
     fs = ["%s/bias_%s.fits" % (temporary_path, i) for i in range(number)]
 
@@ -76,12 +76,12 @@ def crear_archivos(temporary_path, number=5):
     for aux in range(len(fs)):
         fits.writeto('%s/flat_%s.fits' % (temporary_path, aux), fs[aux],
                      header=header,
-                     clobber=True)
+                     overwrite=True)
 
     result = generate_bias(detector, number, temporary_path)
     result.master_bias.frame.writeto(
         '%s/master_bias_data0.fits' % temporary_path,
-        clobber=True)  # Master Bias
+        overwrite=True)  # Master Bias
 
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
@@ -97,6 +97,6 @@ def crear_archivos(temporary_path, number=5):
     ri = recipe.create_input(obresult=ob, master_bias=DataFrame(
         filename=open(temporary_path + '/master_bias_data0.fits').name))
     aux = recipe.run(ri)
-    aux.master_bpm.frame.writeto('%s/master_bpm.fits' % temporary_path, clobber=True)
+    aux.master_bpm.frame.writeto('%s/master_bpm.fits' % temporary_path, overwrite=True)
 
     return names

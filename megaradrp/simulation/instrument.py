@@ -284,7 +284,7 @@ def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, 
     spec_in_detector = out[:,::scale]
     wl_in_detector = wl_in_super[:,::scale]
 
-    # fits.writeto('downsampled.fits', spec_in_detector, clobber=True)
+    # fits.writeto('downsampled.fits', spec_in_detector, overwrite=True)
     ytrace = np.zeros_like(wl_in_detector)
 
     # Y-positions of the traces

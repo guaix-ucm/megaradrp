@@ -39,7 +39,7 @@ def test_dark():
     qe = 0.8 * numpy.ones(DSHAPE)
     config_uuid = '4fd05b24-2ed9-457b-b563-a3c618bb1d4c'
     temporary_path = mkdtemp()
-    fits.writeto('%s/eq.fits' % temporary_path, qe, clobber=True)
+    fits.writeto('%s/eq.fits' % temporary_path, qe, overwrite=True)
 
     readpars1 = ReadParams(gain=gain, ron=ron, bias=bias)
     readpars2 = ReadParams(gain=gain, ron=ron, bias=bias)
@@ -54,7 +54,7 @@ def test_dark():
     fs = simulate_dark_fits(factory, detector, exposure=3600, repeat=number)
 
     for idx, aux in enumerate(fs):
-        aux.writeto('%s/dark_%s.fits' % (temporary_path, idx), clobber=True)
+        aux.writeto('%s/dark_%s.fits' % (temporary_path, idx), overwrite=True)
 
     header = fits.Header()
     header['DATE-OBS'] = '2017-11-09T11:00:00.0'

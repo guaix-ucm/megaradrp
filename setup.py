@@ -34,7 +34,7 @@ setup(
     },
     install_requires=[
         'numpy',
-        'astropy >= 1.0',
+        'astropy >= 2',
         'scipy',
         'numina >= 0.16',
         'scikit-image',

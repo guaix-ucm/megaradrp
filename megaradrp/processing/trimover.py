@@ -38,7 +38,7 @@ def trimOut(img, detconf, direction='normal', out='trimmed.fits'):
     if issubclass(str, type(img)):
         with fits.open(img) as hdul:
             hdu = trim_and_o_array(hdul[0].data, detconf, direction=direction)
-            fits.writeto(out, hdu, clobber=True)
+            fits.writeto(out, hdu, overwrite=True)
 
     elif isinstance(img, fits.PrimaryHDU):
         finaldata = trim_and_o_array(img.data, detconf, direction=direction)
@@ -225,7 +225,7 @@ class OverscanCorrector(Corrector):
         data[self.ocol2] += 500
         data[self.trim2] += 5000
 
-        fits.writeto('eq_estimado.fits', data, clobber=True)
+        fits.writeto('eq_estimado.fits', data, overwrite=True)
 
     def run(self, img):
         imgid = self.get_imgid(img)
