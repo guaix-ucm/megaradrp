@@ -23,7 +23,7 @@ import math
 from scipy import signal
 from scipy.interpolate import RectBivariateSpline
 from megaradrp.simulation.convolution import hex_c, square_c, setup_grid
-from megaradrp.utils import copy_img
+from numina.frame.utils import copy_img
 from megaradrp.datamodel import MegaraDataModel
 import megaradrp.processing.wcs as mwcs
 
