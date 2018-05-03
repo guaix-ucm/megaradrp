@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2017 Universidad Complutense de Madrid
+# Copyright 2016-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -89,7 +89,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
     master_traces = reqs.MasterAperturesRequirement()
-    extraction_offset = Parameter([0.0], 'Offset traces for extraction')
+    extraction_offset = Parameter([0.0], 'Offset traces for extraction', accept_scalar=True)
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
 
     nfibers = Parameter(10, "The results are sampled every nfibers")
