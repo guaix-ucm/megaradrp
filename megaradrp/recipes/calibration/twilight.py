@@ -52,7 +52,7 @@ class RecipeInput(recipeio.RecipeInput):
     master_bpm = reqs.MasterBPMRequirement()
     master_slitflat = reqs.MasterSlitFlatRequirement()
     master_traces = reqs.MasterAperturesRequirement()
-    extraction_offset = Parameter([0.0], 'Offset traces for extraction')
+    extraction_offset = Parameter([0.0], 'Offset traces for extraction', accept_scalar=True)
     normalize_region = Parameter([1900, 2100], 'Region used to normalize the flat-field',
                                  validator=pixel_2d_check)
     master_wlcalib = reqs.WavelengthCalibrationRequirement()

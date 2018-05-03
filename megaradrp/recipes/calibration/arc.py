@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -104,7 +104,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
     master_apertures = reqs.MasterAperturesRequirement()
-    extraction_offset = Parameter([0.0], 'Offset traces for extraction')
+    extraction_offset = Parameter([0.0], 'Offset traces for extraction', accept_scalar=True)
     lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
     polynomial_degree = Parameter(5, 'Polynomial degree of arc calibration',
                                   as_list=True, nelem='+',
