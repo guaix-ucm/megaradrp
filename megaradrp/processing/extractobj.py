@@ -326,6 +326,11 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
 
         # FIXME: add history
         sens = fits.PrimaryHDU(s_response, header=final[0].header)
+        # delete second axis keywords
+        for key in ['CRPIX2', 'CRVAL2', 'CDELT2', 'CTYPE2']:
+            if key in sens.header:
+                del sens.header[key]
+
         sens.header['uuid'] = str(uuid.uuid1())
         sens.header['tunit'] = ('Jy', "Final units")
 
