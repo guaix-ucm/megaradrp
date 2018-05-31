@@ -116,7 +116,7 @@ def test_setstate_wavecalib():
 
 
 @pytest.mark.xfail
-def test_fail_traceMap():
+def test_fail_wcal():
     my_obj = megaradrp.products.WavelengthCalibration()
     my_obj._datatype_load('')
 
@@ -155,6 +155,12 @@ def test_dump_wavecalib():
     traces = final.__getstate__()
 
     assert (traces == state)
+
+
+def test_query_fields():
+    my_obj = megaradrp.products.WavelengthCalibration()
+    assert my_obj.query_expr.fields() == {'insmode', 'vph'}
+    assert my_obj.query_expr.tags() == {'insmode', 'vph'}
 
 
 if __name__ == "__main__":

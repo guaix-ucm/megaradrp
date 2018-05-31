@@ -22,8 +22,22 @@ from numina.datamodel import DataModel
 from numina.util.convert import convert_date
 
 
+class QueryAttribute(object):
+    def __init__(self, name, tipo, description=""):
+        self.name = name
+        self.type = tipo
+        self.description = description
+
+
 class MegaraDataModel(DataModel):
     """Data model of MEGARA images"""
+
+    query_attrs = {
+        'vph': QueryAttribute('vph', str),
+        'insmode': QueryAttribute('insmode', str),
+        'insconf': QueryAttribute('insconf', str),
+        'speclamp': QueryAttribute('speclamp', str)
+    }
 
     meta_info_headers = [
         'instrument',

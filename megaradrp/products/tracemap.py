@@ -58,6 +58,9 @@ class TraceMap(BaseStructuredCalibration):
         self.boxes_positions = []
         self.global_offset = nppol.Polynomial([0.0])
         self.ref_column = 2000
+        #
+    def tag_names(self):
+        return ['insmode', 'vph']
 
     def __getstate__(self):
         st = super(TraceMap, self).__getstate__()

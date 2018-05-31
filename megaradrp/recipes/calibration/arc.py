@@ -21,7 +21,6 @@ from copy import deepcopy
 
 from numina.core import Requirement, Product, Parameter, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
-from numina.core.products import LinesCatalog
 from numina.array.display.polfit_residuals import polfit_residuals
 from numina.array.display.polfit_residuals import polfit_residuals_with_sigma_rejection
 from numina.array.wavecalib.__main__ import find_fxpeaks
@@ -105,7 +104,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     master_bpm = reqs.MasterBPMRequirement()
     master_apertures = reqs.MasterAperturesRequirement()
     extraction_offset = Parameter([0.0], 'Offset traces for extraction', accept_scalar=True)
-    lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
+    lines_catalog = reqs.LinesCatalogRequirement()
     polynomial_degree = Parameter(5, 'Polynomial degree of arc calibration',
                                   as_list=True, nelem='+',
                                   validator=range_validator(minval=1)

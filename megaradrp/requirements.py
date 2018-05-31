@@ -87,6 +87,11 @@ class WavelengthCalibrationRequirement(Requirement):
               self).__init__(megaradrp.products.WavelengthCalibration, 'Wavelength calibration table')
 
 
+class LinesCatalogRequirement(Requirement):
+    def __init__(self):
+        super(LinesCatalogRequirement, self).__init__(megaradrp.types.MegaraLinesCatalog, 'Catalog of lines')
+
+
 class SensitivityRequirement(Requirement):
     def __init__(self, optional=True):
         super(SensitivityRequirement,
