@@ -326,8 +326,10 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
         r0 = response_0 / r0max
         r1 = response_1 / r1max
 
-        pixm1, pixm2 = wl_coverage1
-        pixr1, pixr2 = wl_coverage2
+        pixm1 = wl_coverage1.start
+        pixm2 = wl_coverage1.stop
+        pixr1 = wl_coverage2.start
+        pixr2 = wl_coverage2.stop
 
         pixlims = {}
         pixlims['PIXLIMR1'] = pixr1 + 1  # Convert to 1-ref
