@@ -370,7 +370,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
                     # store results for plotting
                     plot_tracenumber.append(fibid)
-                    plot_npeaksfound.append(nlines)
+                    plot_npeaksfound.append(len(fxpeaks))
                     plot_crval1.append(solution_wv.cr_linear.crval)
                     plot_cdelt1.append(solution_wv.cr_linear.cdelt)
                     plot_coeff.append(solution_wv.coeff)
