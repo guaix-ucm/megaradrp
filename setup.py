@@ -50,7 +50,10 @@ setup(
         ],
         'numinadb.extra.1': [
             'MEGARA = megaradrp.db [DB]'
-        ]
+        ],
+        'console_scripts': [
+            'megaradrp-overplot_traces = megaradrp.tools.overplot_traces:main',
+        ],
     },
     classifiers=[
         "Programming Language :: Python :: 2.7",
