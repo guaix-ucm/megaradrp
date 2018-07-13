@@ -22,7 +22,9 @@ from copy import deepcopy
 from numina.core import Requirement, Product, Parameter, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 from numina.array.display.polfit_residuals import polfit_residuals
-from numina.array.display.polfit_residuals import polfit_residuals_with_sigma_rejection
+from numina.array.display.polfit_residuals import \
+    polfit_residuals_with_sigma_rejection
+from numina.array.display.ximplotxy import ximplotxy
 from numina.array.wavecalib.__main__ import find_fxpeaks
 from numina.array.wavecalib.arccalibration import arccalibration_direct
 from numina.array.wavecalib.arccalibration import fit_list_of_wvfeatures
@@ -103,7 +105,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
     master_apertures = reqs.MasterAperturesRequirement()
-    extraction_offset = Parameter([0.0], 'Offset traces for extraction', accept_scalar=True)
+    extraction_offset = Parameter([0.0], 'Offset traces for extraction',
+                                  accept_scalar=True)
     lines_catalog = reqs.LinesCatalogRequirement()
     polynomial_degree = Parameter(5, 'Polynomial degree of arc calibration',
                                   as_list=True, nelem='+',
@@ -286,6 +289,12 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         crpix1 = 1.0
         naxis1 = rss.shape[1]
 
+        plot_tracenumber = []
+        plot_npeaksfound = []
+        plot_crval1 = []
+        plot_cdelt1 = []
+        plot_coeff = []
+
         initial_data_wlcalib = WavelengthCalibration(instrument='MEGARA')
         initial_data_wlcalib.total_fibers = tracemap.total_fibers
         for trace in tracemap.contents:
@@ -359,6 +368,13 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     self.logger.info('fitted coefficients %s',
                                      solution_wv.coeff)
 
+                    # store results for plotting
+                    plot_tracenumber.append(fibid)
+                    plot_npeaksfound.append(nlines)
+                    plot_crval1.append(solution_wv.cr_linear.crval)
+                    plot_cdelt1.append(solution_wv.cr_linear.cdelt)
+                    plot_coeff.append(solution_wv.coeff)
+
                     trace_pol = trace.polynomial
                     # Update feature with measurements of Y coord in original
                     # image
@@ -400,6 +416,28 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         self.logger.info('Errors in fitting: %s', error_contador)
         self.logger.info('Missing fibers: %s', missing_fib)
 
+        # save PDF file with plots in working directory
+        if self.intermediate_results:
+            from matplotlib.backends.backend_pdf import PdfPages
+            pdf = PdfPages('wavecal_iter1.pdf')
+            for dumplot in zip([plot_npeaksfound, plot_crval1, plot_cdelt1],
+                               ['number of peaks found',
+                                'linear CRVAL1', 'linear_CDELT1']):
+                ax = ximplotxy(plot_tracenumber, dumplot[0],
+                               xlabel='fiber number', ylabel=dumplot[1],
+                               linestyle='', marker='.', color='C0',
+                               show=False)
+                pdf.savefig()
+            for ideg in range(poldeg_initial):
+                dumplot = [coef[ideg] for coef in plot_coeff]
+                ax = ximplotxy(plot_tracenumber, dumplot,
+                               xlabel='fiber number',
+                               ylabel='coef[' + str(ideg) + ']',
+                               linestyle='', marker='.', color='C0',
+                               show=False)
+                pdf.savefig()
+            pdf.close()
+
         self.logger.info('Generating fwhm_image...')
         image = self.generate_fwhm_image(initial_data_wlcalib.contents)
         fwhm_image = fits.PrimaryHDU(image)
@@ -418,6 +456,12 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             error_contador = 0
             data_wlcalib = WavelengthCalibration(instrument='MEGARA')
             data_wlcalib.total_fibers = tracemap.total_fibers
+            plot_tracenumber = []
+            plot_npointseff = []
+            plot_residualstd = []
+            plot_crval1 = []
+            plot_cdelt1 = []
+            plot_coeff = []
             # refine wavelength calibration polynomial for each valid fiber
             for trace in tracemap.contents:
                 fibid = trace.fibid
@@ -472,6 +516,13 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         solution_wv.npoints_eff = npoints_eff  # add also this
                         new = FiberSolutionArcCalibration(fibid, solution_wv)
                         data_wlcalib.contents.append(new)
+                        # store results for plotting
+                        plot_tracenumber.append(fibid)
+                        plot_npointseff.append(npoints_eff)
+                        plot_residualstd.append(residual_std)
+                        plot_crval1.append(crmin1_linear)
+                        plot_cdelt1.append(cdelt1_linear)
+                        plot_coeff.append(poly_refined.coef)
                     else:
                         self.logger.error('error in row %d, fibid %d',
                                           idx, fibid)
@@ -483,6 +534,30 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
             self.logger.info('Errors in fitting: %s', error_contador)
             self.logger.info('Missing fibers: %s', missing_fib)
+
+            # save PDF file with plots in working directory
+            if self.intermediate_results:
+                from matplotlib.backends.backend_pdf import PdfPages
+                pdf = PdfPages('wavecal_iter2.pdf')
+                for dumplot in zip(
+                        [plot_npointseff, plot_residualstd, plot_crval1,
+                         plot_cdelt1],
+                        ['effective number of lines found', 'residual std',
+                         'linear CRVAL1', 'linear_CDELT1']):
+                    ax = ximplotxy(plot_tracenumber, dumplot[0],
+                                   xlabel='fiber number', ylabel=dumplot[1],
+                                   linestyle='', marker='.', color='C0',
+                                   show=False)
+                    pdf.savefig()
+                for ideg in range(poldeg_refined):
+                    dumplot = [coef[ideg] for coef in plot_coeff]
+                    ax = ximplotxy(plot_tracenumber, dumplot,
+                                   xlabel='fiber number',
+                                   ylabel='coef[' + str(ideg) + ']',
+                                   linestyle='', marker='.', color='C0',
+                                   show=False)
+                    pdf.savefig()
+                pdf.close()
         else:
             data_wlcalib = None
 
