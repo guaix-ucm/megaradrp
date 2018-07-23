@@ -16,8 +16,9 @@ from datetime import datetime
 
 import numpy
 from astropy.io import fits
-
 from copy import deepcopy
+import errno
+import os
 
 from numina.core import Requirement, Product, Parameter, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
@@ -116,6 +117,10 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                        as_list=True, nelem='+',
                        validator=range_validator(minval=0))
     debug_plot = Parameter(0, 'Save intermediate tracing plots')
+    store_pdf_with_refined_fits = Parameter(
+        0,
+        description='Store PDF plot with refined fits for each fiber',
+    )
 
     # Products
     reduced_image = Product(ProcessedFrame)
@@ -183,7 +188,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             rinput.master_apertures, rinput.nlines,
             threshold=threshold,
             min_distance=min_distance,
-            debugplot=debugplot
+            debugplot=debugplot,
+            store_pdf_with_refined_fits=rinput.store_pdf_with_refined_fits
         )
 
         initial_data_wlcalib.tags = rinput.obresult.tags
@@ -241,7 +247,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     def calibrate_wl(self, rss, lines_catalog, poldeg, tracemap, nlines,
                      threshold=0.27,
                      min_distance=30,
-                     debugplot=0):
+                     debugplot=0,
+                     store_pdf_with_refined_fits=0):
 
         if len(poldeg) == 1:
             poldeg_initial = poldeg[0]
@@ -462,6 +469,16 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             plot_crval1 = []
             plot_cdelt1 = []
             plot_coeff = []
+
+            # output PDF with refined fits
+            if store_pdf_with_refined_fits == 1:
+                if self.intermediate_results:
+                    if not os.path.exists('refined_wavecal'):
+                        try:
+                            os.makedirs('refined_wavecal')
+                        except OSError as exc:  # Guard against race condition
+                            if exc.errno != errno.EEXIST:
+                                raise
             # refine wavelength calibration polynomial for each valid fiber
             for trace in tracemap.contents:
                 fibid = trace.fibid
@@ -479,13 +496,30 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         coeff[k] = dumpol(fibid)
                     wlpol = numpy.polynomial.Polynomial(coeff)
                     # refine polynomial fit using the full set of arc lines
-                    # in master list
+                    # in master list (and save output PDF file when requested)
+                    if store_pdf_with_refined_fits == 1:
+                        if self.intermediate_results:
+                            from matplotlib.backends.backend_pdf import PdfPages
+                            plottitle = 'fiber #{0:03d}'.format(fibid)
+                            pdf = PdfPages(
+                                'refined_wavecal/{0:03d}.pdf'.format(fibid)
+                            )
+                        else:
+                            plottitle = None
+                            pdf = None
+                    else:
+                        plottitle = None
+                        pdf = None
                     poly_refined, yres_summary  = \
                         refine_arccalibration(sp=row,
                                               poly_initial=wlpol,
                                               wv_master=wv_master_all,
-                                              poldeg=poldeg_refined)
-
+                                              poldeg=poldeg_refined,
+                                              plottitle=plottitle,
+                                              ylogscale=True,
+                                              pdf=pdf)
+                    if pdf is not None:
+                        pdf.close()
                     if poly_refined != numpy.polynomial.Polynomial([0.0]):
                         npoints_eff = yres_summary['npoints']
                         residual_std = yres_summary['robust_std']
