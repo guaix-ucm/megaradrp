@@ -429,13 +429,14 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             pdf = PdfPages('wavecal_iter1.pdf')
             for dumplot in zip([plot_npeaksfound, plot_crval1, plot_cdelt1],
                                ['number of peaks found',
-                                'linear CRVAL1', 'linear_CDELT1']):
+                                'linear CRVAL1 ' + r'($\AA$)',
+                                'linear_CDELT1 ' + r'($\AA$/pixel)']):
                 ax = ximplotxy(plot_tracenumber, dumplot[0],
                                xlabel='fiber number', ylabel=dumplot[1],
                                linestyle='', marker='.', color='C0',
                                show=False)
                 pdf.savefig()
-            for ideg in range(poldeg_initial):
+            for ideg in range(poldeg_initial + 1):
                 dumplot = [coef[ideg] for coef in plot_coeff]
                 ax = ximplotxy(plot_tracenumber, dumplot,
                                xlabel='fiber number',
@@ -562,7 +563,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                           idx, fibid)
                         data_wlcalib.error_fitting.append(fibid)
                 else:
-                    self.logger.info('skipping row %d, fibid %d, not extracted', idx, fibid)
+                    self.logger.info('skipping row %d, fibid %d, not extracted',
+                                     idx, fibid)
                     missing_fib += 1
                     data_wlcalib.missing_fibers.append(fibid)
 
@@ -576,14 +578,16 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 for dumplot in zip(
                         [plot_npointseff, plot_residualstd, plot_crval1,
                          plot_cdelt1],
-                        ['effective number of lines found', 'residual std',
-                         'linear CRVAL1', 'linear_CDELT1']):
+                        ['effective number of lines found',
+                         'residual std ' + r'($\AA$)',
+                         'linear CRVAL1 ' + r'($\AA$)',
+                         'linear_CDELT1 ' + r'($\AA$/pixel)']):
                     ax = ximplotxy(plot_tracenumber, dumplot[0],
                                    xlabel='fiber number', ylabel=dumplot[1],
                                    linestyle='', marker='.', color='C0',
                                    show=False)
                     pdf.savefig()
-                for ideg in range(poldeg_refined):
+                for ideg in range(poldeg_refined + 1):
                     dumplot = [coef[ideg] for coef in plot_coeff]
                     ax = ximplotxy(plot_tracenumber, dumplot,
                                    xlabel='fiber number',
