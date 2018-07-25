@@ -141,7 +141,12 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         """
 
+        self.logger.info('starting arc calibration recipe')
+
         debugplot = rinput.debug_plot if self.intermediate_results else 0
+
+        obresult = rinput.obresult
+        obresult_meta = obresult.metadata_with(self.datamodel)
 
         flow1 = self.init_filters(rinput, rinput.obresult.configuration)
         img = basic_processing_with_combination(rinput, flow1, method=combine.median)
@@ -195,24 +200,14 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         initial_data_wlcalib.tags = rinput.obresult.tags
         final = initial_data_wlcalib
         final.update_metadata(self)
-
-        origin = {}
-        origin['block_uuid'] = reduced2d[0].header.get('BLCKUUID', "UNKNOWN")
-        origin['insconf_uuid'] = reduced2d[0].header.get('INSCONF', "UNKNOWN")
-        origin['observation_date'] = reduced2d[0].header['DATE-OBS']
-        # FIXME: redundant
-        origin['frames'] = []
-        for frame in rinput.obresult.frames:
-            hdulist = frame.open()
-            fname = self.datamodel.get_imgid(hdulist)
-            origin['frames'].append(fname)
-
-        final.update_metadata_origin(origin)
+        final.update_metadata_origin(obresult_meta)
 
         self.save_structured_as_json(
             initial_data_wlcalib,
             'initial_master_wlcalib.json'
         )
+
+        self.logger.info('end arc calibration recipe')
 
         if data_wlcalib is None:
             return self.create_result(
