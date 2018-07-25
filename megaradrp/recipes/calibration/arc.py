@@ -196,20 +196,18 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         final = initial_data_wlcalib
         final.update_metadata(self)
 
-        final.meta_info['creation_date'] = datetime.utcnow().isoformat()
-        final.meta_info['origin'] = {}
-        final.meta_info['origin']['block_uuid'] = reduced2d[0].header.get('BLCKUUID', "UNKNOWN")
-        final.meta_info['origin']['insconf_uuid'] = reduced2d[0].header.get('INSCONF', "UNKNOWN")
-        final.meta_info['origin']['date_obs'] = reduced2d[0].header['DATE-OBS']
-
+        origin = {}
+        origin['block_uuid'] = reduced2d[0].header.get('BLCKUUID', "UNKNOWN")
+        origin['insconf_uuid'] = reduced2d[0].header.get('INSCONF', "UNKNOWN")
+        origin['observation_date'] = reduced2d[0].header['DATE-OBS']
         # FIXME: redundant
-        cdata = []
+        origin['frames'] = []
         for frame in rinput.obresult.frames:
             hdulist = frame.open()
             fname = self.datamodel.get_imgid(hdulist)
-            cdata.append(fname)
+            origin['frames'].append(fname)
 
-        final.meta_info['origin']['frames'] = cdata
+        final.update_metadata_origin(origin)
 
         self.save_structured_as_json(
             initial_data_wlcalib,
