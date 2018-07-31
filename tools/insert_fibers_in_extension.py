@@ -18,7 +18,7 @@ def create_fibers(slit):
         raise ValueError('Wrong slit %s' % (slit,))
 
     data = pkgutil.get_data('megaradrp.instrument.configs', slith)
-    default_hdr = StringIO(data)
+    default_hdr = StringIO(data.decode('utf8'))
     hdr_fiber = fits.header.Header.fromfile(default_hdr)
     fibers = fits.ImageHDU(header=hdr_fiber, name='FIBERS')
     return fibers
