@@ -44,6 +44,13 @@ def pixel_2d_check(value):
     return value
 
 
+def pixel_2d_check_or_none(value):
+    """Check this is a valid 2D pixel list or None"""
+    if value is None:
+        return value
+    return pixel_2d_check(value)
+
+
 @generate_docs
 class RecipeInput(recipeio.RecipeInput):
     obresult = ObservationResultRequirement()
@@ -55,6 +62,8 @@ class RecipeInput(recipeio.RecipeInput):
     extraction_offset = Parameter([0.0], 'Offset traces for extraction', accept_scalar=True)
     normalize_region = Parameter([1900, 2100], 'Region used to normalize the flat-field',
                                  validator=pixel_2d_check)
+    continuum_region = Parameter([1900, 1900], 'Subtract this region before normalize the flat-field',
+                                 validator=pixel_2d_check_or_none)
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
     master_fiberflat = reqs.MasterFiberFlatRequirement()
 
@@ -147,12 +156,19 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
 
         self.save_intermediate_img(reduced_rss, 'reduced_rss.fits')
         # Measure values in final
+        rss_wl_data = reduced_rss[0].data
+        mask = self.good_ids_mask(rinput.master_wlcalib)
+
         start, end = rinput.normalize_region
         self.logger.info('doing mean between columns %d-%d', start, end)
-        rss_wl_data = reduced_rss[0].data
-
-        mask = self.good_ids_mask(rinput.master_wlcalib)
         colapse = rss_wl_data[:, start:end].mean(axis=1)
+        if rinput.continuum_region is not None:
+            start_c, end_c = rinput.continuum_region
+            if end_c > start_c:
+                self.logger.info('subtract mean of columns %d-%d', start_c, end_c)
+                colapse_c = rss_wl_data[:, start_c:end_c].mean(axis=1)
+                colapse -= colapse_c
+
         # Normalize the colapsed array
         colapse_good = colapse[mask]
         colapse_norm = colapse / colapse_good.mean()
