@@ -12,7 +12,7 @@
 import logging
 
 
-__version__ = '0.7.rc1'
+__version__ = '0.7'
 
 
 # Top level NullHandler

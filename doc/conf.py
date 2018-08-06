@@ -28,7 +28,7 @@ exclude_patterns = ['_build']
 project = u'MEGARA Data Reduction Pipeline'
 copyright = u'2013-2018, Universidad Complutense de Madrid'
 version = '0.7'
-release = '0.7rc1'
+release = '0.7'
 show_authors = True
 
 numpydoc_show_class_members = False
