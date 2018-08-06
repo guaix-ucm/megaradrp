@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2018 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -12,7 +12,7 @@
 import logging
 
 
-__version__ = '0.6.dev4'
+__version__ = '0.8.dev0'
 
 
 # Top level NullHandler
