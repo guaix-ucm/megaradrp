@@ -42,7 +42,7 @@ install:
   - pip install pytest-benchmark pytest-cov
   - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
   - if [[ $COVERAGE == true ]]; then pip install codeclimate-test-reporter; fi
-  - pip install -e git+git://github.com/guaix-ucm/numina.git#egg=numina
+  - pip install numina
   # Build in place so we can run tests
   - python setup.py build_ext --inplace
 
