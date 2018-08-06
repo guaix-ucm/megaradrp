@@ -34,7 +34,7 @@ Using Conda
 
 From the shell, execute:::
 
- conda install -c sergiopasra/label/dev megaradrp
+ conda install -c conda-forge megaradrp
 
 
 Using pip

@@ -10,12 +10,14 @@
 """Products of the Megara Pipeline"""
 
 
-from numina.core import DataFrameType, DataProductType
+from numina.core import DataFrameType
 from numina.types.product import DataProductTag
 from numina.types.datatype import DataType
 from numina.types.array import ArrayType
+from numina.types.linescatalog import LinesCatalog
 
-from megaradrp.datamodel import MegaraDataModel
+
+from megaradrp.datamodel import MegaraDataModel, QueryAttribute
 
 
 class MegaraFrame(DataFrameType):
@@ -65,6 +67,12 @@ class ProcessedSpectrumProduct(DataProductTag, ProcessedSpectrum):
     pass
 
 
+class MegaraLinesCatalog(LinesCatalog):
+    __tags__ = {'speclamp': QueryAttribute('speclamp', str), 'vph': QueryAttribute('vph', str)}
+
+    def name(self):
+        return "LinesCatalog"
+
 class MasterBias(ProcessedImageProduct):
     """A Master Bias image"""
     pass
@@ -81,10 +89,12 @@ class MasterDark(ProcessedImageProduct):
 
 class MasterFiberFlat(ProcessedRSSProduct):
     tags_headers = {'insmode': 'insmode', 'vph': 'vph'}
+    __tags__ = ['insmode', 'vph']
 
 
 class MasterSlitFlat(ProcessedImageProduct):
     tags_headers = {'insmode': 'insmode', 'vph': 'vph'}
+    __tags__ = ['insmode', 'vph']
 
 
 class MasterFiberFlatFrame(ProcessedRSSProduct):
@@ -93,6 +103,8 @@ class MasterFiberFlatFrame(ProcessedRSSProduct):
         'vph': 'vph',
         'confid': ('confid', 'FIBERS', lambda x: x)
     }
+    # FIXME: confid missing
+    __tags__ = ['insmode', 'vph']
 
 
 class MasterBPM(ProcessedImageProduct):

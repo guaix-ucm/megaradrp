@@ -44,7 +44,7 @@ def test_trim_and_o(direction):
         'bng': [1,1]
     }
     fs = generate_bias_file()
-    fits.writeto('%s/flat.fits' % (temporary_path), fs, clobber=True)
+    fits.writeto('%s/flat.fits' % (temporary_path), fs, overwrite=True)
     trimOut(
         '%s/flat.fits' % (temporary_path),
         detconf,
@@ -61,7 +61,7 @@ def test_trim_and_o(direction):
 def test_trim_and_o_fail():
     temporary_path = mkdtemp()
     fs = generate_bias_file()
-    fits.writeto('%s/flat.fits' % (temporary_path), fs, clobber=True)
+    fits.writeto('%s/flat.fits' % (temporary_path), fs, overwrite=True)
 
     direction = 'fails'
     detconf = {
@@ -83,7 +83,7 @@ def test_trim_and_o_fail():
 def test_trim_and_o_fail2():
     temporary_path = mkdtemp()
     fs = generate_bias_file()
-    fits.writeto('%s/flat.fits' % (temporary_path), fs, clobber=True)
+    fits.writeto('%s/flat.fits' % (temporary_path), fs, overwrite=True)
 
     bins = 'fail'
     detconf = {
@@ -112,7 +112,7 @@ def test_apextract_weights():
     rss = apextract_weights(data, tarfile.open(file_name, 'r'))
     hdu_rss = fits.PrimaryHDU(rss)
     final = fits.HDUList([hdu_rss])
-    final.writeto('rss.fits', clobber=True)
+    final.writeto('rss.fits', overwrite=True)
     assert True
 
 

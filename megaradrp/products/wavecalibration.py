@@ -41,6 +41,9 @@ class WavelengthCalibration(BaseStructuredCalibration):
         self.contents = []
         self.global_offset = nppol.Polynomial([0.0])
 
+    def tag_names(self):
+        return ['insmode', 'vph']
+
     def __getstate__(self):
         st = super(WavelengthCalibration, self).__getstate__()
 

@@ -88,4 +88,4 @@ def create(image, direction='normal', bins='11'):
     finaldata[ocol2] = 8
 
     hdu = fits.PrimaryHDU(data=finaldata)
-    hdu.writeto(image, clobber=True)
+    hdu.writeto(image, overwrite=True)

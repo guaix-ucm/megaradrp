@@ -49,10 +49,10 @@ class DerivedRecipe(MegaraBaseRecipe):
         reduced1 = img
 
         fits.writeto(self.directorio + '/reduced_flat.fits', reduced1[0].data,
-                     clobber=True)
+                     overwrite=True)
 
         fits.writeto(self.directorio + '/reduced_flat_bpm.fits',
-                     reduced1[0].data, clobber=True)
+                     reduced1[0].data, overwrite=True)
 
         return self.create_result()
 

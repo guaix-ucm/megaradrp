@@ -16,14 +16,16 @@ from datetime import datetime
 
 import numpy
 from astropy.io import fits
-
 from copy import deepcopy
+import errno
+import os
 
 from numina.core import Requirement, Product, Parameter, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
-from numina.core.products import LinesCatalog
 from numina.array.display.polfit_residuals import polfit_residuals
-from numina.array.display.polfit_residuals import polfit_residuals_with_sigma_rejection
+from numina.array.display.polfit_residuals import \
+    polfit_residuals_with_sigma_rejection
+from numina.array.display.ximplotxy import ximplotxy
 from numina.array.wavecalib.__main__ import find_fxpeaks
 from numina.array.wavecalib.arccalibration import arccalibration_direct
 from numina.array.wavecalib.arccalibration import fit_list_of_wvfeatures
@@ -104,8 +106,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
     master_apertures = reqs.MasterAperturesRequirement()
-    extraction_offset = Parameter([0.0], 'Offset traces for extraction', accept_scalar=True)
-    lines_catalog = Requirement(LinesCatalog, 'Catalog of lines')
+    extraction_offset = Parameter([0.0], 'Offset traces for extraction',
+                                  accept_scalar=True)
+    lines_catalog = reqs.LinesCatalogRequirement()
     polynomial_degree = Parameter(5, 'Polynomial degree of arc calibration',
                                   as_list=True, nelem='+',
                                   validator=range_validator(minval=1)
@@ -114,6 +117,10 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                        as_list=True, nelem='+',
                        validator=range_validator(minval=0))
     debug_plot = Parameter(0, 'Save intermediate tracing plots')
+    store_pdf_with_refined_fits = Parameter(
+        0,
+        description='Store PDF plot with refined fits for each fiber',
+    )
 
     # Products
     reduced_image = Product(ProcessedFrame)
@@ -134,7 +141,12 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         """
 
+        self.logger.info('starting arc calibration recipe')
+
         debugplot = rinput.debug_plot if self.intermediate_results else 0
+
+        obresult = rinput.obresult
+        obresult_meta = obresult.metadata_with(self.datamodel)
 
         flow1 = self.init_filters(rinput, rinput.obresult.configuration)
         img = basic_processing_with_combination(rinput, flow1, method=combine.median)
@@ -181,32 +193,21 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             rinput.master_apertures, rinput.nlines,
             threshold=threshold,
             min_distance=min_distance,
-            debugplot=debugplot
+            debugplot=debugplot,
+            store_pdf_with_refined_fits=rinput.store_pdf_with_refined_fits
         )
 
         initial_data_wlcalib.tags = rinput.obresult.tags
         final = initial_data_wlcalib
         final.update_metadata(self)
-
-        final.meta_info['creation_date'] = datetime.utcnow().isoformat()
-        final.meta_info['origin'] = {}
-        final.meta_info['origin']['block_uuid'] = reduced2d[0].header.get('BLCKUUID', "UNKNOWN")
-        final.meta_info['origin']['insconf_uuid'] = reduced2d[0].header.get('INSCONF', "UNKNOWN")
-        final.meta_info['origin']['date_obs'] = reduced2d[0].header['DATE-OBS']
-
-        # FIXME: redundant
-        cdata = []
-        for frame in rinput.obresult.frames:
-            hdulist = frame.open()
-            fname = self.datamodel.get_imgid(hdulist)
-            cdata.append(fname)
-
-        final.meta_info['origin']['frames'] = cdata
+        final.update_metadata_origin(obresult_meta)
 
         self.save_structured_as_json(
             initial_data_wlcalib,
             'initial_master_wlcalib.json'
         )
+
+        self.logger.info('end arc calibration recipe')
 
         if data_wlcalib is None:
             return self.create_result(
@@ -239,7 +240,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     def calibrate_wl(self, rss, lines_catalog, poldeg, tracemap, nlines,
                      threshold=0.27,
                      min_distance=30,
-                     debugplot=0):
+                     debugplot=0,
+                     store_pdf_with_refined_fits=0):
 
         if len(poldeg) == 1:
             poldeg_initial = poldeg[0]
@@ -286,6 +288,12 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         missing_fib = 0
         crpix1 = 1.0
         naxis1 = rss.shape[1]
+
+        plot_tracenumber = []
+        plot_npeaksfound = []
+        plot_crval1 = []
+        plot_cdelt1 = []
+        plot_coeff = []
 
         initial_data_wlcalib = WavelengthCalibration(instrument='MEGARA')
         initial_data_wlcalib.total_fibers = tracemap.total_fibers
@@ -360,6 +368,13 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     self.logger.info('fitted coefficients %s',
                                      solution_wv.coeff)
 
+                    # store results for plotting
+                    plot_tracenumber.append(fibid)
+                    plot_npeaksfound.append(len(fxpeaks))
+                    plot_crval1.append(solution_wv.cr_linear.crval)
+                    plot_cdelt1.append(solution_wv.cr_linear.cdelt)
+                    plot_coeff.append(solution_wv.coeff)
+
                     trace_pol = trace.polynomial
                     # Update feature with measurements of Y coord in original
                     # image
@@ -401,6 +416,29 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         self.logger.info('Errors in fitting: %s', error_contador)
         self.logger.info('Missing fibers: %s', missing_fib)
 
+        # save PDF file with plots in working directory
+        if self.intermediate_results:
+            from matplotlib.backends.backend_pdf import PdfPages
+            pdf = PdfPages('wavecal_iter1.pdf')
+            for dumplot in zip([plot_npeaksfound, plot_crval1, plot_cdelt1],
+                               ['number of peaks found',
+                                'linear CRVAL1 ' + r'($\AA$)',
+                                'linear_CDELT1 ' + r'($\AA$/pixel)']):
+                ax = ximplotxy(plot_tracenumber, dumplot[0],
+                               xlabel='fiber number', ylabel=dumplot[1],
+                               linestyle='', marker='.', color='C0',
+                               show=False)
+                pdf.savefig()
+            for ideg in range(poldeg_initial + 1):
+                dumplot = [coef[ideg] for coef in plot_coeff]
+                ax = ximplotxy(plot_tracenumber, dumplot,
+                               xlabel='fiber number',
+                               ylabel='coef[' + str(ideg) + ']',
+                               linestyle='', marker='.', color='C0',
+                               show=False)
+                pdf.savefig()
+            pdf.close()
+
         self.logger.info('Generating fwhm_image...')
         image = self.generate_fwhm_image(initial_data_wlcalib.contents)
         fwhm_image = fits.PrimaryHDU(image)
@@ -419,6 +457,22 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             error_contador = 0
             data_wlcalib = WavelengthCalibration(instrument='MEGARA')
             data_wlcalib.total_fibers = tracemap.total_fibers
+            plot_tracenumber = []
+            plot_npointseff = []
+            plot_residualstd = []
+            plot_crval1 = []
+            plot_cdelt1 = []
+            plot_coeff = []
+
+            # output PDF with refined fits
+            if store_pdf_with_refined_fits == 1:
+                if self.intermediate_results:
+                    if not os.path.exists('refined_wavecal'):
+                        try:
+                            os.makedirs('refined_wavecal')
+                        except OSError as exc:  # Guard against race condition
+                            if exc.errno != errno.EEXIST:
+                                raise
             # refine wavelength calibration polynomial for each valid fiber
             for trace in tracemap.contents:
                 fibid = trace.fibid
@@ -436,13 +490,30 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         coeff[k] = dumpol(fibid)
                     wlpol = numpy.polynomial.Polynomial(coeff)
                     # refine polynomial fit using the full set of arc lines
-                    # in master list
+                    # in master list (and save output PDF file when requested)
+                    if store_pdf_with_refined_fits == 1:
+                        if self.intermediate_results:
+                            from matplotlib.backends.backend_pdf import PdfPages
+                            plottitle = 'fiber #{0:03d}'.format(fibid)
+                            pdf = PdfPages(
+                                'refined_wavecal/{0:03d}.pdf'.format(fibid)
+                            )
+                        else:
+                            plottitle = None
+                            pdf = None
+                    else:
+                        plottitle = None
+                        pdf = None
                     poly_refined, yres_summary  = \
                         refine_arccalibration(sp=row,
                                               poly_initial=wlpol,
                                               wv_master=wv_master_all,
-                                              poldeg=poldeg_refined)
-
+                                              poldeg=poldeg_refined,
+                                              plottitle=plottitle,
+                                              ylogscale=True,
+                                              pdf=pdf)
+                    if pdf is not None:
+                        pdf.close()
                     if poly_refined != numpy.polynomial.Polynomial([0.0]):
                         npoints_eff = yres_summary['npoints']
                         residual_std = yres_summary['robust_std']
@@ -473,17 +544,51 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         solution_wv.npoints_eff = npoints_eff  # add also this
                         new = FiberSolutionArcCalibration(fibid, solution_wv)
                         data_wlcalib.contents.append(new)
+                        # store results for plotting
+                        plot_tracenumber.append(fibid)
+                        plot_npointseff.append(npoints_eff)
+                        plot_residualstd.append(residual_std)
+                        plot_crval1.append(crmin1_linear)
+                        plot_cdelt1.append(cdelt1_linear)
+                        plot_coeff.append(poly_refined.coef)
                     else:
                         self.logger.error('error in row %d, fibid %d',
                                           idx, fibid)
                         data_wlcalib.error_fitting.append(fibid)
                 else:
-                    self.logger.info('skipping row %d, fibid %d, not extracted', idx, fibid)
+                    self.logger.info('skipping row %d, fibid %d, not extracted',
+                                     idx, fibid)
                     missing_fib += 1
                     data_wlcalib.missing_fibers.append(fibid)
 
             self.logger.info('Errors in fitting: %s', error_contador)
             self.logger.info('Missing fibers: %s', missing_fib)
+
+            # save PDF file with plots in working directory
+            if self.intermediate_results:
+                from matplotlib.backends.backend_pdf import PdfPages
+                pdf = PdfPages('wavecal_iter2.pdf')
+                for dumplot in zip(
+                        [plot_npointseff, plot_residualstd, plot_crval1,
+                         plot_cdelt1],
+                        ['effective number of lines found',
+                         'residual std ' + r'($\AA$)',
+                         'linear CRVAL1 ' + r'($\AA$)',
+                         'linear_CDELT1 ' + r'($\AA$/pixel)']):
+                    ax = ximplotxy(plot_tracenumber, dumplot[0],
+                                   xlabel='fiber number', ylabel=dumplot[1],
+                                   linestyle='', marker='.', color='C0',
+                                   show=False)
+                    pdf.savefig()
+                for ideg in range(poldeg_refined + 1):
+                    dumplot = [coef[ideg] for coef in plot_coeff]
+                    ax = ximplotxy(plot_tracenumber, dumplot,
+                                   xlabel='fiber number',
+                                   ylabel='coef[' + str(ideg) + ']',
+                                   linestyle='', marker='.', color='C0',
+                                   show=False)
+                    pdf.savefig()
+                pdf.close()
         else:
             data_wlcalib = None
 

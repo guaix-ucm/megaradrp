@@ -104,7 +104,7 @@ class LCBStandardRecipe(ImageRecipe):
         spectra_pack = extract_star(final, rinput.position, npoints,
                                     fiberconf, logger=self.logger)
 
-        spectrum, colids, cover1, cover2 = spectra_pack
+        spectrum, colids, wl_cover1, wl_cover2 = spectra_pack
         star_spectrum = fits.PrimaryHDU(spectrum, header=final[0].header)
 
         rad_vel = rinput.reference_spectrum_velocity * u.km / u.s
@@ -117,7 +117,7 @@ class LCBStandardRecipe(ImageRecipe):
 
         fiber_ids = [colid + 1 for colid in colids]
         sigma = rinput.sigma_resolution
-        sens = generate_sensitivity(final, spectrum, star_interp, extinc_interp, cover1, cover2, sigma)
+        sens = generate_sensitivity(final, spectrum, star_interp, extinc_interp, wl_cover1, wl_cover2, sigma)
         self.logger.info('end LCBStandardRecipe reduction')
 
         return self.create_result(

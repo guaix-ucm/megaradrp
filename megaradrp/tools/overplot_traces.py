@@ -7,6 +7,7 @@ import json
 import numpy as np
 from numpy.polynomial import Polynomial
 import pkgutil
+import sys
 from uuid import uuid4
 
 from numina.array.display.polfit_residuals import polfit_residuals
@@ -39,7 +40,7 @@ def assign_boxes_to_fibers(insmode):
 
     fibid_with_box = []
     n1 = 1
-    print('\n* Fiber description for INSMODE=' + insmode)
+    list_to_print = []
     for dumbox in pseudo_slit_config:
         nfibers = dumbox['nfibers']
         name = dumbox['name']
@@ -47,8 +48,12 @@ def assign_boxes_to_fibers(insmode):
         fibid_with_box += \
             ["{}  [{}]".format(val1, val2)
              for val1, val2 in zip(range(n1, n2), [name] * nfibers)]
-        print('Box {:>2},  fibers {:3d} - {:3d}'.format(name, n1, n2 - 1))
+        dumstr ='Box {:>2},  fibers {:3d} - {:3d}'.format(name, n1, n2 - 1)
+        list_to_print.append(dumstr)
         n1 = n2
+    print('\n* Fiber description for INSMODE=' + insmode)
+    for dumstr in reversed(list_to_print):
+        print(dumstr)
     print('---------------------------------')
 
     return fibid_with_box
@@ -81,7 +86,9 @@ def plot_trace(ax, coeff, xmin, xmax, ix_offset,
 
 def main(args=None):
     # parse command-line options
-    parser = argparse.ArgumentParser(prog='overplot_traces')
+    parser = argparse.ArgumentParser(
+        description="description: overplot traces"
+    )
     # positional parameters
     parser.add_argument("fits_file",
                         help="FITS image containing the spectra",
@@ -91,12 +98,12 @@ def main(args=None):
                         type=argparse.FileType('r'))
     # optional parameters
     parser.add_argument("--rawimage",
-                        help="FITS file is a RAW image (RSS assumed instead)",
+                        help="FITS file is a RAW image (otherwise trimmed "
+                             "image is assumed)",
                         action="store_true")
-    parser.add_argument("--yoffset",
-                        help="Vertical offset (+upwards, -downwards)",
-                        default=0,
-                        type=float)
+    parser.add_argument("--global_offset",
+                        help="Global offset polynomial coefficients "
+                             "(+upwards, -downwards)")
     parser.add_argument("--fibids",
                         help="Display fiber identification number",
                         action="store_true")
@@ -122,16 +129,27 @@ def main(args=None):
     parser.add_argument("--pdffile",
                         help="ouput PDF file name",
                         type=argparse.FileType('w'))
+    parser.add_argument("--echo",
+                        help="Display full command line",
+                        action="store_true")
 
     args = parser.parse_args(args=args)
+
+    if args.echo:
+        print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
+
+    # global_offset in command line
+    if args.global_offset is None:
+        args_global_offset = [0.0]
+    else:
+        args_global_offset = [float(dum) for dum in
+                              str(args.global_offset).split(",")]
 
     # read pdffile
     if args.pdffile is not None:
         from matplotlib.backends.backend_pdf import PdfPages
         pdf = PdfPages(args.pdffile.name)
     else:
-        import matplotlib
-        matplotlib.use('Qt5Agg')
         pdf = None
 
     ax = ximshow_file(args.fits_file.name,
@@ -159,8 +177,14 @@ def main(args=None):
                          'expected number from account from boxes')
     if 'global_offset' in bigdict.keys():
         global_offset = bigdict['global_offset']
+        if args_global_offset != [0.0] and global_offset != [0.0]:
+            raise ValueError('global_offset != 0 argument cannot be employed '
+                             'when global_offset != 0 in JSON file')
+        elif args_global_offset != [0.0]:
+            global_offset = args_global_offset
     else:
-        global_offset = [0.0]
+        global_offset = args_global_offset
+    print('>>> Using global_offset:', global_offset)
     pol_global_offset = np.polynomial.Polynomial(global_offset)
     if 'ref_column' in bigdict.keys():
         ref_column = bigdict['ref_column']
@@ -177,7 +201,7 @@ def main(args=None):
             pol_trace = np.polynomial.Polynomial(coeff)
             y_at_ref_column = pol_trace(ref_column)
             correction = pol_global_offset(y_at_ref_column)
-            coeff[0] += correction + args.yoffset
+            coeff[0] += correction
             # update values in bigdict (JSON structure)
             bigdict['contents'][fibid-1]['fitparms'] = coeff.tolist()
             plot_trace(ax, coeff, start, stop, ix_offset, args.rawimage,
@@ -284,12 +308,17 @@ def main(args=None):
                         if start < start_orig:
                             plot_trace(ax, coeff, start, start_orig,
                                        ix_offset,
-                                       args.rawimage, False, fiblabel,
+                                       args.rawimage, True, fiblabel,
                                        colour='green')
                         if stop_orig < stop:
                             plot_trace(ax, coeff, stop_orig, stop,
                                        ix_offset,
-                                       args.rawimage, False, fiblabel,
+                                       args.rawimage, True, fiblabel,
+                                       colour='green')
+                        if start_orig <= start <= stop <= stop_orig:
+                            plot_trace(ax, coeff, start, stop,
+                                       ix_offset,
+                                       args.rawimage, True, fiblabel,
                                        colour='green')
                     else:
                         print('(extrapolation SKIPPED) fibid:', fiblabel)
@@ -371,6 +400,8 @@ def main(args=None):
                     print('(sandwich) fibid:', fiblabel)
                 fraction = operation['fraction']
                 nf1, nf2 = operation['neighbours']
+                start = operation['start']
+                stop = operation['stop']
                 tmpf1 = bigdict['contents'][nf1 - 1]
                 tmpf2 = bigdict['contents'][nf2 - 1]
                 if nf1 != tmpf1['fibid'] or nf2 != tmpf2['fibid']:
@@ -379,8 +410,6 @@ def main(args=None):
                     )
                 coefff1 = np.array(tmpf1['fitparms'])
                 coefff2 = np.array(tmpf2['fitparms'])
-                start = np.min([tmpf1['start'], tmpf2['start']])
-                stop = np.min([tmpf1['stop'], tmpf2['stop']])
                 coeff = coefff1 + fraction * (coefff2 - coefff1)
                 plot_trace(ax, coeff, start, stop, ix_offset,
                            args.rawimage, args.fibids,

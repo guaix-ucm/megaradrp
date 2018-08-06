@@ -11,11 +11,21 @@
 
 
 import numina.types.structured as structured
+import numina.core.tagexpr as tagexpr
+
+import megaradrp.datamodel
 
 
 class BaseStructuredCalibration(structured.BaseStructuredCalibration):
     def __init__(self, instrument='unknown'):
-        super(BaseStructuredCalibration, self).__init__(instrument)
+        datamodel = megaradrp.datamodel.MegaraDataModel()
+        super(BaseStructuredCalibration, self).__init__(instrument, datamodel)
+        my_tag_table = self.datamodel.query_attrs
+        objtags = [my_tag_table[t] for t in self.tag_names()]
+        self.query_expr = tagexpr.query_expr_from_attr(objtags)
+        self.names_t = self.query_expr.tags()
+        self.names_f = self.query_expr.fields()
+
         self.total_fibers = 0
         self.missing_fibers = []
         self.error_fitting = []

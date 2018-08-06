@@ -1,0 +1,78 @@
+{
+  "operations": [
+    {
+      "description": "vertical_shift_in_pixels",
+      "fibid_ini": 350,
+      "fibid_end": 350,
+      "vshift": 6
+    },
+    {
+      "description": "vertical_shift_in_pixels",
+      "fibid_list": [350, 351, 408],
+      "vshift": 6
+    },
+    {
+      "description": "duplicate_trace",
+      "fibid_original": 349,
+      "fibid_duplicated": 350,
+      "vshift": 6
+    },
+    {
+      "description": "extrapolation",
+      "fibid_ini": 1,
+      "fibid_end": 622,
+      "start": 4,
+      "stop": 4092
+    },
+    {
+      "description": "extrapolation",
+      "fibid_list": [603, 605, 607, 608, 609, 612, 613, 615, 616, 617, 619, 622],
+      "start": 4,
+      "stop": 4092
+    },
+    {
+      "description": "fit_through_user_points",
+      "fibid": 614,
+      "poldeg": 5,
+      "start": 4,
+      "stop": 4092,
+      "user_points": [
+        {"x": 57.0, "y": 3891.0},
+        {"x": 388.5, "y": 3895.0},
+        {"x": 849.0, "y": 3900.0},
+        {"x": 1400.0, "y": 3905.0},
+        {"x": 2030.0, "y": 3910.0},
+        {"x": 3250.0, "y": 3915.0},
+        {"x": 3860.5, "y": 3917.0}
+      ]
+    },
+    {
+      "description": "extrapolation_through_user_points",
+      "fibid": 614,
+      "start_reuse": 4,
+      "stop_reuse": 1500,
+      "resampling": 10,
+      "poldeg": 5,
+      "start": 4,
+      "stop": 4092,
+      "user_points": [
+        {"x": 2800, "y": 3864},
+        {"x": 3900, "y": 3865}
+      ]
+    },
+    {
+      "description": "sandwich",
+      "fibid": 535,
+      "fraction": 0.5,
+      "neighbours": [534, 536],
+      "start": 4,
+      "stop": 4092
+    },
+    {
+      "description": "renumber_fibids_within_box",
+      "fibid_ini": 275,
+      "fibid_end": 350,
+      "fibid_shift": -1
+    }
+  ]
+}

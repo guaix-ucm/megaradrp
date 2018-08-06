@@ -39,7 +39,7 @@ def test_bpm():
     config_uuid = '4fd05b24-2ed9-457b-b563-a3c618bb1d4c'
     temporary_path = mkdtemp()
 
-    fits.writeto('%s/eq.fits' % temporary_path, qe, clobber=True)
+    fits.writeto('%s/eq.fits' % temporary_path, qe, overwrite=True)
 
     readpars1 = ReadParams(gain=gain, ron=ron, bias=bias)
     readpars2 = ReadParams(gain=gain, ron=ron, bias=bias)
@@ -62,15 +62,15 @@ def test_bpm():
     for aux in range(len(fs)):
         fits.writeto('%s/flat_%s.fits' % (temporary_path, aux), fs[aux],
                      header=header,
-                     clobber=True)
+                     overwrite=True)
         fits.writeto('%s/flat_%s.fits' % (temporary_path, aux + number), fs2[aux],
                      header=header,
-                     clobber=True)
+                     overwrite=True)
 
     result = generate_bias(detector, number, temporary_path)
     result.master_bias.frame.writeto(
         '%s/master_bias_data0.fits' % temporary_path,
-        clobber=True
+        overwrite=True
     )
 
     ob = ObservationResult()
@@ -87,7 +87,7 @@ def test_bpm():
     ri = recipe.create_input(obresult=ob, master_bias=DataFrame(
         filename=open(temporary_path + '/master_bias_data0.fits').name))
     aux = recipe.run(ri)
-    aux.master_bpm.frame.writeto('%s/master_bpm.fits' % temporary_path, clobber=True)
+    aux.master_bpm.frame.writeto('%s/master_bpm.fits' % temporary_path, overwrite=True)
     shutil.rmtree(temporary_path)
 
 

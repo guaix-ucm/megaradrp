@@ -186,6 +186,12 @@ def test_dump_traceMap(benchmark=None):
     assert (traces == state)
 
 
+def test_query_fields():
+    tracemap = tm.TraceMap()
+    assert tracemap.query_expr.fields() == {'insmode', 'vph'}
+    assert tracemap.query_expr.tags() == {'insmode', 'vph'}
+
+
 if __name__ == "__main__":
     test_load_traceMap()
     test_dump_traceMap()

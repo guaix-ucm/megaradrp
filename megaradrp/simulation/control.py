@@ -106,7 +106,7 @@ class ControlSystem(object):
             self.ob_data['count'] = count
             fitsfile = self.factory.create(final, self.ob_data['name'], self)
             _logger.info('save image %s', self.ob_data['name'])
-            fitsfile.writeto(self.ob_data['name'], clobber=True)
+            fitsfile.writeto(self.ob_data['name'], overwrite=True)
 
     def config_info(self):
         return {'ob_data': self.ob_data}

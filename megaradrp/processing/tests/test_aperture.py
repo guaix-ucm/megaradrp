@@ -10,7 +10,7 @@
 #     eq = 0.8 * np.ones((4112, 4096))
 #     temporary_path = mkdtemp()
 #
-#     fits.writeto('%s/eq.fits' % temporary_path, eq, clobber=True)
+#     fits.writeto('%s/eq.fits' % temporary_path, eq, overwrite=True)
 #
 #     image =file(temporary_path + '/eq.fits')
 #     obj = ApertureExtractor(None)

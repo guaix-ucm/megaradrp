@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name='megaradrp',
-    version='0.6.1',
+    version='0.7',
     author='Sergio Pascual',
     author_email='sergiopr@fis.ucm.es',
     url='https://github.com/guaix-ucm/megaradrp',
@@ -34,9 +34,9 @@ setup(
     },
     install_requires=[
         'numpy',
-        'astropy >= 1.0',
+        'astropy >= 2',
         'scipy',
-        'numina >= 0.16',
+        'numina >= 0.17',
         'scikit-image',
         'enum34;python_version<"3.4"',
     ],
@@ -46,23 +46,26 @@ setup(
     zip_safe=False,
     entry_points={
         'numina.pipeline.1': [
-            'MEGARA = megaradrp.loader:load_drp',
+            'MEGARA = megaradrp.loader:load_drp'
         ],
         'numinadb.extra.1': [
-            'MEGARA = megaradrp.db [DB]',
-            ],
-        },
-        classifiers=[
-            "Programming Language :: Python :: 2.7",
-            "Programming Language :: Python :: 3.4",
-            "Programming Language :: Python :: 3.5",
-            "Programming Language :: Python :: 3.6",
-            'Development Status :: 3 - Alpha',
-            "Environment :: Other Environment",
-            "Intended Audience :: Science/Research",
-            "License :: OSI Approved :: GNU General Public License (GPL)",
-            "Operating System :: OS Independent",
-            "Topic :: Scientific/Engineering :: Astronomy",
+            'MEGARA = megaradrp.db [DB]'
         ],
+        'console_scripts': [
+            'megaradrp-overplot_traces = megaradrp.tools.overplot_traces:main',
+        ],
+    },
+    classifiers=[
+        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
+        'Development Status :: 3 - Alpha',
+        "Environment :: Console",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: GNU General Public License (GPL)",
+        "Operating System :: OS Independent",
+        "Topic :: Scientific/Engineering :: Astronomy",
+    ],
     long_description=open('README.rst').read()
 )

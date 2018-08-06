@@ -24,6 +24,38 @@ from numina.frame.utils import copy_img
 from megaradrp.processing.fluxcalib import update_flux_limits
 
 
+def coverage_det(arr):
+    """Compute coverage"""
+
+    ma = numpy.max(arr)
+    mn = numpy.min(arr)
+
+    maxcover = len(arr) + 1
+
+    if ma == 0:
+        return slice(0, 0)
+
+    if mn == 1:
+        return slice(0, maxcover)
+
+    # We have 0s and 1s
+    diffa = numpy.diff(arr)
+
+    # For the left, find first +1
+    val_f, = numpy.where(diffa==1)
+    pix_f = 0
+    if len(val_f) > 0:
+        pix_f = val_f[0] + 1
+
+    # For the rigth, find first -1
+    val_l, = numpy.where(diffa==-1)
+    pix_l = maxcover
+    if len(val_l) > 0:
+        pix_l = val_l[0] + 1
+
+    return slice(pix_f, pix_l)
+
+
 def extract_star(rssimage, position, npoints, fiberconf, logger=None):
     """Extract a star given its center and the number of fibers to extract"""
 
@@ -77,12 +109,14 @@ def extract_star(rssimage, position, npoints, fiberconf, logger=None):
         valid_region = max_value_region
 
         # Interval with maximum coverage
-        nz_max, = numpy.nonzero(numpy.diff(max_value_region))
+        #nz_max, = numpy.nonzero(numpy.diff(max_value_region))
         # Interval with at least 1 fiber
-        nz_some, = numpy.nonzero(numpy.diff(some_value_region))
+        #nz_some, = numpy.nonzero(numpy.diff(some_value_region))
+        nz_max_slice = coverage_det(max_value_region)
+        nz_some_slice = coverage_det(some_value_region)
 
         # Collapse the flux in the optimal region
-        perf = flux_fiber[:, nz_max[0] + 1: nz_max[1] + 1].sum(axis=1)
+        perf = flux_fiber[:, nz_max_slice].sum(axis=1)
         # Contribution of each fiber to the total flux, 1D
         perf_norm = perf / perf.sum()
         contributions = numpy.zeros(shape=(rssdata.shape[0],))
@@ -113,7 +147,7 @@ def extract_star(rssimage, position, npoints, fiberconf, logger=None):
         # ax2.plot(coverage_total)
         #
         # plt.show()
-        pack = flux_total_c, colids, nz_max, nz_some
+        pack = flux_total_c, colids, nz_max_slice, nz_some_slice
         # pack = flux_total_c
         totals.append(pack)
 
@@ -267,7 +301,7 @@ def compute_dar(img, datamodel, logger=None, debug_plot=False):
 
 
 def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
-                         cover1, cover2, sigma=20.0):
+                         wl_coverage1, wl_coverage2, sigma=20.0):
 
         wcsl = astropy.wcs.WCS(final[0].header)
 
@@ -292,32 +326,33 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
         r0 = response_0 / r0max
         r1 = response_1 / r1max
 
-        pixm1, pixm2 = cover1
-        pixr1, pixr2 = cover2
+        pixm1 = wl_coverage1.start
+        pixm2 = wl_coverage1.stop
+        pixr1 = wl_coverage2.start
+        pixr2 = wl_coverage2.stop
 
         pixlims = {}
-        pixlims['PIXLIMR1'] = pixr1
+        pixlims['PIXLIMR1'] = pixr1 + 1  # Convert to 1-ref
         pixlims['PIXLIMR2'] = pixr2
-        pixlims['PIXLIMM1'] = pixm1
+        pixlims['PIXLIMM1'] = pixm1 + 1  # Convert to 1-ref
         pixlims['PIXLIMM2'] = pixm2
 
         max_valid = numpy.zeros_like(valid)
-        max_valid[pixm1:pixm2 + 1] = True
+        max_valid[wl_coverage1] = True
 
         partial_valid = numpy.zeros_like(valid)
-        partial_valid[pixr1:pixr2 + 1] = True
+        partial_valid[wl_coverage2] = True
 
-        valid = numpy.ones_like(response_0)
-        valid[pixm2:] = 0
-        valid[:pixm1+1] = 0
+        valid = numpy.zeros_like(response_0)
+        valid[wl_coverage1] = 1
 
         pixf1, pixf2 = int(math.floor(pixm1 +  2* sigma)), int(math.ceil(pixm2 - 2 * sigma))
 
-        pixlims['PIXLIMF1'] = pixf1
+        pixlims['PIXLIMF1'] = pixf1 + 1
         pixlims['PIXLIMF2'] = pixf2
 
         flux_valid = numpy.zeros_like(valid, dtype='bool')
-        flux_valid[pixf1:pixf2 + 1] = True
+        flux_valid[pixf1:pixf2] = True
 
         r0_ens = gaussian_filter(r0, sigma=sigma)
 
@@ -326,6 +361,11 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
 
         # FIXME: add history
         sens = fits.PrimaryHDU(s_response, header=final[0].header)
+        # delete second axis keywords
+        for key in ['CRPIX2', 'CRVAL2', 'CDELT2', 'CTYPE2']:
+            if key in sens.header:
+                del sens.header[key]
+
         sens.header['uuid'] = str(uuid.uuid1())
         sens.header['tunit'] = ('Jy', "Final units")
 
