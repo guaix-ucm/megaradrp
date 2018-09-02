@@ -9,12 +9,12 @@ Requirements
 The MEGARA Pipeline package requires the following packages installed in order to
 be able to be installed and work properly:
 
- - `python 2.7 <https://www.python.org>`_
+ - `python <https://www.python.org>`_ either 2.7 or >= 3.4
  - `setuptools <http://peak.telecommunity.com/DevCenter/setuptools>`_
  - `numpy <http://www.numpy.org/>`_ >= 1.7
  - `scipy <http://www.scipy.org/>`_
- - `astropy <http://www.astropy.org/>`_ >= 1.1
- - `numina <https://pypi.python.org/pypi/numina/>`_ >= 0.15
+ - `astropy <http://www.astropy.org/>`_ >= 2.0
+ - `numina <https://pypi.python.org/pypi/numina/>`_ >= 0.17
  - `scikit-image <http://scikit-image.org/>`_
 
 Additional packages are optionally required:
