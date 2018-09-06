@@ -4,7 +4,7 @@ from __future__ import print_function
 import argparse
 import json
 
-from numina.core import import_object
+from numina.util.objimport import import_object
 from numina.util.jsonencoder import ExtEncoder
 
 
