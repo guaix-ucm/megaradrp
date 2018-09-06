@@ -7,6 +7,8 @@
 # License-Filename: LICENSE.txt
 #
 
+from __future__ import print_function
+
 import math
 
 import matplotlib.cbook as cbook
@@ -231,6 +233,8 @@ def main(argv=None):
                         help='Types of coordinates used')
     parser.add_argument('--colormap', type=plt.get_cmap,
                         help='Name of a valid matplotlib colormap')
+    parser.add_argument('--plot-sky', action='store_true',
+                        help='Plot SKY bundles')
     parser.add_argument('--hide-values', action='store_true',
                         help='Do not show values out of range')
     parser.add_argument('--title', help='Title of the plot')
@@ -285,13 +289,20 @@ def main(argv=None):
 
             datamodel = dm.MegaraDataModel()
             fiberconf = datamodel.get_fiberconf(img)
+            plot_mask = np.ones((fiberconf.nfibers,), dtype=np.bool)
+            if not args.plot_sky:
+                skyfibers = fiberconf.sky_fibers()
+                skyfibers.sort()
+                skyfibers_idx = [(fibid - 1) for fibid in skyfibers]
+                plot_mask[skyfibers_idx] = False
 
-            x = []
-            y = []
+            x = np.empty((fiberconf.nfibers,))
+            y = np.empty((fiberconf.nfibers,))
             # Key is fibid
             for _, fiber in sorted(fiberconf.fibers.items()):
-                x.append(fiber.x)
-                y.append(fiber.y)
+                idx = fiber.fibid - 1
+                x[idx] = fiber.x
+                y[idx] = fiber.y
 
             extname = args.extname
             if args.coordinate_type == 'wcs':
@@ -310,7 +321,10 @@ def main(argv=None):
                                 args.continuum_region
                                 )
             fig = plt.figure()
-
+            #zval = zval[:100]
+            x = x[plot_mask]
+            y = y[plot_mask]
+            zval = zval[plot_mask]
             projection = None
 
             if args.wcs_grid:
@@ -329,8 +343,8 @@ def main(argv=None):
             # plt.subplots_adjust(hspace=0.5)
             ax = fig.add_axes([0.15, 0.1, 0.8, 0.8], projection=projection)
 
-            ax.set_xlim([-6.5, 6.5])
-            ax.set_ylim([-6, 6])
+#            ax.set_xlim([-6.5, 6.5])
+#            ax.set_ylim([-6, 6])
 
             if args.wcs_grid:
                 ax.coords.grid(color='black', alpha=1.0, linestyle='solid')
