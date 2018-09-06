@@ -235,6 +235,8 @@ def main(argv=None):
                         help='Name of a valid matplotlib colormap')
     parser.add_argument('--plot-sky', action='store_true',
                         help='Plot SKY bundles')
+    parser.add_argument('--plot-nominal-config', action='store_true',
+                        help='Plot nominal configuration, do not use the header')
     parser.add_argument('--hide-values', action='store_true',
                         help='Do not show values out of range')
     parser.add_argument('--title', help='Title of the plot')
@@ -288,7 +290,11 @@ def main(argv=None):
         with fits.open(fname) as img:
 
             datamodel = dm.MegaraDataModel()
-            fiberconf = datamodel.get_fiberconf(img)
+            if args.plot_nominal_config:
+                insmode = img['FIBERS'].header['INSMODE']
+                fiberconf = datamodel.get_fiberconf_default(insmode)
+            else:
+                fiberconf = datamodel.get_fiberconf(img)
             plot_mask = np.ones((fiberconf.nfibers,), dtype=np.bool)
             if not args.plot_sky:
                 skyfibers = fiberconf.sky_fibers()
@@ -321,7 +327,7 @@ def main(argv=None):
                                 args.continuum_region
                                 )
             fig = plt.figure()
-            #zval = zval[:100]
+            
             x = x[plot_mask]
             y = y[plot_mask]
             zval = zval[plot_mask]
