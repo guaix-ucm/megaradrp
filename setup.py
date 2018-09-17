@@ -33,6 +33,7 @@ setup(
         ],
     },
     install_requires=[
+        'setuptools>=36.2.1',
         'numpy',
         'astropy >= 2',
         'scipy',
