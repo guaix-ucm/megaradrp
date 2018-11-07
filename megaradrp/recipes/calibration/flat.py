@@ -162,6 +162,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
             plt.plot(xx, collapse_smooth, '-')
             plt.plot(xx, collapse_smooth_s, '--')
             plt.savefig('collapsed_smooth.png')
+            plt.close()
 
         # Divide each fiber in rss_wl by spectrum
         gmean = col_good_mean.mean()
