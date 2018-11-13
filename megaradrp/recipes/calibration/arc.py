@@ -418,6 +418,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         # save PDF file with plots in working directory
         if self.intermediate_results:
+            from numina.array.display.matplotlib_qt import plt
             from matplotlib.backends.backend_pdf import PdfPages
             pdf = PdfPages('wavecal_iter1.pdf')
             for dumplot in zip([plot_npeaksfound, plot_crval1, plot_cdelt1],
@@ -429,6 +430,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                linestyle='', marker='.', color='C0',
                                show=False)
                 pdf.savefig()
+                plt.close()
             for ideg in range(poldeg_initial + 1):
                 dumplot = [coef[ideg] for coef in plot_coeff]
                 ax = ximplotxy(plot_tracenumber, dumplot,
@@ -437,6 +439,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                linestyle='', marker='.', color='C0',
                                show=False)
                 pdf.savefig()
+                plt.close()
             pdf.close()
 
         self.logger.info('Generating fwhm_image...')
@@ -513,6 +516,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                                               ylogscale=True,
                                               pdf=pdf)
                     if pdf is not None:
+                        from numina.array.display.matplotlib_qt import plt
+                        plt.close()
                         pdf.close()
                     if poly_refined != numpy.polynomial.Polynomial([0.0]):
                         npoints_eff = yres_summary['npoints']
