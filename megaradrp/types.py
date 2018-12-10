@@ -11,7 +11,7 @@
 
 
 from numina.core import DataFrameType
-from numina.types.product import DataProductTag
+from numina.types.product import DataProductMixin
 from numina.types.datatype import DataType
 from numina.types.array import ArrayType
 from numina.types.linescatalog import LinesCatalog
@@ -55,15 +55,15 @@ class ProcessedSpectrum(ProcessedFrame):
     pass
 
 
-class ProcessedImageProduct(DataProductTag, ProcessedImage):
+class ProcessedImageProduct(DataProductMixin, ProcessedImage):
     pass
 
 
-class ProcessedRSSProduct(DataProductTag, ProcessedRSS):
+class ProcessedRSSProduct(DataProductMixin, ProcessedRSS):
     pass
 
 
-class ProcessedSpectrumProduct(DataProductTag, ProcessedSpectrum):
+class ProcessedSpectrumProduct(DataProductMixin, ProcessedSpectrum):
     pass
 
 
@@ -117,12 +117,17 @@ class MasterSensitivity(ProcessedSpectrumProduct):
     pass
 
 
-class ReferenceExtinctionTable(DataProductTag, ArrayType):
+class ReferenceExtinctionTable(DataProductMixin, ArrayType):
     """Atmospheric Extinction."""
-    pass
+    def convert(self, obj):
+        # Support None value
+        if obj is None:
+            return None
+        else:
+            return super(ReferenceExtinctionTable, self).convert(obj)
 
 
-class ReferenceSpectrumTable(DataProductTag, ArrayType):
+class ReferenceSpectrumTable(DataProductMixin, ArrayType):
     """The spectrum of a reference star"""
     pass
 
