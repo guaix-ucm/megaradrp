@@ -36,13 +36,13 @@ install:
   - conda update --yes conda
   - >
     conda create -n testenv --yes python=$TRAVIS_PYTHON_VERSION
-    $DEPS scikit-image pip pytest setuptools Cython six>=1.7
+    $DEPS scikit-image pip pytest setuptools six>=1.7
     pyyaml
   - source activate testenv
   - pip install pytest-benchmark pytest-cov
   - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
   - if [[ $COVERAGE == true ]]; then pip install codeclimate-test-reporter; fi
-  - pip install -e git+git://github.com/guaix-ucm/numina.git#egg=numina
+  - pip install numina
   # Build in place so we can run tests
   - python setup.py build_ext --inplace
 
