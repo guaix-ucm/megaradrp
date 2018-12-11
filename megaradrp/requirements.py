@@ -106,5 +106,5 @@ class ReferenceExtinction(Requirement):
         super(ReferenceExtinction,
               self).__init__(megaradrp.types.ReferenceExtinctionTable,
                              "Reference extinction",
-                             optional=True
+                             optional=optional
                              )

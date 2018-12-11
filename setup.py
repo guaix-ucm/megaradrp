@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name='megaradrp',
-    version='0.7.1',
+    version='0.8',
     author='Sergio Pascual',
     author_email='sergiopr@fis.ucm.es',
     url='https://github.com/guaix-ucm/megaradrp',
@@ -33,6 +33,7 @@ setup(
         ],
     },
     install_requires=[
+        'setuptools>=36.2.1',
         'numpy',
         'astropy >= 2',
         'scipy',
@@ -60,6 +61,7 @@ setup(
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
         'Development Status :: 3 - Alpha',
         "Environment :: Console",
         "Intended Audience :: Science/Research",

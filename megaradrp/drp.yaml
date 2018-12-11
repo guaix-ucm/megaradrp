@@ -102,11 +102,6 @@ modes:
   description: Sensivity Star Recipe
   key: MegaraSensitivityStar
   tagger: megaradrp.taggers.tagger_base_image
-- name: Linearity test
-  summary: Test the linearity of the MEGARA detector
-  description: Test the linearity of the MEGARA detector
-  key: MegaraLinearirtyTest
-  tagger: megaradrp.taggers.tagger_base_image
 - name: Telescope Focus
   summary: Telescope Focus
   description: Telescope Focus
@@ -172,7 +167,6 @@ pipelines:
          keys: {key1: 1, key2: 2} 
          state: {}
       MegaraBadPixelMask: megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe
-      MegaraLinearityTest: megaradrp.recipes.calibration.linearity.LinearityTestRecipe
       MegaraBiasImage: megaradrp.recipes.calibration.bias.BiasRecipe
       MegaraDarkImage: megaradrp.recipes.calibration.dark.DarkRecipe
       MegaraArcCalibration: megaradrp.recipes.calibration.arc.ArcCalibrationRecipe
