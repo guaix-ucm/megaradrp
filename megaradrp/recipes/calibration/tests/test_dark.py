@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -13,12 +13,12 @@ from tempfile import mkdtemp
 import astropy.io.fits as fits
 import numpy
 from numina.core import DataFrame, ObservationResult
+from numina.core.insconf import instrument_loader
 
 from megaradrp.recipes.calibration.dark import DarkRecipe
 from megaradrp.simulation.factory import MegaraImageFactory
 from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.actions import simulate_dark_fits
-from megaradrp.instrument.loader import build_instrument_config, Loader
 
 
 def test_dark():
@@ -67,7 +67,10 @@ def test_dark():
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'MegaraDarkImage'
-    ob.configuration = build_instrument_config(config_uuid, loader=Loader())
+    modpath = 'megaradrp.instrument.configs'
+    fname = 'instrument-{}.json'.format(config_uuid)
+
+    ob.configuration = instrument_loader(modpath, fname)
 
     names = []
     for aux in range(number):

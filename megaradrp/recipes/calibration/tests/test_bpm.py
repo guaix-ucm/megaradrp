@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -15,12 +15,12 @@ import astropy.io.fits as fits
 import numpy as np
 
 from numina.core import DataFrame, ObservationResult
+from numina.core.insconf import instrument_loader
 
 from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
 from megaradrp.recipes.calibration.tests.test_bpm_common import generate_bias
 from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.actions import simulate_flat
-from megaradrp.instrument.loader import build_instrument_config, Loader
 
 
 # @pytest.mark.remote
@@ -76,7 +76,10 @@ def test_bpm():
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'MegaraBiasImage'
-    ob.configuration = build_instrument_config(config_uuid, loader=Loader())
+    modpath = 'megaradrp.instrument.configs'
+    fname = 'instrument-{}.json'.format(config_uuid)
+
+    ob.configuration = instrument_loader(modpath, fname)
 
     names = []
     for aux in range(number * 2):

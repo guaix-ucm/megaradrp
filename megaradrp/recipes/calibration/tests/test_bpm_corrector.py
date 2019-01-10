@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -12,7 +12,7 @@
 from numina.core import DataFrame, ObservationResult
 import astropy.io.fits as fits
 from numina.core.requirements import ObservationResultRequirement
-
+from numina.core.insconf import instrument_loader
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
@@ -22,7 +22,7 @@ from numina.array import combine
 from megaradrp.processing.combine import basic_processing_with_combination
 
 from megaradrp.recipes.calibration.tests.test_bpm_common import crear_archivos
-from megaradrp.instrument.loader import build_instrument_config, Loader
+
 
 
 class DerivedRecipe(MegaraBaseRecipe):
@@ -61,13 +61,18 @@ def test_bpm_corrector():
     import shutil
     from tempfile import mkdtemp
 
+    config_uuid = '4fd05b24-2ed9-457b-b563-a3c618bb1d4c'
+
     directorio = mkdtemp()
     names = crear_archivos(directorio, number=4)
 
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'MegaraBiasImage'
-    ob.configuration = build_instrument_config('4fd05b24-2ed9-457b-b563-a3c618bb1d4c', loader=Loader())
+    modpath = 'megaradrp.instrument.configs'
+    fname = 'instrument-{}.json'.format(config_uuid)
+
+    ob.configuration = instrument_loader(modpath, fname)
     ob.frames = [DataFrame(filename=open(nombre).name) for nombre in names]
 
     recipe = DerivedRecipe(directorio)
