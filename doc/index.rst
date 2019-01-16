@@ -36,3 +36,5 @@ Developer documentation
    recipes
    reference/index
    glossary
+
+Maintainers: Sergio Pascual sergiopr@fis.ucm.es, Nicolás Cardiel cardiel@ucm.es
