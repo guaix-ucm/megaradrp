@@ -117,7 +117,7 @@ class WavelengthCalibrator(Corrector):
         hdr['CRVAL1'] = wlr0, c_crval
         hdr['CDELT1'] = delt, c_cdelt
         hdr['CUNIT1'] = unit, c_cunit
-        hdr['CTYPE1'] = 'WAVELENGTH'
+        hdr['CTYPE1'] = 'WAVE'
         hdr['CRPIX2'] = (0.0, c_crpix)
         hdr['CRVAL2'] = 0.0
         hdr['CDELT2'] = 1.0
