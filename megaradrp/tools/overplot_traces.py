@@ -10,6 +10,7 @@ import pkgutil
 import sys
 from uuid import uuid4
 
+import numina.core.pipelineload as pload
 from numina.array.display.polfit_residuals import polfit_residuals
 from numina.array.display.ximshow import ximshow_file
 from numina.array.display.pause_debugplot import pause_debugplot
@@ -30,13 +31,13 @@ def assign_boxes_to_fibers(insmode):
         box name.
 
     """
-    sdum = pkgutil.get_data(
-        'megaradrp.instrument.configs',
-        'component-86a6e968-8d3d-456f-89f8-09ff0c7f7c57.json'
-    )
-    dictdum = json.loads(sdum)
-    pseudo_slit_config = \
-        dictdum['configurations']['boxes']['values'][insmode]
+    # FIXME: this should come from the FITS header
+    default_uuid = "ca3558e3-e50d-4bbc-86bd-da50a0998a48"
+    fname = 'instrument-{}.json'.format(default_uuid)
+    modpath = 'megaradrp.instrument.configs'
+
+    insconf = pload.instrument_loader(modpath, fname)
+    pseudo_slit_config = insconf.get('pseudoslit.boxes', insmode=insmode)
 
     fibid_with_box = []
     n1 = 1
