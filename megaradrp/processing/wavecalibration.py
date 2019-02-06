@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2018 Universidad Complutense de Madrid
+# Copyright 2016-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -117,7 +117,7 @@ class WavelengthCalibrator(Corrector):
         hdr['CRVAL1'] = wlr0, c_crval
         hdr['CDELT1'] = delt, c_cdelt
         hdr['CUNIT1'] = unit, c_cunit
-        hdr['CTYPE1'] = 'WAVE'
+        hdr['CTYPE1'] = 'AWAV'
         hdr['CRPIX2'] = (0.0, c_crpix)
         hdr['CRVAL2'] = 0.0
         hdr['CDELT2'] = 1.0
