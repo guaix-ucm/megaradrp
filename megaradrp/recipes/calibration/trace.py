@@ -353,10 +353,10 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
                 if debug_plot:
                     plt.plot(mm[:, 0], mm[:, 1], '.')
-                    plt.savefig('trace-xy-%d.png' % dtrace.fibid)
+                    plt.savefig('trace-xy-{:03d}.png'.format(dtrace.fibid))
                     plt.close()
                     plt.plot(mm[:, 0], mm[:, 2], '.')
-                    plt.savefig('trace-xz-%d.png' % dtrace.fibid)
+                    plt.savefig('trace-xz-{:03d}.png'.format(dtrace.fibid))
                     plt.close()
                 if len(mm) < poldeg + 1:
                     self.logger.warning('in fibid %d, only %d points to fit pol of degree %d',
@@ -483,7 +483,7 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         if debug_plot:
             plt.plot(region)
             plt.plot(ipeaks_int, region[ipeaks_int], 'r*')
-            plt.savefig('central_cut_%d.png' % boxid)
+            plt.savefig('central_cut_{:02d}.png'.format(boxid))
             plt.close()
 
         startid = lastid + 1

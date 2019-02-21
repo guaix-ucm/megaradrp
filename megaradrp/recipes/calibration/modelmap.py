@@ -197,15 +197,15 @@ class ModelMapRecipe(MegaraBaseRecipe):
             if self.intermediate_results:
                 if dolog:
                     self.logger.debug('saving plots')
-                plt.title('std %s' % fibid)
+                plt.title('std fib{:03d}'.format(fibid))
                 plt.plot(g_col, g_std, 'b*')
                 plt.plot(g_col, interpol_std(g_col), 'r')
-                plt.savefig('fib_{}_std.png'.format(fibid))
+                plt.savefig('fib_{:03d}_std.png'.format(fibid))
                 plt.close()
-                plt.title('mean %s' % fibid)
+                plt.title('mean fin{:03d}'.format(fibid))
                 plt.plot(g_col, g_mean, 'b*')
                 plt.plot(g_col, interpol_mean(g_col), 'r')
-                plt.savefig('fib_{}_mean.png'.format(fibid))
+                plt.savefig('fib_{:03d}_mean.png'.format(fibid))
                 plt.close()
                 if dolog:
                     self.logger.debug('saving plots end')
