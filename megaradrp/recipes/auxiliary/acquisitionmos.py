@@ -87,7 +87,11 @@ class AcquireMOSRecipe(ImageRecipe):
         do_sky_subtraction = True
         if do_sky_subtraction:
             self.logger.info('start sky subtraction')
-            final, origin, sky = self.run_sky_subtraction(reduced1d)
+            isb = rinput.ignored_sky_bundles
+            if isb:
+                self.logger.info('sky bundles ignored: %s', isb)
+            final, origin, sky = self.run_sky_subtraction(reduced1d,
+                                                          ignored_sky_bundles=isb)
             self.logger.info('end sky subtraction')
         else:
             final =  reduced1d
