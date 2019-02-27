@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -109,7 +109,11 @@ class LCBStandardRecipe(ImageRecipe):
         ins2 = rinput.obresult.profile
         ins2.configure_with_image(rss_data)
         self.logger.info('start sky subtraction')
-        final, origin, sky = self.run_sky_subtraction(rss_data, rinput.ignored_sky_bundles)
+        final, origin, sky = self.run_sky_subtraction(
+            rss_data,
+            sky_rss=rinput.sky_rss,
+            ignored_sky_bundles=rinput.ignored_sky_bundles
+        )
         self.logger.info('end sky subtraction')
 
         # 1 + 6  for first ring

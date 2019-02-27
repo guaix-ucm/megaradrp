@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -103,12 +103,6 @@ class ImageRecipe(MegaraBaseRecipe):
         reduced_rss =  flow2(img)
         return reduced_rss
 
-    def run_sky_subtraction(self, img, ignored_sky_bundles=None):
-        return subtract_sky(img,
-                            ignored_sky_bundles=ignored_sky_bundles,
-                            logger=self.logger
-                            )
-
     def compute_dar(self, img):
         import numpy.polynomial.polynomial as pol
 
@@ -118,3 +112,21 @@ class ImageRecipe(MegaraBaseRecipe):
 
     def centroid(self, rssdata, fiberconf, c1, c2, point):
         return compute_centroid(rssdata, fiberconf, c1, c2, point, logger=self.logger)
+
+    def run_sky_subtraction(self, img, sky_rss=None, ignored_sky_bundles=None):
+
+        if sky_rss is None:
+            self.logger.info('compute sky from SKY bundles')
+            if ignored_sky_bundles:
+                self.logger.info('sky bundles ignored: %s', ignored_sky_bundles)
+            return subtract_sky(img,
+                                ignored_sky_bundles=ignored_sky_bundles,
+                                logger=self.logger
+                                )
+        else:
+            self.logger.info('use sky RSS image')
+            return subtract_sky(img,
+                                self.datamodel,
+                                ignored_sky_bundles=ignored_sky_bundles,
+                                logger=self.logger
+                                )

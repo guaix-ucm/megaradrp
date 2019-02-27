@@ -93,8 +93,11 @@ class AcquireLCBRecipe(ImageRecipe):
             isb = rinput.ignored_sky_bundles
             if isb:
                 self.logger.info('sky bundles ignored: %s', isb)
-            final, origin, sky = self.run_sky_subtraction(reduced1d,
-                                                          ignored_sky_bundles=isb)
+            final, origin, sky = self.run_sky_subtraction(
+                reduced1d,
+                sky_rss=rinput.sky_rss,
+                ignored_sky_bundles=isb
+            )
             self.logger.info('end sky subtraction')
         else:
             final =  reduced1d

@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -101,7 +101,11 @@ class MOSStandardRecipe(ImageRecipe):
         reduced2d, rss_data = super(MOSStandardRecipe, self).base_run(rinput)
 
         self.logger.info('start sky subtraction')
-        final, origin, sky = self.run_sky_subtraction(rss_data, rinput.ignored_sky_bundles)
+        final, origin, sky = self.run_sky_subtraction(
+            rss_data,
+            sky_rss=rinput.sky_rss,
+            ignored_sky_bundles=rinput.ignored_sky_bundles
+        )
         self.logger.info('end sky subtraction')
 
         # 1 + 6  for first ring
