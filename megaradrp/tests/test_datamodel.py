@@ -116,6 +116,6 @@ def test_sky_fibers(ignored, fibs):
     skyfibs = conf.sky_fibers(valid_only=True,
                               ignored_bundles=ignored
                               )
-    assert skyfibs == fibs
+    assert sorted(skyfibs) == fibs
 
 
