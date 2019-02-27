@@ -92,6 +92,15 @@ class LinesCatalogRequirement(Requirement):
         super(LinesCatalogRequirement, self).__init__(megaradrp.types.MegaraLinesCatalog, 'Catalog of lines')
 
 
+class SkyRSSRequirement(Requirement):
+    def __init__(self, optional=True):
+        super(SkyRSSRequirement, self).__init__(
+            megaradrp.types.SkyRSS,
+            'Row Stacked Spectra of the sky',
+            optional=optional
+        )
+
+
 class SensitivityRequirement(Requirement):
     def __init__(self, optional=True):
         super(SensitivityRequirement,

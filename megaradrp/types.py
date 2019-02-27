@@ -221,6 +221,11 @@ class MasterSensitivity(ProcessedSpectrumProduct):
     pass
 
 
+class SkyRSS(ProcessedRSS):
+    """A processed RSS image"""
+    pass
+
+
 class ReferenceExtinctionTable(DataProductMixin, ArrayType):
     """Atmospheric Extinction."""
 

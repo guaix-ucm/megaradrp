@@ -51,6 +51,7 @@ class ImageRecipe(MegaraBaseRecipe):
     master_fiberflat = reqs.MasterFiberFlatRequirement()
     master_twilight = reqs.MasterTwilightRequirement()
     master_traces = reqs.MasterAperturesRequirement()
+    sky_rss = reqs.SkyRSSRequirement(optional=True)
     extraction_offset = Parameter([0.0], 'Offset traces for extraction', accept_scalar=True)
     ignored_sky_bundles = Parameter([], 'Ignore these sky bundles')
     master_sensitivity = reqs.SensitivityRequirement()
