@@ -150,7 +150,9 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         xx_v = xx[~mask_noinfo]
         collapse_v = collapse[~mask_noinfo]
 
-        interpol_univ = UnivariateSpline(xx_v, collapse_v, k=5)
+        # Spline degree (3 or 5)
+        degree_s = 5
+        interpol_univ = UnivariateSpline(xx_v, collapse_v, k=degree_s)
         collapse_smooth_s = collapse_smooth.copy()
         collapse_smooth_s[~mask_noinfo] = interpol_univ(xx_v)
         collapse_smooth_s[mask_noinfo] = 1.0
@@ -158,9 +160,11 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         if self.intermediate_results:
             numpy.savetxt('collapse.txt', collapse)
             numpy.savetxt('mask_noinfo.txt', mask_noinfo)
-            plt.plot(xx, collapse, '.')
-            plt.plot(xx, collapse_smooth, '-')
-            plt.plot(xx, collapse_smooth_s, '--')
+            fig, ax = plt.subplots()
+            ax.plot(xx, collapse, '.', label='collapsed')
+            ax.plot(xx, collapse_smooth, '-', label='savgol{}'.format(degree))
+            ax.plot(xx, collapse_smooth_s, '--', label='spline{}'.format(degree_s))
+            ax.legend()
             plt.savefig('collapsed_smooth.png')
             plt.close()
 
