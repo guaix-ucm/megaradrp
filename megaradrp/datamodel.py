@@ -92,7 +92,7 @@ class MegaraDataModel(DataModel):
         'imgid'
     ]
 
-    PLATESCALE = 1.120 # arcsec / mm
+    PLATESCALE = 1.2120 # arcsec / mm
 
     def __init__(self):
 
