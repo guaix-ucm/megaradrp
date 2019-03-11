@@ -1,5 +1,5 @@
 
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -16,7 +16,7 @@ import logging
 import numpy
 import astropy.wcs
 import astropy.io.fits as fits
-
+import astropy.units as u
 from scipy.spatial import KDTree
 from scipy.ndimage.filters import gaussian_filter
 from numina.frame.utils import copy_img
@@ -310,7 +310,13 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
         lm = numpy.array([r1, r2])
         # Values are 0-based
         wavelen_ = wcsl.all_pix2world(lm.T, 0)
-        wavelen = wavelen_[:, 0]
+        if wcsl.wcs.cunit[0] == u.dimensionless_unscaled:
+            # CUNIT is empty, assume Angstroms
+            wavelen = wavelen_[:, 0] * u.AA
+        else:
+            wavelen = wavelen_[:, 0] * wcsl.wcs.cunit[0]
+
+        wavelen_aa = wavelen.to(u.AA)
 
         airmass = final[0].header['AIRMASS']
         exptime = final[0].header['EXPTIME']
@@ -320,7 +326,9 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
         # In magAB
         # f(Jy) = 3631 * 10^-0.4 mAB
 
-        response_1 = 3631 * numpy.power(10.0, -0.4 * (star_interp(wavelen) + extinc_interp(wavelen) * airmass))
+        mag_ref = (star_interp(wavelen_aa) + extinc_interp(wavelen_aa) * airmass) * u.ABmag
+        response_1 = mag_ref.to(u.Jy).value
+
         r0max = response_0.max()
         r1max = response_1.max()
         r0 = response_0 / r0max

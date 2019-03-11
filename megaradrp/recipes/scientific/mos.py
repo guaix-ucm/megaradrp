@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -12,6 +12,7 @@
 import numpy
 from scipy.interpolate import interp1d
 import astropy.wcs
+import astropy.units as u
 
 from numina.core import Product
 
@@ -99,10 +100,17 @@ class MOSImageRecipe(ImageRecipe):
             pixrange = numpy.arange(final[0].data.shape[1])
             yrange = pixrange * 0
             calcwl = numpy.array([pixrange, yrange]).T
-            wavelen = wlcalib.all_pix2world(calcwl, 0.0)[:, 0]
+            wavelen_ = wlcalib.all_pix2world(calcwl, 0.0)
+            if wlcalib.wcs.cunit[0] == u.dimensionless_unscaled:
+                # CUNIT is empty, assume Angstroms
+                wavelen = wavelen_[:, 0] * u.AA
+            else:
+                wavelen = wavelen_[:, 0] * wlcalib.wcs.cunit[0]
+            wavelen_aa = wavelen.to(u.AA).value
+
             airmass = final[0].header['AIRMASS']
 
-            extinc_corr = numpy.power(10.0, 0.4 * extinc_interp(wavelen) * airmass)
+            extinc_corr = numpy.power(10.0, 0.4 * extinc_interp(wavelen_aa) * airmass)
 
             final[0].data *= extinc_corr
             origin[0].data *= extinc_corr
