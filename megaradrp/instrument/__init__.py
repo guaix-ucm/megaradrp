@@ -1,11 +1,17 @@
 #
-# Copyright 2016-2017 Universidad Complutense de Madrid
+# Copyright 2016-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
 # SPDX-License-Identifier: GPL-3.0+
 # License-Filename: LICENSE.txt
 #
+
+
+MEGARA_PLATESCALE = 1.2120 # arcsec / mm
+
+MEGARA_IAA = -163.854 # deg
+
 
 # Values for recipe Trace
 # Relative threshold for each VPH in LCB

@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2018 Universidad Complutense de Madrid
+# Copyright 2016-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -20,6 +20,8 @@ import astropy.table
 from six import StringIO
 from numina.datamodel import DataModel
 from numina.util.convert import convert_date
+
+import megaradrp.instrument as megins
 
 
 class QueryAttribute(object):
@@ -92,7 +94,7 @@ class MegaraDataModel(DataModel):
         'imgid'
     ]
 
-    PLATESCALE = 1.2120 # arcsec / mm
+    PLATESCALE = megins.MEGARA_PLATESCALE
 
     def __init__(self):
 
