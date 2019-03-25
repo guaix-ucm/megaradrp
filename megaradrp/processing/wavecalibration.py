@@ -17,6 +17,7 @@ import uuid
 import numpy
 from numpy.polynomial.polynomial import polyval
 import astropy.wcs
+import astropy.io.fits as fits
 
 import numina.array.utils as utils
 from numina.frame.utils import copy_img
@@ -377,7 +378,6 @@ def pixel_borders(arr):
 
 
 if __name__ == '__main__':
-    import astropy.io.fits as fits
     import numina.types.structured as stru
     import logging
 
