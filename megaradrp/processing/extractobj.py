@@ -112,8 +112,8 @@ def extract_star(rssimage, position, npoints, fiberconf, logger=None):
         #nz_max, = numpy.nonzero(numpy.diff(max_value_region))
         # Interval with at least 1 fiber
         #nz_some, = numpy.nonzero(numpy.diff(some_value_region))
-        nz_max_slice = coverage_det(max_value_region)
-        nz_some_slice = coverage_det(some_value_region)
+        nz_max_slice = coverage_det(max_value_region.astype('int'))
+        nz_some_slice = coverage_det(some_value_region.astype('int'))
 
         # Collapse the flux in the optimal region
         perf = flux_fiber[:, nz_max_slice].sum(axis=1)
