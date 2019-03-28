@@ -118,7 +118,7 @@ def find_boxes(fitsfile, channels, nsearch, debugplot):
     yf_trimmed[cut] = 0.0
     ycut_filt = np.fft.ifft(yf_trimmed).real
     if debugplot in (21, 22):
-        ax = ximplotxy(xf, yf.real, plottype='semilog',
+        ax = ximplotxy(xf, yf.real, plottype='semilogy',
                        xlim=(0., 0.51), show=False,
                        label='original', linestyle='dotted')
         ax.plot(xf, yf_trimmed.real, label='trimmed')
