@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -9,7 +9,8 @@
 
 import numpy as np
 
-from numina.simulation.device import HWDevice, Signal
+from numina.instrument.hwdevice import HWDevice
+from numina.instrument.components.signal import Signal
 
 
 class HemiCover(HWDevice):

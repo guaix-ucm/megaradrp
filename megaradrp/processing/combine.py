@@ -177,6 +177,7 @@ def main(args=None):
     #    hduls = [stack.enter_context(fits.open(fname)) for fname in args.image]
     #    combination_hdul(hduls, method=combine.mean, errors=False, prolog=None)
 
+
 if __name__ == '__main__':
 
     main()

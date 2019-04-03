@@ -1,17 +1,14 @@
 {
- "name": "LCB", 
+ "name": "LCB",
  "type": "component",
  "description": "LCB configuration",
  "uuid": "06fc5d6d-d20b-4eba-b3fa-57696f0a1103",
- "date_start": "2016-11-08", 
- "date_end": null, 
- "configurations": {
-   "spaxels": {
-    "depends": [
-    ],
+ "date_start": "2016-11-08T12:00:00",
+ "date_end": null,
+ "properties": [
+  { "id": "spaxels", "depends": [],
     "values": {
-     "positions": 
-     [
+     "positions": [
       [
        0.0,
        -4.564,
@@ -3130,5 +3127,5 @@
      ]
     }
    }
-  }
+  ]
 }

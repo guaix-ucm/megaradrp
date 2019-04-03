@@ -124,9 +124,10 @@ class ModelMapRecipe(MegaraBaseRecipe):
 
         # insconf = obresult.configuration
 
-        # boxes = insconf.get('pseudoslit.boxes', **obresult.tags)
-
-        # box_borders0, cstart0 = self.obtain_boxes(insconf, obresult.tags)
+        # boxes = insconf.get_property('pseudoslit.boxes')
+        # values = insconf.get_property('pseudoslit.boxes_positions')
+        # cstart0 = values['ref_column']
+        # box_borders0 = values['positions']
 
         # box_borders, cstart = self.refine_boxes_from_image(reduced, box_borders0, cstart0)
 

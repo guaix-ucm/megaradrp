@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2018 Universidad Complutense de Madrid
+# Copyright 2016-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -9,8 +9,8 @@
 
 import numpy as np
 from astropy import units as u
-from astropy.analytic_functions import blackbody_lambda
-from numina.simulation.device import HWDevice
+from astropy.modeling.blackbody import blackbody_lambda
+from numina.instrument.hwdevice import HWDevice
 
 from megaradrp.simulation.extended import create_th_ar_arc_spectrum
 

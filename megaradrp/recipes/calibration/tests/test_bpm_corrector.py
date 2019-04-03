@@ -12,7 +12,7 @@
 from numina.core import DataFrame, ObservationResult
 import astropy.io.fits as fits
 from numina.core.requirements import ObservationResultRequirement
-from numina.core.insconf import instrument_loader
+import numina.instrument.assembly as asb
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
@@ -62,17 +62,24 @@ def test_bpm_corrector():
     from tempfile import mkdtemp
 
     config_uuid = '4fd05b24-2ed9-457b-b563-a3c618bb1d4c'
-
+    date_obs = '2017-11-09T11:00:00.0'
     directorio = mkdtemp()
     names = crear_archivos(directorio, number=4)
 
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'MegaraBiasImage'
-    modpath = 'megaradrp.instrument.configs'
-    fname = 'instrument-{}.json'.format(config_uuid)
-
-    ob.configuration = instrument_loader(modpath, fname)
+    pkg_paths = ['megaradrp.instrument.configs']
+    store = asb.load_paths_store(pkg_paths)
+    insmodel = asb.assembly_instrument(store, config_uuid, date_obs, by_key='uuid')
+    header = fits.Header()
+    header['DATE-OBS'] = date_obs
+    header['INSCONF'] = config_uuid
+    header['INSTRUME'] = 'MEGARA'
+    header['VPH'] = 'LR-U'
+    header['INSMODE'] = 'MOS'
+    insmodel.configure_with_header(header)
+    ob.configuration = insmodel
     ob.frames = [DataFrame(filename=open(nombre).name) for nombre in names]
 
     recipe = DerivedRecipe(directorio)

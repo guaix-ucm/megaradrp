@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -143,11 +143,13 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         self.save_intermediate_img(reduced, 'reduced_image.fits')
 
-        insconf = obresult.configuration
+        #insconf = obresult.configuration
+        insconf = obresult.profile
 
-        boxes = insconf.get('pseudoslit.boxes', **obresult.tags)
-
-        box_borders0, cstart0 = self.obtain_boxes(insconf, obresult.tags)
+        boxes = insconf.get_property('pseudoslit.boxes')
+        values = insconf.get_property('pseudoslit.boxes_positions')
+        cstart0 = values['ref_column']
+        box_borders0 = values['positions']
 
         box_borders, cstart = self.refine_boxes_from_image(reduced, box_borders0, cstart0)
 
@@ -204,12 +206,6 @@ class TraceMapRecipe(MegaraBaseRecipe):
         return self.create_result(reduced_image=reduced,
                                   reduced_rss = reduced_rss,
                                   master_traces=final)
-
-    def obtain_boxes(self, insconf, tags):
-        values = insconf.get('pseudoslit.boxes_positions', **tags)
-        cstart = values['ref_column']
-        box_borders = values['positions']
-        return box_borders, cstart
 
     def obtain_boxes_from_image(self, reduced, expected, npeaks, cstart=2000):
         from numina.array.peaks.peakdet import find_peaks_indexes

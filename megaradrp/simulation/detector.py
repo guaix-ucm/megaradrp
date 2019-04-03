@@ -11,7 +11,7 @@ import logging
 
 import numpy
 from numpy.lib.stride_tricks import as_strided as ast
-from numina.simulation.detector import DetectorBase, VirtualDetector
+from numina.instrument.components.detector import DetectorBase, VirtualDetector
 
 
 _logger = logging.getLogger(__name__)

@@ -321,7 +321,4 @@ class GainCorrector(Corrector):
         hdr['history'] = 'Gain correction time {}'.format(datetime.datetime.utcnow().isoformat())
         hdr['history'] = 'Gain1 correction value {}'.format(self.gain1)
         hdr['history'] = 'Gain2 correction value {}'.format(self.gain2)
-
-
-
         return img
