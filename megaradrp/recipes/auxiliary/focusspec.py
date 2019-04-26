@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2018 Universidad Complutense de Madrid
+# Copyright 2016-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -18,7 +18,7 @@ import astropy.io.fits as fits
 
 from numina.array import combine
 from numina.core import Requirement, Parameter
-from numina.core.dataholders import Product
+from numina.core.dataholders import Result
 from numina.core.products import ArrayType
 from numina.core.requirements import ObservationResultRequirement
 from numina.exceptions import RecipeError
@@ -94,10 +94,10 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
 
     nfibers = Parameter(10, "The results are sampled every nfibers")
     tsigma = Parameter(50, "Scale factor for row threshold")
-    # Products
-    focus_table = Product(ArrayType)
-    focus_image = Product(ProcessedFrame)
-    focus_wavelength = Product(FocusWavelength)
+    # Results
+    focus_table = Result(ArrayType)
+    focus_image = Result(ProcessedFrame)
+    focus_wavelength = Result(FocusWavelength)
 
     @numina.core.validator.validate
     def run(self, rinput):

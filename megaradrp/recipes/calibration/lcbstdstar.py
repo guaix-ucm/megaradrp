@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -15,7 +15,7 @@ import astropy.io.fits as fits
 import astropy.units as u
 from astropy import constants as const
 
-from numina.core import Product, Parameter
+from numina.core import Result, Parameter
 from numina.core.requirements import Requirement
 from numina.core.validator import range_validator
 from numina.types.array import ArrayType
@@ -73,13 +73,13 @@ class LCBStandardRecipe(ImageRecipe):
     reference_extinction = Requirement(ReferenceExtinctionTable, "Reference extinction")
     sigma_resolution = Parameter(20.0, 'sigma Gaussian filter to degrade resolution ')
 
-    reduced_image = Product(ProcessedFrame)
-    final_rss = Product(ProcessedRSS)
-    reduced_rss = Product(ProcessedRSS)
-    sky_rss = Product(ProcessedRSS)
-    star_spectrum = Product(ProcessedSpectrum)
-    master_sensitivity = Product(MasterSensitivity)
-    fiber_ids = Product(ArrayType)
+    reduced_image = Result(ProcessedFrame)
+    final_rss = Result(ProcessedRSS)
+    reduced_rss = Result(ProcessedRSS)
+    sky_rss = Result(ProcessedRSS)
+    star_spectrum = Result(ProcessedSpectrum)
+    master_sensitivity = Result(MasterSensitivity)
+    fiber_ids = Result(ArrayType)
 
     def run(self, rinput):
 

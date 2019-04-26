@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -9,7 +9,7 @@
 
 """Calibration Recipes for Megara"""
 
-from numina.core import Product, Requirement
+from numina.core import Result, Requirement
 from numina.core.types import ListOfType
 from numina.core.requirements import ObservationResultRequirement
 
@@ -41,7 +41,7 @@ class Recipe(MegaraBaseRecipe):
     reference_spectra = Requirement(ListOfType(typs.ReferenceSpectrumTable),
                                     "Reference spectra of Std stars")
 
-    master_sensitivity = Product(typs.MasterSensitivity)
+    master_sensitivity = Result(typs.MasterSensitivity)
 
     def run(self, rinput):
 

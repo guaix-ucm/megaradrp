@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -15,7 +15,7 @@ import numpy
 from scipy.ndimage.filters import median_filter
 from astropy.io import fits
 from numina.array import combine
-from numina.core import Product, Parameter
+from numina.core import Result, Parameter
 
 from megaradrp.types import ProcessedFrame
 from megaradrp.processing.combine import basic_processing_with_combination
@@ -38,9 +38,9 @@ class SlitFlatRecipe(MegaraBaseRecipe):
     #polyorder = Parameter(3, 'Savitzky-Golay order of the polynomial used to fit the samples')
     #median_window_length = Parameter(31, 'Median window width')
 
-    # Products
-    reduced_image = Product(ProcessedFrame)
-    master_slitflat = Product(MasterSlitFlat)
+    # Results
+    reduced_image = Result(ProcessedFrame)
+    master_slitflat = Result(MasterSlitFlat)
 
     def get_filters(self):
         return [cor.get_corrector_overscan, cor.get_corrector_trimming,

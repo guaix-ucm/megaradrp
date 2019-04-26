@@ -15,7 +15,7 @@ import math
 import numpy as np
 from scipy.spatial import KDTree
 
-from numina.core import Product, Parameter
+from numina.core import Result, Parameter
 from numina.core.validator import range_validator
 from numina.constants import FWHM_G
 
@@ -75,11 +75,11 @@ class AcquireLCBRecipe(ImageRecipe):
     )
 
 
-    reduced_image = Product(ProcessedFrame)
-    reduced_rss = Product(ProcessedRSS)
-    final_rss = Product(ProcessedRSS)
-    offset = Product(list)
-    rotang = Product(float)
+    reduced_image = Result(ProcessedFrame)
+    reduced_rss = Result(ProcessedRSS)
+    final_rss = Result(ProcessedRSS)
+    offset = Result(list)
+    rotang = Result(float)
 
     def run(self, rinput):
 

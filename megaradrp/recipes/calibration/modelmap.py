@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -20,7 +20,7 @@ from scipy.interpolate import UnivariateSpline
 import matplotlib.pyplot as plt
 from astropy.modeling import fitting
 from astropy.modeling.functional_models import Const1D
-from numina.core import Product, Requirement, Parameter
+from numina.core import Result, Requirement, Parameter
 from numina.array import combine
 from numina.modeling.gaussbox import GaussBox, gauss_box_model
 from numina.frame.utils import copy_img
@@ -91,10 +91,10 @@ class ModelMapRecipe(MegaraBaseRecipe):
     master_traces = reqs.MasterTraceMapRequirement()
     processes = Parameter(0, 'Number of processes used for fitting')
     debug_plot = Parameter(0, 'Save intermediate tracing plots')
-    # Products
-    reduced_image = Product(ProcessedImage)
-    reduced_rss = Product(ProcessedRSS)
-    master_model = Product(ModelMap)
+    # Results
+    reduced_image = Result(ProcessedImage)
+    reduced_rss = Result(ProcessedRSS)
+    master_model = Result(ModelMap)
 
     def run(self, rinput):
 

@@ -18,7 +18,7 @@ import numpy
 import numpy.polynomial.polynomial as nppol
 from numina.array.peaks.peakdet import refine_peaks
 from numina.array.trace.traces import trace
-from numina.core import Product, Parameter
+from numina.core import Result, Parameter
 import matplotlib.pyplot as plt
 
 import numina.core.qc as qc
@@ -97,9 +97,9 @@ class TraceMapRecipe(MegaraBaseRecipe):
     relative_threshold = Parameter(0.3, 'Threshold for peak detection')
     debug_plot = Parameter(0, 'Save intermediate tracing plots')
 
-    reduced_image = Product(ProcessedImage)
-    reduced_rss = Product(ProcessedRSS)
-    master_traces = Product(TraceMap)
+    reduced_image = Result(ProcessedImage)
+    reduced_rss = Result(ProcessedRSS)
+    master_traces = Result(TraceMap)
 
     def run_qc(self, recipe_input, recipe_result):
         """Run quality control checks"""

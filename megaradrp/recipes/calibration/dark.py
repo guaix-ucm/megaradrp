@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -9,7 +9,7 @@
 
 """Dark current calibration Recipe for Megara"""
 
-from numina.core import Product
+from numina.core import Result
 from numina.array import combine
 
 from megaradrp.core.recipe import MegaraBaseRecipe
@@ -24,7 +24,7 @@ class DarkRecipe(MegaraBaseRecipe):
 
     master_bias = MasterBiasRequirement()
 
-    master_dark = Product(MasterDark)
+    master_dark = Result(MasterDark)
 
     def run(self, rinput):
 

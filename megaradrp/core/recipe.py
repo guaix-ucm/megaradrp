@@ -13,7 +13,7 @@ import numpy as np
 
 from numina.core import BaseRecipe
 from numina.core import DataFrame, ObservationResult
-from numina.core.dataholders import Product
+from numina.core.dataholders import Result
 from numina.types.obsresult import QualityControlProduct
 from numina.types.qc import QC
 from numina.core.requirements import ObservationResultRequirement
@@ -49,7 +49,7 @@ class MegaraBaseRecipe(BaseRecipe):
     """
 
     obresult = ObservationResultRequirement()
-    qc = Product(QualityControlProduct, destination='qc', default=QC.UNKNOWN)
+    qc = Result(QualityControlProduct, destination='qc', default=QC.UNKNOWN)
     logger = logging.getLogger('numina.recipes.megara')
     datamodel = MegaraDataModel()
 

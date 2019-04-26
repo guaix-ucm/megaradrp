@@ -14,7 +14,7 @@ from scipy.interpolate import interp1d
 import astropy.wcs
 import astropy.units as u
 
-from numina.core import Product
+from numina.core import Result
 
 from megaradrp.recipes.scientific.base import ImageRecipe
 from megaradrp.types import ProcessedRSS, ProcessedFrame
@@ -62,10 +62,10 @@ class LCBImageRecipe(ImageRecipe):
 
     """
 
-    reduced_image = Product(ProcessedFrame)
-    final_rss = Product(ProcessedRSS)
-    reduced_rss = Product(ProcessedRSS)
-    sky_rss = Product(ProcessedRSS)
+    reduced_image = Result(ProcessedFrame)
+    final_rss = Result(ProcessedRSS)
+    reduced_rss = Result(ProcessedRSS)
+    sky_rss = Result(ProcessedRSS)
 
     def run(self, rinput):
 

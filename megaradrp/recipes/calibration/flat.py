@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -14,7 +14,7 @@ from __future__ import division, print_function
 import numpy
 from astropy.io import fits
 import matplotlib.pyplot as plt
-from numina.core import Product, Parameter
+from numina.core import Result, Parameter
 import numina.exceptions
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.types import MasterFiberFlat
@@ -92,10 +92,10 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     extraction_offset = Parameter([0.0], 'Offset traces for extraction', accept_scalar=True)
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
 
-    # Products
-    reduced_image = Product(ProcessedFrame)
-    reduced_rss = Product(ProcessedRSS)
-    master_fiberflat = Product(MasterFiberFlat)
+    # Results
+    reduced_image = Result(ProcessedFrame)
+    reduced_rss = Result(ProcessedRSS)
+    master_fiberflat = Result(MasterFiberFlat)
 
     def process_flat2d(self, rinput):
         flow = self.init_filters(rinput, rinput.obresult.configuration)
