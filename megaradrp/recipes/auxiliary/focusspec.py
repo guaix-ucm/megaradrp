@@ -19,7 +19,7 @@ import astropy.io.fits as fits
 from numina.array import combine
 from numina.core import Requirement, Parameter
 from numina.core.dataholders import Result
-from numina.core.products import ArrayType
+from numina.types.array import ArrayType
 from numina.core.requirements import ObservationResultRequirement
 from numina.exceptions import RecipeError
 import numina.array.utils
