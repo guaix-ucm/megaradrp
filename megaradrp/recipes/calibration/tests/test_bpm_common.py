@@ -53,7 +53,7 @@ def generate_bias(detector, number, temporary_path):
 
 def crear_archivos(temporary_path, number=5):
     from megaradrp.simulation.actions import simulate_flat
-    from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
+    from megaradrp.instrument.components.detector import ReadParams, MegaraDetectorSat
     from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
 
     config_uuid = '4fd05b24-2ed9-457b-b563-a3c618bb1d4c'

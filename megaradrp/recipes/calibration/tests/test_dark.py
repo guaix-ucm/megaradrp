@@ -17,7 +17,7 @@ import numina.instrument.assembly as asb
 
 from megaradrp.recipes.calibration.dark import DarkRecipe
 from megaradrp.simulation.factory import MegaraImageFactory
-from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
+from megaradrp.instrument.components.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.actions import simulate_dark_fits
 
 

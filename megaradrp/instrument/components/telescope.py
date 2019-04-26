@@ -12,7 +12,7 @@ import math
 from numina.instrument.hwdevice import HWDevice
 from numina.instrument.simulation.efficiency import Efficiency
 
-from .instrument import FocusActuator
+from megaradrp.instrument.components.instrument import FocusActuator
 
 
 class M2FocusActuator(FocusActuator):

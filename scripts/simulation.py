@@ -16,10 +16,10 @@ from megaradrp.simulation.wheel import VPHWheel
 from megaradrp.simulation import lamps
 from megaradrp.simulation import calibrationunit
 from megaradrp.simulation.actions import megara_sequences
-from megaradrp.simulation.telescope import Telescope
+from megaradrp.instrument.components.telescope import Telescope
 from megaradrp.simulation.fiberbundle import FiberBundle
 from megaradrp.simulation.lightfiber import LightFiber, FiberSet
-from megaradrp.simulation.psslit import PseudoSlit, PseudoSlitSelector
+from megaradrp.instrument.components.psslit import PseudoSlit, PseudoSlitSelector
 from megaradrp.simulation.focalplane import FocalPlane
 from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.vph import MegaraVPH
