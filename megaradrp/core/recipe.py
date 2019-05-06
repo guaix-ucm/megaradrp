@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -9,12 +9,8 @@
 
 import logging
 
-import numpy as np
-
 from numina.core import BaseRecipe
-from numina.core import DataFrame, ObservationResult
-from numina.core.dataholders import Result
-from numina.types.obsresult import QualityControlProduct
+from numina.core import DataFrame
 from numina.types.qc import QC
 from numina.core.requirements import ObservationResultRequirement
 import numina.util.flow as flowmod
@@ -38,9 +34,6 @@ class MegaraBaseRecipe(BaseRecipe):
     ----------
 
     obresult : ObservationResult, requirement
-
-    qc : QualityControl, result, QC.GOOD by default
-
     logger :
          recipe logger
 
@@ -49,7 +42,6 @@ class MegaraBaseRecipe(BaseRecipe):
     """
 
     obresult = ObservationResultRequirement()
-    qc = Result(QualityControlProduct, destination='qc', default=QC.UNKNOWN)
     logger = logging.getLogger('numina.recipes.megara')
     datamodel = MegaraDataModel()
 
