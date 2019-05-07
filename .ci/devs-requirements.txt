@@ -7,3 +7,5 @@ six
 scikit-image
 sphinx >= 1.5
 numpydoc
+pytest
+pytest-remotedata

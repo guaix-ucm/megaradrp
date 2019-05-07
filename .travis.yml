@@ -21,6 +21,7 @@ install:
   - pip install git+git://github.com/guaix-ucm/numina.git#egg=numina
   - pip install $DEPS scikit-image pip pytest setuptools Cython six>=1.7
   - pip install pytest-benchmark pytest-cov
+  - pip install pytest-remotedata
   - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
   - if [[ $COVERAGE == true ]]; then pip install codeclimate-test-reporter; fi
 
