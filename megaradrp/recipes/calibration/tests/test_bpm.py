@@ -23,7 +23,7 @@ from megaradrp.instrument.components.detector import ReadParams, MegaraDetectorS
 from megaradrp.simulation.actions import simulate_flat
 
 
-# @pytest.mark.remote
+# @pytest.mark.remote_data
 def test_bpm():
     number = 5
     PSCAN = 50

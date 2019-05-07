@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -24,7 +24,7 @@ def run_recipe():
     main(['run', 'obsrun.yaml', '-r', 'control.yaml'])
 
 
-@pytest.mark.remote
+@pytest.mark.remote_data
 @pytest.mark.usefixtures("numinatpldir")
 def test_mode_arc_calibration_set0(drpmocker):
 

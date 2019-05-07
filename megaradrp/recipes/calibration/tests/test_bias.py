@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2018 Universidad Complutense de Madrid
+# Copyright 2015-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -19,7 +19,7 @@ from megaradrp.recipes.calibration.bias import BiasRecipe
 from megaradrp.loader import load_drp
 
 
-@pytest.mark.remote
+@pytest.mark.remote_data
 def test_bias():
 
     BASE_URL = 'http://guaix.fis.ucm.es/~spr/megara_test/BIAS/%s'

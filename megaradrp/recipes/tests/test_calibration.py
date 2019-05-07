@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -34,7 +34,7 @@ def test_recipe1(drpmocker):
     assert isinstance(recipe, BiasRecipe)
 
 
-@pytest.mark.remote
+@pytest.mark.remote_data
 @pytest.mark.usefixtures("numinatpldir")
 def test_mode_bias_set0(drpmocker):
 
@@ -43,7 +43,7 @@ def test_mode_bias_set0(drpmocker):
     run_recipe()
 
 
-@pytest.mark.remote
+@pytest.mark.remote_data
 @pytest.mark.usefixtures("numinatpldir")
 def test_mode_bias_set1(drpmocker):
 
@@ -52,7 +52,7 @@ def test_mode_bias_set1(drpmocker):
     run_recipe()
 
 
-@pytest.mark.remote
+@pytest.mark.remote_data
 @pytest.mark.usefixtures("numinatpldir")
 def test_mode_trace_map_set0(drpmocker):
 
@@ -60,7 +60,7 @@ def test_mode_trace_map_set0(drpmocker):
     run_recipe()
 
 
-@pytest.mark.remote
+@pytest.mark.remote_data
 @pytest.mark.usefixtures("numinatpldir")
 def test_mode_fiber_flat_set0(drpmocker):
 
