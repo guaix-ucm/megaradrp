@@ -9,8 +9,9 @@
 
 """Calibration Recipes for Megara"""
 
+
 from numina.core import Result, Requirement
-from numina.core.types import ListOfType
+from numina.types.datatype import ListOfType
 from numina.core.requirements import ObservationResultRequirement
 
 import megaradrp.types as typs

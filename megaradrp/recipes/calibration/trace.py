@@ -21,7 +21,7 @@ from numina.array.trace.traces import trace
 from numina.core import Result, Parameter
 import matplotlib.pyplot as plt
 
-import numina.core.qc as qc
+import numina.types.qc as qc
 from numina.array import combine
 import numina.core.validator
 from skimage.filters import threshold_otsu
