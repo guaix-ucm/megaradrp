@@ -138,7 +138,7 @@ class JSONstorage(DataType):
 
     def _datatype_dump(self, obj, where):
         import json
-        filename = where.destination + '.json'
+        filename = where + '.json'
 
         with open(filename, 'w') as fd:
             fd.write(json.dumps(obj, sort_keys=True, indent=2,

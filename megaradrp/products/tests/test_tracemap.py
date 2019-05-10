@@ -170,15 +170,10 @@ def test_load_traceMap():
 
 def test_dump_traceMap(benchmark=None):
 
-    class Aux(object):
-        def __init__(self, destination):
-            self.destination = destination
-
     data, state = create_test_tracemap()
 
     my_file = NamedTemporaryFile()
-    work_env = Aux(my_file.name)
-    my_open_file = tm.TraceMap._datatype_dump(data, work_env)
+    my_open_file = tm.TraceMap._datatype_dump(data, my_file.name)
 
     final = tm.TraceMap._datatype_load(my_open_file)
     traces = final.__getstate__()
