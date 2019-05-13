@@ -18,17 +18,10 @@ import enum
 import astropy.io.fits as fits
 import astropy.table
 from six import StringIO
-from numina.datamodel import DataModel
+from numina.datamodel import DataModel, QueryAttribute, KeyDefinition
 from numina.util.convert import convert_date
 
 import megaradrp.instrument as megins
-
-
-class QueryAttribute(object):
-    def __init__(self, name, tipo, description=""):
-        self.name = name
-        self.type = tipo
-        self.description = description
 
 
 class MegaraDataModel(DataModel):
@@ -38,7 +31,9 @@ class MegaraDataModel(DataModel):
         'vph': QueryAttribute('vph', str),
         'insmode': QueryAttribute('insmode', str),
         'insconf': QueryAttribute('insconf', str),
-        'speclamp': QueryAttribute('speclamp', str)
+        'speclamp': QueryAttribute('speclamp', str),
+        'temp': QueryAttribute('temp', float),
+        'confid': QueryAttribute('confid', str)
     }
 
     meta_info_headers = [
@@ -110,8 +105,8 @@ class MegaraDataModel(DataModel):
             'osfilter': ('OSFILTER', 'undefined'),
             'temp': ('SENTEMP4', 0.0),
             'speclamp': ('SPECLMP', 'undefined'),
+            'confid': KeyDefinition('CONFID', ext='FIBERS'),
         }
-
         super(MegaraDataModel, self).__init__(
             'MEGARA',
             instrument_mappings

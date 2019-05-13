@@ -5,6 +5,8 @@ import megaradrp.requirements as reqs
 import numina.core
 import numina.dal
 from numina.exceptions import NoResultFound
+from ..types import MasterFiberFlat
+from ..products.tracemap import TraceMap
 
 
 class IoInstance(object):
@@ -74,3 +76,59 @@ def _test_extinction_filename():
         assert False
     finally:
         os.remove(path)
+
+
+def test_tag():
+    import megaradrp.tests.simpleobj as simple
+
+    fr = simple.create_simple_hdul()
+
+    tipo = MasterFiberFlat()
+    keys = ['instrument', 'uuid', 'observation_date']
+    mu = tipo.extract_db_info(fr, keys)
+    print(mu)
+    assert True
+
+
+def test_tag2():
+    import megaradrp.tests.simpleobj as simple
+
+    tipo = TraceMap()
+    fr = tipo
+    keys = ['instrument', 'uuid', 'observation_date']
+    mu = tipo.extract_db_info(fr, keys)
+
+
+    assert True
+
+
+def test_tag3():
+
+    import megaradrp.types as T
+    import megaradrp.products as P
+
+
+    for klass in [T.MasterBias, T.MasterBPM, T.MasterSlitFlat, T.MasterTwilightFlat, T.MasterFiberFlat,
+                  P.TraceMap, P.ModelMap, P.WavelengthCalibration, T.MegaraLinesCatalog]:
+
+        tipo  = klass()
+        print(klass)
+        print('qexpr', tipo.query_expr)
+        print('qexpr meta', tipo.query_expr.metadata)
+        print('qexpr nodes', tipo.query_expr.nodes)
+        print(tipo.names_t)
+        print('----------')
+
+    assert True
+
+
+def test_tag4():
+    import megaradrp.tests.simpleobj as simple
+
+    fr = simple.create_simple_hdul()
+
+    tipo = MasterFiberFlat()
+    q2 = tipo.query_expr.fill_tags({'insmode':'a', 'vph': 'b', 'confid': 'c'})
+    print(q2)
+    print(q2.fill_)
+    assert False

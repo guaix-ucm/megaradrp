@@ -64,6 +64,9 @@ class GeometricModel(object):
 
 
 class ModelMap(BaseStructuredCalibration):
+
+    __tags__ = ['insmode', 'vph']
+
     def __init__(self, instrument='unknown'):
         super(ModelMap, self).__init__(instrument)
         self.contents = []
