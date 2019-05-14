@@ -17,7 +17,7 @@ def main():
 
     basedir = pathlib.Path().resolve()
 
-    tarball = 'MEGARA-cookbook-M15_LCB_HR-R.tar.gz'
+    tarball = 'MEGARA-cookbook-M15_LCB_HR-R-v1.tar.gz'
     url = 'http://guaix.fis.ucm.es/~spr/megara_test/{}'.format(tarball)
 
     downloaded = download_cache(url)
@@ -41,11 +41,11 @@ def main():
 
     if not persist:
         with ctx.working_directory(basedir):
-            obsresults = ["0_bias.yaml", "2_modelmap.yaml",
-         "4_fiberflat.yaml", "6_Lcbadquisition.yaml",
-         "8_reduce_LCB.yaml", "1_tracemap.yaml",
-         "3_wavecalib.yaml", "5_twilight.yaml",
-         "7_Standardstar.yaml"]
+            obsresults = ["0_bias.yaml", "2_M15_modelmap.yaml",
+         "4_M15_fiberflat.yaml", "6_M15_Lcbadquisition.yaml",
+         "8_M15_reduce_LCB.yaml", "1_M15_tracemap.yaml",
+         "3_M15_wavecalib.yaml", "5_M15_twilight.yaml",
+         "7_M15_Standardstar.yaml"]
 
             sessions, loaded_obs = load_observations(obsresults, is_session=False)
             dm.backend.add_obs(loaded_obs)
