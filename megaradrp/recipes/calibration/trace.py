@@ -130,8 +130,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         self.logger.info('start trace spectra recipe')
 
         obresult = rinput.obresult
-        current_vph = obresult.tags['vph']
-        current_insmode = obresult.tags['insmode']
+
         obresult_meta = obresult.metadata_with(self.datamodel)
 
         debug_plot = rinput.debug_plot if self.intermediate_results else 0
@@ -156,6 +155,9 @@ class TraceMapRecipe(MegaraBaseRecipe):
         self.logger.debug("original boxes: %s", box_borders0)
         self.logger.debug("refined boxes: %s", box_borders)
 
+        current_vph = reduced[0].header['vph']
+        current_insmode = reduced[0].header['insmode']
+
         if current_insmode in vph_thr and current_vph in vph_thr[current_insmode]:
             threshold = vph_thr[current_insmode][current_vph]
             self.logger.info('rel threshold for %s is %4.2f', current_vph, threshold)
@@ -166,7 +168,13 @@ class TraceMapRecipe(MegaraBaseRecipe):
         final = megaradrp.products.TraceMap(instrument=obresult.instrument)
         fiberconf = self.datamodel.get_fiberconf(reduced)
         final.total_fibers = fiberconf.nfibers
-        final.tags = obresult.tags
+
+        for key in final.tag_names():
+            if key in obresult.labels:
+                final.tags[key] = obresult.labels[key]
+            else:
+                final.tags[key] = reduced[0].header[key]
+
         final.boxes_positions = box_borders
         final.ref_column = cstart
 

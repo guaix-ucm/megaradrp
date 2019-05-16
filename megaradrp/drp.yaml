@@ -32,22 +32,22 @@ modes:
   summary: Summary of Fiber Flat Image
   description: Lines and mode lines
   key: MegaraFiberFlatImage
-  tagger: megaradrp.taggers.tagger_base_image
+  tagger: null
 - name: Image with the fiber MOS
   summary: Summary of Fiber MOS image
   description: Lines and mode lines
   key: MegaraMosImage
-  tagger: megaradrp.taggers.tagger_base_image
+  tagger: null
 - name: Trace Map
   summary: Summary of Fiber MOS image
   description: Lines and mode lines
   key: MegaraTraceMap
-  tagger: megaradrp.taggers.tagger_base_image
+  tagger: null
 - name: Arc Calibration
   summary: Summary of Arc Calibration
   description: Process an Arc image
   key: MegaraArcCalibration
-  tagger: ['vph', 'insmode', 'speclamp']
+  tagger: null
 - name: Bad Pixel Mask
   summary: Bad Pixel Mask
   description: Bad Pixels
@@ -57,66 +57,66 @@ modes:
   summary: Slit Flat
   description: Slit Flat
   key: MegaraSlitFlat
-  tagger: megaradrp.taggers.tagger_base_image
+  tagger: null
 - name: ModelMap
   summary: Computes a ModelMap
   description: Computes a ModelMap from FlatImages
   key: MegaraModelMap
-  tagger: megaradrp.taggers.tagger_base_image
+  tagger: null
 - key: MegaraFocusSpectrograph
   name: Focus Spectrograph
-  tagger: megaradrp.taggers.tagger_base_image
+  tagger: null
   validator: megaradrp.validators.validate_focus
 - name: Twillight fiber flat
   summary: Twillight fiber flat spectrum
   description: Twillight fiber flat spectrum
   key: MegaraTwilightFlatImage
-  tagger: megaradrp.taggers.tagger_base_image
+  tagger: null
 - name: Image with the LCB
   summary: Image with the LCB
   description: Image with the LCB
   key: MegaraLcbImage
-  tagger: megaradrp.taggers.tagger_base_image
+  tagger: null
 - name: Image with the MOS
   summary: Image with the MOS
   description: Image with the MOS
   key: MegaraMosImage
-  tagger: megaradrp.taggers.tagger_base_image
+  tagger: null
 - name: Extinction Star Recipe
   summary: Extinction Star Recipe
   description: Extinction Star Recipe
   key: MegaraExtinctionStar
-  tagger: megaradrp.taggers.tagger_base_image
+  tagger: null
 - name: LCB Standard Recipe
   summary: LCB Standard Recipe
   description: LCB Standard Recipe
   key: MegaraLcbStdStar
-  tagger: megaradrp.taggers.tagger_base_image
+  tagger: null
 - name: MOS Standard Recipe
   summary: MOS Standard Recipe
   description: MOS Standard Recipe
   key: MegaraMosStdStar
-  tagger: megaradrp.taggers.tagger_base_image
+  tagger: null
 - name: Sensivity Star Recipe
   summary: Sensivity Star Recipe
   description: Sensivity Star Recipe
   key: MegaraSensitivityStar
-  tagger: megaradrp.taggers.tagger_base_image
+  tagger: null
 - name: Telescope Focus
   summary: Telescope Focus
   description: Telescope Focus
   key: MegaraFocusTelescope
-  tagger: megaradrp.taggers.tagger_base_image
+  tagger: null
 - name: Acquisition with the LCB IFU
   summary: Acquisition with the LCB IFU
   description: Acquisition with the LCB IFU
   key: MegaraLcbAcquisition
-  tagger: megaradrp.taggers.tagger_base_image
+  tagger: null
 - name: Acquisition with the Fiber MOS
   summary: Acquisition with the Fiber MOS
   description: Acquisition with the Fiber MOS
   key: MegaraMosAcquisition
-  tagger: megaradrp.taggers.tagger_base_image
+  tagger: null
 pipelines:
   default:
     version: 1

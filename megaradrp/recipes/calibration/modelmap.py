@@ -141,7 +141,13 @@ class ModelMapRecipe(MegaraBaseRecipe):
         fiberconf = self.datamodel.get_fiberconf(reduced)
         model_map.total_fibers = fiberconf.nfibers
         model_map.missing_fibers = rinput.master_traces.missing_fibers
-        model_map.tags = obresult.tags
+
+        for key in model_map.tag_names():
+            if key in obresult.labels:
+                model_map.tags[key] = obresult.labels[key]
+            else:
+                model_map.tags[key] = reduced[0].header[key]
+
         # model_map.boxes_positions = box_borders
         # model_map.ref_column = cstart
         model_map.update_metadata(self)

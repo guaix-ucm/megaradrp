@@ -104,7 +104,7 @@ class MegaraDataModel(DataModel):
             'focus': ('FOCUS', 'undefined'),
             'osfilter': ('OSFILTER', 'undefined'),
             'temp': ('SENTEMP4', 0.0),
-            'speclamp': ('SPECLMP', 'undefined'),
+            'speclamp': ('SPECLAMP', 'undefined'),
             'confid': KeyDefinition('CONFID', ext='FIBERS'),
         }
         super(MegaraDataModel, self).__init__(
