@@ -168,13 +168,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         final = megaradrp.products.TraceMap(instrument=obresult.instrument)
         fiberconf = self.datamodel.get_fiberconf(reduced)
         final.total_fibers = fiberconf.nfibers
-
-        for key in final.tag_names():
-            if key in obresult.labels:
-                final.tags[key] = obresult.labels[key]
-            else:
-                final.tags[key] = reduced[0].header[key]
-
+        final.tags = self.extract_tags_from_ref(reduced, final.tag_names(), base=obresult.labels)
         final.boxes_positions = box_borders
         final.ref_column = cstart
 
