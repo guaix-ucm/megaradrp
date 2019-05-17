@@ -33,6 +33,7 @@ setup(
         'numina >= 0.17',
         'scikit-image',
         'enum34;python_version<"3.4"',
+        'contextlib2;python_version<"3.5"',
     ],
     extras_require={
         'DB': ['sqlalchemy', 'numinadb']
