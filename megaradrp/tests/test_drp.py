@@ -179,7 +179,7 @@ def test_recipes_extract_tags(current_drp, ob_repo, results):
 
                 if val.type.isproduct():
                     if isinstance(val.type, mt.MultiType):
-                        try_these = val.type.type_options
+                        try_these = val.type.node_type
                     else:
                         try_these = [val.type]
 
