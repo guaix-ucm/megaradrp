@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name='megaradrp',
-    version='0.8.dev0',
+    version='0.9',
     author='Sergio Pascual',
     author_email='sergiopr@fis.ucm.es',
     url='https://github.com/guaix-ucm/megaradrp',
@@ -30,7 +30,7 @@ setup(
         'numpy',
         'astropy >= 2',
         'scipy',
-        'numina >= 0.17',
+        'numina >= 0.21',
         'scikit-image',
         'enum34;python_version<"3.4"',
         'contextlib2;python_version<"3.5"',
