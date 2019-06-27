@@ -28,7 +28,7 @@ installed in order to be able to be installed and work properly:
  - numpy >= 1.7 (http://www.numpy.org/)
  - scipy (http://www.scipy.org)
  - astropy >= 2.0 (http://www.astropy.org/)
- - numina >= 0.17 (http://guaix.fis.ucm.es/projects/numina/)
+ - numina >= 0.21 (http://guaix.fis.ucm.es/projects/numina/)
  - scikit-image (http://scikit-image.org/)
 
 Webpage: https://guaix.fis.ucm.es/megara
