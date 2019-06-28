@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -9,12 +9,8 @@
 
 import logging
 
-import numpy as np
-
 from numina.core import BaseRecipe
-from numina.core import DataFrame, ObservationResult
-from numina.core.dataholders import Product
-from numina.types.obsresult import QualityControlProduct
+from numina.core import DataFrame
 from numina.types.qc import QC
 from numina.core.requirements import ObservationResultRequirement
 import numina.util.flow as flowmod
@@ -38,9 +34,6 @@ class MegaraBaseRecipe(BaseRecipe):
     ----------
 
     obresult : ObservationResult, requirement
-
-    qc : QualityControl, result, QC.GOOD by default
-
     logger :
          recipe logger
 
@@ -49,7 +42,6 @@ class MegaraBaseRecipe(BaseRecipe):
     """
 
     obresult = ObservationResultRequirement()
-    qc = Product(QualityControlProduct, destination='qc', default=QC.UNKNOWN)
     logger = logging.getLogger('numina.recipes.megara')
     datamodel = MegaraDataModel()
 
@@ -72,17 +64,15 @@ class MegaraBaseRecipe(BaseRecipe):
 
     def types_getter(self):
         from megaradrp.types import MasterBias, MasterDark, MasterBPM, MasterSlitFlat
-        imgtypes = [None, MasterBPM, MasterBias, MasterDark, MasterSlitFlat]
-        getters = [[cor.get_corrector_overscan, cor.get_corrector_trimming],
-                   cor.get_corrector_bpm, cor.get_corrector_bias,
+        imgtypes = [MasterBPM, MasterBias, MasterDark, MasterSlitFlat]
+        getters = [cor.get_corrector_bpm, cor.get_corrector_bias,
                    [cor.get_corrector_dark, cor.get_corrector_gain],
                    cor.get_corrector_slit_flat
                    ]
         return imgtypes, getters
 
-    def get_filters(self):
+    def get_filters(self, imgtypes, getters):
         import collections
-        imgtypes, getters = self.types_getter()
         used_getters = []
         for rtype, getter in zip(imgtypes, getters):
             self.logger.debug('get_filters, %s  %s', rtype, getter)
@@ -105,21 +95,30 @@ class MegaraBaseRecipe(BaseRecipe):
                     pass
         return used_getters
 
-    def init_filters_generic(self, rinput, getters, ins):
+    def init_filters_generic(self, rinput, getters_seq, ins):
 
         meta = self.gather_info(rinput)
         self.logger.debug('obresult info')
         for entry in meta['obresult']:
             self.logger.debug('frame info is %s', entry)
-        correctors = [getter(rinput, meta, ins, self.datamodel) for getter in getters]
 
-        flow = flowmod.SerialFlow(correctors)
+        reduction_flows = []
+        for getters in getters_seq:
+            correctors = [getter(rinput, meta, ins, self.datamodel) for getter in getters]
+            reduction_flow = flowmod.SerialFlow(correctors)
+            reduction_flows.append(reduction_flow)
 
-        return flow
+        return reduction_flows
 
     def init_filters(self, rinput, ins):
-        getters = self.get_filters()
-        return self.init_filters_generic(rinput, getters, ins)
+        imgtypes1 = [None]
+        getters1 = [[cor.get_corrector_overscan, cor.get_corrector_trimming]]
+        getters_f1 = self.get_filters(imgtypes1, getters1)
+        imgtypes2, getters2 = self.types_getter()
+        getters_f2 = self.get_filters(imgtypes2, getters2)
+
+        getters_seq = [getters_f1, getters_f2]
+        return self.init_filters_generic(rinput, getters_seq, ins)
 
     def gather_info(self, recipeinput):
         klass = recipeinput.__class__

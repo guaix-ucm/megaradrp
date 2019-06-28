@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2018 Universidad Complutense de Madrid
+# Copyright 2015-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -12,14 +12,15 @@ import os
 import pytest
 
 from numina.tests.testcache import download_cache
-
 from numina.core import ObservationResult
 from numina.core import DataFrame
+from numina.instrument.assembly import assembly_instrument
+
 from megaradrp.recipes.calibration.bias import BiasRecipe
 from megaradrp.loader import load_drp
 
 
-@pytest.mark.remote
+@pytest.mark.remote_data
 def test_bias():
 
     BASE_URL = 'http://guaix.fis.ucm.es/~spr/megara_test/BIAS/%s'
@@ -39,8 +40,16 @@ def test_bias():
     recipe = pipeline.get_recipe_object(ob.mode)
 
     assert isinstance(recipe, BiasRecipe)
-    # TODO: these should be created by a build_recipe_input method
-    ob.configuration = insdrp.configuration_selector(ob)
+    # TODO: these should be created by the DAL
+
+    import numina.instrument.assembly as asbl
+    import numina.drps
+    sys_drps = numina.drps.get_system_drps()
+    com_store = asbl.load_panoply_store(sys_drps)
+
+    key, date_obs, keyname = insdrp.select_profile(ob)
+    ob.configuration = assembly_instrument(com_store, key, date_obs, by_key=keyname)
+
     ri = recipe.create_input(obresult=ob)
 
     result = recipe.run(ri)

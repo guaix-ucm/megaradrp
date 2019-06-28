@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -20,7 +20,7 @@ from scipy.interpolate import UnivariateSpline
 import matplotlib.pyplot as plt
 from astropy.modeling import fitting
 from astropy.modeling.functional_models import Const1D
-from numina.core import Product, Requirement, Parameter
+from numina.core import Result, Requirement, Parameter
 from numina.array import combine
 from numina.modeling.gaussbox import GaussBox, gauss_box_model
 from numina.frame.utils import copy_img
@@ -91,10 +91,10 @@ class ModelMapRecipe(MegaraBaseRecipe):
     master_traces = reqs.MasterTraceMapRequirement()
     processes = Parameter(0, 'Number of processes used for fitting')
     debug_plot = Parameter(0, 'Save intermediate tracing plots')
-    # Products
-    reduced_image = Product(ProcessedImage)
-    reduced_rss = Product(ProcessedRSS)
-    master_model = Product(ModelMap)
+    # Results
+    reduced_image = Result(ProcessedImage)
+    reduced_rss = Result(ProcessedRSS)
+    master_model = Result(ModelMap)
 
     def run(self, rinput):
 
@@ -124,9 +124,10 @@ class ModelMapRecipe(MegaraBaseRecipe):
 
         # insconf = obresult.configuration
 
-        # boxes = insconf.get('pseudoslit.boxes', **obresult.tags)
-
-        # box_borders0, cstart0 = self.obtain_boxes(insconf, obresult.tags)
+        # boxes = insconf.get_property('pseudoslit.boxes')
+        # values = insconf.get_property('pseudoslit.boxes_positions')
+        # cstart0 = values['ref_column']
+        # box_borders0 = values['positions']
 
         # box_borders, cstart = self.refine_boxes_from_image(reduced, box_borders0, cstart0)
 
@@ -140,7 +141,7 @@ class ModelMapRecipe(MegaraBaseRecipe):
         fiberconf = self.datamodel.get_fiberconf(reduced)
         model_map.total_fibers = fiberconf.nfibers
         model_map.missing_fibers = rinput.master_traces.missing_fibers
-        model_map.tags = obresult.tags
+        model_map.tags = self.extract_tags_from_ref(reduced, model_map.tag_names(), base=obresult.labels)
         # model_map.boxes_positions = box_borders
         # model_map.ref_column = cstart
         model_map.update_metadata(self)
@@ -197,15 +198,15 @@ class ModelMapRecipe(MegaraBaseRecipe):
             if self.intermediate_results:
                 if dolog:
                     self.logger.debug('saving plots')
-                plt.title('std %s' % fibid)
+                plt.title('std fib{:03d}'.format(fibid))
                 plt.plot(g_col, g_std, 'b*')
                 plt.plot(g_col, interpol_std(g_col), 'r')
-                plt.savefig('fib_{}_std.png'.format(fibid))
+                plt.savefig('fib_{:03d}_std.png'.format(fibid))
                 plt.close()
-                plt.title('mean %s' % fibid)
+                plt.title('mean fin{:03d}'.format(fibid))
                 plt.plot(g_col, g_mean, 'b*')
                 plt.plot(g_col, interpol_mean(g_col), 'r')
-                plt.savefig('fib_{}_mean.png'.format(fibid))
+                plt.savefig('fib_{:03d}_mean.png'.format(fibid))
                 plt.close()
                 if dolog:
                     self.logger.debug('saving plots end')

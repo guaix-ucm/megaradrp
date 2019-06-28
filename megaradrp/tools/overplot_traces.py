@@ -6,20 +6,22 @@ from copy import deepcopy
 import json
 import numpy as np
 from numpy.polynomial import Polynomial
-import pkgutil
 import sys
 from uuid import uuid4
 
+import numina.instrument.assembly as asb
 from numina.array.display.polfit_residuals import polfit_residuals
 from numina.array.display.ximshow import ximshow_file
 from numina.array.display.pause_debugplot import pause_debugplot
 
 
-def assign_boxes_to_fibers(insmode):
+def assign_boxes_to_fibers(pseudo_slit_config, insmode):
     """Read boxes in configuration file and assign values to fibid
 
     Parameters
     ----------
+    pseudo_slit_config : dict
+        Contains the association of fibers and boxes
     insmode : string
         Value of the INSMODE keyword: 'LCB' or 'MOS'.
 
@@ -30,14 +32,6 @@ def assign_boxes_to_fibers(insmode):
         box name.
 
     """
-    sdum = pkgutil.get_data(
-        'megaradrp.instrument.configs',
-        'component-86a6e968-8d3d-456f-89f8-09ff0c7f7c57.json'
-    )
-    dictdum = json.loads(sdum)
-    pseudo_slit_config = \
-        dictdum['configurations']['boxes']['values'][insmode]
-
     fibid_with_box = []
     n1 = 1
     list_to_print = []
@@ -51,7 +45,7 @@ def assign_boxes_to_fibers(insmode):
         dumstr ='Box {:>2},  fibers {:3d} - {:3d}'.format(name, n1, n2 - 1)
         list_to_print.append(dumstr)
         n1 = n2
-    print('\n* Fiber description for INSMODE=' + insmode)
+    print('\n* Fiber description for INSMODE={}'.format(insmode))
     for dumstr in reversed(list_to_print):
         print(dumstr)
     print('---------------------------------')
@@ -169,8 +163,26 @@ def main(args=None):
 
     # read and display traces from JSON file
     bigdict = json.loads(open(args.traces_file.name).read())
-    insmode = bigdict['tags']['insmode']
-    fibid_with_box = assign_boxes_to_fibers(insmode)
+
+    # Load metadata from the traces
+    meta_info = bigdict['meta_info']
+
+    origin = meta_info['origin']
+    insconf_uuid = origin['insconf_uuid']
+    date_obs = origin['date_obs']
+
+    tags = bigdict['tags']
+    insmode = tags['insmode']
+
+    # create instrument model
+    pkg_paths = ['megaradrp.instrument.configs']
+    store = asb.load_paths_store(pkg_paths)
+
+    insmodel = asb.assembly_instrument(store, insconf_uuid, date_obs, by_key='uuid')
+
+    pseudo_slit_config = insmodel.get_value('pseudoslit.boxes', **tags)
+
+    fibid_with_box = assign_boxes_to_fibers(pseudo_slit_config, insmode)
     total_fibers = bigdict['total_fibers']
     if total_fibers != len(fibid_with_box):
         raise ValueError('Mismatch between number of fibers and '

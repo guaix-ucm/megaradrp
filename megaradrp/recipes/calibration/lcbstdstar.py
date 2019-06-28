@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -15,7 +15,7 @@ import astropy.io.fits as fits
 import astropy.units as u
 from astropy import constants as const
 
-from numina.core import Product, Parameter
+from numina.core import Result, Parameter
 from numina.core.requirements import Requirement
 from numina.core.validator import range_validator
 from numina.types.array import ArrayType
@@ -73,20 +73,35 @@ class LCBStandardRecipe(ImageRecipe):
     reference_extinction = Requirement(ReferenceExtinctionTable, "Reference extinction")
     sigma_resolution = Parameter(20.0, 'sigma Gaussian filter to degrade resolution ')
 
-    reduced_image = Product(ProcessedFrame)
-    final_rss = Product(ProcessedRSS)
-    reduced_rss = Product(ProcessedRSS)
-    sky_rss = Product(ProcessedRSS)
-    star_spectrum = Product(ProcessedSpectrum)
-    master_sensitivity = Product(MasterSensitivity)
-    fiber_ids = Product(ArrayType)
+    reduced_image = Result(ProcessedFrame)
+    final_rss = Result(ProcessedRSS)
+    reduced_rss = Result(ProcessedRSS)
+    sky_rss = Result(ProcessedRSS)
+    star_spectrum = Result(ProcessedSpectrum)
+    master_sensitivity = Result(MasterSensitivity)
+    fiber_ids = Result(ArrayType)
 
     def run(self, rinput):
 
         self.logger.info('starting LCBStandardRecipe reduction')
 
+        # Create InstrumentModel
+        ins1 = rinput.obresult.configuration
+        #
         reduced2d, rss_data = super(LCBStandardRecipe, self).base_run(rinput)
-
+        tags = rinput.obresult.tags
+        #print(ins1.get('detector.scan'))
+        #print(ins1.get('pseudoslit.boxes', **tags))
+        #print(ins1.get('pseudoslit.boxes_positions', **tags))
+        ins2 = rinput.obresult.profile
+        #print(ins2.is_configured)
+        ins2.configure_with_image(rss_data)
+        #print(ins2.is_configured)
+        #print(ins2.get_property('detector.scan'))
+        #print(ins2.get_property('pseudoslit.boxes'))
+        #print(ins2.get_property('pseudoslit.boxes_positions'))
+        print(tags)
+        print(ins2.children['pseudoslit']._internal_state)
         self.logger.info('start sky subtraction')
         final, origin, sky = self.run_sky_subtraction(rss_data)
         self.logger.info('end sky subtraction')

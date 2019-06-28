@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2017 Universidad Complutense de Madrid
+# Copyright 2014-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -7,7 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
-from numina.core import Product
+from numina.core import Result
 from numina.array import combine
 
 from megaradrp.processing.combine import basic_processing_with_combination
@@ -36,7 +36,7 @@ class BiasRecipe(MegaraBaseRecipe):
     """
 
     master_bpm = MasterBPMRequirement()
-    master_bias = Product(MasterBias)
+    master_bias = Result(MasterBias)
 
     def run(self, rinput):
         """Execute the recipe.

@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2018 Universidad Complutense de Madrid
+# Copyright 2016-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -9,7 +9,7 @@
 
 import logging
 
-from numina.simulation.factory import PersistentRunCounter
+from numina.instrument.simulation.factory import PersistentRunCounter
 
 from megaradrp.simulation.actions import megara_sequences
 from megaradrp.simulation.efficiency import InterpolFile

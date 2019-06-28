@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -12,17 +12,22 @@
 import astropy.io.fits as fits
 import numpy as np
 from numina.core import DataFrame, ObservationResult
+import numina.instrument.assembly as asb
 
-from megaradrp.instrument.loader import build_instrument_config, Loader
 
 def generate_bias(detector, number, temporary_path):
     from megaradrp.simulation.actions import simulate_bias
     from megaradrp.recipes.calibration.bias import BiasRecipe
 
     config_uuid = '4fd05b24-2ed9-457b-b563-a3c618bb1d4c'
+    date_obs = '2017-11-09T11:00:00.0'
     fs = [simulate_bias(detector) for i in range(number)]
     header = fits.Header()
-    header['DATE-OBS'] = '2017-11-09T11:00:00.0'
+    header['DATE-OBS'] = date_obs
+    header['INSCONF'] = config_uuid
+    header['INSTRUME'] = 'MEGARA'
+    header['VPH'] = 'LR-U'
+    header['INSMODE'] = 'MOS'
     for aux in range(len(fs)):
         fits.writeto('%s/bias_%s.fits' % (temporary_path, aux), fs[aux],
                      header=header,
@@ -33,7 +38,12 @@ def generate_bias(detector, number, temporary_path):
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'bias_image'
-    ob.configuration = build_instrument_config(config_uuid, loader=Loader())
+
+    pkg_paths = ['megaradrp.instrument.configs']
+    store = asb.load_paths_store(pkg_paths)
+    insmodel = asb.assembly_instrument(store, config_uuid, date_obs, by_key='uuid')
+    insmodel.configure_with_header(header)
+    ob.configuration = insmodel
     ob.frames = [DataFrame(filename=f) for f in fs]
 
     recipe = BiasRecipe()
@@ -43,10 +53,11 @@ def generate_bias(detector, number, temporary_path):
 
 def crear_archivos(temporary_path, number=5):
     from megaradrp.simulation.actions import simulate_flat
-    from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
+    from megaradrp.instrument.components.detector import ReadParams, MegaraDetectorSat
     from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
 
     config_uuid = '4fd05b24-2ed9-457b-b563-a3c618bb1d4c'
+    date_obs = '2017-11-09T11:00:00.0'
     PSCAN = 50
     DSHAPE = (2056 * 2, 2048 * 2)
     OSCAN = 50
@@ -72,7 +83,11 @@ def crear_archivos(temporary_path, number=5):
           range(number)]
 
     header = fits.Header()
-    header['DATE-OBS'] = '2017-11-09T11:00:00.0'
+    header['DATE-OBS'] = date_obs
+    header['INSCONF'] = config_uuid
+    header['INSTRUME'] = 'MEGARA'
+    header['VPH'] = 'LR-U'
+    header['INSMODE'] = 'MOS'
     for aux in range(len(fs)):
         fits.writeto('%s/flat_%s.fits' % (temporary_path, aux), fs[aux],
                      header=header,
@@ -86,7 +101,11 @@ def crear_archivos(temporary_path, number=5):
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
     ob.mode = 'bias_image'
-    ob.configuration = build_instrument_config(config_uuid, loader=Loader())
+    pkg_paths = ['megaradrp.instrument.configs']
+    store = asb.load_paths_store(pkg_paths)
+    insmodel = asb.assembly_instrument(store, config_uuid, date_obs, by_key='uuid')
+    insmodel.configure_with_header(header)
+    ob.configuration = insmodel
 
     names = []
     for aux in range(number):

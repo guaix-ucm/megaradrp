@@ -18,7 +18,7 @@ from scipy import signal
 import scipy.spatial
 from astropy import units as u
 import astropy.constants as cons
-from numina.simulation.actions import Sequence
+from numina.instrument.simulation.actions import Sequence
 
 from .convolution import rect_c, hex_c, setup_grid
 

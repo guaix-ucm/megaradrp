@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2018 Universidad Complutense de Madrid
+# Copyright 2016-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -18,15 +18,10 @@ import enum
 import astropy.io.fits as fits
 import astropy.table
 from six import StringIO
-from numina.datamodel import DataModel
+from numina.datamodel import DataModel, QueryAttribute, KeyDefinition
 from numina.util.convert import convert_date
 
-
-class QueryAttribute(object):
-    def __init__(self, name, tipo, description=""):
-        self.name = name
-        self.type = tipo
-        self.description = description
+import megaradrp.instrument as megins
 
 
 class MegaraDataModel(DataModel):
@@ -36,7 +31,9 @@ class MegaraDataModel(DataModel):
         'vph': QueryAttribute('vph', str),
         'insmode': QueryAttribute('insmode', str),
         'insconf': QueryAttribute('insconf', str),
-        'speclamp': QueryAttribute('speclamp', str)
+        'speclamp': QueryAttribute('speclamp', str),
+        'temp': QueryAttribute('temp', float),
+        'confid': QueryAttribute('confid', str)
     }
 
     meta_info_headers = [
@@ -92,7 +89,7 @@ class MegaraDataModel(DataModel):
         'imgid'
     ]
 
-    PLATESCALE = 1.120 # arcsec / mm
+    PLATESCALE = megins.MEGARA_PLATESCALE
 
     def __init__(self):
 
@@ -107,9 +104,9 @@ class MegaraDataModel(DataModel):
             'focus': ('FOCUS', 'undefined'),
             'osfilter': ('OSFILTER', 'undefined'),
             'temp': ('SENTEMP4', 0.0),
-            'speclamp': ('SPECLMP', 'undefined'),
+            'speclamp': ('SPECLAMP', 'undefined'),
+            'confid': KeyDefinition('CONFID', ext='FIBERS'),
         }
-
         super(MegaraDataModel, self).__init__(
             'MEGARA',
             instrument_mappings

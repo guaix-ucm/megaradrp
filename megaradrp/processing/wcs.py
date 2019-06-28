@@ -1,5 +1,5 @@
 #
-# Copyright 2018 Universidad Complutense de Madrid
+# Copyright 2018-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -11,11 +11,30 @@ import math
 
 import numpy
 
+from megaradrp.instrument import MEGARA_IAA
 
-def compute_pa_from_ipa(ipa, ins_angle=-163.256):
-    """Recompute the PA from IPA """
-    # get IPA keyword
-    pa = -ins_angle + ipa
+
+def compute_pa_from_ipa(ipa, iaa=MEGARA_IAA):
+    """Recompute the PA from IPA
+
+    Parameters
+    ==========
+    ipa: float
+        Instrument Position Angle
+    iaa: float
+        Instrument Alignment Angle
+
+    Returns
+    =======
+    position angle
+
+    Compute the Position angle of the image from the IPA and
+    the (generally fixed) Instrument Alignment Angle.
+    The angles must be in the same units.
+
+    """
+
+    pa = -iaa + ipa
     return pa
 
 

@@ -93,27 +93,27 @@ def get_corrector_slit_flat(rinput, meta, ins, datamodel):
 
 
 def get_corrector_overscan(rinput, meta, ins, datamodel):
-    detconf = ins.get('detector.scan')
+    detconf = ins.get_property('detector.scan')
     return OverscanCorrector(
         detconf,
         datamodel=datamodel,
-        calibid=ins.components['detector'].uuid
+        calibid=str(ins.get_device('detector').origin.uuid)
     )
 
 
 def get_corrector_trimming(rinput, meta, ins, datamodel):
-    detconf = ins.get('detector.scan')
+    detconf = ins.get_property('detector.scan')
     return TrimImage(
         detconf,
         datamodel=datamodel,
-        calibid=ins.components['detector'].uuid
+        calibid=str(ins.get_device('detector').origin.uuid)
     )
 
 
 def get_corrector_gain(rinput, meta, ins, datamodel):
     """Correct from gain"""
     return GainCorrector(
-        detconf=ins.get('detector.scan'),
+        detconf=ins.get_property('detector.scan'),
         datamodel=datamodel,
-        calibid=ins.components['detector'].uuid
+        calibid=str(ins.get_device('detector').origin.uuid)
     )

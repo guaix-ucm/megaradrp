@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2018 Universidad Complutense de Madrid
+# Copyright 2017-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -12,6 +12,7 @@ import datetime
 
 
 import astropy.wcs
+import astropy.units as u
 
 import numpy
 from numina.processing import Corrector
@@ -93,9 +94,13 @@ def update_flux_limits(header, pixlims, wcs=None, ref=1):
     lm = numpy.array([r1, r2])
     # Values are 0-based
     wavelen_ = wcs.all_pix2world(lm.T, ref)
-    wavelen = wavelen_[:, 0]
+    if wcs.wcs.cunit[0] == u.dimensionless_unscaled:
+        # CUNIT is empty, assume Angstroms
+        wavelen = wavelen_[:, 0] * u.AA
+    else:
+        wavelen = wavelen_[:, 0] * wcs.wcs.cunit[0]
 
     for idx, (key, com) in enumerate(zip(WAVLIM_KEYS, pixlim_coms)):
-        header[key] = (wavelen[idx], com)
+        header[key] = (wavelen[idx].to(u.AA).value, com)
 
     return header

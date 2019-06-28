@@ -36,6 +36,9 @@ class FiberSolutionArcCalibration(object):
 class WavelengthCalibration(BaseStructuredCalibration):
     """Wavelength Calibration Product
     """
+
+    __tags__ = ['insmode', 'vph']
+
     def __init__(self, instrument='unknown'):
         super(WavelengthCalibration, self).__init__(instrument)
         self.contents = []

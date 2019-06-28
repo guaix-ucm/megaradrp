@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -14,7 +14,7 @@ import math
 
 import numpy as np
 from numina.array.offrot import fit_offset_and_rotation
-from numina.core import Product, Parameter
+from numina.core import Result, Parameter
 from numina.core.qc import QC
 
 from megaradrp.datamodel import TargetType
@@ -72,11 +72,11 @@ class AcquireMOSRecipe(ImageRecipe):
         nelem=2
     )
 
-    reduced_image = Product(ProcessedFrame)
-    reduced_rss = Product(ProcessedRSS)
-    final_rss = Product(ProcessedRSS)
-    offset = Product(list)
-    rotang = Product(float)
+    reduced_image = Result(ProcessedFrame)
+    reduced_rss = Result(ProcessedRSS)
+    final_rss = Result(ProcessedRSS)
+    offset = Result(list)
+    rotang = Result(float)
 
     def run(self, rinput):
 
@@ -87,7 +87,11 @@ class AcquireMOSRecipe(ImageRecipe):
         do_sky_subtraction = True
         if do_sky_subtraction:
             self.logger.info('start sky subtraction')
-            final, origin, sky = self.run_sky_subtraction(reduced1d)
+            isb = rinput.ignored_sky_bundles
+            if isb:
+                self.logger.info('sky bundles ignored: %s', isb)
+            final, origin, sky = self.run_sky_subtraction(reduced1d,
+                                                          ignored_sky_bundles=isb)
             self.logger.info('end sky subtraction')
         else:
             final =  reduced1d

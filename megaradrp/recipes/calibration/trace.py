@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -18,10 +18,10 @@ import numpy
 import numpy.polynomial.polynomial as nppol
 from numina.array.peaks.peakdet import refine_peaks
 from numina.array.trace.traces import trace
-from numina.core import Product, Parameter
+from numina.core import Result, Parameter
 import matplotlib.pyplot as plt
 
-import numina.core.qc as qc
+import numina.types.qc as qc
 from numina.array import combine
 import numina.core.validator
 from skimage.filters import threshold_otsu
@@ -97,9 +97,9 @@ class TraceMapRecipe(MegaraBaseRecipe):
     relative_threshold = Parameter(0.3, 'Threshold for peak detection')
     debug_plot = Parameter(0, 'Save intermediate tracing plots')
 
-    reduced_image = Product(ProcessedImage)
-    reduced_rss = Product(ProcessedRSS)
-    master_traces = Product(TraceMap)
+    reduced_image = Result(ProcessedImage)
+    reduced_rss = Result(ProcessedRSS)
+    master_traces = Result(TraceMap)
 
     def run_qc(self, recipe_input, recipe_result):
         """Run quality control checks"""
@@ -130,8 +130,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         self.logger.info('start trace spectra recipe')
 
         obresult = rinput.obresult
-        current_vph = obresult.tags['vph']
-        current_insmode = obresult.tags['insmode']
+
         obresult_meta = obresult.metadata_with(self.datamodel)
 
         debug_plot = rinput.debug_plot if self.intermediate_results else 0
@@ -143,16 +142,21 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         self.save_intermediate_img(reduced, 'reduced_image.fits')
 
-        insconf = obresult.configuration
+        #insconf = obresult.configuration
+        insconf = obresult.profile
 
-        boxes = insconf.get('pseudoslit.boxes', **obresult.tags)
-
-        box_borders0, cstart0 = self.obtain_boxes(insconf, obresult.tags)
+        boxes = insconf.get_property('pseudoslit.boxes')
+        values = insconf.get_property('pseudoslit.boxes_positions')
+        cstart0 = values['ref_column']
+        box_borders0 = values['positions']
 
         box_borders, cstart = self.refine_boxes_from_image(reduced, box_borders0, cstart0)
 
         self.logger.debug("original boxes: %s", box_borders0)
         self.logger.debug("refined boxes: %s", box_borders)
+
+        current_vph = reduced[0].header['vph']
+        current_insmode = reduced[0].header['insmode']
 
         if current_insmode in vph_thr and current_vph in vph_thr[current_insmode]:
             threshold = vph_thr[current_insmode][current_vph]
@@ -164,7 +168,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         final = megaradrp.products.TraceMap(instrument=obresult.instrument)
         fiberconf = self.datamodel.get_fiberconf(reduced)
         final.total_fibers = fiberconf.nfibers
-        final.tags = obresult.tags
+        final.tags = self.extract_tags_from_ref(reduced, final.tag_names(), base=obresult.labels)
         final.boxes_positions = box_borders
         final.ref_column = cstart
 
@@ -204,12 +208,6 @@ class TraceMapRecipe(MegaraBaseRecipe):
         return self.create_result(reduced_image=reduced,
                                   reduced_rss = reduced_rss,
                                   master_traces=final)
-
-    def obtain_boxes(self, insconf, tags):
-        values = insconf.get('pseudoslit.boxes_positions', **tags)
-        cstart = values['ref_column']
-        box_borders = values['positions']
-        return box_borders, cstart
 
     def obtain_boxes_from_image(self, reduced, expected, npeaks, cstart=2000):
         from numina.array.peaks.peakdet import find_peaks_indexes
@@ -353,10 +351,10 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
                 if debug_plot:
                     plt.plot(mm[:, 0], mm[:, 1], '.')
-                    plt.savefig('trace-xy-%d.png' % dtrace.fibid)
+                    plt.savefig('trace-xy-{:03d}.png'.format(dtrace.fibid))
                     plt.close()
                     plt.plot(mm[:, 0], mm[:, 2], '.')
-                    plt.savefig('trace-xz-%d.png' % dtrace.fibid)
+                    plt.savefig('trace-xz-{:03d}.png'.format(dtrace.fibid))
                     plt.close()
                 if len(mm) < poldeg + 1:
                     self.logger.warning('in fibid %d, only %d points to fit pol of degree %d',
@@ -483,7 +481,7 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         if debug_plot:
             plt.plot(region)
             plt.plot(ipeaks_int, region[ipeaks_int], 'r*')
-            plt.savefig('central_cut_%d.png' % boxid)
+            plt.savefig('central_cut_{:02d}.png'.format(boxid))
             plt.close()
 
         startid = lastid + 1

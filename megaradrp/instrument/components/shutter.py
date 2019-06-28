@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2018 Universidad Complutense de Madrid
+# Copyright 2016-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -9,8 +9,8 @@
 
 import six
 
-from numina.simulation.wheel import Wheel
-from numina.simulation.optics import Open, Stop, Filter
+from numina.instrument.components.wheel import Wheel
+from numina.instrument.simulation.optics import Open, Stop, Filter
 
 
 class MegaraShutter(Wheel):

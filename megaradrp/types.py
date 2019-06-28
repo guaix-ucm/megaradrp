@@ -69,9 +69,11 @@ class ProcessedSpectrumProduct(DataProductMixin, ProcessedSpectrum):
 
 class MegaraLinesCatalog(LinesCatalog):
     __tags__ = {'speclamp': QueryAttribute('speclamp', str), 'vph': QueryAttribute('vph', str)}
+    # We are not passing the table of query_attrs in datamodel
 
     def name(self):
         return "LinesCatalog"
+
 
 class MasterBias(ProcessedImageProduct):
     """A Master Bias image"""
@@ -79,7 +81,7 @@ class MasterBias(ProcessedImageProduct):
 
 
 class MasterTwilightFlat(ProcessedRSSProduct):
-    pass
+    __tags__ = ['insmode', 'vph', 'confid']
 
 
 class MasterDark(ProcessedImageProduct):
@@ -88,22 +90,10 @@ class MasterDark(ProcessedImageProduct):
 
 
 class MasterFiberFlat(ProcessedRSSProduct):
-    tags_headers = {'insmode': 'insmode', 'vph': 'vph'}
-    __tags__ = ['insmode', 'vph']
+    __tags__ = ['insmode', 'vph', 'confid']
 
 
 class MasterSlitFlat(ProcessedImageProduct):
-    tags_headers = {'insmode': 'insmode', 'vph': 'vph'}
-    __tags__ = ['insmode', 'vph']
-
-
-class MasterFiberFlatFrame(ProcessedRSSProduct):
-    tags_headers = {
-        'insmode': 'insmode',
-        'vph': 'vph',
-        'confid': ('confid', 'FIBERS', lambda x: x)
-    }
-    # FIXME: confid missing
     __tags__ = ['insmode', 'vph']
 
 
@@ -138,7 +128,7 @@ class JSONstorage(DataType):
 
     def _datatype_dump(self, obj, where):
         import json
-        filename = where.destination + '.json'
+        filename = where + '.json'
 
         with open(filename, 'w') as fd:
             fd.write(json.dumps(obj, sort_keys=True, indent=2,

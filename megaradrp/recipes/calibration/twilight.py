@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2018 Universidad Complutense de Madrid
+# Copyright 2015-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -15,7 +15,7 @@ from __future__ import division, print_function
 import numpy
 from astropy.io import fits
 
-from numina.core import Product, Parameter
+from numina.core import Result, Parameter
 from numina.core.requirements import ObservationResultRequirement
 from numina.util.flow import SerialFlow
 from numina.exceptions import ValidationError
@@ -70,9 +70,9 @@ class RecipeInput(recipeio.RecipeInput):
 
 @generate_docs
 class RecipeResult(recipeio.RecipeResult):
-    reduced_image = Product(ProcessedFrame)
-    reduced_rss = Product(ProcessedRSS)
-    master_twilightflat = Product(MasterTwilightFlat)
+    reduced_image = Result(ProcessedFrame)
+    reduced_rss = Result(ProcessedRSS)
+    master_twilightflat = Result(MasterTwilightFlat)
 
 
 @recipeio.define_input(RecipeInput)

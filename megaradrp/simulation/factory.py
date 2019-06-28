@@ -15,7 +15,7 @@ from datetime import datetime
 
 import astropy.wcs as wcs
 import astropy.io.fits as fits
-from numina.simulation.factory import extract, extractm
+from numina.instrument.simulation.factory import extract, extractm
 
 
 class MegaraImageFactory(object):

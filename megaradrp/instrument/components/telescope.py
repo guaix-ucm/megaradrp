@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2018 Universidad Complutense de Madrid
+# Copyright 2016-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -9,10 +9,10 @@
 
 import math
 
-from numina.simulation.device import HWDevice
-from numina.simulation.efficiency import Efficiency
+from numina.instrument.hwdevice import HWDevice
+from numina.instrument.simulation.efficiency import Efficiency
 
-from .instrument import FocusActuator
+from megaradrp.instrument.components.instrument import FocusActuator
 
 
 class M2FocusActuator(FocusActuator):

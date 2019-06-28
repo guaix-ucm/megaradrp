@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -15,7 +15,8 @@ import math
 import numpy as np
 from scipy.spatial import KDTree
 
-from numina.core import Product, Parameter
+from numina.core import Result, Parameter
+from numina.core.validator import range_validator
 from numina.constants import FWHM_G
 
 from megaradrp.recipes.scientific.base import ImageRecipe
@@ -65,6 +66,8 @@ class AcquireLCBRecipe(ImageRecipe):
 
     # Requirements are defined in base class
     points = Parameter([(0, 0)], "Coordinates")
+    nrings = Parameter(3, "Number of rings to extract the star",
+                       validator=range_validator(minval=1))
     extraction_region = Parameter(
         [1000, 3000],
         description='Region used to compute a mean flux',
@@ -72,11 +75,11 @@ class AcquireLCBRecipe(ImageRecipe):
     )
 
 
-    reduced_image = Product(ProcessedFrame)
-    reduced_rss = Product(ProcessedRSS)
-    final_rss = Product(ProcessedRSS)
-    offset = Product(list)
-    rotang = Product(float)
+    reduced_image = Result(ProcessedFrame)
+    reduced_rss = Result(ProcessedRSS)
+    final_rss = Result(ProcessedRSS)
+    offset = Result(list)
+    rotang = Result(float)
 
     def run(self, rinput):
 
@@ -88,7 +91,11 @@ class AcquireLCBRecipe(ImageRecipe):
         do_sky_subtraction = True
         if do_sky_subtraction:
             self.logger.info('start sky subtraction')
-            final, origin, sky = self.run_sky_subtraction(reduced1d)
+            isb = rinput.ignored_sky_bundles
+            if isb:
+                self.logger.info('sky bundles ignored: %s', isb)
+            final, origin, sky = self.run_sky_subtraction(reduced1d,
+                                                          ignored_sky_bundles=isb)
             self.logger.info('end sky subtraction')
         else:
             final =  reduced1d
@@ -130,11 +137,10 @@ class AcquireLCBRecipe(ImageRecipe):
         # query using radius instead
         # radius = 1.2
         # kdtree.query_ball_point(points, k=7, r=radius)
+        self.logger.debug('adding %d nrings', rinput.nrings)
+        npoints = 1 + 3 * rinput.nrings * (rinput.nrings + 1)
+        self.logger.debug('adding %d fibers', npoints)
 
-        npoints = 19 + 18
-        # 1 + 6  for first ring
-        # 1 + 6  + 12  for second ring
-        # 1 + 6  + 12  + 18 for third ring
         dis_p, idx_p = kdtree.query(points, k=npoints)
 
         self.logger.info('Using %d nearest fibers', npoints)

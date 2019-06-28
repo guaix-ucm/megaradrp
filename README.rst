@@ -28,11 +28,12 @@ installed in order to be able to be installed and work properly:
  - numpy >= 1.7 (http://www.numpy.org/)
  - scipy (http://www.scipy.org)
  - astropy >= 2.0 (http://www.astropy.org/)
- - numina >= 0.17 (http://guaix.fis.ucm.es/projects/numina/)
+ - numina >= 0.21 (http://guaix.fis.ucm.es/projects/numina/)
  - scikit-image (http://scikit-image.org/)
 
 Webpage: https://guaix.fis.ucm.es/megara
-Maintainer: sergiopr@fis.ucm.es
+
+Maintainers: Sergio Pacual sergiopr@fis.ucm.es, Nicolás Cardiel cardiel@ucm.es
 
 .. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.593647.svg
    :target: https://zenodo.org/record/593647

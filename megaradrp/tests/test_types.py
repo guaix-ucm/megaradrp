@@ -5,6 +5,8 @@ import megaradrp.requirements as reqs
 import numina.core
 import numina.dal
 from numina.exceptions import NoResultFound
+from ..types import MasterFiberFlat
+from ..products.tracemap import TraceMap
 
 
 class IoInstance(object):
@@ -74,3 +76,26 @@ def _test_extinction_filename():
         assert False
     finally:
         os.remove(path)
+
+
+def test_tag1():
+    import megaradrp.tests.simpleobj as simple
+
+    fr = simple.create_simple_hdul()
+
+    tipo = MasterFiberFlat()
+    keys = ['instrument', 'uuid', 'observation_date']
+    mu = tipo.extract_db_info(fr, keys)
+
+    assert True
+
+
+def test_tag2():
+    import megaradrp.tests.simpleobj as simple
+
+    tipo = TraceMap()
+    fr = tipo
+    keys = ['instrument', 'uuid', 'observation_date']
+    mu = tipo.extract_db_info(fr, keys)
+
+    assert True

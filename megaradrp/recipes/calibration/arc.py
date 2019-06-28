@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2018 Universidad Complutense de Madrid
+# Copyright 2015-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -20,7 +20,7 @@ from copy import deepcopy
 import errno
 import os
 
-from numina.core import Requirement, Product, Parameter, DataFrameType
+from numina.core import Requirement, Result, Parameter, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 from numina.array.display.polfit_residuals import polfit_residuals
 from numina.array.display.polfit_residuals import \
@@ -122,11 +122,11 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         description='Store PDF plot with refined fits for each fiber',
     )
 
-    # Products
-    reduced_image = Product(ProcessedFrame)
-    reduced_rss = Product(ProcessedRSS)
-    master_wlcalib = Product(WavelengthCalibration)
-    fwhm_image = Product(DataFrameType)
+    # Results
+    reduced_image = Result(ProcessedFrame)
+    reduced_rss = Result(ProcessedRSS)
+    master_wlcalib = Result(WavelengthCalibration)
+    fwhm_image = Result(DataFrameType)
 
     def run(self, rinput):
         """Execute the recipe.

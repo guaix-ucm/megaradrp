@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -14,7 +14,7 @@ from __future__ import division, print_function
 import numpy
 from astropy.io import fits
 import matplotlib.pyplot as plt
-from numina.core import Product, Parameter
+from numina.core import Result, Parameter
 import numina.exceptions
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.types import MasterFiberFlat
@@ -92,10 +92,10 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     extraction_offset = Parameter([0.0], 'Offset traces for extraction', accept_scalar=True)
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
 
-    # Products
-    reduced_image = Product(ProcessedFrame)
-    reduced_rss = Product(ProcessedRSS)
-    master_fiberflat = Product(MasterFiberFlat)
+    # Results
+    reduced_image = Result(ProcessedFrame)
+    reduced_rss = Result(ProcessedRSS)
+    master_fiberflat = Result(MasterFiberFlat)
 
     def process_flat2d(self, rinput):
         flow = self.init_filters(rinput, rinput.obresult.configuration)
@@ -150,7 +150,9 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         xx_v = xx[~mask_noinfo]
         collapse_v = collapse[~mask_noinfo]
 
-        interpol_univ = UnivariateSpline(xx_v, collapse_v, k=5)
+        # Spline degree (3 or 5)
+        degree_s = 5
+        interpol_univ = UnivariateSpline(xx_v, collapse_v, k=degree_s)
         collapse_smooth_s = collapse_smooth.copy()
         collapse_smooth_s[~mask_noinfo] = interpol_univ(xx_v)
         collapse_smooth_s[mask_noinfo] = 1.0
@@ -158,9 +160,11 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         if self.intermediate_results:
             numpy.savetxt('collapse.txt', collapse)
             numpy.savetxt('mask_noinfo.txt', mask_noinfo)
-            plt.plot(xx, collapse, '.')
-            plt.plot(xx, collapse_smooth, '-')
-            plt.plot(xx, collapse_smooth_s, '--')
+            fig, ax = plt.subplots()
+            ax.plot(xx, collapse, '.', label='collapsed')
+            ax.plot(xx, collapse_smooth, '-', label='savgol{}'.format(degree))
+            ax.plot(xx, collapse_smooth_s, '--', label='spline{}'.format(degree_s))
+            ax.legend()
             plt.savefig('collapsed_smooth.png')
             plt.close()
 

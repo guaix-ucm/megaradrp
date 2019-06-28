@@ -1,31 +1,29 @@
 from __future__ import print_function
 
-import os
 import logging
-import datetime
 
 import numpy as np
 from astropy import units as u
 from astropy.io import fits
 
-from megaradrp.simulation.instrument import MegaraInstrument
+from megaradrp.instrument.components.instrument import MegaraInstrument
 from megaradrp.simulation.efficiency import EfficiencyFile
 from megaradrp.simulation.efficiency import InterpolFile
-from megaradrp.simulation.instrument import InternalOptics
-from megaradrp.simulation.wheel import VPHWheel
-from megaradrp.simulation import lamps
-from megaradrp.simulation import calibrationunit
+from megaradrp.instrument.components.instrument import InternalOptics
+from megaradrp.instrument.components.wheel import VPHWheel
+from megaradrp.instrument.components import lamps
+from megaradrp.instrument.components import calibrationunit
 from megaradrp.simulation.actions import megara_sequences
-from megaradrp.simulation.telescope import Telescope
+from megaradrp.instrument.components.telescope import Telescope
 from megaradrp.simulation.fiberbundle import FiberBundle
 from megaradrp.simulation.lightfiber import LightFiber, FiberSet
-from megaradrp.simulation.psslit import PseudoSlit, PseudoSlitSelector
+from megaradrp.instrument.components.psslit import PseudoSlit, PseudoSlitSelector
 from megaradrp.simulation.focalplane import FocalPlane
-from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
+from megaradrp.instrument.components.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.vph import MegaraVPH
-from megaradrp.simulation.shutter import MegaraShutter
-from megaradrp.simulation.fibermos import FiberMOS, RoboticPositioner, LargeCompactBundle
-from megaradrp.simulation.cover import MegaraCover
+from megaradrp.instrument.components.shutter import MegaraShutter
+from megaradrp.instrument.components.fibermos import FiberMOS, RoboticPositioner, LargeCompactBundle
+from megaradrp.instrument.components.cover import MegaraCover
 
 _logger = logging.getLogger("megaradrp.simulation")
 

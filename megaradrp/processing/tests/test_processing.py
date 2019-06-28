@@ -8,7 +8,7 @@ import pytest
 
 from megaradrp.processing.trimover import trimOut
 from megaradrp.processing.trimover import apextract_weights
-from megaradrp.simulation.detector import ReadParams, MegaraDetectorSat
+from megaradrp.instrument.components.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.actions import simulate_flat
 
 

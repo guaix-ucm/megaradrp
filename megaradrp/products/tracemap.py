@@ -51,6 +51,9 @@ class GeometricTrace(object):
 
 
 class TraceMap(BaseStructuredCalibration):
+
+    __tags__ = ['insmode', 'vph']
+
     """Trace map calibration product"""
     def __init__(self, instrument='unknown'):
         super(TraceMap, self).__init__(instrument)
@@ -59,8 +62,6 @@ class TraceMap(BaseStructuredCalibration):
         self.global_offset = nppol.Polynomial([0.0])
         self.ref_column = 2000
         #
-    def tag_names(self):
-        return ['insmode', 'vph']
 
     def __getstate__(self):
         st = super(TraceMap, self).__getstate__()

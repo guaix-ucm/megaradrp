@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2018 Universidad Complutense de Madrid
+# Copyright 2016-2019 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -7,7 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
-from numina.simulation.wheel import Wheel
+from numina.instrument.components.wheel import Wheel
 
 
 class VPHWheel(Wheel):

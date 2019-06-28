@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -15,7 +15,7 @@ import datetime
 import numina.exceptions
 import astropy.io.fits as fits
 from numina.array.cosmetics import ccdmask
-from numina.core import Product
+from numina.core import Result
 from numina.array import combine
 
 from megaradrp.processing.combine import basic_processing_with_combination_frames
@@ -52,7 +52,7 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
 
-    master_bpm = Product(MasterBPM)
+    master_bpm = Result(MasterBPM)
 
     def run(self, rinput):
         self.logger.info('start BPM recipe')
