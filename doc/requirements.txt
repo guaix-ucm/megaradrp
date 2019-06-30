@@ -4,3 +4,4 @@ astropy
 scipy
 numina>=0.21
 scikit-image
+numpydoc
