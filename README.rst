@@ -3,14 +3,11 @@
 MEGARA DRP
 ==========
 
-|zenodo|
-
-.. image:: https://readthedocs.org/projects/megara-drp/badge/?version=latest
-   :target: https://readthedocs.org/projects/megara-drp/?badge=latest
-   :alt: Documentation Status
+|zenodo| |docs| |pypi|
 
 .. image:: https://travis-ci.org/guaix-ucm/megaradrp.svg?branch=master
     :target: https://travis-ci.org/guaix-ucm/megaradrp
+
 
 .. image:: https://coveralls.io/repos/guaix-ucm/megaradrp/badge.svg?branch=master&service=github 
     :target: https://coveralls.io/github/guaix-ucm/megaradrp?branch=master 
@@ -37,3 +34,10 @@ Maintainers: Sergio Pacual sergiopr@fis.ucm.es, Nicolás Cardiel cardiel@ucm.es
 
 .. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.593647.svg
    :target: https://zenodo.org/record/593647
+
+.. |docs| image:: https://readthedocs.org/projects/megaradrp/badge/?version=latest
+   :target: https://readthedocs.org/projects/megaradrp/?badge=latest
+   :alt: Documentation Status
+ 
+.. |pypi| image:: https://badge.fury.io/py/megaradrp.svg
+    :target: https://badge.fury.io/py/megaradrp
