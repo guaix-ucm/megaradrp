@@ -45,18 +45,6 @@ class MegaraBaseRecipe(BaseRecipe):
     logger = logging.getLogger('numina.recipes.megara')
     datamodel = MegaraDataModel()
 
-    def validate_input(self, recipe_input):
-        """Method to customize recipe input validation.
-
-        See Also
-        --------
-        numina.core.validator.validate
-
-        """
-        self.logger.info('start validating input')
-        super(MegaraBaseRecipe, self).validate_input(recipe_input)
-        self.logger.info('end validating input')
-
     def run_qc(self, recipe_input, recipe_result):
         """Run Quality Control checks."""
         recipe_result.qc = QC.GOOD
