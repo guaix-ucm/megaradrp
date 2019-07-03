@@ -90,6 +90,15 @@ class MegaraFrame(DataFrameType):
             ksc = keymap[key]
             validate_keyword_exists(hdulist[ksc.ext].header, ksc.key)
 
+    def validate_fibers(self, hdulist):
+        if 'FIBERS' not in hdulist:
+            msg = '"{}" extension not found'.format('FIBERS')
+            raise ValidationError(hdulist, msg)
+
+        header_f = hdulist['FIBERS'].header
+
+        validate_fiber_ext(header_f)
+
 
 class ProcessedFrame(MegaraFrame):
     """A processed frame"""
@@ -115,12 +124,7 @@ class ProcessedRSS(ProcessedFrame):
         super(ProcessedRSS, self).validate_hdulist(hdulist)
         _logger.debug('validate ProcessedRSS')
 
-        if 'FIBERS' not in hdulist:
-            msg = '"{}" extension not found'.format('FIBERS')
-            raise ValidationError(hdulist, msg)
-
         header_0 = hdulist[0].header
-        header_f = hdulist['FIBERS'].header
 
         # validate_keyword_value(header_0, 'NUMTYPE', 'MasterBias')
         # 4096 for non WCS, and 4300 for WCS
@@ -129,7 +133,7 @@ class ProcessedRSS(ProcessedFrame):
         # This can be 623 or 644
         validate_keyword_any_value(header_0, 'NAXIS2', [623, 644])
 
-        validate_fiber_ext(header_f)
+        self.validate_fibers(hdulist)
 
 
 class ProcessedMultiRSS(ProcessedFrame):
