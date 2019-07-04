@@ -37,9 +37,6 @@ def hexplot(axis, x, y, z, scale=1.0, extent=None,
     object: matplotlib.collections.PolyCollection
 
     """
-    if not axis._hold:
-        axis.cla()
-
     axis._process_unit_info(xdata=x, ydata=y, kwargs=kwargs)
 
     x, y, z = cbook.delete_masked_points(x, y, z)
