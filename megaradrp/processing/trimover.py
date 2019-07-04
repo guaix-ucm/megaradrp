@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -231,38 +231,37 @@ class OverscanCorrector(Corrector):
         imgid = self.get_imgid(img)
         data = img[0].data
 
-        p1 = data[self.pcol1].mean()
-        _logger.debug('prescan1 is %f', p1)
+        # p1 = data[self.pcol1].mean()
+        # _logger.debug('prescan1 is %f', p1)
         # or1 = data[self.orow1].mean()
         # _logger.debug('row overscan1 is %f', or1)
-        oc1 = data[self.ocol1].mean()
-        _logger.debug('col overscan1 is %f', oc1)
+        oc1 = np.median(data[self.ocol1])
+        _logger.debug('median col overscan1 is %f', oc1)
         # avg = (p1 + or1 + oc1) / 3.0
-        avg = (p1 + oc1) / 2.0
-        _logger.debug('average scan1 is %f', avg)
-        data[self.trim1] -= avg
+        avg1 = oc1
+        _logger.debug('overscan1 correction is %f', avg1)
+        data[self.trim1] -= avg1
 
-        p2 = data[self.pcol2].mean()
-        _logger.debug('prescan2 is %f', p2)
+        # p2 = data[self.pcol2].mean()
+        # _logger.debug('prescan2 is %f', p2)
         # or2 = data[self.orow2].mean()
         # _logger.debug('row overscan2 is %f', or2)
-        oc2 = data[self.ocol2].mean()
-        _logger.debug('col overscan2 is %f', oc2)
+        oc2 = np.median(data[self.ocol2])
+        _logger.debug('median col overscan2 is %f', oc2)
         # avg = (p2 + or2 + oc2) / 3.0
-        avg = (p2 + oc2) / 2.0
-        _logger.debug('average scan2 is %f', avg)
-        data[self.trim2] -= avg
+        avg2 = oc2
+        _logger.debug('overscan2 correction is %f', avg2)
+        data[self.trim2] -= avg2
         hdr = img['primary'].header
         hdr['NUM-OVPE'] = self.calibid
         hdr['history'] = 'Overscan correction with {}'.format(self.calibid)
         hdr['history'] = 'Overscan correction time {}'.format(datetime.datetime.utcnow().isoformat())
-        hdr['history'] = 'Mean of prescan1 is %f' % p1
-        hdr['history'] = 'col overscan1 is %f' %  oc1
-        hdr['history'] = 'average scan1 is %f' % avg
-        hdr['history'] = 'prescan2 is %f' %  p2
-        hdr['history'] = 'col overscan2 is %f' % oc2
-        hdr['history'] = 'average scan2 is %f' % avg
-
+        # hdr['history'] = 'Mean of prescan1 is %f' % p1
+        hdr['history'] = 'Median of col overscan1 is {}'.format(oc1)
+        hdr['history'] = 'Overscan1 correction is {}'.format(avg1)
+        # hdr['history'] = 'prescan2 is %f' %  p2
+        hdr['history'] = 'Median of col overscan2 is {}'.format(oc2)
+        hdr['history'] = 'Overscan2 correction is {}'.format(avg2)
         return img
 
 
