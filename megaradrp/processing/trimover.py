@@ -14,9 +14,10 @@ import datetime
 
 import numpy as np
 import numpy
-import numpy.polynomial.polynomial as nppol
+from scipy.interpolate import LSQUnivariateSpline
 from astropy.io import fits
-import numina.array.trace.extract as extract
+
+
 from numina.processing import Corrector
 
 
@@ -238,31 +239,67 @@ class OverscanCorrector(Corrector):
         oc1 = np.median(data[self.ocol1])
         _logger.debug('median col overscan1 is %f', oc1)
         # avg = (p1 + or1 + oc1) / 3.0
-        avg1 = oc1
-        _logger.debug('overscan1 correction is %f', avg1)
-        data[self.trim1] -= avg1
 
-        # p2 = data[self.pcol2].mean()
-        # _logger.debug('prescan2 is %f', p2)
-        # or2 = data[self.orow2].mean()
-        # _logger.debug('row overscan2 is %f', or2)
         oc2 = np.median(data[self.ocol2])
         _logger.debug('median col overscan2 is %f', oc2)
-        # avg = (p2 + or2 + oc2) / 3.0
-        avg2 = oc2
-        _logger.debug('overscan2 correction is %f', avg2)
-        data[self.trim2] -= avg2
+
+        _logger.debug('compute spline for overscan1')
+        fit1, spl1 = self.eval_spline_amp1(data)
+        data[self.trim1] -= fit1[:, numpy.newaxis]
+
+        _logger.debug('compute spline for overscan2')
+        fit2, spl2 = self.eval_spline_amp2(data)
+        data[self.trim2] -= fit2[:, numpy.newaxis]
+
         hdr = img['primary'].header
         hdr['NUM-OVPE'] = self.calibid
         hdr['history'] = 'Overscan correction with {}'.format(self.calibid)
         hdr['history'] = 'Overscan correction time {}'.format(datetime.datetime.utcnow().isoformat())
         # hdr['history'] = 'Mean of prescan1 is %f' % p1
         hdr['history'] = 'Median of col overscan1 is {}'.format(oc1)
-        hdr['history'] = 'Overscan1 correction is {}'.format(avg1)
+        hdr['history'] = 'Overscan1 correction is {}'.format('spline3')
         # hdr['history'] = 'prescan2 is %f' %  p2
         hdr['history'] = 'Median of col overscan2 is {}'.format(oc2)
-        hdr['history'] = 'Overscan2 correction is {}'.format(avg2)
+        hdr['history'] = 'Overscan2 correction is {}'.format('spline3')
+
+        for spl, label in zip([spl1, spl2], ['overscan1', 'overscan2']):
+            k, c, deg = spl._eval_args
+            hdr['history'] = '{} deg {}'.format(label, deg)
+            hdr['history'] = '{} knots {}'.format(label, list(k))
+            hdr['history'] = '{} coeffs {}'.format(label, list(c))
+
         return img
+
+    def fit_spline_amp1(self, data):
+
+        region = self.ocol1
+        u = numpy.arange(region[0].start, region[0].stop)
+        v = data[region].mean(axis=1)
+        knots1 = [1200]
+        spl1 = LSQUnivariateSpline(u, v, knots1, k=3)
+        return spl1
+
+    def eval_spline_amp1(self, data):
+        spl1 = self.fit_spline_amp1(data)
+        region = self.ocol1
+        u = numpy.arange(region[0].start, region[0].stop)
+        fit1 = spl1(u)
+        return fit1, spl1
+
+    def fit_spline_amp2(self, data):
+        region = self.ocol2
+        u = numpy.arange(region[0].start, region[0].stop)
+        v = data[region].mean(axis=1)
+        knots2 = [3100]
+        spl2 = LSQUnivariateSpline(u, v, knots2, k=3)
+        return spl2
+
+    def eval_spline_amp2(self, data):
+        spl2 = self.fit_spline_amp2(data)
+        region = self.ocol2
+        u = numpy.arange(region[0].start, region[0].stop)
+        fit2 = spl2(u)
+        return fit2, spl2
 
 
 class TrimImage(Corrector):
