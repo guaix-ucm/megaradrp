@@ -79,29 +79,19 @@ class LCBStandardRecipe(ImageRecipe):
     sky_rss = Result(ProcessedRSS)
     star_spectrum = Result(ProcessedSpectrum)
     master_sensitivity = Result(MasterSensitivity)
-    fiber_ids = Result(ArrayType)
+    fiber_ids = Result(ArrayType(fmt='%d'))
 
     def run(self, rinput):
 
         self.logger.info('starting LCBStandardRecipe reduction')
 
         # Create InstrumentModel
-        ins1 = rinput.obresult.configuration
+        # ins1 = rinput.obresult.configuration
         #
         reduced2d, rss_data = super(LCBStandardRecipe, self).base_run(rinput)
-        tags = rinput.obresult.tags
-        #print(ins1.get('detector.scan'))
-        #print(ins1.get('pseudoslit.boxes', **tags))
-        #print(ins1.get('pseudoslit.boxes_positions', **tags))
+        # tags = rinput.obresult.tags
         ins2 = rinput.obresult.profile
-        #print(ins2.is_configured)
         ins2.configure_with_image(rss_data)
-        #print(ins2.is_configured)
-        #print(ins2.get_property('detector.scan'))
-        #print(ins2.get_property('pseudoslit.boxes'))
-        #print(ins2.get_property('pseudoslit.boxes_positions'))
-        print(tags)
-        print(ins2.children['pseudoslit']._internal_state)
         self.logger.info('start sky subtraction')
         final, origin, sky = self.run_sky_subtraction(rss_data)
         self.logger.info('end sky subtraction')
