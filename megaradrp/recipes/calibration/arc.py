@@ -388,8 +388,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                             peak, fwhm = self.calc_fwhm_of_line(row, peak_int,
                                                                 lwidth=20)
                         except Exception as error:
-                            self.logger.error("%s", error)
-                            self.logger.error('error in feature %s', feature)
+                            self.logger.warning("%s", error)
+                            self.logger.warning('error in feature %s', feature)
                             # workaround
                             peak = row[peak_int]
                             fwhm = 0.0
@@ -453,8 +453,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             # previous results stored in data_wlcalib
             list_poly_vs_fiber = self.model_coeff_vs_fiber(
                 initial_data_wlcalib, poldeg_initial,
-                times_sigma_reject=5,
-                debugplot=0)
+                times_sigma_reject=5)
             # recompute data_wlcalib from scratch
             missing_fib = 0
             error_contador = 0
@@ -639,14 +638,22 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         return (final_image)
 
     def model_coeff_vs_fiber(self, data_wlcalib, poldeg,
-                             times_sigma_reject=5,
-                             debugplot=0):
+                             times_sigma_reject=5):
         """Model polynomial coefficients vs. fiber number.
 
         For each polynomial coefficient, a smooth polynomial dependence
         with fiber number is also computed, rejecting information from
         fibers which coefficients depart from that smooth variation.
         """
+
+        if self.intermediate_results:
+            from numina.array.display.matplotlib_qt import plt
+            from matplotlib.backends.backend_pdf import PdfPages
+            pdf = PdfPages('wavecal_refine_iter1.pdf')
+            local_debugplot = 11
+        else:
+            pdf = None
+            local_debugplot = 0
 
         list_fibid = []
         list_coeffs = []
@@ -658,6 +665,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             list_coeffs.append(item.solution.coeff)
 
         # determine bad fits from each independent polynomial coefficient
+        # (bad fits correspond to unexpected coefficient values for any of
+        # the coefficients; i.e., the number of bad fits increases as we
+        # examine different coefficients)
         poldeg_coeff_vs_fiber = 5
         reject_all = None  # avoid PyCharm warning
         fibid = numpy.array(list_fibid)
@@ -669,7 +679,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 deg=poldeg_coeff_vs_fiber,
                 times_sigma_reject=times_sigma_reject,
             )
-            if abs(debugplot) % 10 != 0:
+            if pdf is not None:
                 polfit_residuals(
                     x=fibid,
                     y=coeff,
@@ -678,17 +688,22 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     xlabel='fibid',
                     ylabel='coeff a_' + str(i),
                     title='Identifying bad fits',
-                    debugplot=debugplot
+                    show=False,
+                    debugplot=local_debugplot
                 )
+                pdf.savefig()
+                plt.close()
+
             if i == 0:
+                # initialize bad fits
                 reject_all = numpy.copy(reject)
-                if abs(debugplot) >= 10:
-                    print('coeff a_' + str(i) + ': nreject=', sum(reject_all))
             else:
                 # add new bad fits
                 reject_all = numpy.logical_or(reject_all, reject)
-                if abs(debugplot) >= 10:
-                    print('coeff a_' + str(i) + ': nreject=', sum(reject_all))
+            dumlabel = 'coeff a_' + str(i) + ': nreject=' + \
+                       str(sum(reject_all))
+            self.logger.info(dumlabel)
+            self.logger.info(fibid[reject_all])
 
         # determine new fits excluding all fibers with bad fits
         list_poly_vs_fiber = []
@@ -702,11 +717,19 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 xlabel='fibid',
                 ylabel='coeff a_' + str(i),
                 title='Computing filtered fits',
-                debugplot=debugplot
+                show=False,
+                debugplot=local_debugplot
             )
+            if pdf is not None:
+                pdf.savefig()
+                plt.close()
             list_poly_vs_fiber.append(poly)
 
-        if abs(debugplot) >= 10:
-            print("list_poly_vs_fiber:\n", list_poly_vs_fiber)
+        self.logger.info("list_poly_vs_fiber:")
+        for i in range(poldeg + 1):
+            self.logger.info(list_poly_vs_fiber[i])
+
+        if pdf is not None:
+            pdf.close()
 
         return list_poly_vs_fiber
