@@ -7,7 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
-from numina.core import Result
+from numina.core import Result, Parameter
 from numina.array import combine
 
 from megaradrp.processing.combine import basic_processing_with_combination
@@ -34,6 +34,16 @@ class BiasRecipe(MegaraBaseRecipe):
     megaradrp.types.MasterBias: description of the MasterBias product
 
     """
+    method = Parameter(
+        'median',
+        description='Combination method',
+        choices=['mean', 'median', 'sigmaclip']
+    )
+    method_kwargs = Parameter(
+        dict(),
+        description='Arguments for combination method',
+        optional=True
+    )
 
     master_bpm = MasterBPMRequirement()
     master_bias = Result(MasterBias)
@@ -56,7 +66,15 @@ class BiasRecipe(MegaraBaseRecipe):
         errors  = False
         if not errors:
             self.logger.info('not computing errors')
-        hdulist = basic_processing_with_combination(rinput, flow, method=combine.median, errors=errors)
+
+        fmethod = getattr(combine, rinput.method)
+
+        hdulist = basic_processing_with_combination(
+            rinput, flow,
+            method=fmethod,
+            method_kwargs=rinput.method_kwargs,
+            errors=errors
+        )
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
         result = self.create_result(master_bias=hdulist)
