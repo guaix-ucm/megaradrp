@@ -93,7 +93,7 @@ class LCBStandardRecipe(ImageRecipe):
         ins2 = rinput.obresult.profile
         ins2.configure_with_image(rss_data)
         self.logger.info('start sky subtraction')
-        final, origin, sky = self.run_sky_subtraction(rss_data)
+        final, origin, sky = self.run_sky_subtraction(rss_data, rinput.ignored_sky_bundles)
         self.logger.info('end sky subtraction')
 
         # 1 + 6  for first ring
