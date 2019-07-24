@@ -86,7 +86,7 @@ class MOSStandardRecipe(ImageRecipe):
         reduced2d, rss_data = super(MOSStandardRecipe, self).base_run(rinput)
 
         self.logger.info('start sky subtraction')
-        final, origin, sky = self.run_sky_subtraction(rss_data)
+        final, origin, sky = self.run_sky_subtraction(rss_data, rinput.ignored_sky_bundles)
         self.logger.info('end sky subtraction')
 
         # 1 + 6  for first ring
