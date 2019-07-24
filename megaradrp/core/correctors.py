@@ -35,7 +35,9 @@ def get_corrector_bpm(rinput, meta, ins, datamodel):
             bpm_corrector = proc.BadPixelCorrector(
                 mbpm,
                 datamodel=datamodel,
-                calibid=calibid
+                calibid=calibid,
+                hwin=0,
+                wwin=3
             )
     else:
         _logger.info('BPM not provided, ignored')
