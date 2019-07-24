@@ -74,7 +74,6 @@ class AcquireLCBRecipe(ImageRecipe):
         nelem=2
     )
 
-
     reduced_image = Result(ProcessedFrame)
     reduced_rss = Result(ProcessedRSS)
     final_rss = Result(ProcessedRSS)
@@ -173,10 +172,11 @@ class AcquireLCBRecipe(ImageRecipe):
             scf0 = scf - centroid[:, np.newaxis] * flux_per_cell_norm
             mc2 = np.dot(scf0, c_coords)
             self.logger.info('2nd order moments, x2=%f, y2=%f, xy=%f arcsec^2', mc2[0,0], mc2[1,1], mc2[0,1])
-            self.logger.info('FWHM , x=%f, y=%f arcsec',
-                             FWHM_G * math.sqrt(mc2[0,0]),
-                             FWHM_G * math.sqrt(mc2[1,1])
-                             )
+            if (mc2[0,0] > 0) and (mc2[1,1] > 0):
+                self.logger.info('FWHM , x=%f, y=%f arcsec',
+                                 FWHM_G * math.sqrt(mc2[0,0]),
+                                 FWHM_G * math.sqrt(mc2[1,1])
+                                 )
 
         if False:
             self.compute_dar(final)
