@@ -431,7 +431,10 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
         flux_valid = numpy.zeros_like(valid, dtype='bool')
         flux_valid[pixf1:pixf2] = True
 
-        r0_ens = gaussian_filter(r0, sigma=sigma)
+        if sigma > 0:
+            r0_ens = gaussian_filter(r0, sigma=sigma)
+        else:
+            r0_ens = r0
 
         ratio2 = r0_ens / r1
         s_response = ratio2 * (r0max / r1max)
