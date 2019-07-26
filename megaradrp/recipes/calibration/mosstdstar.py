@@ -72,7 +72,16 @@ class MOSStandardRecipe(ImageRecipe):
     reference_spectrum = Requirement(ReferenceSpectrumTable, "Spectrum of reference star")
     reference_spectrum_velocity = Parameter(0.0, 'Radial velocity of reference spectrum')
     reference_extinction = Requirement(ReferenceExtinctionTable, "Reference extinction")
-    sigma_auto = Parameter(False, 'sigma Gaussian is automatically computed')
+    degrade_resolution_target = Parameter('object', 'Spectrum with higher resolution',
+                                          choices=['object']
+                                          )
+    # TODO: Implement the posibility of the reference having higher resolution
+    # degrade_resolution_target = Parameter('object', 'Spectrum with higher resolution',
+    #                                       choices=['object', 'reference']
+    #                                      )
+    degrade_resolution_method = Parameter('fixed', 'Method to degrade the resolution',
+                                          choices=['none', 'fixed', 'auto']
+                                          )
     sigma_resolution = Parameter(20.0, 'sigma Gaussian filter to degrade resolution ')
 
     reduced_image = Result(ProcessedFrame)
@@ -123,8 +132,13 @@ class MOSStandardRecipe(ImageRecipe):
 
         wcsl = astropy.wcs.WCS(final[0].header)
         wl_aa, response_m, response_r = mix_values(wcsl, spectrum, star_interp)
-
-        if rinput.sigma_auto or (rinput.sigma_resolution < 0):
+        if rinput.degrade_resolution_method == 'none':
+            sigma = 0
+            self.logger.info('no broadening')
+        elif rinput.degrade_resolution_method == 'fixed':
+            sigma = rinput.sigma_resolution
+            self.logger.info('fixed sigma=%3.0f', sigma)
+        elif rinput.degrade_resolution_method == 'auto':
             self.logger.info('compute auto broadening')
             offset_broad, sigma_broad = compute_broadening(
                 response_r, response_m, sigmalist=range(1, 101),
@@ -134,8 +148,8 @@ class MOSStandardRecipe(ImageRecipe):
             sigma = sigma_broad
             self.logger.info('computed sigma=%3.0f', sigma)
         else:
-            sigma = rinput.sigma_resolution
-            self.logger.info('sigma=%3.0f', sigma)
+            msg = "'degrade_resolution_method' has value {}".format(rinput.degrade_resolution_method)
+            raise ValueError(msg)
 
         sens_raw = generate_sensitivity(final, spectrum, star_interp, extinc_interp, wl_cover1, wl_cover2, sigma)
 
