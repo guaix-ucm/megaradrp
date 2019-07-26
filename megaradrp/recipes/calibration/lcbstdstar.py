@@ -14,19 +14,17 @@ from astropy import constants as const
 import astropy.io.fits as fits
 import astropy.units as u
 import astropy.wcs
-import matplotlib.pyplot as plt
-import numpy
-from scipy.ndimage.filters import gaussian_filter
+
 from scipy.interpolate import interp1d
 
 from numina.array.numsplines import AdaptiveLSQUnivariateSpline
-from numina.array.wavecalib.crosscorrelation import periodic_corr1d
 from numina.core import Result, Parameter
 from numina.core.requirements import Requirement
 from numina.core.validator import range_validator
 from numina.types.array import ArrayType
 
 from megaradrp.processing.extractobj import extract_star, generate_sensitivity
+from megaradrp.processing.extractobj import mix_values, compute_broadening
 from megaradrp.recipes.scientific.base import ImageRecipe
 from megaradrp.types import ProcessedRSS, ProcessedFrame, ProcessedSpectrum
 from megaradrp.types import ReferenceSpectrumTable, ReferenceExtinctionTable
@@ -77,7 +75,7 @@ class LCBStandardRecipe(ImageRecipe):
     reference_spectrum = Requirement(ReferenceSpectrumTable, "Spectrum of reference star")
     reference_spectrum_velocity = Parameter(0.0, 'Radial velocity (km/s) of reference spectrum')
     reference_extinction = Requirement(ReferenceExtinctionTable, "Reference extinction")
-    # sigma_auto = Parameter(False, 'sigma Gaussian is automatically computed')
+    sigma_auto = Parameter(False, 'sigma Gaussian is automatically computed')
     sigma_resolution = Parameter(20.0, 'sigma Gaussian filter to degrade resolution ')
 
     reduced_image = Result(ProcessedFrame)
@@ -86,7 +84,7 @@ class LCBStandardRecipe(ImageRecipe):
     sky_rss = Result(ProcessedRSS)
     star_spectrum = Result(ProcessedSpectrum)
     master_sensitivity = Result(MasterSensitivity)
-    sensitivity_raw = Result(MasterSensitivity)
+    sensitivity_raw = Result(ProcessedSpectrum)
     fiber_ids = Result(ArrayType(fmt='%d'))
     sigma = Result(float)
 
@@ -134,7 +132,7 @@ class LCBStandardRecipe(ImageRecipe):
         wcsl = astropy.wcs.WCS(final[0].header)
         wl_aa, response_m, response_r = mix_values(wcsl, spectrum, star_interp)
 
-        if rinput.sigma_resolution < 0:
+        if rinput.sigma_auto or (rinput.sigma_resolution < 0):
             self.logger.info('compute auto broadening')
             offset_broad, sigma_broad = compute_broadening(
                 response_r, response_m, sigmalist=range(1, 101),
@@ -159,6 +157,7 @@ class LCBStandardRecipe(ImageRecipe):
         sens.data = spl(wl_aa.value)
 
         if self.intermediate_results:
+            import matplotlib.pyplot as plt
             plt.plot(wl_aa, sens_raw.data, 'b')
             plt.plot(wl_aa, sens.data, 'r')
             plt.savefig('smoothed.png')
@@ -177,71 +176,3 @@ class LCBStandardRecipe(ImageRecipe):
             fiber_ids=fiber_ids,
             sigma=sigma
         )
-
-
-def mix_values(wcsl, spectrum, star_interp):
-
-    r1 = numpy.arange(spectrum.shape[0])
-    r2 = r1 * 0.0
-    lm = numpy.array([r1, r2])
-    # Values are 0-based
-    wavelen_ = wcsl.all_pix2world(lm.T, 0)
-    if wcsl.wcs.cunit[0] == u.dimensionless_unscaled:
-        # CUNIT is empty, assume Angstroms
-        wavelen = wavelen_[:, 0] * u.AA
-    else:
-        wavelen = wavelen_[:, 0] * wcsl.wcs.cunit[0]
-
-    wavelen_aa = wavelen.to(u.AA)
-
-    response_0 = spectrum
-    mag_ref = star_interp(wavelen_aa) * u.ABmag
-    response_1 = mag_ref.to(u.Jy).value
-
-    return wavelen_aa, response_0, response_1
-
-
-def compute_broadening(flux_low, flux_high, sigmalist,
-                       remove_mean=False, frac_cosbell=None, zero_padding=None,
-                       fminmax=None, naround_zero=None, nfit_peak=None):
-
-    # normalize each spectrum dividing by its median
-    flux_low /= numpy.median(flux_low)
-    flux_high /= numpy.median(flux_high)
-
-    offsets = []
-    fpeaks = []
-    sigmalist = numpy.asarray(sigmalist)
-    for sigma in sigmalist:
-        # broaden reference spectrum
-        flux_ref_broad = gaussian_filter(flux_high, sigma)
-        # plot the two spectra
-
-        # periodic correlation between the two spectra
-        offset, fpeak = periodic_corr1d(
-            flux_ref_broad, flux_low,
-            remove_mean=remove_mean,
-            frac_cosbell=frac_cosbell,
-            zero_padding=zero_padding,
-            fminmax=fminmax,
-            naround_zero=naround_zero,
-            nfit_peak=nfit_peak,
-            norm_spectra=True,
-        )
-        offsets.append(offset)
-        fpeaks.append(fpeak)
-
-    fpeaks = numpy.asarray(fpeaks)
-    offsets = numpy.asarray(offsets)
-
-    # import matplotlib.pyplot as plt
-    # #
-    # plt.plot(sigmalist, offsets, color='r')
-    # ax2 = plt.gca().twinx()
-    # ax2.plot(sigmalist, fpeaks, color='b')
-    # plt.show()
-    #
-    offset_broad = offsets[numpy.argmax(fpeaks)]
-    sigma_broad = sigmalist[numpy.argmax(fpeaks)]
-
-    return offset_broad, sigma_broad

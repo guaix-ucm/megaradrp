@@ -20,6 +20,7 @@ import astropy.units as u
 from scipy.spatial import KDTree
 from scipy.ndimage.filters import gaussian_filter
 from numina.frame.utils import copy_img
+from numina.array.wavecalib.crosscorrelation import periodic_corr1d
 
 from megaradrp.processing.fluxcalib import update_flux_limits
 
@@ -298,6 +299,74 @@ def compute_dar(img, datamodel, logger=None, debug_plot=False):
         plt.show()
 
     return world[:, 0], xdar, ydar
+
+
+def mix_values(wcsl, spectrum, star_interp):
+
+    r1 = numpy.arange(spectrum.shape[0])
+    r2 = r1 * 0.0
+    lm = numpy.array([r1, r2])
+    # Values are 0-based
+    wavelen_ = wcsl.all_pix2world(lm.T, 0)
+    if wcsl.wcs.cunit[0] == u.dimensionless_unscaled:
+        # CUNIT is empty, assume Angstroms
+        wavelen = wavelen_[:, 0] * u.AA
+    else:
+        wavelen = wavelen_[:, 0] * wcsl.wcs.cunit[0]
+
+    wavelen_aa = wavelen.to(u.AA)
+
+    response_0 = spectrum
+    mag_ref = star_interp(wavelen_aa) * u.ABmag
+    response_1 = mag_ref.to(u.Jy).value
+
+    return wavelen_aa, response_0, response_1
+
+
+def compute_broadening(flux_low, flux_high, sigmalist,
+                       remove_mean=False, frac_cosbell=None, zero_padding=None,
+                       fminmax=None, naround_zero=None, nfit_peak=None):
+
+    # normalize each spectrum dividing by its median
+    flux_low /= numpy.median(flux_low)
+    flux_high /= numpy.median(flux_high)
+
+    offsets = []
+    fpeaks = []
+    sigmalist = numpy.asarray(sigmalist)
+    for sigma in sigmalist:
+        # broaden reference spectrum
+        flux_ref_broad = gaussian_filter(flux_high, sigma)
+        # plot the two spectra
+
+        # periodic correlation between the two spectra
+        offset, fpeak = periodic_corr1d(
+            flux_ref_broad, flux_low,
+            remove_mean=remove_mean,
+            frac_cosbell=frac_cosbell,
+            zero_padding=zero_padding,
+            fminmax=fminmax,
+            naround_zero=naround_zero,
+            nfit_peak=nfit_peak,
+            norm_spectra=True,
+        )
+        offsets.append(offset)
+        fpeaks.append(fpeak)
+
+    fpeaks = numpy.asarray(fpeaks)
+    offsets = numpy.asarray(offsets)
+
+    # import matplotlib.pyplot as plt
+    # #
+    # plt.plot(sigmalist, offsets, color='r')
+    # ax2 = plt.gca().twinx()
+    # ax2.plot(sigmalist, fpeaks, color='b')
+    # plt.show()
+    #
+    offset_broad = offsets[numpy.argmax(fpeaks)]
+    sigma_broad = sigmalist[numpy.argmax(fpeaks)]
+
+    return offset_broad, sigma_broad
 
 
 def generate_sensitivity(final, spectrum, star_interp, extinc_interp,

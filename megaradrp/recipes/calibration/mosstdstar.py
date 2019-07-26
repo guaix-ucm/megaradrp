@@ -13,13 +13,16 @@
 from scipy.interpolate import interp1d
 import astropy.io.fits as fits
 import astropy.units as u
+import astropy.wcs
 from astropy import constants as const
 
+from numina.array.numsplines import AdaptiveLSQUnivariateSpline
 from numina.core import Result, Parameter
 from numina.core.requirements import Requirement
 from numina.types.array import ArrayType
 
 from megaradrp.processing.extractobj import extract_star, generate_sensitivity
+from megaradrp.processing.extractobj import mix_values, compute_broadening
 from megaradrp.recipes.scientific.base import ImageRecipe
 from megaradrp.types import ProcessedRSS, ProcessedFrame, ProcessedSpectrum
 from megaradrp.types import ReferenceSpectrumTable, ReferenceExtinctionTable
@@ -69,6 +72,7 @@ class MOSStandardRecipe(ImageRecipe):
     reference_spectrum = Requirement(ReferenceSpectrumTable, "Spectrum of reference star")
     reference_spectrum_velocity = Parameter(0.0, 'Radial velocity of reference spectrum')
     reference_extinction = Requirement(ReferenceExtinctionTable, "Reference extinction")
+    sigma_auto = Parameter(False, 'sigma Gaussian is automatically computed')
     sigma_resolution = Parameter(20.0, 'sigma Gaussian filter to degrade resolution ')
 
     reduced_image = Result(ProcessedFrame)
@@ -77,7 +81,9 @@ class MOSStandardRecipe(ImageRecipe):
     sky_rss = Result(ProcessedRSS)
     star_spectrum = Result(ProcessedSpectrum)
     master_sensitivity = Result(MasterSensitivity)
+    sensitivity_raw = Result(ProcessedSpectrum)
     fiber_ids = Result(ArrayType)
+    sigma = Result(float)
 
     def run(self, rinput):
 
@@ -102,7 +108,7 @@ class MOSStandardRecipe(ImageRecipe):
         spectra_pack = extract_star(final, rinput.position, npoints,
                                     fiberconf, logger=self.logger)
 
-        spectrum, colids, cover1, cover2 = spectra_pack
+        spectrum, colids, wl_cover1, wl_cover2 = spectra_pack
         star_spectrum = fits.PrimaryHDU(spectrum, header=final[0].header)
 
         rad_vel = rinput.reference_spectrum_velocity * u.km / u.s
@@ -114,8 +120,41 @@ class MOSStandardRecipe(ImageRecipe):
                                  rinput.reference_extinction[:, 1])
 
         fiber_ids = [colid + 1 for colid in colids]
-        sigma = rinput.sigma_resolution
-        sens = generate_sensitivity(final, spectrum, star_interp, extinc_interp, cover1, cover2, sigma)
+
+        wcsl = astropy.wcs.WCS(final[0].header)
+        wl_aa, response_m, response_r = mix_values(wcsl, spectrum, star_interp)
+
+        if rinput.sigma_auto or (rinput.sigma_resolution < 0):
+            self.logger.info('compute auto broadening')
+            offset_broad, sigma_broad = compute_broadening(
+                response_r, response_m, sigmalist=range(1, 101),
+                remove_mean=False, frac_cosbell=0.10, zero_padding=50,
+                fminmax=(0.003, 0.3), naround_zero=25, nfit_peak=21
+            )
+            sigma = sigma_broad
+            self.logger.info('computed sigma=%3.0f', sigma)
+        else:
+            sigma = rinput.sigma_resolution
+            self.logger.info('sigma=%3.0f', sigma)
+
+        sens_raw = generate_sensitivity(final, spectrum, star_interp, extinc_interp, wl_cover1, wl_cover2, sigma)
+
+        # Compute smoothed version
+        self.logger.info('compute smoothed sensitivity')
+
+        sens = sens_raw.copy()
+        i_knots = 3
+        self.logger.debug('using sdaptive spline with t=%d interior knots', i_knots)
+        spl = AdaptiveLSQUnivariateSpline(x=wl_aa.value, y=sens_raw.data, t=i_knots)
+        sens.data = spl(wl_aa.value)
+
+        if self.intermediate_results:
+            import matplotlib.pyplot as plt
+            plt.plot(wl_aa, sens_raw.data, 'b')
+            plt.plot(wl_aa, sens.data, 'r')
+            plt.savefig('smoothed.png')
+            plt.close()
+
         self.logger.info('end MOSStandardRecipe reduction')
 
         return self.create_result(
@@ -125,5 +164,7 @@ class MOSStandardRecipe(ImageRecipe):
             sky_rss=sky,
             star_spectrum=star_spectrum,
             master_sensitivity=sens,
-            fiber_ids=fiber_ids
+            sensitivity_raw=sens,
+            fiber_ids=fiber_ids,
+            sigma=sigma
         )
