@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -31,8 +31,18 @@ from megaradrp.processing.extractobj import subtract_sky
 class ImageRecipe(MegaraBaseRecipe):
     """Base Image."""
 
-    # Requirements  
+    # Requirements
     obresult = ObservationResultRequirement()
+    method = Parameter(
+        'median',
+        description='Combination method',
+        choices=['mean', 'median', 'sigmaclip']
+    )
+    method_kwargs = Parameter(
+        dict(),
+        description='Arguments for combination method',
+        optional=True
+    )
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
@@ -51,7 +61,13 @@ class ImageRecipe(MegaraBaseRecipe):
 
         # 2D reduction
         flow1 = self.init_filters(rinput, rinput.obresult.configuration)
-        img = basic_processing_with_combination(rinput, flow1, method=combine.median)
+        fmethod = getattr(combine, rinput.method)
+
+        img = basic_processing_with_combination(
+            rinput, flow1,
+            method=fmethod,
+            method_kwargs=rinput.method_kwargs
+        )
         hdr = img[0].header
         self.set_base_headers(hdr)
 

@@ -81,6 +81,16 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     """
 
     # Requirements
+    method = Parameter(
+        'median',
+        description='Combination method',
+        choices=['mean', 'median', 'sigmaclip']
+    )
+    method_kwargs = Parameter(
+        dict(),
+        description='Arguments for combination method',
+        optional=True
+    )
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
@@ -99,7 +109,10 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
     def process_flat2d(self, rinput):
         flow = self.init_filters(rinput, rinput.obresult.configuration)
-        final_image = basic_processing_with_combination(rinput, flow, method=combine.median)
+        fmethod = getattr(combine, rinput.method)
+        final_image = basic_processing_with_combination(
+            rinput, flow, method=fmethod,method_kwargs=rinput.method_kwargs,
+        )
         hdr = final_image[0].header
         self.set_base_headers(hdr)
         return final_image
