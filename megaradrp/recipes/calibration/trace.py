@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 
 import numina.types.qc as qc
 from numina.array import combine
+from numina.array.wavecalib.crosscorrelation import cosinebell
 import numina.core.validator
 from skimage.filters import threshold_otsu
 from skimage.feature import peak_local_max
@@ -142,7 +143,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         self.save_intermediate_img(reduced, 'reduced_image.fits')
 
-        #insconf = obresult.configuration
+        # insconf = obresult.configuration
         insconf = obresult.profile
 
         boxes = insconf.get_property('pseudoslit.boxes')
@@ -206,7 +207,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         self.logger.info('end trace spectra recipe')
         return self.create_result(reduced_image=reduced,
-                                  reduced_rss = reduced_rss,
+                                  reduced_rss=reduced_rss,
                                   master_traces=final)
 
     def obtain_boxes_from_image(self, reduced, expected, npeaks, cstart=2000):
@@ -295,7 +296,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         refined = expected[:]
 
         for ibox, box in enumerate(expected):
-            iargmax = final[box - nsearch: box + nsearch +1].argmax()
+            iargmax = final[box - nsearch: box + nsearch + 1].argmax()
             refined[ibox] = iargmax + box - nsearch
 
         return refined, cstart
@@ -431,7 +432,7 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         nfibers_max = nfibers - len(mfibers)
         sfibers = box.get('skipcount', [])
         _logger.debug('pseudoslit box: %s, id: %d', box['name'], boxid)
-        _logger.debug('nfibers: %d, missing: %s',nfibers, mfibers)
+        _logger.debug('nfibers: %d, missing: %s', nfibers, mfibers)
 
         counted_fibers += nfibers
         b1 = int(box_borders[boxid])
@@ -505,8 +506,8 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
                                                       borders, scale=measured_scale)
 
         for fibid, match in fibermatch.iter_best_solution(fiber_model,
-                                               matched_peaks,
-                                               pos_solutions):
+                                                          matched_peaks,
+                                                          pos_solutions):
             fti = FiberTraceInfo(fibid, boxid)
             if match is not None:
                 fti.start = (center, peaks_y[match, 1], peaks_y[match, 2])
@@ -518,14 +519,3 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         for m1, n2 in boxes_with_missing_fibers:
             _logger.debug('missing %d fibers in box %s', n2, m1)
     return fiber_traces
-
-
-def cosinebell(n, fraction=0.10):
-    """"Cosine bell mask"""
-    mask = numpy.ones(n)
-    nmasked = int(fraction*n)
-    for i in range(nmasked):
-        f = 0.5 * (1 - numpy.cos(numpy.pi * float(i) / float(nmasked)))
-        mask[i] = f
-        mask[n-i-1] = f
-    return mask
