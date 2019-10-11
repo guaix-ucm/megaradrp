@@ -17,7 +17,7 @@ import warnings
 import numpy
 import numpy.polynomial.polynomial as nppol
 from numina.array.peaks.peakdet import refine_peaks
-from numina.array.trace.traces import trace
+from numina.array.trace.traces import trace, tracing_limits
 from numina.core import Result, Parameter
 import matplotlib.pyplot as plt
 
@@ -40,24 +40,6 @@ import megaradrp.requirements as reqs
 import megaradrp.products
 import megaradrp.processing.fibermatch as fibermatch
 from megaradrp.instrument import vph_thr
-
-
-def ll_11(col, step, hs):
-    import math
-    m = col % step
-    k0 = ((hs + step - m) / step)
-    r = int(math.floor(k0))
-    xx_start = r * step + m
-    return xx_start
-
-
-def ll_22(col, step, hs, size):
-    import math
-    m = col % step
-    k0 = ((size - hs - step - m) / step)
-    r = int(math.ceil(k0))
-    xx_start = r * step + m
-    return xx_start
 
 
 class TraceMapRecipe(MegaraBaseRecipe):
@@ -235,8 +217,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         # number of the columns to add
         hs = 3
         # Expected range of computed traces
-        xx_start = ll_11(cstart, step, hs)
-        xx_end = ll_22(cstart, step, hs, reduced[0].shape[1])
+        xx_start, xx_end = tracing_limits(reduced[0].shape[1], cstart, step, hs)
         final.expected_range = [xx_start, xx_end]
 
         final.update_metadata(self)
