@@ -27,6 +27,8 @@ def create_test_tracemap():
     data.tags = tags
     data.uuid = uuid
     data.total_fibers = 623
+    data.expected_range = [2, 4092]
+    data.ref_column = 2001
     meta_info = tm.TraceMap.create_meta_info()
     meta_info['instrument_name'] = instrument
     meta_info['creation_date'] = data.meta_info['creation_date']
@@ -41,7 +43,8 @@ def create_test_tracemap():
                  type_fqn='megaradrp.products.tracemap.TraceMap',
                  boxes_positions=[],
                  type=data.name(),
-                 ref_column=2000,
+                 ref_column=2001,
+                 expected_range=[2, 4092],
                  global_offset=[0.0],
                  quality_control=numina.types.qc.QC.UNKNOWN
                  )

@@ -12,7 +12,7 @@
 from __future__ import division, print_function
 
 import logging
-from datetime import datetime
+import warnings
 
 import numpy
 import numpy.polynomial.polynomial as nppol
@@ -40,6 +40,24 @@ import megaradrp.requirements as reqs
 import megaradrp.products
 import megaradrp.processing.fibermatch as fibermatch
 from megaradrp.instrument import vph_thr
+
+
+def ll_11(col, step, hs):
+    import math
+    m = col % step
+    k0 = ((hs + step - m) / step)
+    r = int(math.floor(k0))
+    xx_start = r * step + m
+    return xx_start
+
+
+def ll_22(col, step, hs, size):
+    import math
+    m = col % step
+    k0 = ((size - hs - step - m) / step)
+    r = int(math.ceil(k0))
+    xx_start = r * step + m
+    return xx_start
 
 
 class TraceMapRecipe(MegaraBaseRecipe):
@@ -105,10 +123,48 @@ class TraceMapRecipe(MegaraBaseRecipe):
     def run_qc(self, recipe_input, recipe_result):
         """Run quality control checks"""
         self.logger.info('start trace recipe QC')
-        recipe_result.qc = qc.QC.GOOD
-        recipe_result.master_traces.quality_control = qc.QC.GOOD
+
+        self.check_qc_tracemap(recipe_result.master_traces)
+
+        recipe_result.qc = recipe_result.master_traces.quality_control
+        self.logger.info('Result QC is %s', recipe_result.qc)
         self.logger.info('end trace recipe QC')
         return recipe_result
+
+    def check_qc_tracemap(self, tracemap):
+        # check full range in all fibers
+        if tracemap.tags['insmode'] == 'LCB':
+            nfibers = 623
+            ignored_ids = [623]
+        else:
+            nfibers = 644
+            ignored_ids = [635]
+
+        cost_ids = nfibers * [0]
+
+        start_min, end_max = tracemap.expected_range
+
+        for trace in tracemap.contents:
+            idx = trace.fibid - 1
+            if trace.fibid in ignored_ids:
+                continue
+            if trace.start > start_min:
+                cost_ids[idx] += 1
+                msg = 'In fiber {}, trace start > {}'.format(trace.fibid, start_min)
+                warnings.warn(msg)
+            if trace.stop < end_max:
+                cost_ids[idx] += 1
+                msg = 'In fiber {}, trace end < {}'.format(trace.fibid, end_max)
+                warnings.warn(msg)
+
+        total = sum(cost_ids)
+
+        if total > 300:
+            tracemap.quality_control = qc.QC.BAD
+        elif total > 0:
+            tracemap.quality_control = qc.QC.PARTIAL
+        else:
+            tracemap.quality_control = qc.QC.GOOD
 
     @numina.core.validator.validate
     def run(self, rinput):
@@ -173,6 +229,16 @@ class TraceMapRecipe(MegaraBaseRecipe):
         final.boxes_positions = box_borders
         final.ref_column = cstart
 
+        # Searching for peaks
+        # step of
+        step = 2
+        # number of the columns to add
+        hs = 3
+        # Expected range of computed traces
+        xx_start = ll_11(cstart, step, hs)
+        xx_end = ll_22(cstart, step, hs, reduced[0].shape[1])
+        final.expected_range = [xx_start, xx_end]
+
         final.update_metadata(self)
         final.update_metadata_origin(obresult_meta)
         # Temperature in Celsius with 2 decimals
@@ -183,6 +249,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
             boxes,
             box_borders,
             cstart=cstart,
+            step=step,
+            hs=hs,
             threshold=threshold,
             poldeg=rinput.polynomial_degree,
             debug_plot=debug_plot
@@ -258,10 +326,6 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         plt.scatter(expected, nidxs - expected)
         plt.show()
-
-        print("expected", expected)
-        print("nidx", nidxs)
-
         return nidxs, col
 
     def refine_boxes_from_image(self, reduced, expected, cstart=2000, nsearch=20):
@@ -302,11 +366,10 @@ class TraceMapRecipe(MegaraBaseRecipe):
         return refined, cstart
 
     def search_traces(self, reduced, boxes, box_borders, cstart=2000,
-                      threshold=0.3, poldeg=5, step=2, debug_plot=0):
+                      threshold=0.3, poldeg=5, step=2, hs=3, debug_plot=0):
 
         data = reduced[0].data
 
-        hs = 3
         tol = 1.63
 
         self.logger.info('search for traces')
