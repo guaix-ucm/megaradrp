@@ -206,6 +206,15 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         final = megaradrp.products.TraceMap(instrument=obresult.instrument)
         fiberconf = self.datamodel.get_fiberconf(reduced)
+        # As of 2019-10-15, headers do not contain information
+        # about inactive fibers, i.e. all have active=True
+        # inactive_fibers = fiberconf.inactive_fibers()
+        # We do it manually
+        if fiberconf.name == 'LCB':
+            inactive_fibers = [623]
+        else:
+            inactive_fibers = [635]
+
         final.total_fibers = fiberconf.nfibers
         final.tags = self.extract_tags_from_ref(reduced, final.tag_names(), base=obresult.labels)
         final.boxes_positions = box_borders
@@ -225,10 +234,11 @@ class TraceMapRecipe(MegaraBaseRecipe):
         # Temperature in Celsius with 2 decimals
         final.tags['temp'] = round(obresult_meta['info'][0]['temp'] - 273.15, 2)
 
-        contents, error_fitting = self.search_traces(
+        contents, error_fitting, missing_fibers = self.search_traces(
             reduced,
             boxes,
             box_borders,
+            inactive_fibers=inactive_fibers,
             cstart=cstart,
             step=step,
             hs=hs,
@@ -239,7 +249,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         final.contents = contents
         final.error_fitting = error_fitting
-
+        final.missing_fibers = missing_fibers
         # Perform extraction with own traces
         calibrator_aper = ApertureExtractor(final, self.datamodel)
         reduced_copy = copy_img(reduced)
@@ -346,11 +356,12 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         return refined, cstart
 
-    def search_traces(self, reduced, boxes, box_borders, cstart=2000,
+    def search_traces(self, reduced, boxes, box_borders, inactive_fibers=None, cstart=2000,
                       threshold=0.3, poldeg=5, step=2, hs=3, debug_plot=0):
 
         data = reduced[0].data
-
+        if inactive_fibers is None:
+            inactive_fibers = []
         tol = 1.63
 
         self.logger.info('search for traces')
@@ -383,6 +394,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         contents = []
         error_fitting = []
+        missing_fibers = []
         self.logger.info('trace peaks from references')
         for dtrace in central_peaks:
             # FIXME, for traces, the background must be local
@@ -390,33 +402,46 @@ class TraceMapRecipe(MegaraBaseRecipe):
             local_trace_background = 300  # background
 
             self.logger.debug('trace fiber %d', dtrace.fibid)
-            if dtrace.start:
-                mm = trace(image2, x=cstart, y=dtrace.start[1], step=step,
-                           hs=hs, background=local_trace_background, maxdis=maxdis)
+            conf_ok = dtrace.fibid not in inactive_fibers
+            peak_ok = dtrace.start is not None
 
-                if debug_plot:
-                    plt.plot(mm[:, 0], mm[:, 1], '.')
-                    plt.savefig('trace-xy-{:03d}.png'.format(dtrace.fibid))
-                    plt.close()
-                    plt.plot(mm[:, 0], mm[:, 2], '.')
-                    plt.savefig('trace-xz-{:03d}.png'.format(dtrace.fibid))
-                    plt.close()
-                if len(mm) < poldeg + 1:
-                    self.logger.warning('in fibid %d, only %d points to fit pol of degree %d',
-                                        dtrace.fibid, len(mm), poldeg)
-                    pfit = numpy.array([])
+            pfit = numpy.array([])
+            start = cstart
+            stop = cstart
+
+            if peak_ok:
+                if not conf_ok:
+                    error_fitting.append(dtrace.fibid)
+                    self.logger.warning('found fibid %d, expected to be missing', dtrace.fibid)
                 else:
-                    pfit = nppol.polyfit(mm[:, 0], mm[:, 1], deg=poldeg)
 
-                start = mm[0, 0]
-                stop = mm[-1, 0]
+                    mm = trace(image2, x=cstart, y=dtrace.start[1], step=step,
+                               hs=hs, background=local_trace_background, maxdis=maxdis)
+
+                    if debug_plot:
+                        plt.plot(mm[:, 0], mm[:, 1], '.')
+                        plt.savefig('trace-xy-{:03d}.png'.format(dtrace.fibid))
+                        plt.close()
+                        plt.plot(mm[:, 0], mm[:, 2], '.')
+                        plt.savefig('trace-xz-{:03d}.png'.format(dtrace.fibid))
+                        plt.close()
+                    if len(mm) < poldeg + 1:
+                        self.logger.warning('in fibid %d, only %d points to fit pol of degree %d',
+                                            dtrace.fibid, len(mm), poldeg)
+                        pfit = numpy.array([])
+                    else:
+                        pfit = nppol.polyfit(mm[:, 0], mm[:, 1], deg=poldeg)
+
+                    start = mm[0, 0]
+                    stop = mm[-1, 0]
+                    self.logger.debug('trace start %d  stop %d', int(start), int(stop))
             else:
-                pfit = numpy.array([])
-                start = cstart
-                stop = cstart
-                error_fitting.append(dtrace.fibid)
-
-            self.logger.debug('trace start %d  stop %d', int(start), int(stop))
+                if conf_ok:
+                    self.logger.warning('error tracing fibid %d', dtrace.fibid)
+                    error_fitting.append(dtrace.fibid)
+                else:
+                    self.logger.debug('expected missing fibid %d', dtrace.fibid)
+                    missing_fibers.append(dtrace.fibid)
 
             this_trace = GeometricTrace(
                 fibid=dtrace.fibid,
@@ -427,7 +452,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
             )
             contents.append(this_trace)
 
-        return contents, error_fitting
+        return contents, error_fitting, missing_fibers
 
 
 def estimate_background(image, center, hs, boxref):
@@ -439,10 +464,6 @@ def estimate_background(image, center, hs, boxref):
     colcut = cut.mean(axis=1)
 
     return threshold_otsu(colcut)
-
-
-# FIXME: need a better place for this
-# Moved from megaradrp.trace
 
 
 class FiberTraceInfo(object):
