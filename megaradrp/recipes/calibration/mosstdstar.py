@@ -178,7 +178,7 @@ class MOSStandardRecipe(ImageRecipe):
             sky_rss=sky,
             star_spectrum=star_spectrum,
             master_sensitivity=sens,
-            sensitivity_raw=sens,
+            sensitivity_raw=sens_raw,
             fiber_ids=fiber_ids,
             sigma=sigma
         )
