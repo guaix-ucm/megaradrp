@@ -70,6 +70,7 @@ def count_peaks(peaks, tol=1.2, distance=6.0, start=1, max_scale_jump=3):
         # print('im peak:', p1, ' next peak should be around:', p1 + scale * expected_distance)
         p2 = rest[0]
         dist = abs(p1 - p2)
+        last_info = values[-1]
         while True:
             sed = scale * expected_distance
             # print('next peak is:', p2, 'distance from p1 is', dist)
@@ -91,7 +92,8 @@ def count_peaks(peaks, tol=1.2, distance=6.0, start=1, max_scale_jump=3):
                 # print('increase scale to:', scale)
                 if scale > max_scale_jump:
                     # print('moving to far')
-                    raise ValueError('moving too far apart')
+                    msg = 'peak {} not found within expected distance from {}'.format(pid, last_info[0])
+                    raise ValueError(msg)
 
         p1, rest = rest[0], rest[1:]
     return values
