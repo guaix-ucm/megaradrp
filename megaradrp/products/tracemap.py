@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -9,19 +9,16 @@
 
 """Products of the Megara Pipeline"""
 
-import numpy
 import numpy.polynomial.polynomial as nppol
 
 from .structured import BaseStructuredCalibration
+from .aperture import GeometricAperture
 from .traces import to_ds9_reg as to_ds9_reg_function
 
 
-class GeometricTrace(object):
+class GeometricTrace(GeometricAperture):
     def __init__(self, fibid, boxid, start, stop, fitparms=None):
-        self.fibid = fibid
-        self.boxid = boxid
-        self.start = start
-        self.stop = stop
+        super(GeometricTrace, self).__init__(fibid, boxid, start, stop)
         self.fitparms = fitparms if fitparms is not None else []
         self.polynomial = None
         # Update polynomial
@@ -29,18 +26,22 @@ class GeometricTrace(object):
 
     @property
     def valid(self):
+        return self.is_valid()
+
+    def is_valid(self):
         if self.fitparms:
             return True
         else:
             return False
 
     def __getstate__(self):
-        state = self.__dict__.copy()
+        state = super(GeometricTrace, self).__getstate__()
         del state['polynomial']
         return state
 
     def __setstate__(self, state):
-        self.__dict__ = state
+        super(GeometricTrace, self).__setstate__(state)
+
         self._set_polynomial(state['fitparms'])
 
     def _set_polynomial(self, fitparms):
@@ -48,6 +49,9 @@ class GeometricTrace(object):
             self.polynomial = nppol.Polynomial(self.fitparms)
         else:
             self.polynomial = nppol.Polynomial([0.0])
+
+    def aper_center(self):
+        return self.polynomial
 
 
 class TraceMap(BaseStructuredCalibration):
