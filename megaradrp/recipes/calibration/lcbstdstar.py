@@ -149,7 +149,7 @@ class LCBStandardRecipe(ImageRecipe):
         elif rinput.degrade_resolution_method == 'auto':
             self.logger.info('compute auto broadening')
             offset_broad, sigma_broad = compute_broadening(
-                response_r, response_m, sigmalist=range(1, 101),
+                response_r.copy(), response_m.copy(), sigmalist=range(1, 101),
                 remove_mean=False, frac_cosbell=0.10, zero_padding=50,
                 fminmax=(0.003, 0.3), naround_zero=25, nfit_peak=21
             )
