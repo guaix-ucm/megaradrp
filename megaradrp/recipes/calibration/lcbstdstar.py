@@ -103,7 +103,7 @@ class LCBStandardRecipe(ImageRecipe):
         print(tags)
         print(ins2.children['pseudoslit']._internal_state)
         self.logger.info('start sky subtraction')
-        final, origin, sky = self.run_sky_subtraction(rss_data)
+        final, origin, sky = self.run_sky_subtraction(rss_data, rinput.ignored_sky_bundles)
         self.logger.info('end sky subtraction')
 
         # 1 + 6  for first ring

@@ -114,7 +114,8 @@ class FocusTelescopeRecipe(ImageRecipe):
                 do_sky_subtraction = True
                 if do_sky_subtraction:
                     self.logger.info('start sky subtraction')
-                    final, origin, sky = self.run_sky_subtraction(img1d)
+                    final, origin, sky = self.run_sky_subtraction(
+                        img1d, rinput.ignored_sky_bundles)
                     self.logger.info('end sky subtraction')
                 else:
                     final = img1d
