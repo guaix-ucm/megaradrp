@@ -4,11 +4,15 @@ sudo: false
 matrix:
   include:
     - python: "2.7"
-      env: DEPS="numpy scipy astropy==2.0 enum34"
+      env: DEPS="numpy scipy astropy==2.0.16 enum34"
     - python: "3.5"
-      env: DEPS="numpy scipy astropy==3.0" COVERAGE=true
+      env: DEPS="numpy scipy astropy==3.2.3"
     - python: "3.6"
-      env: DEPS="numpy scipy astropy==3.0"
+      env: DEPS="numpy scipy astropy==3.2.3"
+    - python: "3.7"
+      env: DEPS="numpy scipy astropy==3.2.3" COVERAGE=true
+    - python: "3.8"
+      env: DEPS="numpy scipy astropy==3.2.3"
 
 cache:
   pip: true
