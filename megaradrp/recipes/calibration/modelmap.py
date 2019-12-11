@@ -335,27 +335,19 @@ def calc1d_N(boxd1d, valid, centers1d, sigma, lateral=0, reject=3, nloop=1,
                 else:
                     fit_ids.append(c)
 
-            num_of_fibers = len(fit_ids)
+            # num_of_fibers = len(fit_ids)
             # print('lateral', lateral, val, fit_ids)
             # print('num', num_of_fibers)
 
-            Model = Const1D
-            for _ in range(num_of_fibers):
-                Model = Model + GaussBox
-
             # Extract values to create initials
-            sub_init = {}
-            sub_init["amplitude_0"] = 0.0
-            for idx, fib_id in enumerate(fit_ids, 1):
-                key = "amplitude_%d" % idx
-                sub_init[key] = init[fib_id]['amplitude']
-                key = "mean_%d" % idx
-                sub_init[key] = init[fib_id]['mean']
-                key = "stddev_%d" % idx
-                sub_init[key] = init[fib_id]['stddev']
-
-            # Model = sum_of_gaussian_factory(num_of_fibers)
-            model = Model(**sub_init)
+            model = Const1D(amplitude=0.0)
+            for fib_id in fit_ids:
+                newg = GaussBox(
+                    amplitude=init[fib_id]['amplitude'],
+                    mean=init[fib_id]['mean'],
+                    stddev=init[fib_id]['stddev']
+                )
+                model = model + newg
 
             # Set fit conditions
             model.amplitude_0.fixed = True
