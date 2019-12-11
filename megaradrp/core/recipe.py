@@ -57,7 +57,7 @@ class MegaraBaseRecipe(BaseRecipe):
         getters = [cor.get_corrector_bpm, cor.get_corrector_bias,
                    [cor.get_corrector_dark, cor.get_corrector_gain],
                    cor.get_corrector_slit_flat,
-                   cor.get_corrector_diffuse_ligth,
+                   cor.get_corrector_diffuse_light,
                    ]
         return imgtypes, getters
 
