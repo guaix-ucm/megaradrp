@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -7,7 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
-"""Load image correctos according to present calibrations"""
+"""Load image correctors according to present calibrations"""
 
 
 import logging
@@ -19,6 +19,7 @@ import numina.processing as proc
 from megaradrp.processing.trimover import OverscanCorrector, TrimImage
 from megaradrp.processing.trimover import GainCorrector
 from megaradrp.processing.slitflat import SlitFlatCorrector
+from megaradrp.processing.diffuselight import DiffuseLightCorrector
 
 
 _logger = logging.getLogger(__name__)
@@ -87,6 +88,24 @@ def get_corrector_slit_flat(rinput, meta, ins, datamodel):
             mbpm = hdul[0].data
             calibid = datamodel.get_imgid(hdul)
             corrector = SlitFlatCorrector(mbpm, datamodel, calibid=calibid)
+    else:
+        _logger.info('%s not provided, ignored', key)
+        corrector = node.IdNode()
+
+    return corrector
+
+
+def get_corrector_diffuse_light(rinput, meta, ins, datamodel):
+    key = 'diffuse_light_image'
+    info = meta.get(key)
+    if info is not None:
+        req = getattr(rinput, key)
+        with req.open() as hdul:
+            _logger.info('loading diffuse light image')
+            _logger.debug('%s image: %s', key, info)
+            mbpm = hdul[0].data
+            calibid = datamodel.get_imgid(hdul)
+            corrector = DiffuseLightCorrector(mbpm, datamodel, calibid=calibid)
     else:
         _logger.info('%s not provided, ignored', key)
         corrector = node.IdNode()

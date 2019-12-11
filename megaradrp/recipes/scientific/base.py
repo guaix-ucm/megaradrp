@@ -56,6 +56,7 @@ class ImageRecipe(MegaraBaseRecipe):
     master_sensitivity = reqs.SensitivityRequirement()
     reference_extinction = reqs.ReferenceExtinction()
     relative_threshold = Parameter(0.3, 'Threshold for peak detection')
+    diffuse_light_image = reqs.DiffuseLightRequirement()
 
     def base_run(self, rinput):
 

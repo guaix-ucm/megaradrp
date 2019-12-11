@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -106,5 +106,14 @@ class ReferenceExtinction(Requirement):
         super(ReferenceExtinction,
               self).__init__(megaradrp.types.ReferenceExtinctionTable,
                              "Reference extinction",
+                             optional=optional
+                             )
+
+
+class DiffuseLightRequirement(Requirement):
+    def __init__(self, optional=True):
+        super(DiffuseLightRequirement,
+              self).__init__(megaradrp.types.DiffuseLightCorrection,
+                             'Diffuse light correction image',
                              optional=optional
                              )
