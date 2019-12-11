@@ -211,6 +211,11 @@ class MasterBPM(ProcessedImageProduct):
         super(MasterBPM, self).validate_hdulist(hdulist)
 
 
+class DiffuseLightCorrection(ProcessedImageProduct):
+    """Image to correct from diffuse light"""
+    pass
+
+
 class MasterSensitivity(ProcessedSpectrumProduct):
     """Sensitivity correction."""
     pass
