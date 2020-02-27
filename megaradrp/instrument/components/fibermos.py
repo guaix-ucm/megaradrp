@@ -12,7 +12,7 @@ import math
 import numpy
 from numina.instrument.hwdevice import HWDevice
 
-from megaradrp.datamodel import TargetType
+from megaradrp.instrument.focalplane import TargetType
 
 
 class RoboticPositioner(HWDevice):

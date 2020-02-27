@@ -85,4 +85,5 @@ class BiasRecipe(MegaraBaseRecipe):
         """Set metadata in FITS headers."""
         hdr = super(BiasRecipe, self).set_base_headers(hdr)
         hdr['NUMTYPE'] = ('MasterBias', 'Product type')
+        hdr['IMGTYPE'] = ('MASTER_BIAS', 'Product type')
         return hdr

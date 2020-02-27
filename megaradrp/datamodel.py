@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2019 Universidad Complutense de Madrid
+# Copyright 2016-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -21,6 +21,7 @@ from six import StringIO
 from numina.datamodel import DataModel, QueryAttribute, KeyDefinition
 from numina.util.convert import convert_date
 
+import megaradrp.instrument as megins
 import megaradrp.instrument.constants as cons
 
 class MegaraDataModel(DataModel):
@@ -131,174 +132,6 @@ class MegaraDataModel(DataModel):
             return scale
 
 
-class FibersConf(object):
-    """Global configuration of the fibers"""
-    def __init__(self):
-        self.name = ""
-        self.conf_id = 1
-        self.nbundles = 0
-        self.nfibers = 0
-        self.bundles = {}
-        self.fibers = {}
-        self.funit = "mm"
-
-    def sky_fibers(self, valid_only=False, ignored_bundles=None):
-        result = []
-        if ignored_bundles is None:
-            ignored_bundles = []
-
-        for bundle in self.bundles.values():
-            if bundle.id in ignored_bundles:
-                continue
-            if bundle.target_type is TargetType.SKY:
-                if valid_only:
-                    for fib in bundle.fibers.values():
-                        if fib.valid:
-                            result.append(fib.fibid)
-                else:
-                    result.extend(bundle.fibers.keys())
-        return result
-
-    def conected_fibers(self, valid_only=False):
-
-        if self.name == 'MOS':
-            raise ValueError('not working for MOS')
-
-        result = []
-        for bundle in self.bundles.values():
-            if bundle.target_type is not TargetType.SKY:
-                if valid_only:
-                    for fib in bundle.fibers.values():
-                        if fib.valid:
-                            result.append(fib)
-                else:
-                    result.extend(bundle.fibers.values())
-        return result
-
-    def inactive_fibers(self):
-        result = []
-        for fiber in self.fibers.values():
-            if fiber.inactive:
-                result.append(fiber.fibid)
-        return result
-
-    def active_fibers(self):
-        result = []
-        for fiber in self.fibers.values():
-            if not fiber.inactive:
-                result.append(fiber.fibid)
-        return result
-
-    def valid_fibers(self):
-        result = []
-        for fiber in self.fibers.values():
-            if fiber.valid:
-                result.append(fiber.fibid)
-        return result
-
-    def invalid_fibers(self):
-        result = []
-        for fiber in self.fibers.values():
-            if not fiber.valid:
-                result.append(fiber.fibid)
-        return result
-
-    def spectral_coverage(self):
-        lowc = []
-        upperc = []
-        for fibid, r in self.fibers.items():
-            if r.w1:
-                lowc.append(r.w1)
-            if r.w2:
-                upperc.append(r.w2)
-
-        mn = max(lowc)
-        nn = min(lowc)
-
-        mx = min(upperc)
-        nx = max(upperc)
-        return (mn, mx), (nn, nx)
-
-    def bundles_to_table(self):
-        """Convert bundles to a Table"""
-        attrnames = ['id', 'x', 'y', 'pa', 'enabled',
-                  'target_type', 'target_priority', 'target_name']
-        cnames = ['bundle_id', 'x', 'y', 'pa', 'enabled',
-                  'target_type', 'target_priority', 'target_name']
-        obj_data = {}
-        for a, c in zip(attrnames, cnames):
-            obj_data[c] = [getattr(ob, a) for ob in self.bundles.values()]
-        result = astropy.table.Table(obj_data, names=cnames)
-        result['x'].unit = self.funit
-        result['y'].unit = self.funit
-        result['pa'].unit = 'deg'
-        return result
-
-    def fibers_to_table(self):
-        """Convert fibers to a Table"""
-        attrnames = ['fibid', 'name', 'x', 'y', 'inactive', 'valid',
-                     'bundle_id']
-        cnames = ['fibid', 'name', 'x', 'y', 'inactive', 'valid',
-                  'bundle_id']
-        obj_data = {}
-
-        for a, c in zip(attrnames, cnames):
-            obj_data[c] = [getattr(ob, a) for ob in self.fibers.values()]
-        result = astropy.table.Table(obj_data, names=cnames)
-        result['x'].unit = self.funit
-        result['y'].unit = self.funit
-        return result
-
-    def scale_unit(self, unit=False):
-        if self.funit == "arcsec":
-            scale = 1
-        else:
-            scale = cons.GTC_FC_A_PLATESCALE.value
-        if unit:
-            return (scale, self.funit)
-        else:
-            return scale
-
-class TargetType(enum.Enum):
-    """Possible targest in a fiber bundle"""
-    SOURCE = 1
-    UNKNOWN = 2
-    UNASSIGNED = 3
-    SKY = 4
-    REFERENCE = 5
-    # aliases for the other fields
-    STAR = 5
-    BLANK = 4
-
-
-class BundleConf(object):
-    """Description of a bundle"""
-    def __init__(self):
-        self.id = 0
-        self.target_type = TargetType.UNASSIGNED
-        self.target_priority = 0
-        self.target_name = 'unknown'
-        self.x_fix = 0
-        self.y_fix = 0
-        self.pa_fix = 0
-        self.x = 0
-        self.y = 0
-        self.pa = 0
-        self.enabled = True
-
-
-class FiberConf(object):
-    """Description of the fiber"""
-    def __init__(self):
-        self.fibid = 0
-        self.name = 'unknown'
-        self.bundle_id = None
-        self.inactive = False
-        self.valid = True
-        self.x = 0.0
-        self.y = 0.0
-
-
 def get_fiberconf(img):
     """Obtain FiberConf from image"""
 
@@ -351,7 +184,8 @@ def read_fibers_extension(hdr, insmode='LCB'):
 
 
     """
-    conf = FibersConf()
+    import megaradrp.instrument.focalplane as fp
+    conf = fp.FibersConf()
     defaults = {}
     defaults['LCB'] = (9, 623)
     defaults['MOS'] = (92, 644)
@@ -385,11 +219,11 @@ def read_fibers_extension(hdr, insmode='LCB'):
             fib_ids.append(fib_idx)
 
     for i in bun_ids:
-        bb = BundleConf()
+        bb = fp.BundleConf()
         bb.id = i
         bb.target_priority = hdr["BUN%03d_P" % i]
         bb.target_name = hdr["BUN%03d_I" % i]
-        bb.target_type = TargetType[hdr["BUN%03d_T" % i]]
+        bb.target_type = fp.TargetType[hdr["BUN%03d_T" % i]]
         bb.enabled = hdr.get("BUN%03d_E" % i, True)
         bb.x = hdr.get("BUN%03d_X" % i, 0.0)
         bb.y = hdr.get("BUN%03d_Y" % i, 0.0)
@@ -398,7 +232,7 @@ def read_fibers_extension(hdr, insmode='LCB'):
         bundles[i] = bb
 
     for fibid in fib_ids:
-        ff = FiberConf()
+        ff = fp.FiberConf()
         ff.fibid = fibid
 
         # Coordinates
@@ -428,3 +262,190 @@ def read_fibers_extension(hdr, insmode='LCB'):
         fibers[ff.fibid] = ff
 
     return conf
+
+
+class MegaraDataType(enum.Enum):
+    UNKNOWN = 1
+    IMAGE_RAW = 100
+    IMAGE_BIAS = 102
+    IMAGE_DARK = 103
+    IMAGE_SLITFLAT = 104
+    IMAGE_FLAT = 105
+    IMAGE_COMP = 106
+    #
+    IMAGE_TWILIGHT = 107
+    IMAGE_TEST = 109
+    IMAGE_TARGET = 150
+    #
+    IMAGE_PROCESSED = 200
+    MASTER_BPM = 201
+    MASTER_BIAS = 202
+    MasterBias = 202 # Alias
+    MASTER_DARK = 203
+    MASTER_SLITFLAT = 204
+    DIFFUSE_LIGHT = 211
+    #
+    RSS_PROCESSED = 300
+    MASTER_FLAT = 305
+    MasterFiberFlat = 305 # Alias
+    MASTER_TWILIGHT = 306
+    SPEC_PROCESSED = 400
+    MASTER_SENSITIVITY = 403
+    STRUCT_PROCESSED = 500
+    TRACE_MAP = 501
+    MODEL_MAP = 502
+
+
+class DataOrigin(enum.Enum):
+    UNKNOWN = 0
+    OBSERVED = 1
+    PROCESSED = 2
+    GENERATED = 3
+
+
+def describe_hdulist_megara(hdulist):
+    prim = hdulist[0].header
+    instrument = prim.get("INSTRUME", "unknown")
+    image_type = prim.get("IMAGETYP")
+    if image_type is None:
+        # try this also
+        image_type = prim.get("NUMTYPE")
+
+    # date_obs = convert_date(prim.get("DATE-OBS"))
+    date_obs = prim.get("DATE-OBS")
+    img_uuid = prim.get("UUID")
+    insconf = prim.get("INSCONF", 'undefined')
+
+    if image_type is None:
+        # inferr from header
+        datatype = megara_inferr_imagetype(hdulist)
+    else:
+        datatype = MegaraDataType[image_type]
+
+    obs = {}
+    proc = {}
+    if datatype.value < MegaraDataType.IMAGE_PROCESSED.value:
+        origin = DataOrigin.OBSERVED
+    else:
+        origin = DataOrigin.PROCESSED
+
+    return {'instrument': instrument, 'datatype': datatype,
+            'origin': origin, 'uuid': img_uuid,
+            'insconf': insconf,
+            'observation': obs,
+            'observation_date': date_obs,
+            'processing': proc
+            }
+
+
+def megara_inferr_imagetype(hdulist):
+    IMAGE_RAW_SHAPE = (4212, 4196)
+    IMAGE_PROC_SHAPE = (4112, 4096)
+    RSS_IFU_PROC_SHAPE = (4300, 623)
+    RSS_MOS_PROC_SHAPE = (4300, 644)
+    SPECTRUM_PROC_SHAPE = (4300,)
+    prim = hdulist[0].header
+
+    image_type = prim.get("IMAGETYP")
+    if image_type is None:
+        # try this also
+        image_type = prim.get("NUMTYPE")
+
+    if image_type is not None:
+        datatype = MegaraDataType[image_type]
+        return datatype
+
+    pshape = hdulist[0].shape
+    obsmode = prim.get("OBSMODE", "unknown")
+    if pshape == IMAGE_RAW_SHAPE:
+        datatype = MegaraDataType.IMAGE_RAW
+    elif pshape == IMAGE_PROC_SHAPE:
+        datatype = MegaraDataType.IMAGE_PROCESSED
+    elif pshape == RSS_IFU_PROC_SHAPE: # IFU
+        datatype = MegaraDataType.RSS_PROCESSED
+    elif pshape == RSS_MOS_PROC_SHAPE: # MOS
+        datatype = MegaraDataType.RSS_PROCESSED
+    elif pshape == SPECTRUM_PROC_SHAPE:
+        datatype = MegaraDataType.SPEC_PROCESSED
+    else:
+        datatype = MegaraDataType.UNKNOWN
+
+    if datatype == MegaraDataType.IMAGE_RAW:
+        if obsmode in ["MegaraSuccess", "MegaraFail"]:
+            sub_datatype = MegaraDataType.IMAGE_TEST
+        elif obsmode in ["MegaraBiasImage"]:
+            sub_datatype = MegaraDataType.IMAGE_BIAS
+        elif obsmode in ["MegaraDarkImage"]:
+            sub_datatype = MegaraDataType.IMAGE_DARK
+        elif obsmode in ["MegaraSlitFlat"]:
+            sub_datatype = MegaraDataType.IMAGE_SLITFLAT
+        elif obsmode in ["MegaraFiberFlatImage", "MegaraTraceMap", "MegaraModelMap"]:
+            sub_datatype = MegaraDataType.IMAGE_FLAT
+        elif obsmode in ["MegaraArcCalibration"]:
+            sub_datatype = MegaraDataType.IMAGE_COMP
+        elif obsmode in ["MegaraTwilightFlatImage"]:
+            sub_datatype = MegaraDataType.IMAGE_TWILIGHT
+        elif obsmode in ["MegaraLcbImage", "MegaraMosImage"]:
+            sub_datatype = MegaraDataType.IMAGE_TARGET
+        elif obsmode in ["MegaraMosStdStar", "MegaraExtinctionStar",
+                         "MegaraLcbStdStar", "MegaraSensitivityStar"]:
+            sub_datatype = MegaraDataType.IMAGE_TARGET
+        elif obsmode in ["MegaraFocusTelescope",
+                         "MegaraLcbAcquisition", "MegaraMosAcquisition"]:
+            sub_datatype = MegaraDataType.IMAGE_TARGET
+        elif obsmode in ["MegaraBadPixelMask", "MegaraFocusSpectrograph"]:
+            sub_datatype = MegaraDataType.IMAGE_RAW
+        else:
+            sub_datatype = MegaraDataType.UNKNOWN
+
+        return sub_datatype
+    elif datatype == MegaraDataType.SPEC_PROCESSED:
+        numrnam = prim.get("NUMRNAM", "unknown")
+        if numrnam in ['LCBStandardRecipe', 'MOSStandardRecipe']:
+            sub_datatype = MegaraDataType.MASTER_SENSITIVITY
+        else:
+            sub_datatype = datatype
+        return sub_datatype
+    return datatype
+
+
+def check_3(obj, level=None):
+    print('checker3 for {}, level={}'.format(obj, level))
+
+
+def check_raw(obj, level=None):
+    print('check RAW for {}, level={}'.format(obj, level))
+
+
+_megara_checkers = {}
+_megara_checkers[MegaraDataType.UNKNOWN] = check_3
+_megara_checkers[MegaraDataType.IMAGE_RAW] = check_raw
+_megara_checkers[MegaraDataType.IMAGE_BIAS] = check_raw
+_megara_checkers[MegaraDataType.IMAGE_DARK] = check_raw
+_megara_checkers[MegaraDataType.IMAGE_SLITFLAT] = check_raw
+_megara_checkers[MegaraDataType.IMAGE_FLAT] = check_raw
+_megara_checkers[MegaraDataType.IMAGE_COMP] = check_raw
+#
+_megara_checkers[MegaraDataType.IMAGE_TWILIGHT] = check_raw
+_megara_checkers[MegaraDataType.IMAGE_TEST] = check_raw
+_megara_checkers[MegaraDataType.IMAGE_TARGET] = check_raw
+#
+_megara_checkers[MegaraDataType.IMAGE_PROCESSED] = check_3
+_megara_checkers[MegaraDataType.MASTER_BPM] = check_3
+_megara_checkers[MegaraDataType.MASTER_BIAS] = check_3
+_megara_checkers[MegaraDataType.MASTER_DARK] = check_3
+_megara_checkers[MegaraDataType.MASTER_SLITFLAT] = check_3
+_megara_checkers[MegaraDataType.DIFFUSE_LIGHT] = check_3
+#
+_megara_checkers[MegaraDataType.RSS_PROCESSED] = check_3
+_megara_checkers[MegaraDataType.MASTER_FLAT] = check_3
+_megara_checkers[MegaraDataType.MASTER_TWILIGHT] = check_3
+_megara_checkers[MegaraDataType.SPEC_PROCESSED] = check_3
+_megara_checkers[MegaraDataType.MASTER_SENSITIVITY] = check_3
+_megara_checkers[MegaraDataType.STRUCT_PROCESSED] = check_3
+_megara_checkers[MegaraDataType.TRACE_MAP] = check_3
+_megara_checkers[MegaraDataType.MODEL_MAP] = check_3
+
+
+def check_as_datatype(datatype):
+    return _megara_checkers[datatype]

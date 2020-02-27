@@ -97,6 +97,13 @@ class LCBStandardRecipe(ImageRecipe):
     fiber_ids = Result(ArrayType(fmt='%d'))
     sigma = Result(float)
 
+    def set_base_headers(self, hdr):
+        """Set metadata in FITS headers."""
+        hdr = super(LCBStandardRecipe, self).set_base_headers(hdr)
+        hdr['NUMTYPE'] = ('MASTER_SENSITIVITY', 'Product type')
+        hdr['IMGTYPE'] = ('MASTER_SENSITIVITY', 'Product type')
+        return hdr
+
     def run(self, rinput):
 
         self.logger.info('starting LCBStandardRecipe reduction')
