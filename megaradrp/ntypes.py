@@ -24,41 +24,6 @@ from megaradrp.datamodel import MegaraDataModel, QueryAttribute
 _logger = logging.getLogger(__name__)
 
 
-def validate_keyword_exists(header, key):
-    """Verify that the keyword exists"""
-    value = header.get(key)
-    if value is None:
-        msg = 'Expected keyword "{}" is not present'.format(key)
-        raise ValidationError(msg)
-    return True
-
-
-def validate_keyword_value(header, key, expected):
-    from numina.exceptions import ValidationError
-
-    validate_keyword_exists(header, key)
-    value = header.get(key)
-
-    if value != expected:
-        msg = 'Keyword "{0}" has value "{1}" != "{2}"'.format(key, value, expected)
-        raise ValidationError(msg)
-
-
-def validate_keyword_any_value(header, key, any_expected):
-    """Validate that keyword has any of allowed values"""
-    from numina.exceptions import ValidationError
-
-    validate_keyword_exists(header, key)
-    value = header.get(key)
-
-    for expected in any_expected:
-        if value == expected:
-            break
-    else:
-        msg = 'Keyword "{0}" has value "{1}" not in "{2}"'.format(key, value, any_expected)
-        raise ValidationError(msg)
-
-
 def validate_fiber_ext(header_f):
     _logger.debug('validate fiber extension')
 
@@ -71,34 +36,6 @@ class MegaraFrame(DataFrameType):
     def __init__(self, *args, **kwds):
         super(MegaraFrame, self).__init__(datamodel=MegaraDataModel)
 
-    def validate_hdulist(self, hdulist):
-        # nhdus = len(hdulist)
-        header_0 = hdulist[0].header
-
-        validate_keyword_value(header_0, 'INSTRUME', 'MEGARA')
-
-        kexits = ['DATE-OBS', 'UUID']
-        # INSMODE can be LCB or MOS
-
-        for key in kexits:
-            validate_keyword_exists(header_0, key)
-
-        tagsk = getattr(self, '__tags__', [])
-        # FIXME: this is really ugly
-        keymap = self.datamodel.extractor.map
-        for key in tagsk:
-            ksc = keymap[key]
-            validate_keyword_exists(hdulist[ksc.ext].header, ksc.key)
-
-    def validate_fibers(self, hdulist):
-        if 'FIBERS' not in hdulist:
-            msg = '"{}" extension not found'.format('FIBERS')
-            raise ValidationError(hdulist, msg)
-
-        header_f = hdulist['FIBERS'].header
-
-        validate_fiber_ext(header_f)
-
 
 class ProcessedFrame(MegaraFrame):
     """A processed frame"""
@@ -110,30 +47,12 @@ class ProcessedImage(ProcessedFrame):
     """A processed image"""
 
     def validate_hdulist(self, hdulist):
-
-        super(ProcessedImage, self).validate_hdulist(hdulist)
-        header_0 = hdulist[0].header
-        validate_keyword_value(header_0, 'NAXIS1', 4096)
-        validate_keyword_value(header_0, 'NAXIS2', 4112)
+        pass
 
 
 class ProcessedRSS(ProcessedFrame):
     """A processed RSS image"""
-
-    def validate_hdulist(self, hdulist):
-        super(ProcessedRSS, self).validate_hdulist(hdulist)
-        _logger.debug('validate ProcessedRSS')
-
-        header_0 = hdulist[0].header
-
-        # validate_keyword_value(header_0, 'NUMTYPE', 'MasterBias')
-        # 4096 for non WCS, and 4300 for WCS
-        validate_keyword_any_value(header_0, 'NAXIS1', [4096, 4300])
-
-        # This can be 623 or 644
-        validate_keyword_any_value(header_0, 'NAXIS2', [623, 644])
-
-        self.validate_fibers(hdulist)
+    pass
 
 
 class ProcessedMultiRSS(ProcessedFrame):

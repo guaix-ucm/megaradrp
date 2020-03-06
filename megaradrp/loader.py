@@ -48,3 +48,8 @@ def describe_fits_megara(pathname):
     import astropy.io.fits as fits
     with fits.open(pathname) as hdulist:
         return DM.describe_hdulist_megara(hdulist)
+
+@cfg.check.register('MEGARA')
+def check_obj_megara(obj, astype=None, level=None):
+    import megaradrp.datamodel as DM
+    DM.check_obj_megara(obj, astype=astype, level=level)

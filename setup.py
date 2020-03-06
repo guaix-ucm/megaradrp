@@ -24,6 +24,10 @@ setup(
             'instrument-*.json',
             'properties-*.json',
         ],
+        'megaradrp.schemas': [
+            'baseimage.json',
+            'basestruct.json'
+        ]
     },
     install_requires=[
         'setuptools>=36.2.1',

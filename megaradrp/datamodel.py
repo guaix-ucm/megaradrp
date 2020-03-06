@@ -13,7 +13,6 @@ from __future__ import division
 
 import re
 import pkgutil
-import enum
 
 import astropy.io.fits as fits
 import astropy.table
@@ -21,6 +20,7 @@ from six import StringIO
 from numina.datamodel import DataModel, QueryAttribute, KeyDefinition
 from numina.util.convert import convert_date
 
+from megaradrp.datatype import MegaraDataType, DataOrigin
 import megaradrp.instrument as megins
 import megaradrp.instrument.constants as cons
 
@@ -264,45 +264,6 @@ def read_fibers_extension(hdr, insmode='LCB'):
     return conf
 
 
-class MegaraDataType(enum.Enum):
-    UNKNOWN = 1
-    IMAGE_RAW = 100
-    IMAGE_BIAS = 102
-    IMAGE_DARK = 103
-    IMAGE_SLITFLAT = 104
-    IMAGE_FLAT = 105
-    IMAGE_COMP = 106
-    #
-    IMAGE_TWILIGHT = 107
-    IMAGE_TEST = 109
-    IMAGE_TARGET = 150
-    #
-    IMAGE_PROCESSED = 200
-    MASTER_BPM = 201
-    MASTER_BIAS = 202
-    MasterBias = 202 # Alias
-    MASTER_DARK = 203
-    MASTER_SLITFLAT = 204
-    DIFFUSE_LIGHT = 211
-    #
-    RSS_PROCESSED = 300
-    MASTER_FLAT = 305
-    MasterFiberFlat = 305 # Alias
-    MASTER_TWILIGHT = 306
-    SPEC_PROCESSED = 400
-    MASTER_SENSITIVITY = 403
-    STRUCT_PROCESSED = 500
-    TRACE_MAP = 501
-    MODEL_MAP = 502
-
-
-class DataOrigin(enum.Enum):
-    UNKNOWN = 0
-    OBSERVED = 1
-    PROCESSED = 2
-    GENERATED = 3
-
-
 def describe_hdulist_megara(hdulist):
     prim = hdulist[0].header
     instrument = prim.get("INSTRUME", "unknown")
@@ -318,7 +279,7 @@ def describe_hdulist_megara(hdulist):
 
     if image_type is None:
         # inferr from header
-        datatype = megara_inferr_imagetype(hdulist)
+        datatype = megara_inferr_datetype_from_image(hdulist)
     else:
         datatype = MegaraDataType[image_type]
 
@@ -338,11 +299,36 @@ def describe_hdulist_megara(hdulist):
             }
 
 
-def megara_inferr_imagetype(hdulist):
+def megara_inferr_datatype(obj):
+
+    if isinstance(obj, fits.HDUList):
+        return megara_inferr_datetype_from_image(obj)
+    elif isinstance(obj, dict):
+        return megara_inferr_datetype_from_dict(obj)
+    else:
+        raise TypeError("I don't know how to inferr datatype from {}".format(obj))
+
+
+def megara_inferr_datetype_from_dict(obj):
+    # this comes from JSON
+    dtype = obj['type_fqn']
+    if dtype in ["megaradrp.products.tracemap.TraceMap"]:
+        return MegaraDataType.TRACE_MAP
+    elif dtype in ["megaradrp.products.modelmap.ModelMap"]:
+        return MegaraDataType.MODEL_MAP
+    elif dtype in ["megaradrp.products.wavecalibration.WavelengthCalibration"]:
+        return MegaraDataType.WAVE_CALIB
+    else:
+        return MegaraDataType.UNKNOWN
+
+
+def megara_inferr_datetype_from_image(hdulist):
     IMAGE_RAW_SHAPE = (4212, 4196)
     IMAGE_PROC_SHAPE = (4112, 4096)
-    RSS_IFU_PROC_SHAPE = (4300, 623)
-    RSS_MOS_PROC_SHAPE = (4300, 644)
+    RSS_IFU_PROC_SHAPE = (623, 4096)
+    RSS_MOS_PROC_SHAPE = (644, 4096)
+    RSS_IFU_PROC_WL_SHAPE = (623, 4300)
+    RSS_MOS_PROC_WL_SHAPE = (644, 4300)
     SPECTRUM_PROC_SHAPE = (4300,)
     prim = hdulist[0].header
 
@@ -365,6 +351,10 @@ def megara_inferr_imagetype(hdulist):
         datatype = MegaraDataType.RSS_PROCESSED
     elif pshape == RSS_MOS_PROC_SHAPE: # MOS
         datatype = MegaraDataType.RSS_PROCESSED
+    elif pshape == RSS_IFU_PROC_WL_SHAPE: # IFU
+        datatype = MegaraDataType.RSS_WL_PROCESSED
+    elif pshape == RSS_MOS_PROC_WL_SHAPE: # MOS
+        datatype = MegaraDataType.RSS_WL_PROCESSED
     elif pshape == SPECTRUM_PROC_SHAPE:
         datatype = MegaraDataType.SPEC_PROCESSED
     else:
@@ -409,43 +399,39 @@ def megara_inferr_imagetype(hdulist):
     return datatype
 
 
-def check_3(obj, level=None):
-    print('checker3 for {}, level={}'.format(obj, level))
+def convert_headers(hdulist):
+    headers = [convert_header(hdu.header) for hdu in hdulist]
+    return headers
 
 
-def check_raw(obj, level=None):
-    print('check RAW for {}, level={}'.format(obj, level))
+def convert_header(header):
+    hdu_v = {}
+    hdu_c = {}
+    hdu_o = []
+    hdu_repr = {'values': hdu_v, 'comments': hdu_c, 'ordering': hdu_o}
+
+    for card in header.cards:
+        key = card.keyword
+        value = card.value
+        comment = card.comment
+        hdu_v[key] = value
+        hdu_c[key] = comment
+        hdu_o.append(key)
+
+    return hdu_repr
 
 
-_megara_checkers = {}
-_megara_checkers[MegaraDataType.UNKNOWN] = check_3
-_megara_checkers[MegaraDataType.IMAGE_RAW] = check_raw
-_megara_checkers[MegaraDataType.IMAGE_BIAS] = check_raw
-_megara_checkers[MegaraDataType.IMAGE_DARK] = check_raw
-_megara_checkers[MegaraDataType.IMAGE_SLITFLAT] = check_raw
-_megara_checkers[MegaraDataType.IMAGE_FLAT] = check_raw
-_megara_checkers[MegaraDataType.IMAGE_COMP] = check_raw
-#
-_megara_checkers[MegaraDataType.IMAGE_TWILIGHT] = check_raw
-_megara_checkers[MegaraDataType.IMAGE_TEST] = check_raw
-_megara_checkers[MegaraDataType.IMAGE_TARGET] = check_raw
-#
-_megara_checkers[MegaraDataType.IMAGE_PROCESSED] = check_3
-_megara_checkers[MegaraDataType.MASTER_BPM] = check_3
-_megara_checkers[MegaraDataType.MASTER_BIAS] = check_3
-_megara_checkers[MegaraDataType.MASTER_DARK] = check_3
-_megara_checkers[MegaraDataType.MASTER_SLITFLAT] = check_3
-_megara_checkers[MegaraDataType.DIFFUSE_LIGHT] = check_3
-#
-_megara_checkers[MegaraDataType.RSS_PROCESSED] = check_3
-_megara_checkers[MegaraDataType.MASTER_FLAT] = check_3
-_megara_checkers[MegaraDataType.MASTER_TWILIGHT] = check_3
-_megara_checkers[MegaraDataType.SPEC_PROCESSED] = check_3
-_megara_checkers[MegaraDataType.MASTER_SENSITIVITY] = check_3
-_megara_checkers[MegaraDataType.STRUCT_PROCESSED] = check_3
-_megara_checkers[MegaraDataType.TRACE_MAP] = check_3
-_megara_checkers[MegaraDataType.MODEL_MAP] = check_3
+def check_obj_megara(obj, astype=None, level=None):
+    import megaradrp.validators as val
 
+    if astype is None:
+        datatype = megara_inferr_datatype(obj)
+        print('check object as it says it is ({})'.format(datatype))
+        thistype = datatype
+    else:
+        print('check object as {}'.format(astype))
+        thistype = astype
 
-def check_as_datatype(datatype):
-    return _megara_checkers[datatype]
+    checker = val.check_as_datatype(thistype)
+    print(thistype, checker)
+    checker(obj, level=level)
