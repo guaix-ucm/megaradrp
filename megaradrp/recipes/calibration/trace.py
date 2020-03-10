@@ -148,7 +148,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         else:
             tracemap.quality_control = qc.QC.GOOD
 
-    @numina.core.validator.validate
+    #@numina.core.validator.validate
     def run(self, rinput):
         """Execute the recipe.
 

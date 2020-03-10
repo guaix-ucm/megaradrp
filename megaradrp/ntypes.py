@@ -18,6 +18,8 @@ from numina.types.array import ArrayType
 from numina.types.linescatalog import LinesCatalog
 from numina.exceptions import ValidationError
 
+import megaradrp.validators as valid
+from megaradrp.datatype import MegaraDataType
 from megaradrp.datamodel import MegaraDataModel, QueryAttribute
 
 
@@ -30,29 +32,32 @@ def validate_fiber_ext(header_f):
 
 class MegaraFrame(DataFrameType):
     """A processed frame"""
-
+    DATATYPE = MegaraDataType.IMAGE_RAW
     tags_headers = {}
 
     def __init__(self, *args, **kwds):
         super(MegaraFrame, self).__init__(datamodel=MegaraDataModel)
 
+    def validate_hdulist(self, hdulist):
+        _logger.debug('validate MasterBias')
+        checker = valid.check_as_datatype(self.DATATYPE)
+        return checker(hdulist)
+
 
 class ProcessedFrame(MegaraFrame):
     """A processed frame"""
-
+    DATATYPE = MegaraDataType.IMAGE_PROCESSED
     tags_headers = {}
 
 
 class ProcessedImage(ProcessedFrame):
     """A processed image"""
-
-    def validate_hdulist(self, hdulist):
-        pass
+    DATATYPE = MegaraDataType.IMAGE_PROCESSED
 
 
 class ProcessedRSS(ProcessedFrame):
     """A processed RSS image"""
-    pass
+    DATATYPE = MegaraDataType.RSS_PROCESSED
 
 
 class ProcessedMultiRSS(ProcessedFrame):
@@ -62,6 +67,7 @@ class ProcessedMultiRSS(ProcessedFrame):
 
 class ProcessedSpectrum(ProcessedFrame):
     """A 1d spectrum"""
+    DATATYPE = MegaraDataType.SPEC_PROCESSED
     pass
 
 
@@ -87,47 +93,32 @@ class MegaraLinesCatalog(LinesCatalog):
 
 class MasterBias(ProcessedImageProduct):
     """A Master Bias image"""
-
-    def validate_hdulist(self, hdulist):
-        super(MasterBias, self).validate_hdulist(hdulist)
-        _logger.debug('validate MasterBias')
+    DATATYPE = MegaraDataType.MASTER_BIAS
 
 
 class MasterTwilightFlat(ProcessedRSSProduct):
     __tags__ = ['insmode', 'vph', 'confid']
-
-    def validate_hdulist(self, hdulist):
-        super(MasterTwilightFlat, self).validate_hdulist(hdulist)
-        _logger.debug('validate MasterTwilightFlat')
+    DATATYPE = MegaraDataType.MASTER_TWILIGHT
 
 
 class MasterDark(ProcessedImageProduct):
     """A Master Dark image"""
-    pass
+    DATATYPE = MegaraDataType.MASTER_DARK
 
 
 class MasterFiberFlat(ProcessedRSSProduct):
     __tags__ = ['insmode', 'vph', 'confid']
-
-    def validate_hdulist(self, hdulist):
-        super(MasterFiberFlat, self).validate_hdulist(hdulist)
-        _logger.debug('validate MasterFiberFlat')
+    DATATYPE = MegaraDataType.MASTER_FLAT
 
 
 class MasterSlitFlat(ProcessedImageProduct):
     __tags__ = ['insmode', 'vph']
-
-    def validate_hdulist(self, hdulist):
-        super(MasterSlitFlat, self).validate_hdulist(hdulist)
-        _logger.debug('validate MasterSlitFlat')
+    DATATYPE = MegaraDataType.MASTER_SLITFLAT
 
 
 class MasterBPM(ProcessedImageProduct):
     """Bad Pixel Mask product"""
-
-    def validate_hdulist(self, hdulist):
-        _logger.debug('validate MasterBPM')
-        super(MasterBPM, self).validate_hdulist(hdulist)
+    DATATYPE = MegaraDataType.MASTER_BPM
 
 
 class DiffuseLightCorrection(ProcessedImageProduct):

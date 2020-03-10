@@ -38,6 +38,7 @@ modes:
   key: MegaraFiberFlatImage
   tagger: null
   rawimage: IMAGE_FLAT
+  validator: megaradrp.validators.validate_flat
 - name: Image with the fiber MOS
   summary: Summary of Fiber MOS image
   description: Lines and mode lines
@@ -56,6 +57,7 @@ modes:
   key: MegaraArcCalibration
   tagger: null
   rawimage: IMAGE_COMP
+  validator: megaradrp.validators.validate_arc
 - name: Bad Pixel Mask
   summary: Bad Pixel Mask
   description: Bad Pixels

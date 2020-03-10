@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -20,7 +20,7 @@ from numina.core.validator import range_validator
 from numina.constants import FWHM_G
 
 from megaradrp.recipes.scientific.base import ImageRecipe
-from megaradrp.ntypes import ProcessedRSS, ProcessedFrame
+from megaradrp.ntypes import ProcessedRSS, ProcessedImage
 
 
 class AcquireLCBRecipe(ImageRecipe):
@@ -74,7 +74,7 @@ class AcquireLCBRecipe(ImageRecipe):
         nelem=2
     )
 
-    reduced_image = Result(ProcessedFrame)
+    reduced_image = Result(ProcessedImage)
     reduced_rss = Result(ProcessedRSS)
     final_rss = Result(ProcessedRSS)
     offset = Result(list)

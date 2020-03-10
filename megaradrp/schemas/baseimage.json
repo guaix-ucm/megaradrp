@@ -6,6 +6,7 @@
   "anyOf": [
     {"$ref": "#/definitions/one_ext_hdul"},
     {"$ref": "#/definitions/two_ext_hdul"},
+    {"$ref": "#/definitions/four_ext_hdul"},
     {"$ref": "#/definitions/proc_rss_wl_hdul"},
     {"$ref": "#/definitions/proc_image_hdul"}
   ],
@@ -236,13 +237,38 @@
       "description": "A MEGARA image, 2 HDUs",
       "additionalItems": false,
       "minItems": 2,
-      "maxItems": 2,
+      "maxItems": 4,
       "items": [
         {
           "$ref": "#/definitions/primary_hdu"
         },
         {
           "$ref": "#/definitions/fibers_hdu"
+        },
+        {
+        },
+        {
+        }
+      ]
+    },
+    "four_ext_hdul": {
+      "type": "array",
+      "description": "A MEGARA image, 4 HDUs",
+      "additionalItems": false,
+      "minItems": 4,
+      "maxItems": 4,
+      "items": [
+        {
+          "$ref": "#/definitions/primary_hdu"
+        },
+        {
+          "$ref": "#/definitions/fibers_hdu"
+        },
+        {
+          "$ref": "#/definitions/variance_hdu"
+        },
+        {
+          "$ref": "#/definitions/map_hdu"
         }
       ]
     },

@@ -17,7 +17,7 @@ from numina.array.offrot import fit_offset_and_rotation
 from numina.core import Result, Parameter
 from numina.core.qc import QC
 
-from megaradrp.datamodel import TargetType
+from megaradrp.instrument.focalplane import TargetType
 from megaradrp.recipes.scientific.base import ImageRecipe
 from megaradrp.ntypes import ProcessedRSS, ProcessedFrame
 from megaradrp.utils import add_collapsed_mos_extension

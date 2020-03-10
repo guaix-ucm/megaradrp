@@ -13,16 +13,19 @@ from __future__ import division
 
 import re
 import pkgutil
+import logging
 
 import astropy.io.fits as fits
-import astropy.table
 from six import StringIO
 from numina.datamodel import DataModel, QueryAttribute, KeyDefinition
 from numina.util.convert import convert_date
 
 from megaradrp.datatype import MegaraDataType, DataOrigin
-import megaradrp.instrument as megins
 import megaradrp.instrument.constants as cons
+
+
+_logger = logging.getLogger(__name__)
+
 
 class MegaraDataModel(DataModel):
     """Data model of MEGARA images"""
@@ -399,39 +402,15 @@ def megara_inferr_datetype_from_image(hdulist):
     return datatype
 
 
-def convert_headers(hdulist):
-    headers = [convert_header(hdu.header) for hdu in hdulist]
-    return headers
-
-
-def convert_header(header):
-    hdu_v = {}
-    hdu_c = {}
-    hdu_o = []
-    hdu_repr = {'values': hdu_v, 'comments': hdu_c, 'ordering': hdu_o}
-
-    for card in header.cards:
-        key = card.keyword
-        value = card.value
-        comment = card.comment
-        hdu_v[key] = value
-        hdu_c[key] = comment
-        hdu_o.append(key)
-
-    return hdu_repr
-
-
 def check_obj_megara(obj, astype=None, level=None):
     import megaradrp.validators as val
-
     if astype is None:
         datatype = megara_inferr_datatype(obj)
-        print('check object as it says it is ({})'.format(datatype))
+        _logger.debug('check object as it says it is ({})'.format(datatype))
         thistype = datatype
     else:
-        print('check object as {}'.format(astype))
+        _logger.debug('check object as {}'.format(astype))
         thistype = astype
-
     checker = val.check_as_datatype(thistype)
-    print(thistype, checker)
-    checker(obj, level=level)
+    res = checker(obj, level=level)
+    return res

@@ -14,6 +14,11 @@ import numina.core.config as cfg
 
 
 class MegaraDrpLoader(object):
+    """Custom loader class
+
+    This class modifies the rawimage field of the observing modes
+    of MEGARA
+    """
     @staticmethod
     def mode_loader(mode_node):
         import megaradrp.datamodel as DM
@@ -49,7 +54,8 @@ def describe_fits_megara(pathname):
     with fits.open(pathname) as hdulist:
         return DM.describe_hdulist_megara(hdulist)
 
+
 @cfg.check.register('MEGARA')
 def check_obj_megara(obj, astype=None, level=None):
     import megaradrp.datamodel as DM
-    DM.check_obj_megara(obj, astype=astype, level=level)
+    return DM.check_obj_megara(obj, astype=astype, level=level)

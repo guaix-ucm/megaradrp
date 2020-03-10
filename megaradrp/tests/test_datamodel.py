@@ -12,7 +12,8 @@ import astropy.io.fits as fits
 import astropy.table
 import pytest
 
-from ..datamodel import MegaraDataModel, FibersConf
+from ..datamodel import MegaraDataModel
+from megaradrp.instrument.focalplane import FibersConf
 
 
 def create_empty_img(insmode):

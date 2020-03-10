@@ -22,7 +22,7 @@ from numina.exceptions import ValidationError
 from megaradrp.datatype import MegaraDataType
 
 
-def validate_focus(obresult):
+def validate_focus(mode, obresult):
     """Validate FOCUS_SPECTROGRAPH"""
     image_groups = {}
     for idx, frame in enumerate(obresult.frames):
@@ -42,6 +42,42 @@ def validate_focus(obresult):
     if len(image_groups) < 2:
         raise ValidationError('We have only {} different focus in OB'.format(len(image_groups)))
 
+    return True
+
+
+def validate_key(mode, obresult, key):
+    """Validate key"""
+
+    # Assume that the individual images are valid IMG_COMP
+    # check consistency of key
+    kval = []
+    for idx, frame in enumerate(obresult.frames):
+        # SPECLAMP values
+        with frame.open() as img:
+            try:
+                spec_val = img[0].header[key]
+                kval.append(spec_val)
+            except Exception:
+                _type, exc, tb = sys.exc_info()
+                six.reraise(ValidationError, exc, tb)
+
+    if kval[:-1] == kval[1:]:
+        return True
+    else:
+        raise ValidationError("{} value is incorrect".format(key))
+
+
+def validate_arc(mode, obresult):
+    """Validate ARC_CALIBRATION"""
+
+    # Assume that the individual images are valid IMG_COMP
+    return validate_key(mode, obresult, 'SPECLAMP')
+
+
+def validate_flat(mode, obresult):
+    """Validate FLAT"""
+
+    # Assume that the individual images are valid IMG_COMP
     return True
 
 
@@ -103,7 +139,7 @@ def convert_header(header):
 
 
 def check_null(obj, level=None):
-    pass
+    return True
 
 
 def check_invalid(obj, level=None):
@@ -117,13 +153,13 @@ class Checker(object):
 
     def check(self, obj, level=None):
 
-        self.check_post(obj, level=level)
+        return self.check_post(obj, level=level)
 
     def __call__(self, hdulist, level=None):
         return self.check(hdulist, level=level)
 
     def check_post(self, hdulist, level=None):
-        pass
+        return True
 
 
 class ImageChecker(Checker):
@@ -133,7 +169,8 @@ class ImageChecker(Checker):
     def check(self, hdulist, level=None):
         dheaders = convert_headers(hdulist)
         self.check_dheaders(dheaders, level=level)
-        self.check_post(hdulist, level=level)
+        super(ImageChecker, self).check_post(hdulist, level=level)
+        return True
 
     def check_dheaders(self, dheaders, level=None):
         # Check with json schema
@@ -156,6 +193,7 @@ class StructChecker(Checker):
     def check(self, obj, level=None):
         self.validator.validate(obj)
         self.check_post(obj, level=level)
+        return True
 
 
 class BaseChecker(ImageChecker):
@@ -165,11 +203,11 @@ class BaseChecker(ImageChecker):
 
 # TODO: insert all subschemas in the general schema
 _sub_schema_rss = {
-    "oneOff": [
+    "oneOf": [
     {
         "type": "object",
         "properties": {
-            "NAXIS1": {"const": 4300},
+            #"NAXIS1": {"const": 4300},
             "NAXIS2": {"const": 623},
             "INSMODE": {"const": "LCB"}
         }
@@ -177,7 +215,7 @@ _sub_schema_rss = {
     {
         "type": "object",
         "properties": {
-            "NAXIS1": {"const": 4300},
+            #"NAXIS1": {"const": 4300},
             "NAXIS2": {"const": 644},
             "INSMODE": {"const": "MOS"}
         }
@@ -207,7 +245,7 @@ _sub_schema_master_bpm = {
 _sub_schema_master_bias = {
     "type": "object",
     "properties": {
-        "OBJECT": {"const": "BIAS"},
+        #"OBJECT": {"const": "BIAS"},
         "OBSMODE": {"const": "MegaraBiasImage"},
         "IMAGETYP": {"const": "MASTER_BIAS"},
         "EXPTIME": {"type": "number", "maximum": 0},
@@ -242,8 +280,11 @@ class ExtChecker(BaseChecker):
         self.sub_schemas = sub_schemas
 
     def check_dheaders(self, dheaders, level=None):
-        super(ExtChecker, self).check_dheaders(dheaders, level=level)
 
+        try:
+            super(ExtChecker, self).check_dheaders(dheaders, level=level)
+        except jsonschema.exceptions.ValidationError:
+            pass
         # Image must have only one extension
         if self.n_ext is not None:
             if len(dheaders) != self.n_ext:
@@ -269,7 +310,7 @@ class FlatImageChecker(ExtChecker):
             "type": "object",
             "properties": {
                 "OBSMODE": {"enum": [
-                    "MegaraFiberFlatImage", "MegaraTraceMap", "MegaraModelMap"]
+                    "MegaraFiberFlatImage", "MegaraTraceMap", "MegaraModelMap", "MegaraSuccess"]
                 },
                 "IMAGETYP": {"const": "IMAGE_FLAT"},
             }
@@ -305,7 +346,7 @@ class CompImageChecker(ExtChecker):
         _sub_schema_comp = {
             "type": "object",
             "properties": {
-                "OBSMODE": {"enum": ["MegaraArcCalibration"]},
+                "OBSMODE": {"enum": ["MegaraArcCalibration", "MegaraSuccess"]},
                 "IMAGETYP": {"const": "IMAGE_COMP"},
             }
         }
@@ -421,6 +462,7 @@ def check_header_additional(values_primary, values_fibers):
 
 
 class CheckAsDatatype(object):
+    """Collection of schemas for validation"""
     def __init__(self):
 
         image_schema_path = "baseimage.json"

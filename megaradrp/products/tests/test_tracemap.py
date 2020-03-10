@@ -16,6 +16,7 @@ import numpy.polynomial.polynomial as nppol
 import numina.types.qc
 import numina.types.structured as structured
 
+from megaradrp.datatype import MegaraDataType
 import megaradrp.products.tracemap as tm
 
 
@@ -169,6 +170,7 @@ def test_load_traceMap():
     assert (my_open_file.tags == state['tags'])
     assert (my_open_file.uuid == state['uuid'])
     assert (my_open_file.contents == state['contents'])
+    assert (my_open_file.DATATYPE == MegaraDataType.TRACE_MAP)
 
 
 def test_dump_traceMap(benchmark=None):

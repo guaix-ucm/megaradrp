@@ -11,6 +11,7 @@
 
 import numpy.polynomial.polynomial as nppol
 
+from megaradrp.datatype import MegaraDataType
 from .structured import BaseStructuredCalibration
 from .aperture import GeometricAperture
 from .traces import to_ds9_reg as to_ds9_reg_function
@@ -56,7 +57,7 @@ class GeometricTrace(GeometricAperture):
 
 class TraceMap(BaseStructuredCalibration):
     """Trace map calibration product"""
-
+    DATATYPE = MegaraDataType.TRACE_MAP
     __tags__ = ['insmode', 'vph']
 
     def __init__(self, instrument='MEGARA'):

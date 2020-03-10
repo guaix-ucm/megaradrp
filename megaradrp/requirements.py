@@ -18,36 +18,43 @@ import megaradrp.products.modelmap
 
 
 class MasterBiasRequirement(Requirement):
+    """Requirement for Master Bias images"""
     def __init__(self, optional=False):
-        super(MasterBiasRequirement,
-              self).__init__(megaradrp.ntypes.MasterBias,
-                             'Master BIAS image',
-                             optional=optional
-                             )
+        super(MasterBiasRequirement, self).__init__(
+            megaradrp.ntypes.MasterBias,
+            'Master BIAS image',
+            optional=optional,
+            validation=True
+        )
 
 
 class MasterBPMRequirement(Requirement):
     def __init__(self, optional=True):
-        super(MasterBPMRequirement,
-              self).__init__(megaradrp.ntypes.MasterBPM,
-                             'Master Bad Pixel Mask',
-                             optional=optional
-                             )
+        super(MasterBPMRequirement, self).__init__(
+            megaradrp.ntypes.MasterBPM,
+            'Master Bad Pixel Mask',
+            optional=optional,
+            validation=False
+        )
 
 
 class MasterDarkRequirement(Requirement):
     def __init__(self, optional=True):
-        super(MasterDarkRequirement,
-              self).__init__(megaradrp.ntypes.MasterDark, 'Master DARK image',
-                             optional=optional)
+        super(MasterDarkRequirement, self).__init__(
+            megaradrp.ntypes.MasterDark,
+            'Master DARK image',
+            optional=optional,
+            validation=True
+        )
 
 
 class MasterFiberFlatRequirement(Requirement):
     def __init__(self):
-        super(MasterFiberFlatRequirement,
-              self).__init__(megaradrp.ntypes.MasterFiberFlat,
-                             'Master fiber flat calibration'
-                             )
+        super(MasterFiberFlatRequirement, self).__init__(
+            megaradrp.ntypes.MasterFiberFlat,
+            'Master fiber flat calibration',
+            validation=True
+        )
 
 
 class MasterSlitFlatRequirement(Requirement):
@@ -70,21 +77,30 @@ class MasterTwilightRequirement(Requirement):
 
 class MasterTraceMapRequirement(Requirement):
     def __init__(self):
-        super(MasterTraceMapRequirement,
-              self).__init__(megaradrp.products.TraceMap, 'Trace information of the Apertures')
+        super(MasterTraceMapRequirement, self).__init__(
+            megaradrp.products.TraceMap,
+            'Trace information of the Apertures',
+            validation=True
+        )
 
 
 class MasterAperturesRequirement(Requirement):
     def __init__(self):
         super(MasterAperturesRequirement, self).__init__(MultiType(
             megaradrp.products.modelmap.ModelMap,
-            megaradrp.products.TraceMap), 'Apertures information for extraction')
+            megaradrp.products.TraceMap),
+            'Apertures information for extraction',
+            validation=True,
+        )
 
 
 class WavelengthCalibrationRequirement(Requirement):
     def __init__(self):
-        super(WavelengthCalibrationRequirement,
-              self).__init__(megaradrp.products.WavelengthCalibration, 'Wavelength calibration table')
+        super(WavelengthCalibrationRequirement, self).__init__(
+            megaradrp.products.WavelengthCalibration,
+            'Wavelength calibration table',
+            validation=True
+        )
 
 
 class LinesCatalogRequirement(Requirement):

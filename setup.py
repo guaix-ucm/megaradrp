@@ -38,6 +38,7 @@ setup(
         'scikit-image',
         'enum34;python_version<"3.4"',
         'contextlib2;python_version<"3.5"',
+        'jsonschema'
     ],
     extras_require={
         'DB': ['sqlalchemy', 'numinadb']
