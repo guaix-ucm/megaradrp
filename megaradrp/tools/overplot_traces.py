@@ -154,13 +154,21 @@ def main(args=None):
         ix_offset = 1
 
     # read and display traces from JSON file
+    # TODO: some checks, this should be done by validating the struct
+    with open(args.traces_file.name, mode='r') as fd:
+        import json
+        data = json.load(fd)
+        if 'type_fqn' not in data:
+            raise ValueError("malformed JSON file, 'type_fqn' missing")
+    #
     apers = structured.open(args.traces_file.name)
     # Load metadata from the traces
     meta_info = apers.meta_info
 
     origin = meta_info['origin']
     insconf_uuid = origin['insconf_uuid']
-    date_obs = origin['date_obs']
+    # None is allowed
+    date_obs = origin.get('date_obs')
 
     tags = apers.tags
     insmode = tags['insmode']

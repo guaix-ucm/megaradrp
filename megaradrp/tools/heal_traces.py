@@ -169,7 +169,7 @@ def main(args=None):
 
     origin = meta_info['origin']
     insconf_uuid = origin['insconf_uuid']
-    date_obs = origin['date_obs']
+    date_obs = origin.get('date_obs')
 
     tags = bigdict['tags']
     insmode = tags['insmode']
