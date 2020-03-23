@@ -1,5 +1,5 @@
 
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -22,6 +22,7 @@ from scipy.ndimage.filters import gaussian_filter
 from numina.frame.utils import copy_img
 from numina.array.wavecalib.crosscorrelation import periodic_corr1d
 
+import megaradrp.datamodel as dm
 from megaradrp.processing.fluxcalib import update_flux_limits
 
 
@@ -64,7 +65,7 @@ def extract_star(rssimage, position, npoints, fiberconf, logger=None):
 
     logger.info('extracting star')
 
-    # fiberconf = datamodel.get_fiberconf(rssimage)
+    # fiberconf = dm.get_fiberconf(rssimage)
     logger.debug("Configuration UUID is %s", fiberconf.conf_id)
 
     rssdata = rssimage[0].data
@@ -206,10 +207,10 @@ def compute_centroid(rssdata, fiberconf, c1, c2, point, logger=None):
         return centroid
 
 
-def compute_dar(img, datamodel, logger=None, debug_plot=False):
+def compute_dar(img, logger=None, debug_plot=False):
     """Compute Diferencial Atmospheric Refraction"""
 
-    fiberconf = datamodel.get_fiberconf(img)
+    fiberconf = dm.get_fiberconf(img)
     wlcalib = astropy.wcs.WCS(img[0].header)
 
     rssdata = img[0].data
@@ -454,7 +455,7 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
         return sens
 
 
-def subtract_sky(img, datamodel, ignored_sky_bundles=None, logger=None):
+def subtract_sky(img, ignored_sky_bundles=None, logger=None):
     # Sky subtraction
 
     if logger is None:
@@ -463,7 +464,7 @@ def subtract_sky(img, datamodel, ignored_sky_bundles=None, logger=None):
     logger.info('obtain fiber information')
     sky_img = copy_img(img)
     final_img = copy_img(img)
-    fiberconf = datamodel.get_fiberconf(sky_img)
+    fiberconf = dm.get_fiberconf(sky_img)
     # Sky fibers
     skyfibs = fiberconf.sky_fibers(valid_only=True,
                                    ignored_bundles=ignored_sky_bundles)
@@ -490,8 +491,7 @@ def subtract_sky(img, datamodel, ignored_sky_bundles=None, logger=None):
     avg_sky[mask] = coldata[mask] / colsum[mask]
 
     # This should be done only on valid fibers
-    # The information of which fiber is valid
-    # is in the tracemap, not in the header
+    logger.info('ignoring invalid fibers: %s', fiberconf.invalid_fibers())
     for fibid in fiberconf.valid_fibers():
         rowid = fibid - 1
         final_img[0].data[rowid, mask] = img[0].data[rowid, mask] - avg_sky[mask]

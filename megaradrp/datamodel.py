@@ -123,29 +123,7 @@ class MegaraDataModel(DataModel):
 
     def get_fiberconf(self, img):
         """Obtain FiberConf from image"""
-        main_insmode = img[0].header.get('INSMODE', '')
-        if 'FIBERS' in img:
-            # We have a 'fibers' extension
-            # Information os there
-            hdr_fiber = img['FIBERS'].header
-            return read_fibers_extension(hdr_fiber, insmode=main_insmode)
-        else:
-            return self.get_fiberconf_default(main_insmode)
-
-    def get_fiberconf_default(self, insmode):
-        """Obtain default FiberConf object"""
-        if insmode == 'LCB':
-            slit_file = 'lcb_default_header.txt'
-        elif insmode == 'MOS':
-            slit_file = 'mos_default_header.txt'
-        else:
-            # Read fiber info from headers
-            raise ValueError('Invalid INSMODE {}'.format(insmode))
-
-        data = pkgutil.get_data('megaradrp.instrument.configs', slit_file)
-        default_hdr = StringIO(data.decode('utf8'))
-        hdr_fiber = fits.header.Header.fromfile(default_hdr)
-        return read_fibers_extension(hdr_fiber)
+        return get_fiberconf(img)
 
     def gather_info_oresult(self, val):
         return [self.gather_info_dframe(f) for f in val.images]
@@ -282,7 +260,6 @@ class FibersConf(object):
         return result
 
 
-
 class TargetType(enum.Enum):
     """Possible targest in a fiber bundle"""
     SOURCE = 1
@@ -321,6 +298,36 @@ class FiberConf(object):
         self.valid = True
         self.x = 0.0
         self.y = 0.0
+
+
+def get_fiberconf(img):
+    """Obtain FiberConf from image"""
+
+    main_insmode = img[0].header.get('INSMODE', '')
+
+    if 'FIBERS' in img:
+        # We have a 'fibers' extension
+        # Information os there
+        hdr_fiber = img['FIBERS'].header
+        return read_fibers_extension(hdr_fiber, insmode=main_insmode)
+    else:
+        return get_fiberconf_default(main_insmode)
+
+
+def get_fiberconf_default(insmode):
+    """Obtain default FiberConf object"""
+    if insmode == 'LCB':
+        slit_file = 'lcb_default_header.txt'
+    elif insmode == 'MOS':
+        slit_file = 'mos_default_header.txt'
+    else:
+        # Read fiber info from headers
+        raise ValueError('Invalid INSMODE {}'.format(insmode))
+
+    data = pkgutil.get_data('megaradrp.instrument.configs', slit_file)
+    default_hdr = StringIO(data.decode('utf8'))
+    hdr_fiber = fits.header.Header.fromfile(default_hdr)
+    return read_fibers_extension(hdr_fiber)
 
 
 def read_fibers_extension(hdr, insmode='LCB'):

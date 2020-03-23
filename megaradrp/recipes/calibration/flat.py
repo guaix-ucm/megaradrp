@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -16,10 +16,12 @@ from astropy.io import fits
 import matplotlib.pyplot as plt
 from numina.core import Result, Parameter
 import numina.exceptions
+
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.types import MasterFiberFlat
 import megaradrp.requirements as reqs
 from megaradrp.types import ProcessedRSS, ProcessedFrame
+import megaradrp.datamodel as dm
 
 # Flat 2D
 from megaradrp.processing.combine import basic_processing_with_combination
@@ -117,18 +119,17 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         self.set_base_headers(hdr)
         return final_image
 
-    def obtain_fiber_flat(self, rss_wl, wlcalib, col1=1900, col2=2100, window=31, degree=3):
+    def obtain_fiber_flat(self, rss_wl, col1=1900, col2=2100, window=31, degree=3):
         from scipy.signal import savgol_filter
         from scipy.interpolate import UnivariateSpline
 
-        # Bad fibers, join:
-        bad_fibers = wlcalib.missing_fibers
-        bad_fibers.extend(wlcalib.error_fitting)
-        # print(bad_fibers)
+        # Bad fibers
+        fiberconf = dm.get_fiberconf(rss_wl)
+        bad_fibers = fiberconf.invalid_fibers()
         bad_idxs = [fibid - 1 for fibid in bad_fibers]
         # print(bad_idxs)
 
-        good_idxs_mask = numpy.ones((wlcalib.total_fibers,), dtype='bool')
+        good_idxs_mask = numpy.ones((fiberconf.nfibers,), dtype='bool')
         good_idxs_mask[bad_idxs] = False
 
         # Collapse all fiber spectrum
@@ -146,16 +147,17 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         data_good = data0[valid_mask] / col_good_mean[:, numpy.newaxis]
         data_good[numpy.isnan(data_good)] = 0.0
 
-        # Crappy way
         # This extension was created by WLcalibrator
         wlmap = rss_wl['WLMAP'].data
         mm = numpy.sum(wlmap, axis=0)
+        # The information is also in the keywords
+        # FIBxxxS1, FIBxxxS2
         # skip 0 in divisions
         mask_noinfo = mm < 1
         mm[mask_noinfo] = 1
         # Filter collapse to smooth it
         collapse = numpy.sum(data_good, axis=0) / mm
-        # Smooting works bad very near the border (overshooting)
+        # Smoothing works bad very near the border (overshooting)
         collapse_smooth = savgol_filter(collapse, window, degree)
         collapse_smooth[mask_noinfo] = 1.0
 
@@ -231,7 +233,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
         # Obtain flat field
         self.logger.info('Normalize flat field')
-        rss_wl2 = self.obtain_fiber_flat(rss_wl, rinput.master_wlcalib, window=rinput.smoothing_window)
+        rss_wl2 = self.obtain_fiber_flat(rss_wl, window=rinput.smoothing_window)
         rss_wl2[0].header = self.set_base_headers(rss_wl2[0].header)
         result = self.create_result(
             master_fiberflat=rss_wl2,

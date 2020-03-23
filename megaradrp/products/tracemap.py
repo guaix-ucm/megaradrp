@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -59,7 +59,7 @@ class TraceMap(BaseStructuredCalibration):
 
     __tags__ = ['insmode', 'vph']
 
-    def __init__(self, instrument='unknown'):
+    def __init__(self, instrument='MEGARA'):
         super(TraceMap, self).__init__(instrument)
         self.contents = []
         self.boxes_positions = []
@@ -80,6 +80,7 @@ class TraceMap(BaseStructuredCalibration):
     def __setstate__(self, state):
         super(TraceMap, self).__setstate__(state)
         self.contents = [GeometricTrace(**trace) for trace in state['contents']]
+        # fibers in missing fibers and error_fitting are invalid
         self.boxes_positions = state.get('boxes_positions', [])
         self.global_offset = nppol.Polynomial(state.get('global_offset', [0.0]))
         self.ref_column = state.get('ref_column', 2000)

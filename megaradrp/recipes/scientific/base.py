@@ -104,7 +104,6 @@ class ImageRecipe(MegaraBaseRecipe):
 
     def run_sky_subtraction(self, img, ignored_sky_bundles=None):
         return subtract_sky(img,
-                            self.datamodel,
                             ignored_sky_bundles=ignored_sky_bundles,
                             logger=self.logger
                             )
@@ -112,7 +111,7 @@ class ImageRecipe(MegaraBaseRecipe):
     def compute_dar(self, img):
         import numpy.polynomial.polynomial as pol
 
-        wl, xdar, ydar = compute_dar(img, self.datamodel, logger=self.logger)
+        wl, xdar, ydar = compute_dar(img, logger=self.logger)
         print('DAR, x:', pol.polyfit(wl, xdar, deg=3))
         print('DAR: y:', pol.polyfit(wl, ydar, deg=3))
 
