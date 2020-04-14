@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2018 Universidad Complutense de Madrid
+# Copyright 2017-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -9,36 +9,36 @@
 
 """
 Interpolation method based on:
-
 'Hex-Splines: A Novel Spline Family for Hexagonal Lattices'
 van de Ville et al. IEEE Transactions on Image Processing 2004, 13, 6
-
 """
 
 from __future__ import print_function
 
-import numpy as np
 import math
 
+import numpy as np
 from scipy import signal
 from scipy.interpolate import RectBivariateSpline
-from megaradrp.simulation.convolution import hex_c, square_c, setup_grid
+
 from numina.frame.utils import copy_img
+
+from megaradrp.simulation.convolution import hex_c, square_c, setup_grid
 from megaradrp.datamodel import MegaraDataModel
 import megaradrp.processing.wcs as mwcs
+import megaradrp.instrument as megins
 
-M_SQRT3 = math.sqrt(3)
-
-PLATESCALE = 1.2120  # arcsec / mm
-SCALE = 0.443 # mm
-
-HEX_SCALE = PLATESCALE * SCALE
 
 # Normalized hexagon geometry
+M_SQRT3 = math.sqrt(3)
 H_HEX = 0.5
 R_HEX = 1 / M_SQRT3
 A_HEX = 0.5 * H_HEX * R_HEX
 HA_HEX = 6 * A_HEX # detR0 == ha
+
+
+SCALE = 0.443 # mm
+HEX_SCALE = megins.MEGARA_PLATESCALE * SCALE
 
 
 def my_atleast_2d(*arys):
@@ -155,8 +155,8 @@ def create_cube(r0l, zval, target_scale=1.0):
     (i1min, i1max), (j1min, j1max) = hexgrid_extremes(r0l, target_scale)
 
     # Rectangular grid
-    mk1 = np.arange(i1min, i1max+1)
-    mk2 = np.arange(j1min, j1max+1)
+    mk1 = np.arange(i1min, i1max + 1)
+    mk2 = np.arange(j1min, j1max + 1)
     crow = len(mk1)
     ccol = len(mk2)
     # Result image
@@ -170,6 +170,7 @@ def create_cube(r0l, zval, target_scale=1.0):
     r1k = np.dot(R1, sk)
 
     # Compute convolution of hex and rect kernels
+    # eta_p * eta'_p
     Dx = 0.005
     Dy = 0.005
     xsize = ysize = 3.0
@@ -232,18 +233,6 @@ def create_cube_from_rss(rss, target_scale_arcsec=1.0, conserve_flux=True):
 
     # FIXME: workaround
     # Get FUNIT keyword
-    hdr = rss['FIBERS'].header
-    funit = hdr.get('FUNIT', 'arcsec')
-    pscale = hdr.get('PSCALE', PLATESCALE)
-    if funit == 'mm':
-        print('fiber coordinates in mm')
-        coord_scale = pscale
-    else:
-        print('fiber coordinates in arcsec')
-        coord_scale = 1.0
-    # print('PSCALE', pscale)
-
-    # The scale can be 'mm' or 'arcsec'  and it should come from the header
     r0l, (refx, refy) = calc_matrix_from_fiberconf(fiberconf)
 
     (i1min, i1max), (j1min, j1max) = hexgrid_extremes(r0l, target_scale)
@@ -297,7 +286,7 @@ def recompute_wcs(hdr):
 
 
 def merge_wcs(hdr_sky, hdr_spec, out=None):
-
+    """Merge sky WCS with spectral WCS"""
     if out is None:
         hdr = hdr_spec.copy()
     else:
@@ -369,7 +358,7 @@ def merge_wcs(hdr_sky, hdr_spec, out=None):
 
 def _simulate(seeing_fwhm=1.0, hex_scale=HEX_SCALE):
     # simulation tools
-    from megaradrp.simulation.atmosphere import generate_gaussian_profile
+    from numina.instrument.simulation.atmosphere import generate_gaussian_profile
     from megaradrp.simulation.actions import simulate_point_like_profile
 
     FIBRAD_ANG = R_HEX * hex_scale
@@ -466,7 +455,7 @@ def main(args=None):
         print('recompute WCS from IPA')
         cube[0].header = recompute_wcs(cube[0].header)
 
-    cube.writeto(args.outfile, clobber=True)
+    cube.writeto(args.outfile, overwrite=True)
 
 
 if __name__ == '__main__':
