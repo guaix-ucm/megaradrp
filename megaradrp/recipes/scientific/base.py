@@ -25,7 +25,7 @@ from megaradrp.processing.wavecalibration import WavelengthCalibrator
 from megaradrp.processing.fiberflat import FlipLR, FiberFlatCorrector
 from megaradrp.processing.twilight import TwilightCorrector
 from megaradrp.processing.extractobj import compute_centroid, compute_dar
-from megaradrp.processing.extractobj import subtract_sky
+from megaradrp.processing.sky import subtract_sky, subtract_sky_rss
 
 
 class ImageRecipe(MegaraBaseRecipe):
@@ -100,7 +100,7 @@ class ImageRecipe(MegaraBaseRecipe):
 
         flow2 = SerialFlow(correctors)
 
-        reduced_rss =  flow2(img)
+        reduced_rss = flow2(img)
         return reduced_rss
 
     def compute_dar(self, img):
@@ -125,8 +125,6 @@ class ImageRecipe(MegaraBaseRecipe):
                                 )
         else:
             self.logger.info('use sky RSS image')
-            return subtract_sky(img,
-                                self.datamodel,
-                                ignored_sky_bundles=ignored_sky_bundles,
+            return subtract_sky_rss(img, sky_img=sky_rss,
                                 logger=self.logger
                                 )

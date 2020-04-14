@@ -313,8 +313,8 @@ def get_fiberconf(img):
         return get_fiberconf_default(main_insmode)
 
 
-def get_fiberconf_default(insmode):
-    """Obtain default FiberConf object"""
+def create_default_fiber_header(insmode):
+    """Obtain default FIBER header"""
     if insmode == 'LCB':
         slit_file = 'lcb_default_header.txt'
     elif insmode == 'MOS':
@@ -326,6 +326,12 @@ def get_fiberconf_default(insmode):
     data = pkgutil.get_data('megaradrp.instrument.configs', slit_file)
     default_hdr = StringIO(data.decode('utf8'))
     hdr_fiber = fits.header.Header.fromfile(default_hdr)
+    return hdr_fiber
+
+
+def get_fiberconf_default(insmode):
+    """Obtain default FiberConf object"""
+    hdr_fiber = create_default_fiber_header(insmode)
     return read_fibers_extension(hdr_fiber)
 
 

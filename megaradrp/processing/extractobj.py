@@ -11,7 +11,6 @@
 
 import math
 import uuid
-import logging
 
 import numpy
 import astropy.wcs
@@ -19,7 +18,6 @@ import astropy.io.fits as fits
 import astropy.units as u
 from scipy.spatial import KDTree
 from scipy.ndimage.filters import gaussian_filter
-from numina.frame.utils import copy_img
 from numina.array.wavecalib.crosscorrelation import periodic_corr1d
 
 import megaradrp.datamodel as dm
@@ -443,6 +441,7 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
         # FIXME: add history
         sens = fits.PrimaryHDU(s_response, header=final[0].header)
         # delete second axis keywords
+        # FIXME: delete axis with wcslib
         for key in ['CRPIX2', 'CRVAL2', 'CDELT2', 'CTYPE2']:
             if key in sens.header:
                 del sens.header[key]
@@ -455,45 +454,3 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
         return sens
 
 
-def subtract_sky(img, ignored_sky_bundles=None, logger=None):
-    # Sky subtraction
-
-    if logger is None:
-        logger = logging.getLogger(__name__)
-
-    logger.info('obtain fiber information')
-    sky_img = copy_img(img)
-    final_img = copy_img(img)
-    fiberconf = dm.get_fiberconf(sky_img)
-    # Sky fibers
-    skyfibs = fiberconf.sky_fibers(valid_only=True,
-                                   ignored_bundles=ignored_sky_bundles)
-    logger.debug('sky fibers are: %s', skyfibs)
-    # Create empty sky_data
-    target_data = img[0].data
-
-    target_map = img['WLMAP'].data
-    sky_data = numpy.zeros_like(img[0].data)
-    sky_map = numpy.zeros_like(img['WLMAP'].data)
-    sky_img[0].data = sky_data
-
-    for fibid in skyfibs:
-        rowid = fibid - 1
-        sky_data[rowid] = target_data[rowid]
-        sky_map[rowid] = target_map[rowid]
-    # Sum
-    coldata = sky_data.sum(axis=0)
-    colsum = sky_map.sum(axis=0)
-
-    # Divide only where map is > 0
-    mask = colsum > 0
-    avg_sky = numpy.zeros_like(coldata)
-    avg_sky[mask] = coldata[mask] / colsum[mask]
-
-    # This should be done only on valid fibers
-    logger.info('ignoring invalid fibers: %s', fiberconf.invalid_fibers())
-    for fibid in fiberconf.valid_fibers():
-        rowid = fibid - 1
-        final_img[0].data[rowid, mask] = img[0].data[rowid, mask] - avg_sky[mask]
-
-    return final_img, img, sky_img
