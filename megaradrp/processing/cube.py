@@ -19,13 +19,11 @@ import math
 
 import numpy as np
 from scipy import signal
-from scipy.interpolate import RectBivariateSpline
-
 from numina.frame.utils import copy_img
 
-from megaradrp.simulation.convolution import hex_c, square_c, setup_grid
 from megaradrp.datamodel import MegaraDataModel
 import megaradrp.processing.wcs as mwcs
+import megaradrp.processing.hexspline as hspline
 import megaradrp.instrument as megins
 
 
@@ -41,7 +39,7 @@ SCALE = 0.443 # mm
 HEX_SCALE = megins.MEGARA_PLATESCALE * SCALE
 
 
-def my_atleast_2d(*arys):
+def atleast_2d_last(*arys):
     """Equivalent to atleast_2d, adding the newaxis at the end"""
     res = []
     for ary in arys:
@@ -63,13 +61,15 @@ def calc_matrix(nrow, ncol, grid_type=2):
 
     R0 = np.array([[M_SQRT3 / 2,0], [-0.5,1]]) # Unit scale
 
+    if grid_type == 2:
+        f = 0
+    else:
+        f = 1
+
     kcol = []
     krow = []
     for i in range(ncol):
-        if grid_type == 1:
-            s = (i + i % 2) // 2 # depending on type
-        else:
-            s = i // 2
+        s = (i + f * (i % 2)) // 2
         for j in range(nrow):
             kcol.append(i)
             krow.append(j+s)
@@ -82,7 +82,7 @@ def calc_matrix(nrow, ncol, grid_type=2):
 
 def calc_matrix_from_fiberconf(fiberconf):
 
-    # This should be in FIBERCONF...
+    # TODO: This should be in FIBERCONF...
     spos1_x = []
     spos1_y = []
     for fiber in fiberconf.conected_fibers():
@@ -143,11 +143,15 @@ def hexgrid_extremes(r0l, target_scale):
     return (i1min, i1max), (j1min, j1max)
 
 
-def create_cube(r0l, zval, target_scale=1.0):
+def create_cube(r0l, zval, p=1, target_scale=1.0):
     # geometry
+    # Interpolation method. Allowed values are:
+    # P = 1 NN
+    # P = 2 Linear
+    if p > 2:
+        raise ValueError('p > 2 not implemented')
 
     R1 = target_scale * np.array([[1.0 ,0], [0,1]]) # Unit scale
-    detR1 = np.linalg.det(R1)
 
     # compute extremes of hexgrid to rectangular grid
     # with pixel size 'scale'
@@ -160,8 +164,8 @@ def create_cube(r0l, zval, target_scale=1.0):
     crow = len(mk1)
     ccol = len(mk2)
     # Result image
-    # Third axis
-    zval2 = my_atleast_2d(zval)
+    # Add third last axis
+    zval2 = atleast_2d_last(zval)
     # disp axis is last axis...
     dk = np.zeros((crow, ccol, zval2.shape[-1]))
     # print('result shape is ', dk.shape)
@@ -169,44 +173,54 @@ def create_cube(r0l, zval, target_scale=1.0):
     sk = np.flipud(np.transpose([np.tile(mk1, len(mk2)), np.repeat(mk2, len(mk1))]).T)  # x y
     r1k = np.dot(R1, sk)
 
-    # Compute convolution of hex and rect kernels
-    # eta_p * eta'_p
-    Dx = 0.005
-    Dy = 0.005
-    xsize = ysize = 3.0
-    xx, yy, xs, ys, xl, yl = setup_grid(xsize, ysize, Dx, Dy)
+    # Prefiltering
+    # For p = 1, prefilter coefficients with p = 1, coeff = 1
+    # For p = 2, prefilter coefficients with p = 2, coeff = 1
+    # No prefiltering in zval2 is required if p <= 2
 
-    hex_kernel = hex_c(xx, yy, rad=R_HEX, ang=0.0)
-    square_kernel = square_c(xx, yy, target_scale)
-    convolved = signal.fftconvolve(hex_kernel, square_kernel, mode='same')
-    kernel = convolved *(Dx *Dy)  / (detR1)
-    rbs = RectBivariateSpline(xs, ys, kernel)
-    # done
+    rbs = hspline.rescaling_kernel(p, scale=target_scale)
 
     # Loop to compute integrals...
-    # This could be faster
-    # zval could be 2D
     for s, r in zip(sk.T, r1k.T):
         allpos = -(r0l - r[:, np.newaxis])
         we = np.abs((rbs.ev(allpos[1], allpos[0])))
-        we[we<0] = 0.0
         dk[s[1] - i1min, s[0] - j1min] = np.sum(we[:, np.newaxis] * zval2, axis=0)
 
-    return dk
+    # Postfiltering
+    # For p = 1, final image in NN, postfilter coefficients with n = 1
+    # For p = 2, final image is linear, postfilter coefficients with n = 3
+    #
+    if p == 1:
+        # Coefficients post filtering to n = 2 * p - 1 == 1
+        cpk = dk
+        # Nearest-neighbor samples equal to coefficients
+        img = cpk
+    elif p == 2:
+        # Coefficients post filtering to n = 2 * p - 1 == 3
+        cpk = np.zeros_like(dk)
+        # last axis
+        for k in range(dk.shape[-1]):
+            cpk[..., k] = signal.cspline2d(dk[..., k])
+        # Linear samples equal to coefficients
+        img = cpk
+    else:
+        raise ValueError('p > 2 not implemented')
+
+    return img
 
 
-def create_cube_from_array(rss_data, fiberconf, target_scale_arcsec=1.0, conserve_flux=True):
+def create_cube_from_array(rss_data, fiberconf, p=1, target_scale_arcsec=1.0, conserve_flux=True):
 
     target_scale = target_scale_arcsec / HEX_SCALE
     conected = fiberconf.conected_fibers()
     rows = [conf.fibid - 1 for conf in conected]
 
-    rss_data = my_atleast_2d(rss_data)
+    rss_data = atleast_2d_last(rss_data)
 
     region = rss_data[rows, :]
 
     r0l, (refx, refy) = calc_matrix_from_fiberconf(fiberconf)
-    cube_data = create_cube(r0l, region[:, :], target_scale)
+    cube_data = create_cube(r0l, region[:, :], p, target_scale)
     # scale with areas
     if conserve_flux:
         cube_data *= (target_scale ** 2 / HA_HEX)
@@ -215,7 +229,7 @@ def create_cube_from_array(rss_data, fiberconf, target_scale_arcsec=1.0, conserv
     return result
 
 
-def create_cube_from_rss(rss, target_scale_arcsec=1.0, conserve_flux=True):
+def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
 
     target_scale = target_scale_arcsec / HEX_SCALE
     # print('target scale is', target_scale)
@@ -236,7 +250,7 @@ def create_cube_from_rss(rss, target_scale_arcsec=1.0, conserve_flux=True):
     r0l, (refx, refy) = calc_matrix_from_fiberconf(fiberconf)
 
     (i1min, i1max), (j1min, j1max) = hexgrid_extremes(r0l, target_scale)
-    cube_data = create_cube(r0l, region[:, :], target_scale)
+    cube_data = create_cube(r0l, region[:, :], p, target_scale)
 
     if conserve_flux:
         # scale with areas
@@ -429,6 +443,8 @@ def main(args=None):
     parser = argparse.ArgumentParser(prog='convert_rss_cube')
     # positional parameters
 
+    methods = {'nn': 1, 'linear': 2}
+
     parser.add_argument("rss",
                         help="RSS file with fiber traces",
                         type=argparse.FileType('rb'))
@@ -439,17 +455,20 @@ def main(args=None):
                         help="Name of the output cube file")
     parser.add_argument('-d', '--disable-scaling', action='store_true',
                         help="Disable flux conservation")
+    parser.add_argument('-m', '--method', action='store', choices=['nn', 'linear'],
+                        default='nn', help="Method of interpolation")
     parser.add_argument('--wcs-pa-from-header', action='store_true',
                         help="Use PA angle from header", dest='pa_from_header')
 
     args = parser.parse_args(args=args)
 
     target_scale = args.pixel_size # Arcsec
-
+    p = methods[args.method]
+    print('interpolation method is "{}"'.format(args.method))
     print('target scale is', target_scale, 'arcsec')
     conserve_flux = not args.disable_scaling
     with fits.open(args.rss) as rss:
-        cube = create_cube_from_rss(rss, target_scale, conserve_flux=conserve_flux)
+        cube = create_cube_from_rss(rss, p, target_scale, conserve_flux=conserve_flux)
 
     if not args.pa_from_header:
         print('recompute WCS from IPA')

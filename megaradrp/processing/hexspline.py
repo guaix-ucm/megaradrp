@@ -186,6 +186,176 @@ def hexspline2(x1, x2):
     return res
 
 
+def _hexspline2_t1(x1, x2):
+    """Hexspline of order p=2 in region t1"""
+
+    # This function has been created with sympy
+
+    x1 = np.asanyarray(np.abs(x1))
+    x2 = np.asanyarray(np.abs(x2))
+
+    M_SQRT3_D_3 = M_SQRT3 / 3
+    M_SQRT3_D_2 = M_SQRT3 / 2
+    M_SQRT3_D_6 = M_SQRT3 / 6
+    M_SQRT3_2D3 = 2 * M_SQRT3_D_3
+
+    x_p0_m12 = x2 - 1 / 2
+    x_p0_p12 = x2 + 1 / 2
+
+    x_p0_scaled = M_SQRT3_D_3 * x2
+
+    x_p0_m12_scaled = M_SQRT3_D_3 * x_p0_m12
+    x_p0_p12_scaled = M_SQRT3_D_3 * x_p0_p12
+
+    aux_p12 = x1 + x_p0_m12_scaled
+    aux_p12_p2 = aux_p12 + M_SQRT3_D_2
+    aux_p12_p6 = aux_p12 + M_SQRT3_D_6
+    aux_mm12 = x1 - x_p0_p12_scaled
+    aux_mm12_p2 = aux_mm12 + M_SQRT3_D_2
+    aux_m0 = x1 - x_p0_scaled
+    aux_m0_p23 = aux_m0 + M_SQRT3_2D3
+    aux_m0_p3 = aux_m0 + M_SQRT3_D_3
+
+    scale = M_SQRT3_2D3
+    res = x2 * aux_m0_p23  + \
+          2 * x_p0_m12 * aux_p12_p6  + \
+          M_SQRT3 * (
+                     (aux_m0_p3) ** 2 / 2 +
+                     (aux_m0_p23) ** 2 / 2 -
+                     (aux_p12_p6) ** 2 / 2 -
+                     (aux_p12_p2) ** 2  / 2 -
+                     (aux_mm12_p2) ** 2 / 2
+                  )
+    res = res * scale
+    return res
+
+
+def _hexspline2_regions(x1, x2):
+    """Hexspline regions of order p=2"""
+    x1 = np.asanyarray(x1)
+    x2 = np.asanyarray(x2)
+    Heaviside = np.heaviside
+
+    M_SQRT3_D_3 = M_SQRT3 / 3
+    M_SQRT3_D_2 = M_SQRT3 / 2
+    M_SQRT3_D_6 = M_SQRT3 / 6
+    M_SQRT3_2D3 = 2 * M_SQRT3_D_3
+    ref = 1 / 2
+
+    x_p0_m1 = x2 - 1
+    x_p0_p1 = x2 + 1
+    x_p0_m12 = x2 - 1 / 2
+    x_p0_p12 = x2 + 1 / 2
+
+    x_p0_scaled = M_SQRT3_D_3 * x2
+    x_p0_m1_scaled = M_SQRT3_D_3 * x_p0_m1
+    x_p0_p1_scaled = M_SQRT3_D_3 * x_p0_p1
+    x_p0_m12_scaled = M_SQRT3_D_3 * x_p0_m12
+    x_p0_p12_scaled = M_SQRT3_D_3 * x_p0_p12
+
+    aux_p1 = x1 + x_p0_m1_scaled
+    aux_p1_m3 = aux_p1 - M_SQRT3_D_3
+
+    aux_m1 = x1 - x_p0_m1_scaled
+    aux_m1_p3 = x1 - x_p0_m1_scaled + M_SQRT3_D_3
+
+    aux_mm1 = x1 - x_p0_p1_scaled
+    aux_mm1_m3 = aux_mm1 - M_SQRT3_D_3
+    aux_pm1 = x1 + M_SQRT3 * (x_p0_p1) / 3
+    aux_pm1_p3 = aux_pm1 + M_SQRT3_D_3
+
+    aux_p12 = x1 + x_p0_m12_scaled
+    aux_p12_m2 = aux_p12 - M_SQRT3_D_2
+    aux_p12_p2 = aux_p12 + M_SQRT3_D_2
+    aux_p12_p6 = aux_p12 + M_SQRT3_D_6
+    aux_p12_m6 = aux_p12 - M_SQRT3_D_6
+
+    aux_m12 = x1 - x_p0_m12_scaled
+    aux_m12_m6 = aux_m12- M_SQRT3_D_6
+    aux_m12_p6 = aux_m12+ M_SQRT3_D_6
+    aux_m12_p2 = aux_m12+ M_SQRT3_D_2
+    aux_m12_m2 = aux_m12- M_SQRT3_D_2
+
+    aux_mm12 = x1 - x_p0_p12_scaled
+    aux_mm12_p6 = aux_mm12 + M_SQRT3_D_6
+    aux_mm12_m6 = aux_mm12 - M_SQRT3_D_6
+    aux_mm12_m2 = aux_mm12 - M_SQRT3_D_2
+    aux_mm12_p2 = aux_mm12 + M_SQRT3_D_2
+
+    aux_pm12 = x1 + x_p0_p12_scaled
+    aux_pm12_m6 = aux_pm12 - M_SQRT3_D_6
+    aux_pm12_p6 = aux_pm12 + M_SQRT3_D_6
+    aux_pm12_p2 = aux_pm12 + M_SQRT3_D_2
+    aux_pm12_m2 = aux_pm12 - M_SQRT3_D_2
+
+    aux_m0 = x1 - x_p0_scaled
+    aux_m0_p23 = aux_m0 + M_SQRT3_2D3
+    aux_m0_m23 = aux_m0 - M_SQRT3_2D3
+    aux_m0_p3 = aux_m0 + M_SQRT3_D_3
+    aux_m0_m3 = aux_m0 - M_SQRT3_D_3
+
+    aux_p0 = x1 + x_p0_scaled
+    aux_p0_m23 = aux_p0 - M_SQRT3_2D3
+    aux_p0_p23 = aux_p0 + M_SQRT3_2D3
+    aux_p0_p3 = aux_p0 + M_SQRT3_D_3
+    aux_p0_m3 = aux_p0 - M_SQRT3_D_3
+
+    r = {}
+    h_p0 = Heaviside(x2, ref)
+    h_p0_m1 = Heaviside(x_p0_m1, ref)
+    h_p0_p1 = Heaviside(x_p0_p1, ref)
+    h_p0_m12 = Heaviside(x_p0_m12, ref)
+    h_p0_p12 = Heaviside(x_p0_p12, ref)
+
+    h_m0 = Heaviside(-x2, ref)
+    h_m0_p12 = Heaviside(1 / 2 - x2, ref)
+    h_m0_m12 = Heaviside(-x2 - 1 / 2, ref)
+    h_m0_p1 = Heaviside(1 - x2, ref)
+    h_m0_m1 = Heaviside(-x2 - 1, ref)
+
+    h_aux_m0 = Heaviside(aux_m0, ref)
+    h_aux_m1 = Heaviside(aux_m1, ref)
+    h_aux_p0 = Heaviside(aux_p0, ref)
+    h_aux_p1 = Heaviside(aux_p1, ref)
+    h_aux_m0_p23 = Heaviside(aux_m0_p23, ref)
+    h_aux_m0_m23 = Heaviside(aux_m0_m23, ref)
+    h_aux_p0_m23 = Heaviside(aux_p0_m23, ref)
+    h_aux_p0_p23 = Heaviside(aux_p0_p23, ref)
+    h_aux_m1_p3 = Heaviside(aux_m1_p3, ref)
+    h_aux_p1_m3 = Heaviside(aux_p1_m3, ref)
+    h_aux_m12_m6 = Heaviside(aux_m12_m6, ref)
+    h_aux_m12_p2 = Heaviside(aux_m12_p2, ref)
+    h_aux_p12_m2 = Heaviside(aux_p12_m2, ref)
+    h_aux_p12_p6 = Heaviside(aux_p12_p6, ref)
+    h_aux_mm12_m2 = Heaviside(aux_mm12_m2, ref)
+    h_aux_mm12_p6 = Heaviside(aux_mm12_p6, ref)
+    h_aux_pm12_m6 = Heaviside(aux_pm12_m6, ref)
+    h_aux_pm12_p2 = Heaviside(aux_pm12_p2, ref)
+    h_aux_mm1_m3 = Heaviside(aux_mm1_m3, ref)
+    h_aux_pm1_p3 = Heaviside(aux_pm1_p3, ref)
+    h_aux_mm1 = Heaviside(aux_mm1, ref)
+
+    h_aux_m0_m3 = Heaviside(aux_m0_m3, ref)
+    h_aux_m0_p3 = Heaviside(aux_m0_p3, ref)
+    h_aux_p0_m3 = Heaviside(aux_p0_m3, ref)
+    h_aux_p0_p3 = Heaviside(aux_p0_p3, ref)
+
+    h_aux_m12_m2 = Heaviside(aux_m12_m2, ref)
+    h_aux_m12_p6 = Heaviside(aux_m12_p6, ref)
+    h_aux_p12_m6 = Heaviside(aux_p12_m6, ref)
+    h_aux_p12_p2 = Heaviside(aux_p12_p2, ref)
+    h_aux_mm12_m6 = Heaviside(aux_mm12_m6, ref)
+    h_aux_mm12_p2 = Heaviside(aux_mm12_p2, ref)
+    h_aux_pm12_m2 = Heaviside(aux_pm12_m2, ref)
+    h_aux_pm12_p6 = Heaviside(aux_pm12_p6, ref)
+
+    inter = locals().copy()
+    for key in inter:
+        if key.startswith('h_'):
+            r[key] = inter[key]
+    return r
+
+
 def hexspline_support(xx, yy, p):
     """Support of hexspline of order p
 
@@ -202,8 +372,9 @@ def hexspline_bbox(p):
     Omega = M_SQRT3 / 2
     """
     # (x1, x2), (y1, y2)
-    x1 = 0
-    y1 = 0
+    # TODO: review numbers
+    x1 = p / M_SQRT3
+    y1 = p / M_SQRT3
     return (-x1, x1), (-y1, y1)
 
 
@@ -262,7 +433,7 @@ def sincH(x, y):
 # Convolution, compute kernel
 def rescaling_kernel(p, scale=1):
     """Rescaling kernel from hexgrid to rectangular grid"""
-    from megaradrp.simulation.convolution import hex_c, setup_grid
+    from megaradrp.simulation.convolution import setup_grid
     from scipy import signal
     from scipy.interpolate import RectBivariateSpline
 
@@ -281,7 +452,7 @@ def rescaling_kernel(p, scale=1):
 
     rect_kernel = signal.bspline(xx / scale, n) * signal.bspline(yy / scale, n) / detR1
 
-    hex1 = hex_c(xx, yy, rad=1.0 / M_SQRT3, ang=0.0)
+    hex1 = hexspline1(xx, yy)
 
     if p == 1:
         hex_kernel = hex1
@@ -296,7 +467,5 @@ def rescaling_kernel(p, scale=1):
         raise ValueError('p>3 not implemented')
 
     kernel = signal.fftconvolve(rect_kernel, hex_kernel, mode='same') * DA
-
-    # print(np.sum(kernel)*DA, detR0)
     rbs = RectBivariateSpline(xs, ys, kernel)
     return rbs
