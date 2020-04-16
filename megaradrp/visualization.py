@@ -211,12 +211,6 @@ def main(argv=None):
         create_cube_from_rss = None
         has_contours = False
 
-    try:
-        from megaradrp.processing.cube import create_cube_from_rss
-        has_contours = True
-    except ImportError:
-        has_contours = False
-
     parser = argparse.ArgumentParser(description='Display MEGARA RSS images')
     parser.add_argument('--wcs-grid', action='store_true',
                         help='Display WCS grid')
@@ -291,13 +285,11 @@ def main(argv=None):
 
     for fname in args.rss:
         with fits.open(fname) as img:
-
-            datamodel = dm.MegaraDataModel()
             if args.plot_nominal_config:
                 insmode = img['FIBERS'].header['INSMODE']
-                fiberconf = datamodel.get_fiberconf_default(insmode)
+                fiberconf = dm.get_fiberconf_default(insmode)
             else:
-                fiberconf = datamodel.get_fiberconf(img)
+                fiberconf = dm.get_fiberconf(img)
             plot_mask = np.ones((fiberconf.nfibers,), dtype=np.bool)
             if not args.plot_sky:
                 skyfibers = fiberconf.sky_fibers()
@@ -414,7 +406,8 @@ def main(argv=None):
                     synt.writeto(args.contour_image_save)
 
                 conserve_flux = not args.contour_is_density
-                s_cube = create_cube_from_rss(synt, target_scale_arcsec, conserve_flux=conserve_flux)
+                order = 1
+                s_cube = create_cube_from_rss(synt, order, target_scale_arcsec, conserve_flux=conserve_flux)
                 cube_wcs = WCS(s_cube[0].header).celestial
                 px, py = cube_wcs.wcs.crpix
                 interp = np.squeeze(s_cube[0].data)
@@ -434,8 +427,8 @@ def main(argv=None):
                 # Build synthetic rss... for reconstruction
                 primary = fits.PrimaryHDU(data=zval[:, np.newaxis], header=img[extname].header)
                 synt = fits.HDUList([primary, img['FIBERS']])
-
-                s_cube = create_cube_from_rss(synt, target_scale_arcsec)
+                order = 1
+                s_cube = create_cube_from_rss(synt, order, target_scale_arcsec)
                 cube_wcs = WCS(s_cube[0].header).celestial
                 px, py = cube_wcs.wcs.crpix
                 interp = np.squeeze(s_cube[0].data)
