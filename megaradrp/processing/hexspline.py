@@ -13,6 +13,8 @@ Interpolation method based on:
 van de Ville et al. IEEE Transactions on Image Processing 2004, 13, 6
 """
 
+from __future__ import division
+
 import math
 import numpy as np
 from megaradrp.simulation.convolution import hex_c
