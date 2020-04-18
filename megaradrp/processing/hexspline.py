@@ -374,7 +374,7 @@ def hexspline_bbox(p):
     # (x1, x2), (y1, y2)
     # TODO: review numbers
     x1 = p / M_SQRT3
-    y1 = p / M_SQRT3
+    y1 = p / 2.0
     return (-x1, x1), (-y1, y1)
 
 
@@ -384,7 +384,7 @@ def hexspline_gauss(xx, yy, p):
     https://miplab.epfl.ch/pub/vandeville0202.pdf
 
     Least-squares spline resampling to a hexagonal lattice
-    Signal Processing:Image Communication17 (2002) 393–408
+    Signal Processing:Image Communication17 (2002) 393-408
 
     Eq B.4
     """
