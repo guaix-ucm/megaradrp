@@ -49,6 +49,7 @@ setup(
         'console_scripts': [
             'megaradrp-overplot_traces = megaradrp.tools.overplot_traces:main',
             'megaradrp-heal_traces = megaradrp.tools.heal_traces:main',
+            'megaradrp-cube = megaradrp.processing.cube:main',
         ],
     },
     classifiers=[
