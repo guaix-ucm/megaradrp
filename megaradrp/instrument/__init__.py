@@ -8,11 +8,6 @@
 #
 
 
-MEGARA_PLATESCALE = 1.2120 # arcsec / mm
-
-MEGARA_IAA = -163.854 # deg
-
-
 # Values for recipe Trace
 # Relative threshold for each VPH in LCB
 vph_thr = {

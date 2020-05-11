@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2018 Universidad Complutense de Madrid
+# Copyright 2017-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -18,11 +18,9 @@ import matplotlib.transforms as mtrans
 import matplotlib.transforms as mtransforms
 import numpy as np
 
+import megaradrp.instrument.constants as cons
 
 M_SQRT3 = math.sqrt(3)
-
-PLATESCALE = 1.2120  # arcsec / mm
-SCALE = 0.443  # mm from center to center, upwards
 
 
 def hexplot(axis, x, y, z, scale=1.0, extent=None,
@@ -199,10 +197,14 @@ def main(argv=None):
     import astropy.io.fits as fits
     from astropy.wcs import WCS
     from astropy.visualization import simple_norm
+    import astropy.units as u
     import matplotlib.transforms as mtransforms
 
     import megaradrp.datamodel as dm
     from megaradrp.processing.wcs import update_wcs_from_ipa, compute_pa_from_ipa
+
+    # scale of the LCB grid in mm
+    SCALE = cons.SPAXEL_SCALE.to(u.mm).value
 
     try:
         from megaradrp.processing.cube import create_cube_from_rss

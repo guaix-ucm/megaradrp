@@ -21,8 +21,7 @@ from six import StringIO
 from numina.datamodel import DataModel, QueryAttribute, KeyDefinition
 from numina.util.convert import convert_date
 
-import megaradrp.instrument as megins
-
+import megaradrp.instrument.constants as cons
 
 class MegaraDataModel(DataModel):
     """Data model of MEGARA images"""
@@ -89,7 +88,7 @@ class MegaraDataModel(DataModel):
         'imgid'
     ]
 
-    PLATESCALE = megins.MEGARA_PLATESCALE
+    PLATESCALE = cons.GTC_FC_A_PLATESCALE.value
 
     def __init__(self):
 

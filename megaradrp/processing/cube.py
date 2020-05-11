@@ -19,13 +19,13 @@ import math
 
 import numpy as np
 from scipy import signal
+import astropy.units as u
 from numina.frame.utils import copy_img
 
 from megaradrp.datamodel import MegaraDataModel
 import megaradrp.processing.wcs as mwcs
 import megaradrp.processing.hexspline as hspline
-import megaradrp.instrument as megins
-
+import megaradrp.instrument.constants as cons
 
 # Normalized hexagon geometry
 M_SQRT3 = math.sqrt(3)
@@ -35,8 +35,8 @@ A_HEX = 0.5 * H_HEX * R_HEX
 HA_HEX = 6 * A_HEX # detR0 == ha
 
 
-SCALE = 0.443 # mm
-HEX_SCALE = megins.MEGARA_PLATESCALE * SCALE
+# Size scale of the spaxel grid in arcseconds
+HEX_SCALE = (cons.GTC_FC_A_PLATESCALE * cons.SPAXEL_SCALE).to(u.arcsec).value
 
 
 def atleast_2d_last(*arys):
@@ -98,11 +98,11 @@ def calc_matrix_from_fiberconf(fiberconf):
     minx, miny = ref_fiber.x, ref_fiber.y
     if ref_fiber.x < -6:
         # arcsec
-        ascale = HEX_SCALE # 0.443 * 1.212
+        ascale = HEX_SCALE
         print('fiber coordinates in arcsec')
     else:
         # mm
-        ascale = SCALE
+        ascale = cons.SPAXEL_SCALE.to(u.mm).value
         print('fiber coordinates in mm')
     refx, refy = minx / ascale, miny / ascale
     rpos1_x = (spos1_x - minx) / ascale
