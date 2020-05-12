@@ -311,7 +311,7 @@ def merge_wcs(hdr_sky, hdr_spec, out=None):
     c_cunit = 'Units of coordinate increment and value'
     hdr.set('CUNIT1', comment=c_cunit, after='CDELT1')
     hdr.set('CUNIT2', comment=c_cunit, after='CUNIT1')
-    hdr.set('CUNIT3', comment=c_cunit, after='CUNIT2')
+    hdr.set('CUNIT3', value='', comment=c_cunit, after='CUNIT2')
     hdr.set('CRPIX2', value=1, comment=c_crpix, after='CRPIX1')
     hdr.set('CRPIX3', value=1, comment=c_crpix, after='CRPIX2')
     hdr.set('CDELT3', after='CDELT2')
