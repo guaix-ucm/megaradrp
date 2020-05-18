@@ -111,15 +111,6 @@ class MegaraDataModel(DataModel):
             instrument_mappings
         )
 
-    def get_imgid(self, img):
-        hdr = self.get_header(img)
-        if 'UUID' in hdr:
-            return 'uuid:{}'.format(hdr['UUID'])
-        elif 'DATE-OBS' in hdr:
-            return 'dateobs:{}'.format(hdr['DATE-OBS'])
-        else:
-            return super(MegaraDataModel, self).get_imgid(img)
-
     def get_fiberconf(self, img):
         """Obtain FiberConf from image"""
         return get_fiberconf(img)
@@ -258,6 +249,15 @@ class FibersConf(object):
         result['y'].unit = self.funit
         return result
 
+    def scale_unit(self, unit=False):
+        if self.funit == "arcsec":
+            scale = 1
+        else:
+            scale = cons.GTC_FC_A_PLATESCALE.value
+        if unit:
+            return (scale, self.funit)
+        else:
+            return scale
 
 class TargetType(enum.Enum):
     """Possible targest in a fiber bundle"""

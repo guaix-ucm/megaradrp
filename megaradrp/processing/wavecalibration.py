@@ -19,6 +19,7 @@ from numpy.polynomial.polynomial import polyval
 import astropy.wcs
 import astropy.io.fits as fits
 
+import numina.datamodel as dm
 import numina.array.utils as utils
 from numina.frame.utils import copy_img
 from numina.processing import Corrector
@@ -46,30 +47,6 @@ class SimpleWcs1D(object):
         w.wcs.crval = [self.crval, 0.0]
         w.wcs.ctype = ['AWAV', ' ']
         return w
-
-
-def get_imgid(img, prefix=True):
-    # FIXME: duplicated with datamodel
-    hdr = img[0].header
-    base = "{}"
-    if 'UUID' in hdr:
-        pre = 'uuid:{}'
-        value = hdr['UUID']
-    elif 'DATE-OBS' in hdr:
-        pre = 'dateobs:{}'
-        value = hdr['DATE-OBS']
-    elif 'checksum' in hdr:
-        pre = 'checksum:{}'
-        value = hdr['checksum']
-    elif 'filename' in hdr:
-        pre = 'file:{}'
-        value = hdr['filename']
-    else:
-        raise ValueError('no method to identity image')
-    if prefix:
-        return pre.format(value)
-    else:
-        return base.format(value)
 
 
 class WavelengthCalibrator(Corrector):
@@ -116,7 +93,7 @@ def calibrate_wl_rss_megara(rss, solutionwl, dtype='float32', span=0, inplace=Fa
         A Row stacked Spectra MEGARA image, WL calibrated
     """
 
-    imgid = get_imgid(rss)
+    imgid = dm.get_imgid(rss)
     _logger.debug('wavelength calibration in image %s', imgid)
     _logger.debug('with wavecalib %s', solutionwl.calibid)
     _logger.debug('offsets are %s', solutionwl.global_offset.coef)
@@ -177,7 +154,7 @@ def calibrate_wl_rss(rss, solutionwl, npix, targetwcs, dtype='float32', span=0, 
         # This is a new HDUList
         rss = copy_img(rss)
 
-    imgid = get_imgid(rss)
+    imgid = dm.get_imgid(rss)
     _logger.debug('wavelength calibration in image %s', imgid)
     _logger.debug('with wavecalib %s', solutionwl.calibid)
     _logger.debug('offsets are %s', solutionwl.global_offset.coef)
