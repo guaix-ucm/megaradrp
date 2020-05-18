@@ -18,7 +18,7 @@ from numina.core import Result
 
 from megaradrp.processing.fluxcalib import FluxCalibration
 from megaradrp.utils import add_collapsed_mos_extension
-from megaradrp.types import ProcessedRSS, ProcessedFrame
+from megaradrp.ntypes import ProcessedRSS, ProcessedFrame
 from .base import ImageRecipe
 
 

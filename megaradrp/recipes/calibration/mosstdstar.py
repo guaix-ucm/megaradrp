@@ -24,9 +24,9 @@ from numina.types.array import ArrayType
 from megaradrp.processing.extractobj import extract_star, generate_sensitivity
 from megaradrp.processing.extractobj import mix_values, compute_broadening
 from megaradrp.recipes.scientific.base import ImageRecipe
-from megaradrp.types import ProcessedRSS, ProcessedFrame, ProcessedSpectrum
-from megaradrp.types import ReferenceSpectrumTable, ReferenceExtinctionTable
-from megaradrp.types import MasterSensitivity
+from megaradrp.ntypes import ProcessedRSS, ProcessedFrame, ProcessedSpectrum
+from megaradrp.ntypes import ReferenceSpectrumTable, ReferenceExtinctionTable
+from megaradrp.ntypes import MasterSensitivity
 
 
 class MOSStandardRecipe(ImageRecipe):

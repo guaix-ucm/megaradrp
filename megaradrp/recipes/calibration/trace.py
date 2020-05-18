@@ -34,7 +34,7 @@ from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.products import TraceMap
 from megaradrp.products.tracemap import GeometricTrace
-from megaradrp.types import ProcessedImage, ProcessedRSS
+from megaradrp.ntypes import ProcessedImage, ProcessedRSS
 from megaradrp.core.recipe import MegaraBaseRecipe
 import megaradrp.requirements as reqs
 import megaradrp.products

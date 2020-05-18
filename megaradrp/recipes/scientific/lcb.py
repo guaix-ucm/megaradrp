@@ -17,7 +17,7 @@ import astropy.units as u
 from numina.core import Result
 
 from megaradrp.recipes.scientific.base import ImageRecipe
-from megaradrp.types import ProcessedRSS, ProcessedFrame
+from megaradrp.ntypes import ProcessedRSS, ProcessedFrame
 from megaradrp.processing.fluxcalib import FluxCalibration
 
 

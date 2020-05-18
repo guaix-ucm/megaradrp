@@ -13,7 +13,7 @@
 from numina.core import Result, Requirement
 from numina.types.datatype import ListOfType
 
-import megaradrp.types as typs
+import megaradrp.ntypes as typs
 from megaradrp.core.recipe import MegaraBaseRecipe
 
 

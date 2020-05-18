@@ -18,9 +18,9 @@ from numina.core import Result, Parameter
 import numina.exceptions
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.types import MasterFiberFlat
+from megaradrp.ntypes import MasterFiberFlat
 import megaradrp.requirements as reqs
-from megaradrp.types import ProcessedRSS, ProcessedFrame
+from megaradrp.ntypes import ProcessedRSS, ProcessedFrame
 import megaradrp.datamodel as dm
 
 # Flat 2D

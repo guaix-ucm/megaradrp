@@ -5,7 +5,7 @@ import megaradrp.requirements as reqs
 import numina.core
 import numina.dal
 from numina.exceptions import NoResultFound
-from ..types import MasterFiberFlat
+from ..ntypes import MasterFiberFlat
 from ..products.tracemap import TraceMap
 
 

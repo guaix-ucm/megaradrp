@@ -19,7 +19,7 @@ from numina.core.qc import QC
 
 from megaradrp.datamodel import TargetType
 from megaradrp.recipes.scientific.base import ImageRecipe
-from megaradrp.types import ProcessedRSS, ProcessedFrame
+from megaradrp.ntypes import ProcessedRSS, ProcessedFrame
 from megaradrp.utils import add_collapsed_mos_extension
 
 

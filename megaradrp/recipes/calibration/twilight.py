@@ -22,8 +22,8 @@ from numina.exceptions import ValidationError
 
 import megaradrp.requirements as reqs
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.types import MasterTwilightFlat
-from megaradrp.types import ProcessedRSS, ProcessedFrame
+from megaradrp.ntypes import MasterTwilightFlat
+from megaradrp.ntypes import ProcessedRSS, ProcessedFrame
 # Flat 2D
 from megaradrp.processing.combine import basic_processing_with_combination
 from numina.array import combine

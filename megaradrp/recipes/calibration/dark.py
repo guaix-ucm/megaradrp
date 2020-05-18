@@ -14,7 +14,7 @@ from numina.array import combine
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement
-from megaradrp.types import MasterDark
+from megaradrp.ntypes import MasterDark
 from megaradrp.processing.combine import basic_processing_with_combination
 
 

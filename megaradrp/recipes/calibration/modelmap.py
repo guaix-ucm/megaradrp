@@ -28,7 +28,7 @@ from numina.frame.utils import copy_img
 from megaradrp.products.modelmap import ModelMap
 from megaradrp.products.modelmap import GeometricModel
 from megaradrp.processing.aperture import ApertureExtractor
-from megaradrp.types import ProcessedImage, ProcessedRSS
+from megaradrp.ntypes import ProcessedImage, ProcessedRSS
 from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.core.recipe import MegaraBaseRecipe
 import megaradrp.requirements as reqs

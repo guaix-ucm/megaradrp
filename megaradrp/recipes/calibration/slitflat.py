@@ -17,10 +17,10 @@ from astropy.io import fits
 from numina.array import combine
 from numina.core import Result, Parameter
 
-from megaradrp.types import ProcessedFrame
+from megaradrp.ntypes import ProcessedFrame
 from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.types import MasterSlitFlat
+from megaradrp.ntypes import MasterSlitFlat
 import megaradrp.requirements as reqs
 import megaradrp.core.correctors as cor
 

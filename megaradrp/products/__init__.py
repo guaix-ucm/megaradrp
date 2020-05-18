@@ -1,7 +1,7 @@
 
 
 # FIXME: workaround
-from megaradrp.types import MasterBias
+from megaradrp.ntypes import MasterBias
 
 from .tracemap import TraceMap, GeometricTrace
 from .wavecalibration import WavelengthCalibration

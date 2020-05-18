@@ -51,8 +51,8 @@ class MegaraBaseRecipe(BaseRecipe):
         return recipe_result
 
     def types_getter(self):
-        from megaradrp.types import MasterBias, MasterDark, MasterBPM, MasterSlitFlat
-        from megaradrp.types import DiffuseLightCorrection
+        from megaradrp.ntypes import MasterBias, MasterDark, MasterBPM, MasterSlitFlat
+        from megaradrp.ntypes import DiffuseLightCorrection
         imgtypes = [MasterBPM, MasterBias, MasterDark, MasterSlitFlat, DiffuseLightCorrection]
         getters = [cor.get_corrector_bpm, cor.get_corrector_bias,
                    [cor.get_corrector_dark, cor.get_corrector_gain],

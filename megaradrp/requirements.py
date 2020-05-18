@@ -12,7 +12,7 @@
 from numina.core import Requirement
 from numina.types.multitype import MultiType
 
-import megaradrp.types
+import megaradrp.ntypes
 import megaradrp.products
 import megaradrp.products.modelmap
 
@@ -20,7 +20,7 @@ import megaradrp.products.modelmap
 class MasterBiasRequirement(Requirement):
     def __init__(self, optional=False):
         super(MasterBiasRequirement,
-              self).__init__(megaradrp.types.MasterBias,
+              self).__init__(megaradrp.ntypes.MasterBias,
                              'Master BIAS image',
                              optional=optional
                              )
@@ -29,7 +29,7 @@ class MasterBiasRequirement(Requirement):
 class MasterBPMRequirement(Requirement):
     def __init__(self, optional=True):
         super(MasterBPMRequirement,
-              self).__init__(megaradrp.types.MasterBPM,
+              self).__init__(megaradrp.ntypes.MasterBPM,
                              'Master Bad Pixel Mask',
                              optional=optional
                              )
@@ -38,14 +38,14 @@ class MasterBPMRequirement(Requirement):
 class MasterDarkRequirement(Requirement):
     def __init__(self, optional=True):
         super(MasterDarkRequirement,
-              self).__init__(megaradrp.types.MasterDark, 'Master DARK image',
+              self).__init__(megaradrp.ntypes.MasterDark, 'Master DARK image',
                              optional=optional)
 
 
 class MasterFiberFlatRequirement(Requirement):
     def __init__(self):
         super(MasterFiberFlatRequirement,
-              self).__init__(megaradrp.types.MasterFiberFlat,
+              self).__init__(megaradrp.ntypes.MasterFiberFlat,
                              'Master fiber flat calibration'
                              )
 
@@ -53,7 +53,7 @@ class MasterFiberFlatRequirement(Requirement):
 class MasterSlitFlatRequirement(Requirement):
     def __init__(self, optional=True):
         super(MasterSlitFlatRequirement,
-              self).__init__(megaradrp.types.MasterSlitFlat,
+              self).__init__(megaradrp.ntypes.MasterSlitFlat,
                              'Master slit flat calibration',
                              optional=optional
                              )
@@ -62,7 +62,7 @@ class MasterSlitFlatRequirement(Requirement):
 class MasterTwilightRequirement(Requirement):
     def __init__(self, optional=True):
         super(MasterTwilightRequirement,
-              self).__init__(megaradrp.types.MasterTwilightFlat,
+              self).__init__(megaradrp.ntypes.MasterTwilightFlat,
                              'Master twlight flat calibration',
                              optional=optional
                              )
@@ -89,13 +89,13 @@ class WavelengthCalibrationRequirement(Requirement):
 
 class LinesCatalogRequirement(Requirement):
     def __init__(self):
-        super(LinesCatalogRequirement, self).__init__(megaradrp.types.MegaraLinesCatalog, 'Catalog of lines')
+        super(LinesCatalogRequirement, self).__init__(megaradrp.ntypes.MegaraLinesCatalog, 'Catalog of lines')
 
 
 class SkyRSSRequirement(Requirement):
     def __init__(self, optional=True):
         super(SkyRSSRequirement, self).__init__(
-            megaradrp.types.SkyRSS,
+            megaradrp.ntypes.SkyRSS,
             'Row Stacked Spectra of the sky',
             optional=optional
         )
@@ -104,7 +104,7 @@ class SkyRSSRequirement(Requirement):
 class SensitivityRequirement(Requirement):
     def __init__(self, optional=True):
         super(SensitivityRequirement,
-              self).__init__(megaradrp.types.MasterSensitivity,
+              self).__init__(megaradrp.ntypes.MasterSensitivity,
                              'Master sensitivity for flux calibration',
                              optional=optional
                              )
@@ -113,7 +113,7 @@ class SensitivityRequirement(Requirement):
 class ReferenceExtinction(Requirement):
     def __init__(self, optional=True):
         super(ReferenceExtinction,
-              self).__init__(megaradrp.types.ReferenceExtinctionTable,
+              self).__init__(megaradrp.ntypes.ReferenceExtinctionTable,
                              "Reference extinction",
                              optional=optional
                              )
@@ -122,7 +122,7 @@ class ReferenceExtinction(Requirement):
 class DiffuseLightRequirement(Requirement):
     def __init__(self, optional=True):
         super(DiffuseLightRequirement,
-              self).__init__(megaradrp.types.DiffuseLightCorrection,
+              self).__init__(megaradrp.ntypes.DiffuseLightCorrection,
                              'Diffuse light correction image',
                              optional=optional
                              )

@@ -20,7 +20,7 @@ from numina.core.validator import range_validator
 from numina.constants import FWHM_G
 
 from megaradrp.recipes.scientific.base import ImageRecipe
-from megaradrp.types import ProcessedRSS, ProcessedFrame
+from megaradrp.ntypes import ProcessedRSS, ProcessedFrame
 
 
 class AcquireLCBRecipe(ImageRecipe):

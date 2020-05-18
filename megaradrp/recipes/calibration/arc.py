@@ -37,7 +37,7 @@ from numina.core.validator import range_validator
 from numina.util.flow import SerialFlow
 from numina.array import combine
 
-from megaradrp.types import ProcessedFrame, ProcessedRSS
+from megaradrp.ntypes import ProcessedFrame, ProcessedRSS
 from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.fiberflat import Splitter, FlipLR
