@@ -12,7 +12,7 @@ matrix:
     - python: "3.7"
       env: DEPS="numpy scipy astropy==3.2.3" COVERAGE=true
     - python: "3.8"
-      env: DEPS="numpy scipy astropy==3.2.3"
+      env: DEPS="numpy scipy astropy==4.0.1"
 
 cache:
   pip: true
