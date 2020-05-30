@@ -28,32 +28,6 @@ def create_header1():
     return hdr
 
 
-def test_add_barycentric():
-    hdr = create_header1()
-
-    hdr = header_add_barycentric_correction(hdr, key='b')
-
-    # velocity
-    rv = -7114.518753399715
-    # (1 + rv / c)
-    factor = 0.9999762685198925
-
-    assert hdr['WCSNAMEB'] == 'Barycentric correction'
-    assert hdr['CTYPE1B'] == hdr['CTYPE1']
-    assert hdr['CRPIX1B'] == hdr['CRPIX1']
-    assert numpy.allclose(hdr['CRVAL1B'], hdr['CRVAL1'] * factor)
-    assert numpy.allclose(hdr['CDELT1B'], hdr['CDELT1'] * factor)
-    assert hdr['CUNIT1B'] == hdr['CUNIT1']
-    #
-    assert hdr['CRPIX2B'] == hdr['CRPIX2']
-    assert hdr['CRVAL2B'] == hdr['CRVAL2']
-    assert hdr['CDELT2B'] == hdr['CDELT2']
-    #
-    assert numpy.allclose(hdr['VELOSYSB'], rv)
-    assert hdr['SPECSYSB'] == 'BARYCENT'
-    assert hdr['SSYSOBSB'] == 'TOPOCENT'
-
-
 def test_add_barycentric_missing1():
     hdr = create_header1()
     del hdr['RADEG']
