@@ -23,14 +23,14 @@ install:
   - pip install Cython
   - pip install "numpy>=1.16"
   - pip install git+git://github.com/guaix-ucm/numina.git#egg=numina
-  - pip install $DEPS scikit-image pip pytest setuptools Cython six>=1.7
+  - pip install $DEPS scikit-image pytest setuptools six>=1.7 jsonschema
   - pip install pytest-benchmark pytest-cov
   - pip install pytest-remotedata
   - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
   - if [[ $COVERAGE == true ]]; then pip install codeclimate-test-reporter; fi
 
 script:
-  - py.test -s -v megaradrp
+  - py.test megaradrp
   - if [[ $COVERAGE == true ]]; then py.test megaradrp --cov=megaradrp; fi
 
 after_success:
