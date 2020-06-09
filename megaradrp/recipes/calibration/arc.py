@@ -401,9 +401,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     initial_data_wlcalib.contents.append(new)
 
                 except (ValueError, TypeError, IndexError) as error:
-                    self.logger.error("%s", error)
-                    self.logger.error('error in row %d, fibid %d', idx, fibid)
-                    traceback.print_exc()
+                    self.logger.warning("%s", error)
+                    self.logger.warning('problem in row %d, fibid %d', idx, fibid)
                     initial_data_wlcalib.error_fitting.append(fibid)
                     error_contador += 1
 
