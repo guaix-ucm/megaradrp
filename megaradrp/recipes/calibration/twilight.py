@@ -58,7 +58,7 @@ class RecipeInput(recipeio.RecipeInput):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
     master_slitflat = reqs.MasterSlitFlatRequirement()
-    master_traces = reqs.MasterAperturesRequirement()
+    master_apertures = reqs.MasterAperturesRequirement(alias='master_traces')
     extraction_offset = Parameter([0.0], 'Offset traces for extraction', accept_scalar=True)
     normalize_region = Parameter([1900, 2100], 'Region used to normalize the flat-field',
                                  validator=pixel_2d_check)
@@ -103,7 +103,7 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
     `reduced_image` of the recipe result.
 
     The apertures in the 2D image are extracted, using the information in
-    `master_traces` and resampled according to the wavelength calibration in
+    `master_apertures` and resampled according to the wavelength calibration in
     `master_wlcalib`. Then is divided by the `master_fiberflat`.
     The resulting RSS is saved as an intermediate
     result named 'reduced_rss.fits'. This RSS is also returned in the field
@@ -148,7 +148,7 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
         self.save_intermediate_img(reduced_image, 'reduced_image.fits')
 
         reduced_rss = self.run_reduction_1d(img,
-                                            rinput.master_traces,
+                                            rinput.master_apertures,
                                             rinput.master_wlcalib,
                                             rinput.master_fiberflat,
                                             offset=rinput.extraction_offset

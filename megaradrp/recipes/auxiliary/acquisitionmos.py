@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -49,7 +49,7 @@ class AcquireMOSRecipe(ImageRecipe):
     `reduced_image` of the recipe result.
 
     The apertures in the 2D image are extracted, using the information in
-    `master_traces` and resampled according to the wavelength calibration in
+    `master_apertures` and resampled according to the wavelength calibration in
     `master_wlcalib`. Then is divided by the `master_fiberflat`.
     The resulting RSS is saved as an intermediate
     result named 'reduced_rss.fits'. This RSS is also returned in the field

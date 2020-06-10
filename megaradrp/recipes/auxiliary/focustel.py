@@ -59,7 +59,7 @@ class FocusTelescopeRecipe(ImageRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
-    master_traces = reqs.MasterAperturesRequirement()
+    master_apertures = reqs.MasterAperturesRequirement(alias='master_traces')
     extraction_offset = Parameter([0.0], 'Offset traces for extraction', accept_scalar=True)
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
     position = Requirement(list, "Position of the reference object", default=(0, 0))
@@ -105,7 +105,7 @@ class FocusTelescopeRecipe(ImageRecipe):
                 # 1D, extraction, Wl calibration, Flat fielding
                 _, img1d = self.run_reduction_1d(
                     img,
-                    rinput.master_traces,
+                    rinput.master_apertures,
                     rinput.master_wlcalib,
                     rinput.master_fiberflat,
                     offset=rinput.extraction_offset

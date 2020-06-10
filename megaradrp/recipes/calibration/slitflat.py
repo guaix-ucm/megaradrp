@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -41,11 +41,6 @@ class SlitFlatRecipe(MegaraBaseRecipe):
     # Results
     reduced_image = Result(ProcessedFrame)
     master_slitflat = Result(MasterSlitFlat)
-
-    def get_filters(self):
-        return [cor.get_corrector_overscan, cor.get_corrector_trimming,
-                cor.get_corrector_bpm, cor.get_corrector_bias,
-                cor.get_corrector_dark, cor.get_corrector_gain]
 
     def run(self, rinput):
         from scipy.signal import savgol_filter

@@ -70,7 +70,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     `reduced_image` of the recipe result.
 
     The apertures in the 2D image are extracted, using the information in
-    `master_traces` and resampled accoding to the wavelength calibration in
+    `master_apertures` and resampled accoding to the wavelength calibration in
     `master_wlcalib`. The resulting RSS is saved as an intermediate
     result named 'reduced_rss.fits'. This RSS is also returned in the field
     `reduced_rss` of the recipe result.
@@ -97,7 +97,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
     master_slitflat = reqs.MasterSlitFlatRequirement()
-    master_traces = reqs.MasterAperturesRequirement()
+    master_apertures = reqs.MasterAperturesRequirement(alias='master_traces')
     smoothing_window = Parameter(31, 'Window for smoothing (must be odd)',
                                  validator=_smoothing_window_check
                                  )
@@ -212,7 +212,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         self.save_intermediate_img(img, 'reduced_image.fits')
         splitter1 = Splitter()
         calibrator_aper = ApertureExtractor(
-            rinput.master_traces,
+            rinput.master_apertures,
             self.datamodel,
             offset=rinput.extraction_offset
         )

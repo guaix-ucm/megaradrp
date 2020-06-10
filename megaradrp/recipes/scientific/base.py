@@ -50,7 +50,7 @@ class ImageRecipe(MegaraBaseRecipe):
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
     master_fiberflat = reqs.MasterFiberFlatRequirement()
     master_twilight = reqs.MasterTwilightRequirement()
-    master_traces = reqs.MasterAperturesRequirement()
+    master_apertures = reqs.MasterAperturesRequirement(alias='master_traces')
     sky_rss = reqs.SkyRSSRequirement(optional=True)
     extraction_offset = Parameter([0.0], 'Offset traces for extraction', accept_scalar=True)
     ignored_sky_bundles = Parameter([], 'Ignore these sky bundles')
@@ -79,7 +79,7 @@ class ImageRecipe(MegaraBaseRecipe):
 
         # 1D, extraction, Wl calibration, Flat fielding
         reduced_rss = self.run_reduction_1d(img,
-            rinput.master_traces, rinput.master_wlcalib,
+            rinput.master_apertures, rinput.master_wlcalib,
             rinput.master_fiberflat, rinput.master_twilight,
             offset=rinput.extraction_offset
         )

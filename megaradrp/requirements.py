@@ -85,12 +85,13 @@ class MasterTraceMapRequirement(Requirement):
 
 
 class MasterAperturesRequirement(Requirement):
-    def __init__(self):
+    def __init__(self, alias=None):
         super(MasterAperturesRequirement, self).__init__(MultiType(
             megaradrp.products.modelmap.ModelMap,
             megaradrp.products.TraceMap),
             'Apertures information for extraction',
             validation=True,
+            alias=alias
         )
 
 
