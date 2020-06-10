@@ -18,6 +18,7 @@ from .traces import to_ds9_reg as to_ds9_reg_function
 
 
 class GeometricTrace(GeometricAperture):
+    """Representation of fiber trace on the image"""
     def __init__(self, fibid, boxid, start, stop, fitparms=None):
         super(GeometricTrace, self).__init__(fibid, boxid, start, stop)
         self.fitparms = fitparms if fitparms is not None else []

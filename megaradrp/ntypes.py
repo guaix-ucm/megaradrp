@@ -43,6 +43,21 @@ class MegaraFrame(DataFrameType):
         checker = valid.check_as_datatype(self.DATATYPE)
         return checker(hdulist)
 
+    def extract_tags(self, obj):
+        """Extract tags from serialized file"""
+
+        objl = self.convert(obj)
+        ext = self.datamodel.extractor_map['fits']
+        tags = {}
+
+        if objl:
+            with objl.open() as hdulist:
+                for field in self.names_t:
+                    tags[field] = ext.extract(field, hdulist)
+                return tags
+        else:
+            return {}
+
 
 class ProcessedFrame(MegaraFrame):
     """A processed frame"""
