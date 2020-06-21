@@ -34,7 +34,7 @@ setup(
         'numpy',
         'astropy >= 2',
         'scipy',
-        'numina >= 0.21',
+        'numina >= 0.22',
         'scikit-image',
         'enum34;python_version<"3.4"',
         'contextlib2;python_version<"3.5"',
