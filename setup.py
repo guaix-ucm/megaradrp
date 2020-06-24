@@ -41,7 +41,8 @@ setup(
         'jsonschema'
     ],
     extras_require={
-        'DB': ['sqlalchemy', 'numinadb']
+        'DB': ['sqlalchemy', 'numinadb'],
+        'test': ['pytest', 'pytest-remotedata']
     },
     zip_safe=False,
     entry_points={
