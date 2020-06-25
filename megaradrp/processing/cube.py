@@ -23,6 +23,7 @@ import astropy.units as u
 from numina.frame.utils import copy_img
 
 from megaradrp.datamodel import MegaraDataModel
+from megaradrp.core.utils import atleast_2d_last
 import megaradrp.processing.wcs as mwcs
 import megaradrp.processing.hexspline as hspline
 import megaradrp.instrument.constants as cons
@@ -37,24 +38,6 @@ HA_HEX = 6 * A_HEX # detR0 == ha
 
 # Size scale of the spaxel grid in arcseconds
 HEX_SCALE = (cons.GTC_FC_A_PLATESCALE * cons.SPAXEL_SCALE).to(u.arcsec).value
-
-
-def atleast_2d_last(*arys):
-    """Equivalent to atleast_2d, adding the newaxis at the end"""
-    res = []
-    for ary in arys:
-        ary = np.asanyarray(ary)
-        if len(ary.shape) == 0:
-            result = ary.reshape(1, 1)
-        elif len(ary.shape) == 1:
-            result = ary[:, np.newaxis]
-        else:
-            result = ary
-        res.append(result)
-    if len(res) == 1:
-        return res[0]
-    else:
-        return res
 
 
 def calc_matrix(nrow, ncol, grid_type=2):
