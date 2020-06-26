@@ -41,6 +41,18 @@ HEX_SCALE = (cons.GTC_FC_A_PLATESCALE * cons.SPAXEL_SCALE).to(u.arcsec).value
 
 
 def calc_matrix(nrow, ncol, grid_type=2):
+    """
+
+    Parameters
+    ----------
+    nrow
+    ncol
+    grid_type
+
+    Returns
+    -------
+
+    """
 
     R0 = np.array([[M_SQRT3 / 2,0], [-0.5,1]]) # Unit scale
 
@@ -64,6 +76,16 @@ def calc_matrix(nrow, ncol, grid_type=2):
 
 
 def calc_matrix_from_fiberconf(fiberconf):
+    """
+
+    Parameters
+    ----------
+    fiberconf
+
+    Returns
+    -------
+
+    """
 
     # TODO: This should be in FIBERCONF...
     spos1_x = []
@@ -95,6 +117,16 @@ def calc_matrix_from_fiberconf(fiberconf):
 
 
 def calc_grid(scale=1.0):
+    """
+
+    Parameters
+    ----------
+    scale
+
+    Returns
+    -------
+
+    """
 
     G_TYPE = 2
     ncol = 27
@@ -108,6 +140,17 @@ def calc_grid(scale=1.0):
 
 
 def hexgrid_extremes(r0l, target_scale):
+    """
+
+    Parameters
+    ----------
+    r0l
+    target_scale
+
+    Returns
+    -------
+
+    """
     # geometry
     # ha_hex = 6 * a_hex # detR0 == ha
     # compute extremes of hexgrid to rectangular grid
@@ -127,6 +170,19 @@ def hexgrid_extremes(r0l, target_scale):
 
 
 def create_cube(r0l, zval, p=1, target_scale=1.0):
+    """
+
+    Parameters
+    ----------
+    r0l
+    zval
+    p
+    target_scale
+
+    Returns
+    -------
+
+    """
     # geometry
     # Interpolation method. Allowed values are:
     # P = 1 NN
@@ -193,6 +249,20 @@ def create_cube(r0l, zval, p=1, target_scale=1.0):
 
 
 def create_cube_from_array(rss_data, fiberconf, p=1, target_scale_arcsec=1.0, conserve_flux=True):
+    """
+
+    Parameters
+    ----------
+    rss_data
+    fiberconf
+    p
+    target_scale_arcsec
+    conserve_flux
+
+    Returns
+    -------
+
+    """
 
     target_scale = target_scale_arcsec / HEX_SCALE
     conected = fiberconf.conected_fibers()
@@ -213,6 +283,19 @@ def create_cube_from_array(rss_data, fiberconf, p=1, target_scale_arcsec=1.0, co
 
 
 def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
+    """
+
+    Parameters
+    ----------
+    rss
+    p
+    target_scale_arcsec
+    conserve_flux
+
+    Returns
+    -------
+
+    """
 
     target_scale = target_scale_arcsec / HEX_SCALE
     # print('target scale is', target_scale)
