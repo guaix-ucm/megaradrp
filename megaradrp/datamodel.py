@@ -130,7 +130,7 @@ class MegaraDataModel(DataModel):
         else:
             scale = self.PLATESCALE
         if unit:
-            return (scale, funit)
+            return scale, funit
         else:
             return scale
 
