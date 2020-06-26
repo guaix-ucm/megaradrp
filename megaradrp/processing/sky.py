@@ -11,7 +11,7 @@ import logging
 
 import numpy
 
-import megaradrp.datamodel as dm
+import megaradrp.instrument.focalplane as fp
 from numina.frame.utils import copy_img
 
 
@@ -24,9 +24,9 @@ def subtract_sky(img, ignored_sky_bundles=None, logger=None):
     logger.info('obtain fiber information')
     sky_img = copy_img(img)
     final_img = copy_img(img)
-    fiberconf = dm.get_fiberconf(sky_img)
+    fp_conf = fp.FocalPlaneConf.from_img(sky_img)
     # Sky fibers
-    skyfibs = fiberconf.sky_fibers(valid_only=True,
+    skyfibs = fp_conf.sky_fibers(valid_only=True,
                                    ignored_bundles=ignored_sky_bundles)
     logger.debug('sky fibers are: %s', skyfibs)
     # Create empty sky_data
@@ -51,8 +51,8 @@ def subtract_sky(img, ignored_sky_bundles=None, logger=None):
     avg_sky[mask] = coldata[mask] / colsum[mask]
 
     # This should be done only on valid fibers
-    logger.info('ignoring invalid fibers: %s', fiberconf.invalid_fibers())
-    for fibid in fiberconf.valid_fibers():
+    logger.info('ignoring invalid fibers: %s', fp_conf.invalid_fibers())
+    for fibid in fp_conf.valid_fibers():
         rowid = fibid - 1
         final_img[0].data[rowid, mask] = img[0].data[rowid, mask] - avg_sky[mask]
     # Update headers

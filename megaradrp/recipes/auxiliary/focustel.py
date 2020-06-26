@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2018 Universidad Complutense de Madrid
+# Copyright 2016-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,6 +17,7 @@ from numina.core.dataholders import Result, Parameter, Requirement
 from numina.core.requirements import ObservationResultRequirement
 from numina.exceptions import RecipeError
 
+from megaradrp.instrument.focalplane import FocalPlaneConf
 from megaradrp.recipes.scientific.base import ImageRecipe
 import megaradrp.requirements as reqs
 from megaradrp.processing.combine import basic_processing_with_combination_frames
@@ -143,13 +144,13 @@ class FocusTelescopeRecipe(ImageRecipe):
 
         from scipy.spatial import KDTree
 
-        fiberconf = self.datamodel.get_fiberconf(img)
-        self.logger.debug("LCB configuration is %s", fiberconf.conf_id)
+        fp_conf = FocalPlaneConf.from_img(img)
+        self.logger.debug("LCB configuration is %s", fp_conf.conf_id)
         rssdata = img[0].data
         cut1 = 1000
         cut2 = 3000
         points = [(0, 0)] # Center of fiber 313
-        fibers = fiberconf.connected_fibers(valid_only=True)
+        fibers = fp_conf.connected_fibers(valid_only=True)
         grid_coords = []
         for fiber in fibers:
             grid_coords.append((fiber.x, fiber.y))

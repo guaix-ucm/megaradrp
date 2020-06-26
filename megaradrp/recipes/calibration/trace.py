@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -24,7 +24,6 @@ import matplotlib.pyplot as plt
 import numina.types.qc as qc
 from numina.array import combine
 from numina.array.wavecalib.crosscorrelation import cosinebell
-import numina.core.validator
 from skimage.filters import threshold_otsu
 from skimage.feature import peak_local_max
 from scipy.ndimage.filters import minimum_filter
@@ -40,6 +39,7 @@ import megaradrp.requirements as reqs
 import megaradrp.products
 import megaradrp.processing.fibermatch as fibermatch
 from megaradrp.instrument import vph_thr
+from megaradrp.instrument.focalplane import FocalPlaneConf
 
 
 class TraceMapRecipe(MegaraBaseRecipe):
@@ -205,17 +205,17 @@ class TraceMapRecipe(MegaraBaseRecipe):
             self.logger.info('rel threshold not defined for %s, using %4.2f', current_vph, threshold)
 
         final = megaradrp.products.TraceMap(instrument=obresult.instrument)
-        fiberconf = self.datamodel.get_fiberconf(reduced)
+        fp_conf = FocalPlaneConf.from_img(reduced)
         # As of 2019-10-15, headers do not contain information
         # about inactive fibers, i.e. all have active=True
-        # inactive_fibers = fiberconf.inactive_fibers()
+        # inactive_fibers = fp_conf.inactive_fibers()
         # We do it manually
-        if fiberconf.name == 'LCB':
+        if fp_conf.name == 'LCB':
             inactive_fibers = [623]
         else:
             inactive_fibers = [635]
 
-        final.total_fibers = fiberconf.nfibers
+        final.total_fibers = fp_conf.nfibers
         final.tags = self.extract_tags_from_ref(reduced, final.tag_names(), base=obresult.labels)
         final.boxes_positions = box_borders
         final.ref_column = cstart

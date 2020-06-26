@@ -18,10 +18,10 @@ from numina.core import Result, Parameter
 import numina.exceptions
 
 from megaradrp.core.recipe import MegaraBaseRecipe
+from megaradrp.instrument.focalplane import FocalPlaneConf
 from megaradrp.ntypes import MasterFiberFlat
 import megaradrp.requirements as reqs
 from megaradrp.ntypes import ProcessedRSS, ProcessedFrame
-import megaradrp.datamodel as dm
 
 # Flat 2D
 from megaradrp.processing.combine import basic_processing_with_combination
@@ -113,7 +113,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         flow = self.init_filters(rinput, rinput.obresult.configuration)
         fmethod = getattr(combine, rinput.method)
         final_image = basic_processing_with_combination(
-            rinput, flow, method=fmethod,method_kwargs=rinput.method_kwargs,
+            rinput, flow, method=fmethod, method_kwargs=rinput.method_kwargs,
         )
         hdr = final_image[0].header
         self.set_base_headers(hdr)
@@ -124,12 +124,12 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         from scipy.interpolate import UnivariateSpline
 
         # Bad fibers
-        fiberconf = dm.get_fiberconf(rss_wl)
-        bad_fibers = fiberconf.invalid_fibers()
+        fp_conf = FocalPlaneConf.from_img(rss_wl)
+        bad_fibers = fp_conf.invalid_fibers()
         bad_idxs = [fibid - 1 for fibid in bad_fibers]
         # print(bad_idxs)
 
-        good_idxs_mask = numpy.ones((fiberconf.nfibers,), dtype='bool')
+        good_idxs_mask = numpy.ones((fp_conf.nfibers,), dtype='bool')
         good_idxs_mask[bad_idxs] = False
 
         # Collapse all fiber spectrum

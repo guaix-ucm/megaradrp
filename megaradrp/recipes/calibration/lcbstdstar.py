@@ -23,6 +23,7 @@ from numina.core.requirements import Requirement
 from numina.core.validator import range_validator
 from numina.types.array import ArrayType
 
+from megaradrp.instrument.focalplane import FocalPlaneConf
 from megaradrp.processing.extractobj import extract_star, generate_sensitivity
 from megaradrp.processing.extractobj import mix_values, compute_broadening
 from megaradrp.recipes.scientific.base import ImageRecipe
@@ -78,7 +79,7 @@ class LCBStandardRecipe(ImageRecipe):
     degrade_resolution_target = Parameter('object', 'Spectrum with higher resolution',
                                           choices=['object']
                                           )
-    # TODO: Implement the posibility of the reference having higher resolution
+    # TODO: Implement the possibility of the reference having higher resolution
     # degrade_resolution_target = Parameter('object', 'Spectrum with higher resolution',
     #                                       choices=['object', 'reference']
     #                                      )
@@ -132,9 +133,9 @@ class LCBStandardRecipe(ImageRecipe):
         npoints = 1 + 3 * rinput.nrings * (rinput.nrings +1)
         self.logger.debug('adding %d fibers', npoints)
 
-        fiberconf = self.datamodel.get_fiberconf(final)
+        fp_conf = FocalPlaneConf.from_img(final)
         spectra_pack = extract_star(final, rinput.position, npoints,
-                                    fiberconf, logger=self.logger)
+                                    fp_conf, logger=self.logger)
 
         spectrum, colids, wl_cover1, wl_cover2 = spectra_pack
         star_spectrum = fits.PrimaryHDU(spectrum, header=final[0].header)

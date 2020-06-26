@@ -20,7 +20,8 @@ from scipy.spatial import KDTree
 from scipy.ndimage.filters import gaussian_filter
 from numina.array.wavecalib.crosscorrelation import periodic_corr1d
 
-import megaradrp.datamodel as dm
+#import megaradrp.datamodel as dm
+import megaradrp.instrument.focalplane as fp
 from megaradrp.processing.fluxcalib import update_flux_limits
 
 
@@ -208,7 +209,7 @@ def compute_centroid(rssdata, fiberconf, c1, c2, point, logger=None):
 def compute_dar(img, logger=None, debug_plot=False):
     """Compute Diferencial Atmospheric Refraction"""
 
-    fiberconf = dm.get_fiberconf(img)
+    fp_conf = fp.FocalPlaneConf.from_img(img)
     wlcalib = astropy.wcs.WCS(img[0].header)
 
     rssdata = img[0].data
@@ -217,7 +218,7 @@ def compute_dar(img, logger=None, debug_plot=False):
     colids = []
     x = []
     y = []
-    for fiber in fiberconf.fibers.values():
+    for fiber in fp_conf.fibers.values():
         colids.append(fiber.fibid - 1)
         x.append(fiber.x)
         y.append(fiber.y)
@@ -236,7 +237,7 @@ def compute_dar(img, logger=None, debug_plot=False):
         c2 = c + delt // 2
 
         z = rssdata[colids, c1:c2].mean(axis=1)
-        centroid = compute_centroid(rssdata, fiberconf, c1, c2, point, logger=logger)
+        centroid = compute_centroid(rssdata, fp_conf, c1, c2, point, logger=logger)
         cols.append(c)
         xdar.append(centroid[0])
         ydar.append(centroid[1])
@@ -253,7 +254,7 @@ def compute_dar(img, logger=None, debug_plot=False):
         c1 = c - delt // 2
         c2 = c + delt // 2
         z = rssdata[colids, c1:c2].mean(axis=1)
-        centroid = compute_centroid(rssdata, fiberconf, c1, c2, point)
+        centroid = compute_centroid(rssdata, fp_conf, c1, c2, point)
         cols.append(c)
         xdar.append(centroid[0])
         ydar.append(centroid[1])

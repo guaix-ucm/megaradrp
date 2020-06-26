@@ -17,7 +17,7 @@ from numina.array.offrot import fit_offset_and_rotation
 from numina.core import Result, Parameter
 from numina.core.qc import QC
 
-from megaradrp.instrument.focalplane import TargetType
+from megaradrp.instrument.focalplane import TargetType, FocalPlaneConf
 from megaradrp.recipes.scientific.base import ImageRecipe
 from megaradrp.ntypes import ProcessedRSS, ProcessedFrame
 from megaradrp.utils import add_collapsed_mos_extension
@@ -101,11 +101,11 @@ class AcquireMOSRecipe(ImageRecipe):
             origin = final
             sky = final
 
-        fiberconf = self.datamodel.get_fiberconf(final)
+        fp_conf = FocalPlaneConf.from_img(final)
 
         cut1, cut2 = rinput.extraction_region
 
-        self.logger.debug("MOS configuration is %s", fiberconf.conf_id)
+        self.logger.debug("MOS configuration is %s", fp_conf.conf_id)
         rssdata = final[0].data
         scale, funit = self.datamodel.fiber_scale_unit(final, unit=True)
         self.logger.debug('unit is %s', funit)
@@ -114,7 +114,7 @@ class AcquireMOSRecipe(ImageRecipe):
         p1 = []
         q1 = []
         temp = []
-        for key, bundle in fiberconf.bundles.items():
+        for key, bundle in fp_conf.bundles.items():
             if bundle.target_type == TargetType.REFERENCE:
                 self.logger.debug("%s %s %s", key, bundle.target_name, bundle.target_type)
                 sorted_fibers = [bundle.fibers[key] for key in sorted(bundle.fibers)]

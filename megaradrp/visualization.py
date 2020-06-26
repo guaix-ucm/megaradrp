@@ -201,6 +201,7 @@ def main(argv=None):
     import matplotlib.transforms as mtransforms
 
     import megaradrp.datamodel as dm
+    from megaradrp.instrument.focalplane import FocalPlaneConf
     from megaradrp.processing.wcs import update_wcs_from_ipa, compute_pa_from_ipa
 
     # scale of the LCB grid in mm
@@ -289,20 +290,20 @@ def main(argv=None):
         with fits.open(fname) as img:
             if args.plot_nominal_config:
                 insmode = img['FIBERS'].header['INSMODE']
-                fiberconf = dm.get_fiberconf_default(insmode)
+                fp_conf = dm.get_fiberconf_default(insmode)
             else:
-                fiberconf = dm.get_fiberconf(img)
-            plot_mask = np.ones((fiberconf.nfibers,), dtype=np.bool)
+                fp_conf = FocalPlaneConf.from_img(img)
+            plot_mask = np.ones((fp_conf.nfibers,), dtype=np.bool)
             if not args.plot_sky:
-                skyfibers = fiberconf.sky_fibers()
+                skyfibers = fp_conf.sky_fibers()
                 skyfibers.sort()
                 skyfibers_idx = [(fibid - 1) for fibid in skyfibers]
                 plot_mask[skyfibers_idx] = False
 
-            x = np.empty((fiberconf.nfibers,))
-            y = np.empty((fiberconf.nfibers,))
+            x = np.empty((fp_conf.nfibers,))
+            y = np.empty((fp_conf.nfibers,))
             # Key is fibid
-            for _, fiber in sorted(fiberconf.fibers.items()):
+            for _, fiber in sorted(fp_conf.fibers.items()):
                 idx = fiber.fibid - 1
                 x[idx] = fiber.x
                 y[idx] = fiber.y

@@ -19,6 +19,7 @@ from numina.core import Result, Parameter
 from numina.core.validator import range_validator
 from numina.constants import FWHM_G
 
+from megaradrp.instrument.focalplane import FocalPlaneConf
 from megaradrp.recipes.scientific.base import ImageRecipe
 from megaradrp.ntypes import ProcessedRSS, ProcessedImage
 
@@ -29,7 +30,7 @@ class AcquireLCBRecipe(ImageRecipe):
     This recipe processes a set of acquisition images
     obtained in **LCB Acquisition** mode and returns
     the offset and rotation required to center the
-    fiducial object in its reference positions.
+    fiduciary object in its reference positions.
 
     See Also
     --------
@@ -58,9 +59,9 @@ class AcquireLCBRecipe(ImageRecipe):
     in the fibers configuration. The RSS with sky subtracted is returned ini the
     field `final_rss` of the recipe result.
 
-    Then, the centroid of the fiducial object nearest to the center of the field
+    Then, the centroid of the fiduciary object nearest to the center of the field
     is computed. The offset needed to center
-    the fiducial object in the center of the LCB is returned.
+    the fiduciary object in the center of the LCB is returned.
 
     """
 
@@ -104,8 +105,8 @@ class AcquireLCBRecipe(ImageRecipe):
             origin = final
             sky = final
 
-        fiberconf = self.datamodel.get_fiberconf(final)
-        self.logger.debug("LCB configuration is %s", fiberconf.conf_id)
+        fp_conf = FocalPlaneConf.from_img(final)
+        self.logger.debug("LCB configuration is %s", fp_conf.conf_id)
 
         rssdata = final[0].data
 
@@ -121,13 +122,13 @@ class AcquireLCBRecipe(ImageRecipe):
         flux_per_cell_all = rssdata[:, cut1:cut2].mean(axis=1)
 
         max_cell = flux_per_cell_all.argmax() + 1
-        max_fiber_ = fiberconf.fibers[max_cell]
+        max_fiber_ = fp_conf.fibers[max_cell]
 
         self.logger.info("maximum flux in spaxel %d -- %s", max_cell, max_fiber_.name)
         # Extend points with the brightest spaxel
         points.append((max_fiber_.x, max_fiber_.y))
 
-        fibers = fiberconf.connected_fibers(valid_only=True)
+        fibers = fp_conf.connected_fibers(valid_only=True)
 
         grid_coords = []
         for fiber in fibers:

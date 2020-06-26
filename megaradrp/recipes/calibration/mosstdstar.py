@@ -21,6 +21,7 @@ from numina.core import Result, Parameter
 from numina.core.requirements import Requirement
 from numina.types.array import ArrayType
 
+from megaradrp.instrument.focalplane import FocalPlaneConf
 from megaradrp.processing.extractobj import extract_star, generate_sensitivity
 from megaradrp.processing.extractobj import mix_values, compute_broadening
 from megaradrp.recipes.scientific.base import ImageRecipe
@@ -117,9 +118,9 @@ class MOSStandardRecipe(ImageRecipe):
         npoints = 7
         self.logger.debug('adding %d fibers', npoints)
 
-        fiberconf = self.datamodel.get_fiberconf(final)
+        fp_conf = FocalPlaneConf.from_img(final)
         spectra_pack = extract_star(final, rinput.position, npoints,
-                                    fiberconf, logger=self.logger)
+                                    fp_conf, logger=self.logger)
 
         spectrum, colids, wl_cover1, wl_cover2 = spectra_pack
         star_spectrum = fits.PrimaryHDU(spectrum, header=final[0].header)

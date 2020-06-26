@@ -23,7 +23,8 @@ import astropy.units as u
 import astropy.wcs
 from numina.frame.utils import copy_img
 
-from megaradrp.datamodel import MegaraDataModel
+from megaradrp.instrument.focalplane import FocalPlaneConf
+# from megaradrp.datamodel import MegaraDataModel
 from megaradrp.core.utils import atleast_2d_last
 import megaradrp.processing.wcs as mwcs
 import megaradrp.processing.hexspline as hspline
@@ -76,12 +77,12 @@ def calc_matrix(nrow, ncol, grid_type=2):
     return r0l
 
 
-def calc_matrix_from_fiberconf(fiberconf):
+def calc_matrix_from_fiberconf(fibersconf):
     """
 
     Parameters
     ----------
-    fiberconf : megaradrp.instrument.focalplance.FiberConfs
+    fibersconf : megaradrp.instrument.focalplance.FocalPlabeConf
 
     Returns
     -------
@@ -91,7 +92,7 @@ def calc_matrix_from_fiberconf(fiberconf):
     # TODO: This should be in FIBERCONFS...
     spos1_x = []
     spos1_y = []
-    for fiber in fiberconf.connected_fibers():
+    for fiber in fibersconf.connected_fibers():
         spos1_x.append(fiber.x)
         spos1_y.append(fiber.y)
     spos1_x = np.asarray(spos1_x)
@@ -100,7 +101,7 @@ def calc_matrix_from_fiberconf(fiberconf):
     # FIXME: workaround
     # FIBER in LOW LEFT corner is 614
     REFID = 614
-    ref_fiber = fiberconf.fibers[REFID]
+    ref_fiber = fibersconf.fibers[REFID]
     minx, miny = ref_fiber.x, ref_fiber.y
     if ref_fiber.x < -6:
         # arcsec
@@ -309,9 +310,7 @@ def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
     rss_data = rss[0].data
     # Operate on non-SKY fibers
 
-    datamodel = MegaraDataModel()
-
-    fiberconf = datamodel.get_fiberconf(rss)
+    fiberconf = FocalPlaneConf.from_img(rss)
     conected = fiberconf.connected_fibers()
     rows = [conf.fibid - 1 for conf in conected]
     #
