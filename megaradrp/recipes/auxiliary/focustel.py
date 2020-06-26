@@ -149,7 +149,7 @@ class FocusTelescopeRecipe(ImageRecipe):
         cut1 = 1000
         cut2 = 3000
         points = [(0, 0)] # Center of fiber 313
-        fibers = fiberconf.conected_fibers(valid_only=True)
+        fibers = fiberconf.connected_fibers(valid_only=True)
         grid_coords = []
         for fiber in fibers:
             grid_coords.append((fiber.x, fiber.y))

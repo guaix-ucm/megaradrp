@@ -188,7 +188,7 @@ def read_fibers_extension(hdr, insmode='LCB'):
 
     """
     import megaradrp.instrument.focalplane as fp
-    conf = fp.FibersConf()
+    conf = fp.FocalPlaneConf()
     defaults = {}
     defaults['LCB'] = (9, 623)
     defaults['MOS'] = (92, 644)

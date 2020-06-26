@@ -70,7 +70,7 @@ def extract_star(rssimage, position, npoints, fiberconf, logger=None):
     pdata = rssimage['wlmap'].data
 
     points = [position]
-    fibers = fiberconf.conected_fibers(valid_only=True)
+    fibers = fiberconf.connected_fibers(valid_only=True)
     grid_coords = []
     for fiber in fibers:
         grid_coords.append((fiber.x, fiber.y))
@@ -159,7 +159,7 @@ def compute_centroid(rssdata, fiberconf, c1, c2, point, logger=None):
 
     logger.debug("LCB configuration is %s", fiberconf.conf_id)
 
-    fibers = fiberconf.conected_fibers(valid_only=True)
+    fibers = fiberconf.connected_fibers(valid_only=True)
     grid_coords = []
     for fiber in fibers:
         grid_coords.append((fiber.x, fiber.y))

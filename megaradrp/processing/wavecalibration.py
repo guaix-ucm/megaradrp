@@ -303,8 +303,12 @@ def header_add_barycentric_correction(hdr, key='B', out=None):
     out['CDELT1{}'.format(key)] = hdr['CDELT1'] * factor
     out['CUNIT1{}'.format(key)] = hdr['CUNIT1']
 
-    for keyword in ['CRPIX2', 'CRVAL2', 'CDELT2']:
-        out['{}{}'.format(keyword, key)] = hdr['{}'.format(keyword)]
+    for keyword in ['CRPIX2', 'CRVAL2', 'CDELT2', 'CTYPE2']:
+        try:
+            out['{}{}'.format(keyword, key)] = hdr['{}'.format(keyword)]
+        except KeyError:
+            # Ignore non-existing key
+            pass
 
     out['VELOSYS{}'.format(key)] = rv.to('m / s').value
     out['SPECSYS{}'.format(key)] = 'BARYCENT'

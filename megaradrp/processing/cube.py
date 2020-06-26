@@ -20,6 +20,7 @@ import math
 import numpy as np
 from scipy import signal
 import astropy.units as u
+import astropy.wcs
 from numina.frame.utils import copy_img
 
 from megaradrp.datamodel import MegaraDataModel
@@ -45,9 +46,9 @@ def calc_matrix(nrow, ncol, grid_type=2):
 
     Parameters
     ----------
-    nrow
-    ncol
-    grid_type
+    nrow : int
+    ncol : int
+    grid_type : int
 
     Returns
     -------
@@ -80,17 +81,17 @@ def calc_matrix_from_fiberconf(fiberconf):
 
     Parameters
     ----------
-    fiberconf
+    fiberconf : megaradrp.instrument.focalplance.FiberConfs
 
     Returns
     -------
 
     """
 
-    # TODO: This should be in FIBERCONF...
+    # TODO: This should be in FIBERCONFS...
     spos1_x = []
     spos1_y = []
-    for fiber in fiberconf.conected_fibers():
+    for fiber in fiberconf.connected_fibers():
         spos1_x.append(fiber.x)
         spos1_y.append(fiber.y)
     spos1_x = np.asarray(spos1_x)
@@ -104,11 +105,11 @@ def calc_matrix_from_fiberconf(fiberconf):
     if ref_fiber.x < -6:
         # arcsec
         ascale = HEX_SCALE
-        print('fiber coordinates in arcsec')
+        # print('fiber coordinates in arcsec')
     else:
         # mm
         ascale = cons.SPAXEL_SCALE.to(u.mm).value
-        print('fiber coordinates in mm')
+        # print('fiber coordinates in mm')
     refx, refy = minx / ascale, miny / ascale
     rpos1_x = (spos1_x - minx) / ascale
     rpos1_y = (spos1_y - miny) / ascale
@@ -121,16 +122,16 @@ def calc_grid(scale=1.0):
 
     Parameters
     ----------
-    scale
+    scale : float
 
     Returns
     -------
 
     """
 
-    G_TYPE = 2
-    ncol = 27
-    nrow = 21
+    G_TYPE = 2 # Values for MEGARA
+    ncol = 27 #
+    nrow = 21 #
     r0l = calc_matrix(nrow, ncol, grid_type=G_TYPE)
     # r0l = R0 @ sl
     spos_x = scale * (r0l[0] - r0l[0].max() / 2)
@@ -145,7 +146,7 @@ def hexgrid_extremes(r0l, target_scale):
     Parameters
     ----------
     r0l
-    target_scale
+    target_scale : float
 
     Returns
     -------
@@ -176,11 +177,16 @@ def create_cube(r0l, zval, p=1, target_scale=1.0):
     ----------
     r0l
     zval
-    p
-    target_scale
+    p : {1, 2}
+    target_scale : float, optional
 
     Returns
     -------
+
+    Raises
+    ------
+    ValueError
+        If `p` > 2
 
     """
     # geometry
@@ -254,10 +260,10 @@ def create_cube_from_array(rss_data, fiberconf, p=1, target_scale_arcsec=1.0, co
     Parameters
     ----------
     rss_data
-    fiberconf
-    p
-    target_scale_arcsec
-    conserve_flux
+    fiberconf : megaradrp.instrument.focalplance.FocalPlaneConf
+    p : {1, 2}
+    target_scale_arcsec : float
+    conserve_flux : bool
 
     Returns
     -------
@@ -265,7 +271,7 @@ def create_cube_from_array(rss_data, fiberconf, p=1, target_scale_arcsec=1.0, co
     """
 
     target_scale = target_scale_arcsec / HEX_SCALE
-    conected = fiberconf.conected_fibers()
+    conected = fiberconf.connected_fibers()
     rows = [conf.fibid - 1 for conf in conected]
 
     rss_data = atleast_2d_last(rss_data)
@@ -288,9 +294,9 @@ def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
     Parameters
     ----------
     rss
-    p
-    target_scale_arcsec
-    conserve_flux
+    p : {1, 2}
+    target_scale_arcsec : float, optional
+    conserve_flux : bool, optional
 
     Returns
     -------
@@ -306,7 +312,7 @@ def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
     datamodel = MegaraDataModel()
 
     fiberconf = datamodel.get_fiberconf(rss)
-    conected = fiberconf.conected_fibers()
+    conected = fiberconf.connected_fibers()
     rows = [conf.fibid - 1 for conf in conected]
     #
     region = rss_data[rows, :]
@@ -372,66 +378,77 @@ def merge_wcs(hdr_sky, hdr_spec, out=None):
     else:
         hdr = out
 
+    allw = astropy.wcs.find_all_wcs(hdr_spec)
+    for w in allw:
+        ss = w.wcs.alt
+        merge_wcs_alt(hdr_sky, hdr_spec, hdr, spec_suffix=ss)
+
+    return hdr
+
+
+def merge_wcs_alt(hdr_sky, hdr_spec, out, spec_suffix=''):
+    """Merge sky WCS with spectral WCS"""
+
+    hdr = out
+    s = spec_suffix
+    sf = s
     # Extend header for third axis
     c_crpix = 'Pixel coordinate of reference point'
     c_cunit = 'Units of coordinate increment and value'
-    hdr.set('CUNIT1', comment=c_cunit, after='CDELT1')
-    hdr.set('CUNIT2', comment=c_cunit, after='CUNIT1')
-    hdr.set('CUNIT3', value='', comment=c_cunit, after='CUNIT2')
-    hdr.set('CRPIX2', value=1, comment=c_crpix, after='CRPIX1')
-    hdr.set('CRPIX3', value=1, comment=c_crpix, after='CRPIX2')
-    hdr.set('CDELT3', after='CDELT2')
-    hdr.set('CTYPE3', after='CTYPE2')
-    hdr.set('CRVAL3', after='CRVAL2')
+    hdr.set('CUNIT1{}'.format(sf), comment=c_cunit, after='CDELT1{}'.format(sf))
+    hdr.set('CUNIT2{}'.format(sf), comment=c_cunit, after='CUNIT1{}'.format(sf))
+    hdr.set('CUNIT3{}'.format(sf), value='', comment=c_cunit, after='CUNIT2{}'.format(sf))
+    hdr.set('CRPIX2{}'.format(sf), value=1, comment=c_crpix, after='CRPIX1{}'.format(sf))
+    hdr.set('CRPIX3{}'.format(sf), value=1, comment=c_crpix, after='CRPIX2{}'.format(sf))
+    hdr.set('CDELT3{}'.format(sf), after='CDELT2{}'.format(sf))
+    hdr.set('CTYPE3{}'.format(sf), after='CTYPE2{}'.format(sf))
+    hdr.set('CRVAL3{}'.format(sf), after='CRVAL2{}'.format(sf))
     c_pc = 'Coordinate transformation matrix element'
-    hdr.set('PC1_1', value=1.0, comment=c_pc, after='CRVAL3')
-    hdr.set('PC1_2', value=0.0, comment=c_pc, after='PC1_1')
-    hdr.set('PC1_3', value=0.0, comment=c_pc, after='PC1_2')
-    hdr.set('PC2_1', value=0.0, comment=c_pc, after='PC1_3')
-    hdr.set('PC2_2', value=1.0, comment=c_pc, after='PC2_1')
-    hdr.set('PC2_3', value=0.0, comment=c_pc, after='PC2_2')
-    hdr.set('PC3_1', value=0.0, comment=c_pc, after='PC2_3')
-    hdr.set('PC3_2', value=0.0, comment=c_pc, after='PC3_1')
-    hdr.set('PC3_3', value=1.0, comment=c_pc, after='PC3_2')
+    hdr.set('PC1_1{}'.format(sf), value=1.0, comment=c_pc, after='CRVAL3{}'.format(sf))
+    hdr.set('PC1_2{}'.format(sf), value=0.0, comment=c_pc, after='PC1_1{}'.format(sf))
+    hdr.set('PC2_1{}'.format(sf), value=0.0, comment=c_pc, after='PC1_2{}'.format(sf))
+    hdr.set('PC2_2{}'.format(sf), value=1.0, comment=c_pc, after='PC2_1{}'.format(sf))
+    hdr.set('PC3_3{}'.format(sf), value=1.0, comment=c_pc, after='PC2_2{}'.format(sf))
 
     # Mapping, which keyword comes from each header
-    mappings = [('CRPIX3', 'CRPIX1', 0, 0.0),
-                ('CDELT3', 'CDELT1', 0, 1.0),
-                ('CRVAL3', 'CRVAL1', 0, 0.0),
-                ('CTYPE3', 'CTYPE1', 0, ' '),
-                ('CRPIX1', 'CRPIX1', 1, 0.0),
-                ('CDELT1', 'CDELT1', 1, 1.0),
-                ('CRVAL1', 'CRVAL1', 1, 0.0),
-                ('CTYPE1', 'CTYPE1', 1, ' '),
-                ('CUNIT1', 'CUNIT1', 1, ' '),
-                ('PC1_1', 'PC1_1', 1 , 1.0),
-                ('PC1_2', 'PC1_2', 1 , 0.0),
-                ('CRPIX2', 'CRPIX2', 1, 0.0),
-                ('CDELT2', 'CDELT2', 1, 1.0),
-                ('CRVAL2', 'CRVAL2', 1, 0.0),
-                ('CTYPE2', 'CTYPE2', 1, ' '),
-                ('CUNIT2', 'CUNIT2', 1, ' '),
-                ('PC2_1', 'PC2_1', 1, 0.0),
-                ('PC2_2', 'PC2_2', 1, 1.0),
+    mappings = [('CRPIX3', 'CRPIX1', s, 0),
+                ('CDELT3', 'CDELT1', s, 0),
+                ('CRVAL3', 'CRVAL1', s, 0),
+                ('CTYPE3', 'CTYPE1', s, 0),
+                ('CRPIX1', 'CRPIX1', '', 1),
+                ('CDELT1', 'CDELT1', '', 1),
+                ('CRVAL1', 'CRVAL1', '', 1),
+                ('CTYPE1', 'CTYPE1', '', 1),
+                ('CUNIT1', 'CUNIT1', '', 1),
+                ('PC1_1', 'PC1_1', '', 1),
+                ('PC1_2', 'PC1_2', '', 1),
+                ('CRPIX2', 'CRPIX2', '', 1),
+                ('CDELT2', 'CDELT2', '', 1),
+                ('CRVAL2', 'CRVAL2', '', 1),
+                ('CTYPE2', 'CTYPE2', '', 1),
+                ('CUNIT2', 'CUNIT2', '', 1),
+                ('PC2_1', 'PC2_1', '', 1),
+                ('PC2_2', 'PC2_2', '', 1),
+                ('LONPOLE', 'LONPOLE', '', 1),
+                ('RADESYS', 'READESYS', '', 1),
+                ('specsys', 'SPECSYS', s, 0),
+                ('ssysobs', 'SSYSOBS', s, 0),
+                ('velosys', 'VELOSYS', s, 0)
                 ]
-
-    idem_keys = [
-        ('LONPOLE', 0.0),
-    #    'LATPOLE',
-        ('RADESYS', 'FK5')
-    #    'EQUINOX'
-    ]
-    for key, default in idem_keys:
-        mp = (key, key, 1, default)
-        mappings.append(mp)
 
     hdr_in = {}
     hdr_in[0] = hdr_spec
     hdr_in[1] = hdr_sky
 
-    for dest, orig, idx, default in mappings:
+    for dest, orig, key, idx in mappings:
         hdr_orig = hdr_in[idx]
-        hdr[dest] = (hdr_orig.get(orig, default), hdr_orig.comments[orig])
+        korig = orig + key
+        kdest = dest + sf
+        try:
+            hdr[kdest] = hdr_orig[korig], hdr_orig.comments[korig]
+        except KeyError:
+            # Ignoring errors. Copy only if keyword exists
+            pass
 
     return hdr
 
@@ -533,12 +550,14 @@ def main(args=None):
     print('interpolation method is "{}"'.format(args.method))
     print('target scale is', target_scale, 'arcsec')
     conserve_flux = not args.disable_scaling
-    with fits.open(args.rss) as rss:
-        cube = create_cube_from_rss(rss, p, target_scale, conserve_flux=conserve_flux)
 
-    if not args.pa_from_header:
-        print('recompute WCS from IPA')
-        cube[0].header = recompute_wcs(cube[0].header)
+    with fits.open(args.rss) as rss:
+        if not args.pa_from_header:
+            # Doing it here so the change is propagated to
+            # all alternative coordinates
+            print('recompute WCS from IPA')
+            rss['FIBERS'].header = recompute_wcs(rss['FIBERS'].header)
+        cube = create_cube_from_rss(rss, p, target_scale, conserve_flux=conserve_flux)
 
     cube.writeto(args.outfile, overwrite=True)
 

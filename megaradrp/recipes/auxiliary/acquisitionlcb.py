@@ -127,7 +127,7 @@ class AcquireLCBRecipe(ImageRecipe):
         # Extend points with the brightest spaxel
         points.append((max_fiber_.x, max_fiber_.y))
 
-        fibers = fiberconf.conected_fibers(valid_only=True)
+        fibers = fiberconf.connected_fibers(valid_only=True)
 
         grid_coords = []
         for fiber in fibers:
