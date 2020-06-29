@@ -7,5 +7,11 @@
    :synopsis:  Static configuration
 
 
-.. autoclass:: megaradrp.instrument.loader.Loader
+.. automodule:: megaradrp.instrument.components
+   :members:
 
+.. automodule:: megaradrp.instrument.configs
+   :members:
+
+.. automodule:: megaradrp.instrument.focalplane
+   :members:

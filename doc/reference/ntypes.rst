@@ -1,7 +1,7 @@
 
 ==================================================================
-:mod:`megaradrp.types` --- MEGARA data types
+:mod:`megaradrp.ntypes` --- MEGARA data types
 ==================================================================
 
-.. module:: megaradrp.types
+.. module:: megaradrp.ntypes
    :synopsis:  Data types

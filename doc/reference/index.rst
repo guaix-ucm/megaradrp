@@ -26,8 +26,9 @@ Reference
    processing
    products
    recipes
-   types
+   ntypes
    datamodel
+   datatype
    utils
    validators
    visualization

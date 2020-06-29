@@ -78,6 +78,5 @@ MEGARA team.
    fiberflat
    twilight
    bpm
-   linearity
    lcbstd
    mosstd
