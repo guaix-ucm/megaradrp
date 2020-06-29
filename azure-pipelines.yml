@@ -20,3 +20,5 @@ jobs:
       pypi_connection_name: 'pypi_megaradrp'
     targets:
     - sdist
+    - wheels_universal
+
