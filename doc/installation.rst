@@ -28,9 +28,6 @@ Additional packages are optionally required:
 Installing MEGARA DRP
 *********************
 
-Using Conda
-===========
-
 Using pip
 =========
 To install with pip, simply run:::
@@ -43,6 +40,9 @@ To install with pip, simply run:::
     have Numpy installed, since otherwise pip will sometimes try to upgrade 
     your Numpy installation, which may not always be desired.
 
+
+Using Conda
+===========
 
 `megaradrp` can be installed with conda using a custom channel.
 
