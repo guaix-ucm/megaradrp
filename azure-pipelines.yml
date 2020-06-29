@@ -1,0 +1,22 @@
+#
+resources:
+  repositories:
+  - repository: OpenAstronomy
+    type: github
+    endpoint: guaix-ucm
+    name: OpenAstronomy/azure-pipelines-templates
+    ref: master
+trigger:
+#  branches:
+#    include:
+#    - '*'
+  tags:
+    include:
+    - 'v*'
+jobs:
+- template: publish.yml@OpenAstronomy
+  parameters:
+    ${{ if startsWith(variables['Build.SourceBranch'], 'refs/tags/v') }}:
+      pypi_connection_name: 'pypi_megaradrp'
+    targets:
+    - sdist
