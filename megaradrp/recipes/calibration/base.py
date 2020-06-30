@@ -17,7 +17,7 @@ from numina.core.requirements import ObservationResultRequirement
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement
-from megaradrp.types import MasterFiberFlat
+from megaradrp.ntypes import MasterFiberFlat
 
 
 _logger = logging.getLogger('numina.recipes.megara')

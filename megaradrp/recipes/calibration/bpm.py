@@ -20,7 +20,7 @@ from numina.array import combine
 
 from megaradrp.processing.combine import basic_processing_with_combination_frames
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.types import  MasterBPM
+from megaradrp.ntypes import  MasterBPM
 import megaradrp.requirements as reqs
 
 

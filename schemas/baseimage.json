@@ -1,0 +1,473 @@
+{
+  "$id": "/home/spr/devel/guaix/megaradrp/schemas/baseimage.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Schema for MEGARA headers",
+  "description": "Describe MEGARA headers",
+  "anyOf": [
+    {"$ref": "#/definitions/one_ext_hdul"},
+    {"$ref": "#/definitions/two_ext_hdul"},
+    {"$ref": "#/definitions/proc_rss_wl_hdul"},
+    {"$ref": "#/definitions/proc_image_hdul"}
+  ],
+  "definitions": {
+    "structure_hdu": {
+      "type": "object",
+      "properties": {
+        "values": {
+          "type": "object"
+        },
+        "comments": {
+          "type": "object"
+        },
+        "ordering": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "values"
+      ]
+    },
+    "primary_hdu": {
+      "allOf": [
+        {"$ref": "#/definitions/structure_hdu"},
+        {
+          "type": "object",
+          "properties": {
+            "values": {
+              "allOf": [
+                {"$ref": "#/definitions/primary_hdu_values"},
+                {
+                  "oneOf": [
+                    {
+                      "$ref": "#/definitions/raw_hdu_values"
+                    },
+                    {
+                      "$ref": "#/definitions/rss_hdu_values"
+                    },
+                    {
+                      "$ref": "#/definitions/proc_hdu_values"
+                    },
+                    {
+                      "$ref": "#/definitions/spec_hdu_values"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "primary_hdu_values": {
+      "type": "object",
+      "properties": {
+        "OBSMODE": {"type": "string"},
+        "DATE-OBS": {"$ref":  "#/definitions/datetime"},
+        "INSTRUME": {"type": "string", "const": "MEGARA"},
+        "BUNIT": {"type":  "string", "default": "ADU"},
+        "DETECTOR": {"type":  "string", "default": "CCD2231-84-0-E74"},
+        "EXPTIME": {"type":  "number", "minimum": 0},
+        "DARKTIME": {"type":  "number", "minimum": 0},
+        "READMODE": {"type": "string", "enum": ["NORMAL", "MIRROR"]},
+        "RSPEED": {"type": "string", "enum": ["SLOW", "FAST", "ENG"]},
+        "GAIN1": {"type": "number", "minimum": 0, "default": 1.73},
+        "GAIN2": {"type": "number", "minimum": 0, "default": 1.6},
+        "RDNOISE1": {"type": "number", "minimum": 0, "default": 3.4},
+        "RDNOISE2": {"type": "number", "minimum": 0, "default": 3.4},
+        "IPA": {"type": "number"},
+        "ARIMASS": {"type": "number"},
+        "ARIMASS1": {"type": "number"},
+        "ARIMASS2": {"type": "number"},
+        "AMSTART": {"type": "number"},
+        "AMEND": {"type": "number"},
+        "RA": {"type": "string"},
+        "DEC": {"type": "string"},
+        "RADEG": {"type": "number"},
+        "DECDEG": {"type": "number"},
+        "AZIMUTH": {"type": "number"},
+        "ELEVAT":  {"type": "number"},
+        "ROTANG":  {"type": "number"},
+        "LST":  {"type": "string"},
+        "MDJ-OBS":  {"type": "number"},
+        "SETPNT":  {"type": "number"},
+        "CCDTEMP0":  {"type": "number", "minimum": 0},
+        "CCDTEMP1":  {"type": "number", "minimum": 0},
+        "CCDTEMP2":  {"type": "number", "minimum": 0},
+        "CCDTEMP3":  {"type": "number", "minimum": 0},
+        "SENTEMP0":  {"type": "number"},
+        "SENTEMP1":  {"type": "number"},
+        "SENTEMP2":  {"type": "number"},
+        "SENTEMP3":  {"type": "number"},
+        "SENTEMP4":  {"type": "number"},
+        "SENTEMP5":  {"type": "number"},
+        "SENTEMP6":  {"type": "number"},
+        "INSMODE":  {"type": "string", "enum": ["LCB", "MOS"]},
+        "VPHWHPOS":  {"type": "string", "enum": [
+          "VPH1", "VPH2", "VPH3", "VPH4", "VPH5","VPH6", "VPH7","VPH8","VPH9","VPH10",
+          "VPH11"
+        ]
+        },
+        "VPH":  {"type": "string"},
+        "FOCUS":  {"type": "number", "minimum": 0},
+        "SLITN":  {"type": "number"},
+        "OSFILTER":  {"type": "string",
+          "enum": ["BLUE", "RED", " RED"]
+        },
+        "COVER":  {"type": "string",
+          "enum": ["STOPPED", "BOTH_OPEN"]
+        },
+        "LAMPI1S":  {"type": "integer",
+          "enum": [0,1]
+        },
+        "LAMPI1I":  {"type": "number", "minimum": 0, "maximum": 100},
+        "LAMPI2S":  {"type": "integer",
+          "enum": [0,1]
+        },
+        "LAMPI2I":  {"type": "number", "minimum": 0, "maximum": 100},
+        "LAMPS1S":  {"type": "integer",
+          "enum": [0,1]
+        },
+        "LAMPS2S":  {"type": "integer",
+          "enum": [0,1]
+        },
+        "LAMPS3S":  {"type": "integer",
+          "enum": [0,1]
+        },
+        "LAMPS4S":  {"type": "integer",
+          "enum": [0,1]
+        },
+        "LAMPS5S":  {"type": "integer", "enum": [0,1]},
+        "LAMPMIR":  {"type": "string", "enum": ["WORK", "PARK", "UNDEFINED"],
+          "description": "Status of the ICM mirror"
+        },
+        "SPECLAMP":  {"type": "string", "enum": ["NONE", "ThNe", "ThAr", "ThArNe", "UNKNOWN"]},
+        "OBJECT":  {"type": "string"},
+        "OBSTYPE":  {"type": "string",
+          "enum": ["AUXILIARY", "CALIBRATION", "SCIENTIFIC", "ENGINEERING", "OBJECT"],
+          "description": "OBJECT is not in our document"
+        },
+        "ORIGIN":  {"type": "string"},
+        "INSCONF":  {"$ref":  "#/definitions/uuid"},
+        "UUID":  {"$ref":  "#/definitions/uuid"},
+        "BLCKUUID": {"$ref":  "#/definitions/uuid"}
+      },
+      "required": ["OBSMODE", "DATE-OBS", "INSTRUME", "UUID", "INSCONF", "EXPTIME",
+        "VPH"]
+    },
+    "raw_hdu_values": {
+      "type": "object",
+      "properties": {
+        "NAXIS":  {"const": 2},
+        "NAXIS1": {"const": 4196},
+        "NAXIS2": {"const": 4212}
+      }
+    },
+    "proc_hdu_values": {
+      "type": "object",
+      "properties": {
+        "NAXIS":  {"const": 2},
+        "NAXIS1": {"const": 4096},
+        "NAXIS2": {"const": 4112}
+      }
+    },
+    "spec_hdu_values": {
+      "type": "object",
+      "properties": {
+        "NAXIS":  {"const": 1},
+        "NAXIS1": {"const": 4300}
+      }
+    },
+    "rss_naxis2": {
+      "type": "object",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "INSMODE": {
+                "const": "LCB"
+              }
+            }
+          },
+          "then": {"properties": {"NAXIS2": {"const": 623}}}
+          },
+        {
+          "if": {
+            "properties": {
+              "INSMODE": {
+                "const": "MOS"
+              }
+            }
+          },
+          "then": {"properties": {"NAXIS2": {"const": 644}}}
+        }
+      ]
+    },
+    "rss_hdu_values": {
+      "allOf": [
+        {
+          "type": "object",
+          "properties": {
+            "NAXIS": {"const": 2},
+            "NAXIS1": {"enum": [4300, 4096]}
+          }
+        },
+        {
+          "$ref": "#/definitions/rss_naxis2"
+        }
+      ]
+    },
+    "one_ext_hdul": {
+      "description": "A MEGARA image, 1 HDU",
+      "type": "array",
+      "additionalItems": false,
+      "minItems": 1,
+      "maxItems": 1,
+      "items": [
+        {
+          "$ref": "#/definitions/primary_hdu"
+        }
+      ]
+    },
+    "two_ext_hdul": {
+      "type": "array",
+      "description": "A MEGARA image, 2 HDUs",
+      "additionalItems": false,
+      "minItems": 2,
+      "maxItems": 2,
+      "items": [
+        {
+          "$ref": "#/definitions/primary_hdu"
+        },
+        {
+          "$ref": "#/definitions/fibers_hdu"
+        }
+      ]
+    },
+    "proc_rss_wl_hdul": {
+      "type": "array",
+      "description": "A MEGARA image, 3 HDUs",
+      "additionalItems": false,
+      "minItems": 3,
+      "maxItems": 3,
+      "items": [
+        {
+          "$ref": "#/definitions/primary_hdu"
+        },
+        {
+          "$ref": "#/definitions/fibers_hdu"
+        },
+        {
+          "$ref": "#/definitions/wlmap_hdu"
+        }
+      ]
+    },
+    "proc_image_hdul": {
+      "type": "array",
+      "description": "A MEGARA image, 3 HDUs",
+      "additionalItems": false,
+      "minItems": 2,
+      "items": [
+        {
+          "$ref": "#/definitions/primary_hdu"
+        },
+        {
+          "$ref": "#/definitions/fibers_hdu"
+        },
+        {
+          "$ref": "#/definitions/variance_hdu"
+        },
+        {
+          "$ref": "#/definitions/map_hdu"
+        }
+      ]
+    },
+    "spec1d_hdul": {
+      "type": "array",
+      "description": "A MEGARA spectrum, 1 HDUs",
+      "additionalItems": false,
+      "minItems": 1,
+      "items": [
+        {
+          "type": "object"
+        }
+      ]
+    },
+    "fibers_hdu": {
+      "allOf": [
+        {"$ref": "#/definitions/structure_hdu"},
+        {
+          "type": "object",
+          "properties": {
+            "values": {
+              "allOf": [
+                {"$ref": "#/definitions/fibers_hdu_values"},
+                {
+                  "oneOf": [
+                    {
+                      "$ref": "#/definitions/fibers_lcb_hdu_values"
+                    },
+                    {
+                      "$ref": "#/definitions/fibers_mos_hdu_values"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "fibers_hdu_values": {
+      "type":  "object",
+      "properties": {
+        "EXTNAME": {"type":  "string", "const": "FIBERS"},
+        "NFIBERS": {"type": "integer", "enum": [623, 644]},
+        "NBUNDLES": {"type": "integer", "enum": [9, 92]},
+        "INSMODE": {"type":  "string", "enum": ["LCB", "MOS"]},
+        "CONFID": {"$ref":  "#/definitions/uuid"},
+        "CONFNAME": {"type": "string"}
+      },
+      "patternProperties": {
+        "^FIB[0123456][0-9][0-9]_N$": {"type": "string",
+          "description": "this is matching more keywords, like FIB699_N"
+        },
+        "^FIB[0123456][0-9][0-9]_X$": {"type": "number"},
+        "^FIB[0123456][0-9][0-9]_Y$": {"type": "number"},
+        "^FIB[0123456][0-9][0-9]_B$": {"type": "integer"},
+        "^FIB[0123456][0-9][0-9]_D$": {"type": "number"},
+        "^FIB[0123456][0-9][0-9]_R$": {"type": "number"},
+        "^FIB[0123456][0-9][0-9]_A$": {"type": "boolean"},
+        "^BUN0[0-9][0-9]_E$": {"type": "boolean"},
+        "^BUN0[0-9][0-9]_X$": {"type": "number"},
+        "^BUN0[0-9][0-9]_Y$": {"type": "number"},
+        "^BUN0[0-9][0-9]_O$": {"type": "number"},
+        "^BUN0[0-9][0-9]_P$": {"type": "integer"},
+        "^BUN0[0-9][0-9]_I$": {"type": "string"},
+        "^BUN0[0-9][0-9]_T$": {"type": "string"}
+      },
+      "required": ["EXTNAME","NFIBERS", "NBUNDLES", "INSMODE", "CONFID",
+      "FIB001_X", "FIB002_Y", "FIB623_X", "FIB623_Y"]
+    },
+    "fibers_lcb_hdu_values": {
+      "type":  "object",
+      "properties": {
+        "NFIBERS": {"type": "integer", "const": 623},
+        "NBUNDLES": {"type": "integer", "const": 9},
+        "INSMODE": {"type":  "string", "const": "LCB"},
+        "CONFID": {"$ref":  "#/definitions/uuid"}
+      },
+      "required": ["FIB623_X", "FIB623_Y", "BUN000_X", "BUN093_X"]
+    },
+    "fibers_mos_hdu_values": {
+      "type":  "object",
+      "properties": {
+        "NFIBERS": {"type": "integer", "const":  644},
+        "NBUNDLES": {"type": "integer"},
+        "INSMODE": {"type":  "string", "const": "MOS"},
+        "CONFID": {"$ref":  "#/definitions/uuid"}
+      },
+      "required": ["FIB644_X", "FIB644_Y", "BUN001_X", "BUN092_X"]
+    },
+    "wlmap_hdu": {
+      "allOf": [
+        {"$ref": "#/definitions/structure_hdu"},
+        {
+          "type": "object",
+          "properties": {
+            "values": {
+              "allOf": [
+                {"$ref": "#/definitions/wlmap_hdu_values"},
+                {
+                  "oneOf": [
+                    {
+                      "$ref": "#/definitions/wlmap_lcb_hdu_values"
+                    },
+                    {
+                      "$ref": "#/definitions/wlmap_mos_hdu_values"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "wlmap_hdu_values": {
+      "type":  "object",
+      "properties": {
+        "EXTNAME": {"type":  "string", "const": "WLMAP"},
+        "NAXIS1": {"type": "integer", "enum": [4300]},
+        "NAXIS2": {"type": "integer", "enum": [623, 644]}
+      },
+      "required": ["EXTNAME"]
+    },
+    "wlmap_lcb_hdu_values": {
+      "type":  "object",
+      "properties": {
+        "NAXIS2": {"type": "integer", "const": 623}
+      }
+    },
+    "wlmap_mos_hdu_values": {
+      "type":  "object",
+      "properties": {
+        "NAXIS2": {"type": "integer", "const": 644}
+      }
+    },
+    "variance_hdu": {
+      "allOf": [
+        {"$ref": "#/definitions/structure_hdu"},
+        {
+          "type": "object",
+          "properties": {
+            "values": {
+              "allOf": [
+                {"$ref": "#/definitions/variance_hdu_values"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "variance_hdu_values": {
+      "type":  "object",
+      "properties": {
+        "EXTNAME": {"type":  "string", "const": "VARIANCE"}
+      },
+      "required": ["EXTNAME"]
+    },
+    "map_hdu": {
+      "allOf": [
+        {"$ref": "#/definitions/structure_hdu"},
+        {
+          "type": "object",
+          "properties": {
+            "values": {
+              "allOf": [
+                {"$ref": "#/definitions/map_hdu_values"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "map_hdu_values": {
+      "type":  "object",
+      "properties": {
+        "EXTNAME": {"type":  "string", "const": "MAP"}
+      },
+      "required": ["EXTNAME"]
+    },
+    "uuid": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
+    "datetime": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,4})?$"
+    }
+  }
+}

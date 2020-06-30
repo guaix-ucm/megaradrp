@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2019 Universidad Complutense de Madrid
+# Copyright 2015-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -25,10 +25,11 @@ from numina.array import combine
 from numina.modeling.gaussbox import GaussBox, gauss_box_model
 from numina.frame.utils import copy_img
 
+from megaradrp.instrument.focalplane import FocalPlaneConf
 from megaradrp.products.modelmap import ModelMap
 from megaradrp.products.modelmap import GeometricModel
 from megaradrp.processing.aperture import ApertureExtractor
-from megaradrp.types import ProcessedImage, ProcessedRSS
+from megaradrp.ntypes import ProcessedImage, ProcessedRSS
 from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.core.recipe import MegaraBaseRecipe
 import megaradrp.requirements as reqs
@@ -138,8 +139,8 @@ class ModelMapRecipe(MegaraBaseRecipe):
 
         self.logger.debug('update metadata in model')
         model_map.update_metadata(self)
-        fiberconf = self.datamodel.get_fiberconf(reduced)
-        model_map.total_fibers = fiberconf.nfibers
+        fp_conf = FocalPlaneConf.from_img(reduced)
+        model_map.total_fibers = fp_conf.nfibers
         model_map.missing_fibers = rinput.master_traces.missing_fibers
         model_map.tags = self.extract_tags_from_ref(reduced, model_map.tag_names(), base=obresult.labels)
         # model_map.boxes_positions = box_borders

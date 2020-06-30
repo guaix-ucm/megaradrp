@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -10,21 +10,26 @@
 """LCB Standard Star Image Recipe for Megara"""
 
 
-from scipy.interpolate import interp1d
+from astropy import constants as const
 import astropy.io.fits as fits
 import astropy.units as u
-from astropy import constants as const
+import astropy.wcs
 
+from scipy.interpolate import interp1d
+
+from numina.array.numsplines import AdaptiveLSQUnivariateSpline
 from numina.core import Result, Parameter
 from numina.core.requirements import Requirement
 from numina.core.validator import range_validator
 from numina.types.array import ArrayType
 
+from megaradrp.instrument.focalplane import FocalPlaneConf
 from megaradrp.processing.extractobj import extract_star, generate_sensitivity
+from megaradrp.processing.extractobj import mix_values, compute_broadening
 from megaradrp.recipes.scientific.base import ImageRecipe
-from megaradrp.types import ProcessedRSS, ProcessedFrame, ProcessedSpectrum
-from megaradrp.types import ReferenceSpectrumTable, ReferenceExtinctionTable
-from megaradrp.types import MasterSensitivity
+from megaradrp.ntypes import ProcessedRSS, ProcessedFrame, ProcessedSpectrum
+from megaradrp.ntypes import ReferenceSpectrumTable, ReferenceExtinctionTable
+from megaradrp.ntypes import MasterSensitivity
 
 
 class LCBStandardRecipe(ImageRecipe):
@@ -51,7 +56,7 @@ class LCBStandardRecipe(ImageRecipe):
     `reduced_image` of the recipe result.
 
     The apertures in the 2D image are extracted, using the information in
-    `master_traces` and resampled according to the wavelength calibration in
+    `master_apertures` and resampled according to the wavelength calibration in
     `master_wlcalib`. Then is divided by the `master_fiberflat`.
     The resulting RSS is saved as an intermediate
     result named 'reduced_rss.fits'. This RSS is also returned in the field
@@ -71,6 +76,16 @@ class LCBStandardRecipe(ImageRecipe):
     reference_spectrum = Requirement(ReferenceSpectrumTable, "Spectrum of reference star")
     reference_spectrum_velocity = Parameter(0.0, 'Radial velocity (km/s) of reference spectrum')
     reference_extinction = Requirement(ReferenceExtinctionTable, "Reference extinction")
+    degrade_resolution_target = Parameter('object', 'Spectrum with higher resolution',
+                                          choices=['object']
+                                          )
+    # TODO: Implement the possibility of the reference having higher resolution
+    # degrade_resolution_target = Parameter('object', 'Spectrum with higher resolution',
+    #                                       choices=['object', 'reference']
+    #                                      )
+    degrade_resolution_method = Parameter('fixed', 'Method to degrade the resolution',
+                                          choices=['none', 'fixed', 'auto']
+                                          )
     sigma_resolution = Parameter(20.0, 'sigma Gaussian filter to degrade resolution ')
 
     reduced_image = Result(ProcessedFrame)
@@ -79,31 +94,34 @@ class LCBStandardRecipe(ImageRecipe):
     sky_rss = Result(ProcessedRSS)
     star_spectrum = Result(ProcessedSpectrum)
     master_sensitivity = Result(MasterSensitivity)
-    fiber_ids = Result(ArrayType)
+    sensitivity_raw = Result(ProcessedSpectrum)
+    fiber_ids = Result(ArrayType(fmt='%d'))
+    sigma = Result(float)
+
+    def set_base_headers(self, hdr):
+        """Set metadata in FITS headers."""
+        hdr = super(LCBStandardRecipe, self).set_base_headers(hdr)
+        hdr['NUMTYPE'] = ('MASTER_SENSITIVITY', 'Product type')
+        hdr['IMGTYPE'] = ('MASTER_SENSITIVITY', 'Product type')
+        return hdr
 
     def run(self, rinput):
 
         self.logger.info('starting LCBStandardRecipe reduction')
 
         # Create InstrumentModel
-        ins1 = rinput.obresult.configuration
+        # ins1 = rinput.obresult.configuration
         #
         reduced2d, rss_data = super(LCBStandardRecipe, self).base_run(rinput)
-        tags = rinput.obresult.tags
-        #print(ins1.get('detector.scan'))
-        #print(ins1.get('pseudoslit.boxes', **tags))
-        #print(ins1.get('pseudoslit.boxes_positions', **tags))
+        # tags = rinput.obresult.tags
         ins2 = rinput.obresult.profile
-        #print(ins2.is_configured)
         ins2.configure_with_image(rss_data)
-        #print(ins2.is_configured)
-        #print(ins2.get_property('detector.scan'))
-        #print(ins2.get_property('pseudoslit.boxes'))
-        #print(ins2.get_property('pseudoslit.boxes_positions'))
-        print(tags)
-        print(ins2.children['pseudoslit']._internal_state)
         self.logger.info('start sky subtraction')
-        final, origin, sky = self.run_sky_subtraction(rss_data, rinput.ignored_sky_bundles)
+        final, origin, sky = self.run_sky_subtraction(
+            rss_data,
+            sky_rss=rinput.sky_rss,
+            ignored_sky_bundles=rinput.ignored_sky_bundles
+        )
         self.logger.info('end sky subtraction')
 
         # 1 + 6  for first ring
@@ -115,9 +133,9 @@ class LCBStandardRecipe(ImageRecipe):
         npoints = 1 + 3 * rinput.nrings * (rinput.nrings +1)
         self.logger.debug('adding %d fibers', npoints)
 
-        fiberconf = self.datamodel.get_fiberconf(final)
+        fp_conf = FocalPlaneConf.from_img(final)
         spectra_pack = extract_star(final, rinput.position, npoints,
-                                    fiberconf, logger=self.logger)
+                                    fp_conf, logger=self.logger)
 
         spectrum, colids, wl_cover1, wl_cover2 = spectra_pack
         star_spectrum = fits.PrimaryHDU(spectrum, header=final[0].header)
@@ -131,8 +149,46 @@ class LCBStandardRecipe(ImageRecipe):
                                rinput.reference_extinction[:, 1])
 
         fiber_ids = [colid + 1 for colid in colids]
-        sigma = rinput.sigma_resolution
-        sens = generate_sensitivity(final, spectrum, star_interp, extinc_interp, wl_cover1, wl_cover2, sigma)
+
+        wcsl = astropy.wcs.WCS(final[0].header)
+        wl_aa, response_m, response_r = mix_values(wcsl, spectrum, star_interp)
+        if rinput.degrade_resolution_method == 'none':
+            sigma = 0
+            self.logger.info('no broadening')
+        elif rinput.degrade_resolution_method == 'fixed':
+            sigma = rinput.sigma_resolution
+            self.logger.info('fixed sigma=%3.0f', sigma)
+        elif rinput.degrade_resolution_method == 'auto':
+            self.logger.info('compute auto broadening')
+            offset_broad, sigma_broad = compute_broadening(
+                response_r.copy(), response_m.copy(), sigmalist=range(1, 101),
+                remove_mean=False, frac_cosbell=0.10, zero_padding=50,
+                fminmax=(0.003, 0.3), naround_zero=25, nfit_peak=21
+            )
+            sigma = sigma_broad
+            self.logger.info('computed sigma=%3.0f', sigma)
+        else:
+            msg = "'degrade_resolution_method' has value {}".format(rinput.degrade_resolution_method)
+            raise ValueError(msg)
+
+        sens_raw = generate_sensitivity(final, spectrum, star_interp, extinc_interp, wl_cover1, wl_cover2, sigma)
+
+        # Compute smoothed version
+        self.logger.info('compute smoothed sensitivity')
+
+        sens = sens_raw.copy()
+        i_knots = 3
+        self.logger.debug('using sdaptive spline with t=%d interior knots', i_knots)
+        spl = AdaptiveLSQUnivariateSpline(x=wl_aa.value, y=sens_raw.data, t=i_knots)
+        sens.data = spl(wl_aa.value)
+
+        if self.intermediate_results:
+            import matplotlib.pyplot as plt
+            plt.plot(wl_aa, sens_raw.data, 'b')
+            plt.plot(wl_aa, sens.data, 'r')
+            plt.savefig('smoothed.png')
+            plt.close()
+
         self.logger.info('end LCBStandardRecipe reduction')
 
         return self.create_result(
@@ -142,5 +198,7 @@ class LCBStandardRecipe(ImageRecipe):
             sky_rss=sky,
             star_spectrum=star_spectrum,
             master_sensitivity=sens,
-            fiber_ids=fiber_ids
+            sensitivity_raw=sens_raw,
+            fiber_ids=fiber_ids,
+            sigma=sigma
         )

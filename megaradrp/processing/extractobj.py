@@ -1,5 +1,5 @@
 
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -11,7 +11,6 @@
 
 import math
 import uuid
-import logging
 
 import numpy
 import astropy.wcs
@@ -19,8 +18,10 @@ import astropy.io.fits as fits
 import astropy.units as u
 from scipy.spatial import KDTree
 from scipy.ndimage.filters import gaussian_filter
-from numina.frame.utils import copy_img
+from numina.array.wavecalib.crosscorrelation import periodic_corr1d
 
+#import megaradrp.datamodel as dm
+import megaradrp.instrument.focalplane as fp
 from megaradrp.processing.fluxcalib import update_flux_limits
 
 
@@ -63,14 +64,14 @@ def extract_star(rssimage, position, npoints, fiberconf, logger=None):
 
     logger.info('extracting star')
 
-    # fiberconf = datamodel.get_fiberconf(rssimage)
+    # fiberconf = dm.get_fiberconf(rssimage)
     logger.debug("Configuration UUID is %s", fiberconf.conf_id)
 
     rssdata = rssimage[0].data
     pdata = rssimage['wlmap'].data
 
     points = [position]
-    fibers = fiberconf.conected_fibers(valid_only=True)
+    fibers = fiberconf.connected_fibers(valid_only=True)
     grid_coords = []
     for fiber in fibers:
         grid_coords.append((fiber.x, fiber.y))
@@ -159,7 +160,7 @@ def compute_centroid(rssdata, fiberconf, c1, c2, point, logger=None):
 
     logger.debug("LCB configuration is %s", fiberconf.conf_id)
 
-    fibers = fiberconf.conected_fibers(valid_only=True)
+    fibers = fiberconf.connected_fibers(valid_only=True)
     grid_coords = []
     for fiber in fibers:
         grid_coords.append((fiber.x, fiber.y))
@@ -205,10 +206,10 @@ def compute_centroid(rssdata, fiberconf, c1, c2, point, logger=None):
         return centroid
 
 
-def compute_dar(img, datamodel, logger=None, debug_plot=False):
+def compute_dar(img, logger=None, debug_plot=False):
     """Compute Diferencial Atmospheric Refraction"""
 
-    fiberconf = datamodel.get_fiberconf(img)
+    fp_conf = fp.FocalPlaneConf.from_img(img)
     wlcalib = astropy.wcs.WCS(img[0].header)
 
     rssdata = img[0].data
@@ -217,7 +218,7 @@ def compute_dar(img, datamodel, logger=None, debug_plot=False):
     colids = []
     x = []
     y = []
-    for fiber in fiberconf.fibers.values():
+    for fiber in fp_conf.fibers.values():
         colids.append(fiber.fibid - 1)
         x.append(fiber.x)
         y.append(fiber.y)
@@ -236,7 +237,7 @@ def compute_dar(img, datamodel, logger=None, debug_plot=False):
         c2 = c + delt // 2
 
         z = rssdata[colids, c1:c2].mean(axis=1)
-        centroid = compute_centroid(rssdata, fiberconf, c1, c2, point, logger=logger)
+        centroid = compute_centroid(rssdata, fp_conf, c1, c2, point, logger=logger)
         cols.append(c)
         xdar.append(centroid[0])
         ydar.append(centroid[1])
@@ -253,7 +254,7 @@ def compute_dar(img, datamodel, logger=None, debug_plot=False):
         c1 = c - delt // 2
         c2 = c + delt // 2
         z = rssdata[colids, c1:c2].mean(axis=1)
-        centroid = compute_centroid(rssdata, fiberconf, c1, c2, point)
+        centroid = compute_centroid(rssdata, fp_conf, c1, c2, point)
         cols.append(c)
         xdar.append(centroid[0])
         ydar.append(centroid[1])
@@ -298,6 +299,74 @@ def compute_dar(img, datamodel, logger=None, debug_plot=False):
         plt.show()
 
     return world[:, 0], xdar, ydar
+
+
+def mix_values(wcsl, spectrum, star_interp):
+
+    r1 = numpy.arange(spectrum.shape[0])
+    r2 = r1 * 0.0
+    lm = numpy.array([r1, r2])
+    # Values are 0-based
+    wavelen_ = wcsl.all_pix2world(lm.T, 0)
+    if wcsl.wcs.cunit[0] == u.dimensionless_unscaled:
+        # CUNIT is empty, assume Angstroms
+        wavelen = wavelen_[:, 0] * u.AA
+    else:
+        wavelen = wavelen_[:, 0] * wcsl.wcs.cunit[0]
+
+    wavelen_aa = wavelen.to(u.AA)
+
+    response_0 = spectrum
+    mag_ref = star_interp(wavelen_aa) * u.ABmag
+    response_1 = mag_ref.to(u.Jy).value
+
+    return wavelen_aa, response_0, response_1
+
+
+def compute_broadening(flux_low, flux_high, sigmalist,
+                       remove_mean=False, frac_cosbell=None, zero_padding=None,
+                       fminmax=None, naround_zero=None, nfit_peak=None):
+
+    # normalize each spectrum dividing by its median
+    flux_low /= numpy.median(flux_low)
+    flux_high /= numpy.median(flux_high)
+
+    offsets = []
+    fpeaks = []
+    sigmalist = numpy.asarray(sigmalist)
+    for sigma in sigmalist:
+        # broaden reference spectrum
+        flux_ref_broad = gaussian_filter(flux_high, sigma)
+        # plot the two spectra
+
+        # periodic correlation between the two spectra
+        offset, fpeak = periodic_corr1d(
+            flux_ref_broad, flux_low,
+            remove_mean=remove_mean,
+            frac_cosbell=frac_cosbell,
+            zero_padding=zero_padding,
+            fminmax=fminmax,
+            naround_zero=naround_zero,
+            nfit_peak=nfit_peak,
+            norm_spectra=True,
+        )
+        offsets.append(offset)
+        fpeaks.append(fpeak)
+
+    fpeaks = numpy.asarray(fpeaks)
+    offsets = numpy.asarray(offsets)
+
+    # import matplotlib.pyplot as plt
+    # #
+    # plt.plot(sigmalist, offsets, color='r')
+    # ax2 = plt.gca().twinx()
+    # ax2.plot(sigmalist, fpeaks, color='b')
+    # plt.show()
+    #
+    offset_broad = offsets[numpy.argmax(fpeaks)]
+    sigma_broad = sigmalist[numpy.argmax(fpeaks)]
+
+    return offset_broad, sigma_broad
 
 
 def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
@@ -362,7 +431,10 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
         flux_valid = numpy.zeros_like(valid, dtype='bool')
         flux_valid[pixf1:pixf2] = True
 
-        r0_ens = gaussian_filter(r0, sigma=sigma)
+        if sigma > 0:
+            r0_ens = gaussian_filter(r0, sigma=sigma)
+        else:
+            r0_ens = r0
 
         ratio2 = r0_ens / r1
         s_response = ratio2 * (r0max / r1max)
@@ -370,6 +442,7 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
         # FIXME: add history
         sens = fits.PrimaryHDU(s_response, header=final[0].header)
         # delete second axis keywords
+        # FIXME: delete axis with wcslib
         for key in ['CRPIX2', 'CRVAL2', 'CDELT2', 'CTYPE2']:
             if key in sens.header:
                 del sens.header[key]
@@ -382,46 +455,3 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
         return sens
 
 
-def subtract_sky(img, datamodel, ignored_sky_bundles=None, logger=None):
-    # Sky subtraction
-
-    if logger is None:
-        logger = logging.getLogger(__name__)
-
-    logger.info('obtain fiber information')
-    sky_img = copy_img(img)
-    final_img = copy_img(img)
-    fiberconf = datamodel.get_fiberconf(sky_img)
-    # Sky fibers
-    skyfibs = fiberconf.sky_fibers(valid_only=True,
-                                   ignored_bundles=ignored_sky_bundles)
-    logger.debug('sky fibers are: %s', skyfibs)
-    # Create empty sky_data
-    target_data = img[0].data
-
-    target_map = img['WLMAP'].data
-    sky_data = numpy.zeros_like(img[0].data)
-    sky_map = numpy.zeros_like(img['WLMAP'].data)
-    sky_img[0].data = sky_data
-
-    for fibid in skyfibs:
-        rowid = fibid - 1
-        sky_data[rowid] = target_data[rowid]
-        sky_map[rowid] = target_map[rowid]
-    # Sum
-    coldata = sky_data.sum(axis=0)
-    colsum = sky_map.sum(axis=0)
-
-    # Divide only where map is > 0
-    mask = colsum > 0
-    avg_sky = numpy.zeros_like(coldata)
-    avg_sky[mask] = coldata[mask] / colsum[mask]
-
-    # This should be done only on valid fibers
-    # The information of which fiber is valid
-    # is in the tracemap, not in the header
-    for fibid in fiberconf.valid_fibers():
-        rowid = fibid - 1
-        final_img[0].data[rowid, mask] = img[0].data[rowid, mask] - avg_sky[mask]
-
-    return final_img, img, sky_img

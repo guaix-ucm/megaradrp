@@ -6,35 +6,35 @@
 .. module:: megaradrp.products
    :synopsis:  Data products of the MEGARA pipeline
 
-.. autoclass:: megaradrp.types.MegaraFrame
+.. autoclass:: megaradrp.ntypes.MegaraFrame
 
-.. autoclass:: megaradrp.types.ProcessedFrame
+.. autoclass:: megaradrp.ntypes.ProcessedFrame
 
-.. autoclass:: megaradrp.types.ProcessedImage
+.. autoclass:: megaradrp.ntypes.ProcessedImage
 
-.. autoclass:: megaradrp.types.ProcessedRSS
+.. autoclass:: megaradrp.ntypes.ProcessedRSS
 
-.. autoclass:: megaradrp.types.ProcessedMultiRSS
+.. autoclass:: megaradrp.ntypes.ProcessedMultiRSS
 
-.. autoclass:: megaradrp.types.ProcessedSpectrum
+.. autoclass:: megaradrp.ntypes.ProcessedSpectrum
 
-.. autoclass:: megaradrp.types.ProcessedImageProduct
+.. autoclass:: megaradrp.ntypes.ProcessedImageProduct
 
-.. autoclass:: megaradrp.types.ProcessedRSSProduct
+.. autoclass:: megaradrp.ntypes.ProcessedRSSProduct
 
-.. autoclass:: megaradrp.types.ProcessedSpectrumProduct
+.. autoclass:: megaradrp.ntypes.ProcessedSpectrumProduct
 
-.. autoclass:: megaradrp.types.MasterBPM
+.. autoclass:: megaradrp.ntypes.MasterBPM
 
-.. autoclass:: megaradrp.types.MasterBias
+.. autoclass:: megaradrp.ntypes.MasterBias
 
-.. autoclass:: megaradrp.types.MasterDark
+.. autoclass:: megaradrp.ntypes.MasterDark
 
-.. autoclass:: megaradrp.types.MasterSlitFlat
+.. autoclass:: megaradrp.ntypes.MasterSlitFlat
 
-.. autoclass:: megaradrp.types.MasterFiberFlat
+.. autoclass:: megaradrp.ntypes.MasterFiberFlat
 
-.. autoclass:: megaradrp.types.MasterTwilightFlat
+.. autoclass:: megaradrp.ntypes.MasterTwilightFlat
 
 .. autoclass:: megaradrp.products.structured.BaseStructuredCalibration
 
@@ -44,10 +44,10 @@
 
 .. autoclass:: megaradrp.products.wavecalibration.WavelengthCalibration
 
-.. autoclass:: megaradrp.types.MasterSensitivity
+.. autoclass:: megaradrp.ntypes.MasterSensitivity
 
-.. autoclass:: megaradrp.types.ReferenceExtinctionTable
+.. autoclass:: megaradrp.ntypes.ReferenceExtinctionTable
 
-.. autoclass:: megaradrp.types.ReferenceSpectrumTable
+.. autoclass:: megaradrp.ntypes.ReferenceSpectrumTable
 
 

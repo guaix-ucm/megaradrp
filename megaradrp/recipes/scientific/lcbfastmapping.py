@@ -12,7 +12,7 @@
 
 from numina.core import Product, ObservationResult
 
-from megaradrp.types import ProcessedMultiRSS
+from megaradrp.ntypes import ProcessedMultiRSS
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.processing.multirss import generate_multi_rss
 

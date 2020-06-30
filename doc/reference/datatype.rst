@@ -1,7 +1,9 @@
-
 ==================================================================
-:mod:`megaradrp.types` --- MEGARA data types
+:mod:`megaradrp.datatype` --- MEGARA types of data
 ==================================================================
 
-.. module:: megaradrp.types
-   :synopsis:  Data types
+
+.. automodule:: megaradrp.datatype
+    :members:
+    :undoc-members:
+

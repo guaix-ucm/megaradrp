@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,10 +17,10 @@ from astropy.io import fits
 from numina.array import combine
 from numina.core import Result, Parameter
 
-from megaradrp.types import ProcessedFrame
+from megaradrp.ntypes import ProcessedFrame
 from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.types import MasterSlitFlat
+from megaradrp.ntypes import MasterSlitFlat
 import megaradrp.requirements as reqs
 import megaradrp.core.correctors as cor
 
@@ -41,11 +41,6 @@ class SlitFlatRecipe(MegaraBaseRecipe):
     # Results
     reduced_image = Result(ProcessedFrame)
     master_slitflat = Result(MasterSlitFlat)
-
-    def get_filters(self):
-        return [cor.get_corrector_overscan, cor.get_corrector_trimming,
-                cor.get_corrector_bpm, cor.get_corrector_bias,
-                cor.get_corrector_dark, cor.get_corrector_gain]
 
     def run(self, rinput):
         from scipy.signal import savgol_filter

@@ -11,10 +11,10 @@ import math
 
 import numpy
 
-from megaradrp.instrument import MEGARA_IAA
+import megaradrp.instrument.constants as cons
 
 
-def compute_pa_from_ipa(ipa, iaa=MEGARA_IAA):
+def compute_pa_from_ipa(ipa, iaa=cons.MEGARA_IAA.value):
     """Recompute the PA from IPA
 
     Parameters

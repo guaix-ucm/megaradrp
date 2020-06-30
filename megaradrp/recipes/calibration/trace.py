@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -12,18 +12,18 @@
 from __future__ import division, print_function
 
 import logging
-from datetime import datetime
+import warnings
 
 import numpy
 import numpy.polynomial.polynomial as nppol
 from numina.array.peaks.peakdet import refine_peaks
-from numina.array.trace.traces import trace
+from numina.array.trace.traces import trace, tracing_limits
 from numina.core import Result, Parameter
 import matplotlib.pyplot as plt
 
 import numina.types.qc as qc
 from numina.array import combine
-import numina.core.validator
+from numina.array.wavecalib.crosscorrelation import cosinebell
 from skimage.filters import threshold_otsu
 from skimage.feature import peak_local_max
 from scipy.ndimage.filters import minimum_filter
@@ -33,12 +33,13 @@ from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.products import TraceMap
 from megaradrp.products.tracemap import GeometricTrace
-from megaradrp.types import ProcessedImage, ProcessedRSS
+from megaradrp.ntypes import ProcessedImage, ProcessedRSS
 from megaradrp.core.recipe import MegaraBaseRecipe
 import megaradrp.requirements as reqs
 import megaradrp.products
 import megaradrp.processing.fibermatch as fibermatch
 from megaradrp.instrument import vph_thr
+from megaradrp.instrument.focalplane import FocalPlaneConf
 
 
 class TraceMapRecipe(MegaraBaseRecipe):
@@ -104,12 +105,50 @@ class TraceMapRecipe(MegaraBaseRecipe):
     def run_qc(self, recipe_input, recipe_result):
         """Run quality control checks"""
         self.logger.info('start trace recipe QC')
-        recipe_result.qc = qc.QC.GOOD
-        recipe_result.master_traces.quality_control = qc.QC.GOOD
+
+        self.check_qc_tracemap(recipe_result.master_traces)
+
+        recipe_result.qc = recipe_result.master_traces.quality_control
+        self.logger.info('Result QC is %s', recipe_result.qc)
         self.logger.info('end trace recipe QC')
         return recipe_result
 
-    @numina.core.validator.validate
+    def check_qc_tracemap(self, tracemap):
+        # check full range in all fibers
+        if tracemap.tags['insmode'] == 'LCB':
+            nfibers = 623
+            ignored_ids = [623]
+        else:
+            nfibers = 644
+            ignored_ids = [635]
+
+        cost_ids = nfibers * [0]
+
+        start_min, end_max = tracemap.expected_range
+
+        for trace in tracemap.contents:
+            idx = trace.fibid - 1
+            if trace.fibid in ignored_ids:
+                continue
+            if trace.start > start_min:
+                cost_ids[idx] += 1
+                msg = 'In fiber {}, trace start > {}'.format(trace.fibid, start_min)
+                warnings.warn(msg)
+            if trace.stop < end_max:
+                cost_ids[idx] += 1
+                msg = 'In fiber {}, trace end < {}'.format(trace.fibid, end_max)
+                warnings.warn(msg)
+
+        total = sum(cost_ids)
+
+        if total > 300:
+            tracemap.quality_control = qc.QC.BAD
+        elif total > 0:
+            tracemap.quality_control = qc.QC.PARTIAL
+        else:
+            tracemap.quality_control = qc.QC.GOOD
+
+    #@numina.core.validator.validate
     def run(self, rinput):
         """Execute the recipe.
 
@@ -142,7 +181,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         self.save_intermediate_img(reduced, 'reduced_image.fits')
 
-        #insconf = obresult.configuration
+        # insconf = obresult.configuration
         insconf = obresult.profile
 
         boxes = insconf.get_property('pseudoslit.boxes')
@@ -166,22 +205,43 @@ class TraceMapRecipe(MegaraBaseRecipe):
             self.logger.info('rel threshold not defined for %s, using %4.2f', current_vph, threshold)
 
         final = megaradrp.products.TraceMap(instrument=obresult.instrument)
-        fiberconf = self.datamodel.get_fiberconf(reduced)
-        final.total_fibers = fiberconf.nfibers
+        fp_conf = FocalPlaneConf.from_img(reduced)
+        # As of 2019-10-15, headers do not contain information
+        # about inactive fibers, i.e. all have active=True
+        # inactive_fibers = fp_conf.inactive_fibers()
+        # We do it manually
+        if fp_conf.name == 'LCB':
+            inactive_fibers = [623]
+        else:
+            inactive_fibers = [635]
+
+        final.total_fibers = fp_conf.nfibers
         final.tags = self.extract_tags_from_ref(reduced, final.tag_names(), base=obresult.labels)
         final.boxes_positions = box_borders
         final.ref_column = cstart
+
+        # Searching for peaks
+        # step of
+        step = 2
+        # number of the columns to add
+        hs = 3
+        # Expected range of computed traces
+        xx_start, xx_end = tracing_limits(reduced[0].shape[1], cstart, step, hs)
+        final.expected_range = [xx_start, xx_end]
 
         final.update_metadata(self)
         final.update_metadata_origin(obresult_meta)
         # Temperature in Celsius with 2 decimals
         final.tags['temp'] = round(obresult_meta['info'][0]['temp'] - 273.15, 2)
 
-        contents, error_fitting = self.search_traces(
+        contents, error_fitting, missing_fibers = self.search_traces(
             reduced,
             boxes,
             box_borders,
+            inactive_fibers=inactive_fibers,
             cstart=cstart,
+            step=step,
+            hs=hs,
             threshold=threshold,
             poldeg=rinput.polynomial_degree,
             debug_plot=debug_plot
@@ -189,7 +249,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         final.contents = contents
         final.error_fitting = error_fitting
-
+        final.missing_fibers = missing_fibers
         # Perform extraction with own traces
         calibrator_aper = ApertureExtractor(final, self.datamodel)
         reduced_copy = copy_img(reduced)
@@ -206,7 +266,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         self.logger.info('end trace spectra recipe')
         return self.create_result(reduced_image=reduced,
-                                  reduced_rss = reduced_rss,
+                                  reduced_rss=reduced_rss,
                                   master_traces=final)
 
     def obtain_boxes_from_image(self, reduced, expected, npeaks, cstart=2000):
@@ -257,10 +317,6 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         plt.scatter(expected, nidxs - expected)
         plt.show()
-
-        print("expected", expected)
-        print("nidx", nidxs)
-
         return nidxs, col
 
     def refine_boxes_from_image(self, reduced, expected, cstart=2000, nsearch=20):
@@ -295,17 +351,17 @@ class TraceMapRecipe(MegaraBaseRecipe):
         refined = expected[:]
 
         for ibox, box in enumerate(expected):
-            iargmax = final[box - nsearch: box + nsearch +1].argmax()
+            iargmax = final[box - nsearch: box + nsearch + 1].argmax()
             refined[ibox] = iargmax + box - nsearch
 
         return refined, cstart
 
-    def search_traces(self, reduced, boxes, box_borders, cstart=2000,
-                      threshold=0.3, poldeg=5, step=2, debug_plot=0):
+    def search_traces(self, reduced, boxes, box_borders, inactive_fibers=None, cstart=2000,
+                      threshold=0.3, poldeg=5, step=2, hs=3, debug_plot=0):
 
         data = reduced[0].data
-
-        hs = 3
+        if inactive_fibers is None:
+            inactive_fibers = []
         tol = 1.63
 
         self.logger.info('search for traces')
@@ -338,6 +394,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         contents = []
         error_fitting = []
+        missing_fibers = []
         self.logger.info('trace peaks from references')
         for dtrace in central_peaks:
             # FIXME, for traces, the background must be local
@@ -345,33 +402,46 @@ class TraceMapRecipe(MegaraBaseRecipe):
             local_trace_background = 300  # background
 
             self.logger.debug('trace fiber %d', dtrace.fibid)
-            if dtrace.start:
-                mm = trace(image2, x=cstart, y=dtrace.start[1], step=step,
-                           hs=hs, background=local_trace_background, maxdis=maxdis)
+            conf_ok = dtrace.fibid not in inactive_fibers
+            peak_ok = dtrace.start is not None
 
-                if debug_plot:
-                    plt.plot(mm[:, 0], mm[:, 1], '.')
-                    plt.savefig('trace-xy-{:03d}.png'.format(dtrace.fibid))
-                    plt.close()
-                    plt.plot(mm[:, 0], mm[:, 2], '.')
-                    plt.savefig('trace-xz-{:03d}.png'.format(dtrace.fibid))
-                    plt.close()
-                if len(mm) < poldeg + 1:
-                    self.logger.warning('in fibid %d, only %d points to fit pol of degree %d',
-                                        dtrace.fibid, len(mm), poldeg)
-                    pfit = numpy.array([])
+            pfit = numpy.array([])
+            start = cstart
+            stop = cstart
+
+            if peak_ok:
+                if not conf_ok:
+                    error_fitting.append(dtrace.fibid)
+                    self.logger.warning('found fibid %d, expected to be missing', dtrace.fibid)
                 else:
-                    pfit = nppol.polyfit(mm[:, 0], mm[:, 1], deg=poldeg)
 
-                start = mm[0, 0]
-                stop = mm[-1, 0]
+                    mm = trace(image2, x=cstart, y=dtrace.start[1], step=step,
+                               hs=hs, background=local_trace_background, maxdis=maxdis)
+
+                    if debug_plot:
+                        plt.plot(mm[:, 0], mm[:, 1], '.')
+                        plt.savefig('trace-xy-{:03d}.png'.format(dtrace.fibid))
+                        plt.close()
+                        plt.plot(mm[:, 0], mm[:, 2], '.')
+                        plt.savefig('trace-xz-{:03d}.png'.format(dtrace.fibid))
+                        plt.close()
+                    if len(mm) < poldeg + 1:
+                        self.logger.warning('in fibid %d, only %d points to fit pol of degree %d',
+                                            dtrace.fibid, len(mm), poldeg)
+                        pfit = numpy.array([])
+                    else:
+                        pfit = nppol.polyfit(mm[:, 0], mm[:, 1], deg=poldeg)
+
+                    start = mm[0, 0]
+                    stop = mm[-1, 0]
+                    self.logger.debug('trace start %d  stop %d', int(start), int(stop))
             else:
-                pfit = numpy.array([])
-                start = cstart
-                stop = cstart
-                error_fitting.append(dtrace.fibid)
-
-            self.logger.debug('trace start %d  stop %d', int(start), int(stop))
+                if conf_ok:
+                    self.logger.warning('error tracing fibid %d', dtrace.fibid)
+                    error_fitting.append(dtrace.fibid)
+                else:
+                    self.logger.debug('expected missing fibid %d', dtrace.fibid)
+                    missing_fibers.append(dtrace.fibid)
 
             this_trace = GeometricTrace(
                 fibid=dtrace.fibid,
@@ -382,7 +452,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
             )
             contents.append(this_trace)
 
-        return contents, error_fitting
+        return contents, error_fitting, missing_fibers
 
 
 def estimate_background(image, center, hs, boxref):
@@ -394,10 +464,6 @@ def estimate_background(image, center, hs, boxref):
     colcut = cut.mean(axis=1)
 
     return threshold_otsu(colcut)
-
-
-# FIXME: need a better place for this
-# Moved from megaradrp.trace
 
 
 class FiberTraceInfo(object):
@@ -431,7 +497,7 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         nfibers_max = nfibers - len(mfibers)
         sfibers = box.get('skipcount', [])
         _logger.debug('pseudoslit box: %s, id: %d', box['name'], boxid)
-        _logger.debug('nfibers: %d, missing: %s',nfibers, mfibers)
+        _logger.debug('nfibers: %d, missing: %s', nfibers, mfibers)
 
         counted_fibers += nfibers
         b1 = int(box_borders[boxid])
@@ -505,8 +571,8 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
                                                       borders, scale=measured_scale)
 
         for fibid, match in fibermatch.iter_best_solution(fiber_model,
-                                               matched_peaks,
-                                               pos_solutions):
+                                                          matched_peaks,
+                                                          pos_solutions):
             fti = FiberTraceInfo(fibid, boxid)
             if match is not None:
                 fti.start = (center, peaks_y[match, 1], peaks_y[match, 2])
@@ -518,14 +584,3 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         for m1, n2 in boxes_with_missing_fibers:
             _logger.debug('missing %d fibers in box %s', n2, m1)
     return fiber_traces
-
-
-def cosinebell(n, fraction=0.10):
-    """"Cosine bell mask"""
-    mask = numpy.ones(n)
-    nmasked = int(fraction*n)
-    for i in range(nmasked):
-        f = 0.5 * (1 - numpy.cos(numpy.pi * float(i) / float(nmasked)))
-        mask[i] = f
-        mask[n-i-1] = f
-    return mask

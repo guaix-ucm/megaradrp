@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2019 Universidad Complutense de Madrid
+# Copyright 2016-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -29,7 +29,7 @@ from numina.array.stats import robust_std as sigmaG
 from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.types import FocusWavelength, ProcessedFrame
+from megaradrp.ntypes import FocusWavelength, ProcessedFrame
 import megaradrp.requirements as reqs
 from megaradrp.processing.combine import basic_processing_with_combination_frames
 from megaradrp.processing.aperture import ApertureExtractor
@@ -88,7 +88,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
-    master_traces = reqs.MasterAperturesRequirement()
+    master_apertures = reqs.MasterAperturesRequirement(alias='master_traces')
     extraction_offset = Parameter([0.0], 'Offset traces for extraction', accept_scalar=True)
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
 
@@ -163,7 +163,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
             try:
                 img = basic_processing_with_combination_frames(frames, flow, method=combine.median, errors=False)
                 calibrator_aper = ApertureExtractor(
-                    rinput.master_traces,
+                    rinput.master_apertures,
                     self.datamodel,
                     offset=rinput.extraction_offset
                 )
@@ -173,7 +173,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                 self.save_intermediate_img(img1d, 'focus1d-%s.fits' % (focus,))
 
                 self.logger.info('find lines and compute FWHM')
-                lines_rss_fwhm = self.run_on_image(img1d, rinput.master_traces,
+                lines_rss_fwhm = self.run_on_image(img1d, rinput.master_apertures,
                                                    flux_limit,
                                                    valid_traces=valid_traces,
                                                    times_sigma=rinput.tsigma

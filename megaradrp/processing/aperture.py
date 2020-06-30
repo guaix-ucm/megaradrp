@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -204,12 +204,14 @@ class ApertureExtractor(numina.processing.Corrector):
         fibers_ext = img['FIBERS']
         fibers_ext_headers = fibers_ext.header
         for aper in self.trace_repr.contents:
-            key = "FIB%03d_V" % aper.fibid
-            fibers_ext_headers[key] = aper.valid
-            key = "FIB%03dS1" % aper.fibid
-            fibers_ext_headers[key] = aper.start
-            key = "FIB%03dS2" % aper.fibid
-            fibers_ext_headers[key] = aper.stop
+            # set the value only if invalid
+            if not aper.valid:
+                key = "FIB{:03d}_V".format(aper.fibid)
+                fibers_ext_headers[key] = (aper.valid, "Fiber is invalid")
+            key = "FIB{:03d}S1".format(aper.fibid)
+            fibers_ext_headers[key] = (aper.start, "[pix] Start of trace")
+            key = "FIB{:03d}S2".format(aper.fibid)
+            fibers_ext_headers[key] = (aper.stop, "[pix] End of trace")
 
         newimg = fits.HDUList([img[0], fibers_ext])
         return newimg

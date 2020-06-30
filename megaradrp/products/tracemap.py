@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -9,19 +9,18 @@
 
 """Products of the Megara Pipeline"""
 
-import numpy
 import numpy.polynomial.polynomial as nppol
 
+from megaradrp.datatype import MegaraDataType
 from .structured import BaseStructuredCalibration
+from .aperture import GeometricAperture
 from .traces import to_ds9_reg as to_ds9_reg_function
 
 
-class GeometricTrace(object):
+class GeometricTrace(GeometricAperture):
+    """Representation of fiber trace on the image"""
     def __init__(self, fibid, boxid, start, stop, fitparms=None):
-        self.fibid = fibid
-        self.boxid = boxid
-        self.start = start
-        self.stop = stop
+        super(GeometricTrace, self).__init__(fibid, boxid, start, stop)
         self.fitparms = fitparms if fitparms is not None else []
         self.polynomial = None
         # Update polynomial
@@ -29,18 +28,22 @@ class GeometricTrace(object):
 
     @property
     def valid(self):
+        return self.is_valid()
+
+    def is_valid(self):
         if self.fitparms:
             return True
         else:
             return False
 
     def __getstate__(self):
-        state = self.__dict__.copy()
+        state = super(GeometricTrace, self).__getstate__()
         del state['polynomial']
         return state
 
     def __setstate__(self, state):
-        self.__dict__ = state
+        super(GeometricTrace, self).__setstate__(state)
+
         self._set_polynomial(state['fitparms'])
 
     def _set_polynomial(self, fitparms):
@@ -49,18 +52,22 @@ class GeometricTrace(object):
         else:
             self.polynomial = nppol.Polynomial([0.0])
 
+    def aper_center(self):
+        return self.polynomial
+
 
 class TraceMap(BaseStructuredCalibration):
-
+    """Trace map calibration product"""
+    DATATYPE = MegaraDataType.TRACE_MAP
     __tags__ = ['insmode', 'vph']
 
-    """Trace map calibration product"""
-    def __init__(self, instrument='unknown'):
+    def __init__(self, instrument='MEGARA'):
         super(TraceMap, self).__init__(instrument)
         self.contents = []
         self.boxes_positions = []
         self.global_offset = nppol.Polynomial([0.0])
         self.ref_column = 2000
+        self.expected_range = [4, 4092]
         #
 
     def __getstate__(self):
@@ -69,14 +76,17 @@ class TraceMap(BaseStructuredCalibration):
         st['boxes_positions'] = self.boxes_positions
         st['global_offset'] = self.global_offset.coef
         st['ref_column'] = self.ref_column
+        st['expected_range'] = self.expected_range
         return st
 
     def __setstate__(self, state):
         super(TraceMap, self).__setstate__(state)
         self.contents = [GeometricTrace(**trace) for trace in state['contents']]
+        # fibers in missing fibers and error_fitting are invalid
         self.boxes_positions = state.get('boxes_positions', [])
         self.global_offset = nppol.Polynomial(state.get('global_offset', [0.0]))
         self.ref_column = state.get('ref_column', 2000)
+        self.expected_range = state.get('expected_range', [4, 4092])
         return self
 
     def to_ds9_reg(self, ds9reg, rawimage=False, numpix=100, fibid_at=0):

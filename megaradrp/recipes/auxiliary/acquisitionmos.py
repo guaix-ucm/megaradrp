@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,9 +17,9 @@ from numina.array.offrot import fit_offset_and_rotation
 from numina.core import Result, Parameter
 from numina.core.qc import QC
 
-from megaradrp.datamodel import TargetType
+from megaradrp.instrument.focalplane import TargetType, FocalPlaneConf
 from megaradrp.recipes.scientific.base import ImageRecipe
-from megaradrp.types import ProcessedRSS, ProcessedFrame
+from megaradrp.ntypes import ProcessedRSS, ProcessedFrame
 from megaradrp.utils import add_collapsed_mos_extension
 
 
@@ -49,7 +49,7 @@ class AcquireMOSRecipe(ImageRecipe):
     `reduced_image` of the recipe result.
 
     The apertures in the 2D image are extracted, using the information in
-    `master_traces` and resampled according to the wavelength calibration in
+    `master_apertures` and resampled according to the wavelength calibration in
     `master_wlcalib`. Then is divided by the `master_fiberflat`.
     The resulting RSS is saved as an intermediate
     result named 'reduced_rss.fits'. This RSS is also returned in the field
@@ -90,19 +90,22 @@ class AcquireMOSRecipe(ImageRecipe):
             isb = rinput.ignored_sky_bundles
             if isb:
                 self.logger.info('sky bundles ignored: %s', isb)
-            final, origin, sky = self.run_sky_subtraction(reduced1d,
-                                                          ignored_sky_bundles=isb)
+            final, origin, sky = self.run_sky_subtraction(
+                reduced1d,
+                sky_rss=rinput.sky_rss,
+                ignored_sky_bundles=isb
+            )
             self.logger.info('end sky subtraction')
         else:
             final =  reduced1d
             origin = final
             sky = final
 
-        fiberconf = self.datamodel.get_fiberconf(final)
+        fp_conf = FocalPlaneConf.from_img(final)
 
         cut1, cut2 = rinput.extraction_region
 
-        self.logger.debug("MOS configuration is %s", fiberconf.conf_id)
+        self.logger.debug("MOS configuration is %s", fp_conf.conf_id)
         rssdata = final[0].data
         scale, funit = self.datamodel.fiber_scale_unit(final, unit=True)
         self.logger.debug('unit is %s', funit)
@@ -111,7 +114,7 @@ class AcquireMOSRecipe(ImageRecipe):
         p1 = []
         q1 = []
         temp = []
-        for key, bundle in fiberconf.bundles.items():
+        for key, bundle in fp_conf.bundles.items():
             if bundle.target_type == TargetType.REFERENCE:
                 self.logger.debug("%s %s %s", key, bundle.target_name, bundle.target_type)
                 sorted_fibers = [bundle.fibers[key] for key in sorted(bundle.fibers)]

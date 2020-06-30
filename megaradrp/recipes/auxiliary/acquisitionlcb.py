@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -19,8 +19,9 @@ from numina.core import Result, Parameter
 from numina.core.validator import range_validator
 from numina.constants import FWHM_G
 
+from megaradrp.instrument.focalplane import FocalPlaneConf
 from megaradrp.recipes.scientific.base import ImageRecipe
-from megaradrp.types import ProcessedRSS, ProcessedFrame
+from megaradrp.ntypes import ProcessedRSS, ProcessedImage
 
 
 class AcquireLCBRecipe(ImageRecipe):
@@ -29,7 +30,7 @@ class AcquireLCBRecipe(ImageRecipe):
     This recipe processes a set of acquisition images
     obtained in **LCB Acquisition** mode and returns
     the offset and rotation required to center the
-    fiducial object in its reference positions.
+    fiduciary object in its reference positions.
 
     See Also
     --------
@@ -48,7 +49,7 @@ class AcquireLCBRecipe(ImageRecipe):
     `reduced_image` of the recipe result.
 
     The apertures in the 2D image are extracted, using the information in
-    `master_traces` and resampled according to the wavelength calibration in
+    `master_apertures` and resampled according to the wavelength calibration in
     `master_wlcalib`. Then is divided by the `master_fiberflat`.
     The resulting RSS is saved as an intermediate
     result named 'reduced_rss.fits'. This RSS is also returned in the field
@@ -58,9 +59,9 @@ class AcquireLCBRecipe(ImageRecipe):
     in the fibers configuration. The RSS with sky subtracted is returned ini the
     field `final_rss` of the recipe result.
 
-    Then, the centroid of the fiducial object nearest to the center of the field
+    Then, the centroid of the fiduciary object nearest to the center of the field
     is computed. The offset needed to center
-    the fiducial object in the center of the LCB is returned.
+    the fiduciary object in the center of the LCB is returned.
 
     """
 
@@ -74,7 +75,7 @@ class AcquireLCBRecipe(ImageRecipe):
         nelem=2
     )
 
-    reduced_image = Result(ProcessedFrame)
+    reduced_image = Result(ProcessedImage)
     reduced_rss = Result(ProcessedRSS)
     final_rss = Result(ProcessedRSS)
     offset = Result(list)
@@ -93,16 +94,19 @@ class AcquireLCBRecipe(ImageRecipe):
             isb = rinput.ignored_sky_bundles
             if isb:
                 self.logger.info('sky bundles ignored: %s', isb)
-            final, origin, sky = self.run_sky_subtraction(reduced1d,
-                                                          ignored_sky_bundles=isb)
+            final, origin, sky = self.run_sky_subtraction(
+                reduced1d,
+                sky_rss=rinput.sky_rss,
+                ignored_sky_bundles=isb
+            )
             self.logger.info('end sky subtraction')
         else:
             final =  reduced1d
             origin = final
             sky = final
 
-        fiberconf = self.datamodel.get_fiberconf(final)
-        self.logger.debug("LCB configuration is %s", fiberconf.conf_id)
+        fp_conf = FocalPlaneConf.from_img(final)
+        self.logger.debug("LCB configuration is %s", fp_conf.conf_id)
 
         rssdata = final[0].data
 
@@ -118,13 +122,13 @@ class AcquireLCBRecipe(ImageRecipe):
         flux_per_cell_all = rssdata[:, cut1:cut2].mean(axis=1)
 
         max_cell = flux_per_cell_all.argmax() + 1
-        max_fiber_ = fiberconf.fibers[max_cell]
+        max_fiber_ = fp_conf.fibers[max_cell]
 
         self.logger.info("maximum flux in spaxel %d -- %s", max_cell, max_fiber_.name)
         # Extend points with the brightest spaxel
         points.append((max_fiber_.x, max_fiber_.y))
 
-        fibers = fiberconf.conected_fibers(valid_only=True)
+        fibers = fp_conf.connected_fibers(valid_only=True)
 
         grid_coords = []
         for fiber in fibers:

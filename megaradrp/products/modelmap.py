@@ -1,5 +1,5 @@
 #
-# Copyright 2017 Universidad Complutense de Madrid
+# Copyright 2017-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -14,27 +14,28 @@ import numpy.polynomial.polynomial as nppol
 
 from numina.util.convertfunc import json_serial_function, convert_function
 
-from megaradrp.products.structured import BaseStructuredCalibration
+from .structured import BaseStructuredCalibration
+from .aperture import GeometricAperture
 from .traces import to_ds9_reg as to_ds9_reg_function
 
 
-class GeometricModel(object):
+class GeometricModel(GeometricAperture):
     def __init__(self, fibid, boxid, start, stop, model):
-        self.fibid = fibid
-        self.boxid = boxid
-        self.start = start
-        self.stop = stop
+        super(GeometricModel, self).__init__(fibid, boxid, start, stop)
         self.model = model
 
     @property
     def valid(self):
+        return self.is_valid()
+
+    def is_valid(self):
         if self.model:
             return True
         else:
             return False
 
     def __getstate__(self):
-        state = self.__dict__.copy()
+        state = super(GeometricModel, self).__getstate__()
         # del state['model']
 
         params = state['model']['params']
@@ -47,7 +48,7 @@ class GeometricModel(object):
         return state
 
     def __setstate__(self, state):
-        self.__dict__ = state
+        super(GeometricModel, self).__setstate__(state)
         self._set_model(state['model'])
 
     def _set_model(self, model):
@@ -60,6 +61,9 @@ class GeometricModel(object):
     @property
     def polynomial(self):
         # FIXME: this is a workaround
+        return self.model['params']['mean']
+
+    def aper_center(self):
         return self.model['params']['mean']
 
 

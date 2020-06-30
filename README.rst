@@ -3,33 +3,31 @@
 MEGARA DRP
 ==========
 
-|zenodo|
-
-.. image:: https://readthedocs.org/projects/megara-drp/badge/?version=latest
-   :target: https://readthedocs.org/projects/megara-drp/?badge=latest
-   :alt: Documentation Status
-
-.. image:: https://travis-ci.org/guaix-ucm/megaradrp.svg?branch=master
-    :target: https://travis-ci.org/guaix-ucm/megaradrp
-
-.. image:: https://coveralls.io/repos/guaix-ucm/megaradrp/badge.svg?branch=master&service=github 
-    :target: https://coveralls.io/github/guaix-ucm/megaradrp?branch=master 
+|zenodo| |docs| |pypi| |travis| |coveralls|
 
 
-This is Megara DRP, the data reduction pipeline for MEGARA
+This is Megara DRP, the data reduction pipeline for MEGARA, 
+the optical Integral-Field Unit and Multi-Object Spectrograph
+designed for the Gran telescopio Canarias (GTC).
+
+
+You can install `megaradrp` using
+the `released code in PyPI <https://pypi.org/project/megaradrp/>`_ or
+the `development version in Github <https://github.com/guaix-ucm/megaradrp>`_.
+
+The installation instructions are available in the
+`online documentation <https://megaradrp.readthedocs.io/en/latest/installation.html>`_
+or `doc/installation.rst <doc/installation.rst>`_ in the source distribution.
+
+
+Licensing
+---------
 
 Megara DRP is distributed under GNU GPL, either version 3 of the License,
 or (at your option) any later version. See the file LICENSE.txt for details.
 
-Python 2.7 or 3.4 (or greater) is required. Megara DRP requires the following packages
-installed in order to be able to be installed and work properly:
-
- - setuptools (http://peak.telecommunity.com/DevCenter/setuptools)
- - numpy >= 1.7 (http://www.numpy.org/)
- - scipy (http://www.scipy.org)
- - astropy >= 2.0 (http://www.astropy.org/)
- - numina >= 0.21 (http://guaix.fis.ucm.es/projects/numina/)
- - scikit-image (http://scikit-image.org/)
+Authors
+-------
 
 Webpage: https://guaix.fis.ucm.es/megara
 
@@ -37,3 +35,19 @@ Maintainers: Sergio Pacual sergiopr@fis.ucm.es, Nicolás Cardiel cardiel@ucm.es
 
 .. |zenodo| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.593647.svg
    :target: https://zenodo.org/record/593647
+
+.. |docs| image:: https://readthedocs.org/projects/megaradrp/badge/?version=latest
+   :target: https://readthedocs.org/projects/megaradrp/?badge=latest
+   :alt: Documentation Status
+ 
+.. |pypi| image:: https://badge.fury.io/py/megaradrp.svg
+    :target: https://badge.fury.io/py/megaradrp
+
+.. |travis| image:: https://img.shields.io/travis/guaix-ucm/megaradrp/master?logo=travis%20ci&logoColor=white&label=Travis%20CI
+    :target: https://travis-ci.org/guaix-ucm/megaradrp
+    :alt: megaradrp's Travis CI Status
+
+.. |coveralls| image:: https://coveralls.io/repos/guaix-ucm/megaradrp/badge.svg?branch=master&service=github
+    :target: https://coveralls.io/github/guaix-ucm/megaradrp?branch=master
+     :alt: megaradrp's Coverall Status
+

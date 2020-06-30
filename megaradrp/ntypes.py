@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2019 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -9,40 +9,70 @@
 
 """Products of the Megara Pipeline"""
 
+import logging
 
 from numina.core import DataFrameType
 from numina.types.product import DataProductMixin
 from numina.types.datatype import DataType
 from numina.types.array import ArrayType
 from numina.types.linescatalog import LinesCatalog
+from numina.exceptions import ValidationError
 
-
+import megaradrp.validators as valid
+from megaradrp.datatype import MegaraDataType
 from megaradrp.datamodel import MegaraDataModel, QueryAttribute
+
+
+_logger = logging.getLogger(__name__)
+
+
+def validate_fiber_ext(header_f):
+    _logger.debug('validate fiber extension')
 
 
 class MegaraFrame(DataFrameType):
     """A processed frame"""
-
+    DATATYPE = MegaraDataType.IMAGE_RAW
     tags_headers = {}
 
     def __init__(self, *args, **kwds):
         super(MegaraFrame, self).__init__(datamodel=MegaraDataModel)
 
+    def validate_hdulist(self, hdulist):
+        _logger.debug('validate MasterBias')
+        checker = valid.check_as_datatype(self.DATATYPE)
+        return checker(hdulist)
+
+    def extract_tags(self, obj):
+        """Extract tags from serialized file"""
+
+        objl = self.convert(obj)
+        ext = self.datamodel.extractor_map['fits']
+        tags = {}
+
+        if objl:
+            with objl.open() as hdulist:
+                for field in self.names_t:
+                    tags[field] = ext.extract(field, hdulist)
+                return tags
+        else:
+            return {}
+
 
 class ProcessedFrame(MegaraFrame):
     """A processed frame"""
-
+    DATATYPE = MegaraDataType.IMAGE_PROCESSED
     tags_headers = {}
 
 
 class ProcessedImage(ProcessedFrame):
     """A processed image"""
-    pass
+    DATATYPE = MegaraDataType.IMAGE_PROCESSED
 
 
 class ProcessedRSS(ProcessedFrame):
     """A processed RSS image"""
-    pass
+    DATATYPE = MegaraDataType.RSS_PROCESSED
 
 
 class ProcessedMultiRSS(ProcessedFrame):
@@ -52,6 +82,7 @@ class ProcessedMultiRSS(ProcessedFrame):
 
 class ProcessedSpectrum(ProcessedFrame):
     """A 1d spectrum"""
+    DATATYPE = MegaraDataType.SPEC_PROCESSED
     pass
 
 
@@ -77,28 +108,36 @@ class MegaraLinesCatalog(LinesCatalog):
 
 class MasterBias(ProcessedImageProduct):
     """A Master Bias image"""
-    pass
+    DATATYPE = MegaraDataType.MASTER_BIAS
 
 
 class MasterTwilightFlat(ProcessedRSSProduct):
     __tags__ = ['insmode', 'vph', 'confid']
+    DATATYPE = MegaraDataType.MASTER_TWILIGHT
 
 
 class MasterDark(ProcessedImageProduct):
     """A Master Dark image"""
-    pass
+    DATATYPE = MegaraDataType.MASTER_DARK
 
 
 class MasterFiberFlat(ProcessedRSSProduct):
     __tags__ = ['insmode', 'vph', 'confid']
+    DATATYPE = MegaraDataType.MASTER_FLAT
 
 
 class MasterSlitFlat(ProcessedImageProduct):
     __tags__ = ['insmode', 'vph']
+    DATATYPE = MegaraDataType.MASTER_SLITFLAT
 
 
 class MasterBPM(ProcessedImageProduct):
     """Bad Pixel Mask product"""
+    DATATYPE = MegaraDataType.MASTER_BPM
+
+
+class DiffuseLightCorrection(ProcessedImageProduct):
+    """Image to correct from diffuse light"""
     pass
 
 
@@ -107,8 +146,21 @@ class MasterSensitivity(ProcessedSpectrumProduct):
     pass
 
 
+class SkyRSS(ProcessedRSS):
+    """A processed RSS image"""
+    pass
+
+
 class ReferenceExtinctionTable(DataProductMixin, ArrayType):
     """Atmospheric Extinction."""
+
+    def validate(self, obj):
+        if obj is None:
+            # None is valid
+            pass
+        else:
+            super(ReferenceExtinctionTable, self).validate(obj)
+
     def convert(self, obj):
         # Support None value
         if obj is None:

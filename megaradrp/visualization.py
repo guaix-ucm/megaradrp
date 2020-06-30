@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2018 Universidad Complutense de Madrid
+# Copyright 2017-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -18,11 +18,9 @@ import matplotlib.transforms as mtrans
 import matplotlib.transforms as mtransforms
 import numpy as np
 
+import megaradrp.instrument.constants as cons
 
 M_SQRT3 = math.sqrt(3)
-
-PLATESCALE = 1.2120  # arcsec / mm
-SCALE = 0.443  # mm from center to center, upwards
 
 
 def hexplot(axis, x, y, z, scale=1.0, extent=None,
@@ -199,10 +197,15 @@ def main(argv=None):
     import astropy.io.fits as fits
     from astropy.wcs import WCS
     from astropy.visualization import simple_norm
+    import astropy.units as u
     import matplotlib.transforms as mtransforms
 
     import megaradrp.datamodel as dm
+    from megaradrp.instrument.focalplane import FocalPlaneConf
     from megaradrp.processing.wcs import update_wcs_from_ipa, compute_pa_from_ipa
+
+    # scale of the LCB grid in mm
+    SCALE = cons.SPAXEL_SCALE.to(u.mm).value
 
     try:
         from megaradrp.processing.cube import create_cube_from_rss
@@ -285,24 +288,22 @@ def main(argv=None):
 
     for fname in args.rss:
         with fits.open(fname) as img:
-
-            datamodel = dm.MegaraDataModel()
             if args.plot_nominal_config:
                 insmode = img['FIBERS'].header['INSMODE']
-                fiberconf = datamodel.get_fiberconf_default(insmode)
+                fp_conf = dm.get_fiberconf_default(insmode)
             else:
-                fiberconf = datamodel.get_fiberconf(img)
-            plot_mask = np.ones((fiberconf.nfibers,), dtype=np.bool)
+                fp_conf = FocalPlaneConf.from_img(img)
+            plot_mask = np.ones((fp_conf.nfibers,), dtype=np.bool)
             if not args.plot_sky:
-                skyfibers = fiberconf.sky_fibers()
+                skyfibers = fp_conf.sky_fibers()
                 skyfibers.sort()
                 skyfibers_idx = [(fibid - 1) for fibid in skyfibers]
                 plot_mask[skyfibers_idx] = False
 
-            x = np.empty((fiberconf.nfibers,))
-            y = np.empty((fiberconf.nfibers,))
+            x = np.empty((fp_conf.nfibers,))
+            y = np.empty((fp_conf.nfibers,))
             # Key is fibid
-            for _, fiber in sorted(fiberconf.fibers.items()):
+            for _, fiber in sorted(fp_conf.fibers.items()):
                 idx = fiber.fibid - 1
                 x[idx] = fiber.x
                 y[idx] = fiber.y
@@ -408,7 +409,29 @@ def main(argv=None):
                     synt.writeto(args.contour_image_save)
 
                 conserve_flux = not args.contour_is_density
-                s_cube = create_cube_from_rss(synt, target_scale_arcsec, conserve_flux=conserve_flux)
+                order = 1
+                s_cube = create_cube_from_rss(synt, order, target_scale_arcsec, conserve_flux=conserve_flux)
+                cube_wcs = WCS(s_cube[0].header).celestial
+                px, py = cube_wcs.wcs.crpix
+                interp = np.squeeze(s_cube[0].data)
+                td = mtransforms.Affine2D().translate(-px, -py).scale(target_scale_arcsec, target_scale_arcsec)
+                tt_d = td + ax.transData
+                # im = ax.imshow(interp, alpha=0.9, cmap='jet', transform=tt_d)
+                # im = ax.imshow(interp, alpha=0.9, cmap='jet', transform=ax.get_transform(cube_wcs))
+                if args.contour_levels is not None:
+                    levels = json.loads(args.contour_levels)
+                    mm = ax.contour(interp, levels, transform=tt_d)
+                else:
+                    mm = ax.contour(interp, transform=tt_d)
+                print('contour levels', mm.levels)
+
+            if args.has_contours and args.contour:
+                target_scale_arcsec = args.pixel_size
+                # Build synthetic rss... for reconstruction
+                primary = fits.PrimaryHDU(data=zval[:, np.newaxis], header=img[extname].header)
+                synt = fits.HDUList([primary, img['FIBERS']])
+                order = 1
+                s_cube = create_cube_from_rss(synt, order, target_scale_arcsec)
                 cube_wcs = WCS(s_cube[0].header).celestial
                 px, py = cube_wcs.wcs.crpix
                 interp = np.squeeze(s_cube[0].data)

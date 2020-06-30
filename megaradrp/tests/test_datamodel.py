@@ -12,7 +12,8 @@ import astropy.io.fits as fits
 import astropy.table
 import pytest
 
-from ..datamodel import MegaraDataModel, FibersConf
+from ..datamodel import MegaraDataModel
+from megaradrp.instrument.focalplane import FocalPlaneConf
 
 
 def create_empty_img(insmode):
@@ -46,7 +47,7 @@ def test_fiberconf_1(name, confid, nbundles, nfibers):
 
     conf = datamodel.get_fiberconf(img)
 
-    assert isinstance(conf, FibersConf)
+    assert isinstance(conf, FocalPlaneConf)
     # Default values from file
     assert conf.name == name
     assert conf.conf_id == confid

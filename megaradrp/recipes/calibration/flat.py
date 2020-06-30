@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2020 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -16,10 +16,12 @@ from astropy.io import fits
 import matplotlib.pyplot as plt
 from numina.core import Result, Parameter
 import numina.exceptions
+
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.types import MasterFiberFlat
+from megaradrp.instrument.focalplane import FocalPlaneConf
+from megaradrp.ntypes import MasterFiberFlat
 import megaradrp.requirements as reqs
-from megaradrp.types import ProcessedRSS, ProcessedFrame
+from megaradrp.ntypes import ProcessedRSS, ProcessedFrame
 
 # Flat 2D
 from megaradrp.processing.combine import basic_processing_with_combination
@@ -68,7 +70,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     `reduced_image` of the recipe result.
 
     The apertures in the 2D image are extracted, using the information in
-    `master_traces` and resampled accoding to the wavelength calibration in
+    `master_apertures` and resampled accoding to the wavelength calibration in
     `master_wlcalib`. The resulting RSS is saved as an intermediate
     result named 'reduced_rss.fits'. This RSS is also returned in the field
     `reduced_rss` of the recipe result.
@@ -81,11 +83,21 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     """
 
     # Requirements
+    method = Parameter(
+        'median',
+        description='Combination method',
+        choices=['mean', 'median', 'sigmaclip']
+    )
+    method_kwargs = Parameter(
+        dict(),
+        description='Arguments for combination method',
+        optional=True
+    )
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
     master_slitflat = reqs.MasterSlitFlatRequirement()
-    master_traces = reqs.MasterAperturesRequirement()
+    master_apertures = reqs.MasterAperturesRequirement(alias='master_traces')
     smoothing_window = Parameter(31, 'Window for smoothing (must be odd)',
                                  validator=_smoothing_window_check
                                  )
@@ -99,23 +111,25 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
     def process_flat2d(self, rinput):
         flow = self.init_filters(rinput, rinput.obresult.configuration)
-        final_image = basic_processing_with_combination(rinput, flow, method=combine.median)
+        fmethod = getattr(combine, rinput.method)
+        final_image = basic_processing_with_combination(
+            rinput, flow, method=fmethod, method_kwargs=rinput.method_kwargs,
+        )
         hdr = final_image[0].header
         self.set_base_headers(hdr)
         return final_image
 
-    def obtain_fiber_flat(self, rss_wl, wlcalib, col1=1900, col2=2100, window=31, degree=3):
+    def obtain_fiber_flat(self, rss_wl, col1=1900, col2=2100, window=31, degree=3):
         from scipy.signal import savgol_filter
         from scipy.interpolate import UnivariateSpline
 
-        # Bad fibers, join:
-        bad_fibers = wlcalib.missing_fibers
-        bad_fibers.extend(wlcalib.error_fitting)
-        # print(bad_fibers)
+        # Bad fibers
+        fp_conf = FocalPlaneConf.from_img(rss_wl)
+        bad_fibers = fp_conf.invalid_fibers()
         bad_idxs = [fibid - 1 for fibid in bad_fibers]
         # print(bad_idxs)
 
-        good_idxs_mask = numpy.ones((wlcalib.total_fibers,), dtype='bool')
+        good_idxs_mask = numpy.ones((fp_conf.nfibers,), dtype='bool')
         good_idxs_mask[bad_idxs] = False
 
         # Collapse all fiber spectrum
@@ -133,16 +147,17 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         data_good = data0[valid_mask] / col_good_mean[:, numpy.newaxis]
         data_good[numpy.isnan(data_good)] = 0.0
 
-        # Crappy way
         # This extension was created by WLcalibrator
         wlmap = rss_wl['WLMAP'].data
         mm = numpy.sum(wlmap, axis=0)
+        # The information is also in the keywords
+        # FIBxxxS1, FIBxxxS2
         # skip 0 in divisions
         mask_noinfo = mm < 1
         mm[mask_noinfo] = 1
         # Filter collapse to smooth it
         collapse = numpy.sum(data_good, axis=0) / mm
-        # Smooting works bad very near the border (overshooting)
+        # Smoothing works bad very near the border (overshooting)
         collapse_smooth = savgol_filter(collapse, window, degree)
         collapse_smooth[mask_noinfo] = 1.0
 
@@ -197,7 +212,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         self.save_intermediate_img(img, 'reduced_image.fits')
         splitter1 = Splitter()
         calibrator_aper = ApertureExtractor(
-            rinput.master_traces,
+            rinput.master_apertures,
             self.datamodel,
             offset=rinput.extraction_offset
         )
@@ -218,7 +233,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
         # Obtain flat field
         self.logger.info('Normalize flat field')
-        rss_wl2 = self.obtain_fiber_flat(rss_wl, rinput.master_wlcalib, window=rinput.smoothing_window)
+        rss_wl2 = self.obtain_fiber_flat(rss_wl, window=rinput.smoothing_window)
         rss_wl2[0].header = self.set_base_headers(rss_wl2[0].header)
         result = self.create_result(
             master_fiberflat=rss_wl2,
