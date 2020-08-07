@@ -19,6 +19,7 @@ from astropy import constants as const
 from numina.array.numsplines import AdaptiveLSQUnivariateSpline
 from numina.core import Result, Parameter
 from numina.core.requirements import Requirement
+from numina.exceptions import RecipeError
 from numina.types.array import ArrayType
 
 from megaradrp.instrument.focalplane import FocalPlaneConf
@@ -98,6 +99,16 @@ class MOSStandardRecipe(ImageRecipe):
     def run(self, rinput):
 
         self.logger.info('starting MOSStandardRecipe reduction')
+
+        # Try to guard against receiving here something
+        # that is not in magAB
+        # TODO: implement this in ReferenceSpectrumTable
+        maxm = max(rinput.reference_spectrum[:, 1])
+        if maxm > 100:
+            # If the column here has values greater than 100
+            # this could not be a magnitude
+            raise RecipeError("the maximum flux of 'reference_spectrum' is > 100, "
+                              "check the flux unit (it has to be magAB)")
 
         reduced2d, rss_data = super(MOSStandardRecipe, self).base_run(rinput)
 

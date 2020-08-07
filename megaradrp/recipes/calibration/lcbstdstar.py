@@ -21,6 +21,7 @@ from numina.array.numsplines import AdaptiveLSQUnivariateSpline
 from numina.core import Result, Parameter
 from numina.core.requirements import Requirement
 from numina.core.validator import range_validator
+from numina.exceptions import RecipeError
 from numina.types.array import ArrayType
 
 from megaradrp.instrument.focalplane import FocalPlaneConf
@@ -109,6 +110,16 @@ class LCBStandardRecipe(ImageRecipe):
 
         self.logger.info('starting LCBStandardRecipe reduction')
 
+        # Try to guard against receiving here something
+        # that is not in magAB
+        # TODO: implement this in ReferenceSpectrumTable
+        maxm = max(rinput.reference_spectrum[:, 1])
+        if maxm > 100:
+            # If the column here has values greater than 100
+            # this could not be a magnitude
+            raise RecipeError("the maximum flux of 'reference_spectrum' is > 100, "
+                              "check the flux unit (it has to be magAB)")
+
         # Create InstrumentModel
         # ins1 = rinput.obresult.configuration
         #
@@ -142,6 +153,7 @@ class LCBStandardRecipe(ImageRecipe):
 
         rad_vel = rinput.reference_spectrum_velocity * u.km / u.s
         factor = 1 + rad_vel / const.c
+
         star_interp = interp1d(rinput.reference_spectrum[:,0] / factor,
                                rinput.reference_spectrum[:,1])
 

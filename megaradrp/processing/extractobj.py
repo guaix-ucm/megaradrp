@@ -371,87 +371,95 @@ def compute_broadening(flux_low, flux_high, sigmalist,
 
 def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
                          wl_coverage1, wl_coverage2, sigma=20.0):
+    """Generate sensitivity response"""
 
-        wcsl = astropy.wcs.WCS(final[0].header)
+    wcsl = astropy.wcs.WCS(final[0].header)
 
-        r1 = numpy.arange(final[0].shape[1])
-        r2 = r1 * 0.0
-        lm = numpy.array([r1, r2])
-        # Values are 0-based
-        wavelen_ = wcsl.all_pix2world(lm.T, 0)
-        if wcsl.wcs.cunit[0] == u.dimensionless_unscaled:
-            # CUNIT is empty, assume Angstroms
-            wavelen = wavelen_[:, 0] * u.AA
-        else:
-            wavelen = wavelen_[:, 0] * wcsl.wcs.cunit[0]
+    r1 = numpy.arange(final[0].shape[1])
+    r2 = r1 * 0.0
+    lm = numpy.array([r1, r2])
+    # Values are 0-based
+    wavelen_ = wcsl.all_pix2world(lm.T, 0)
+    if wcsl.wcs.cunit[0] == u.dimensionless_unscaled:
+        # CUNIT is empty, assume Angstroms
+        wavelen = wavelen_[:, 0] * u.AA
+    else:
+        wavelen = wavelen_[:, 0] * wcsl.wcs.cunit[0]
 
-        wavelen_aa = wavelen.to(u.AA)
+    wavelen_aa = wavelen.to(u.AA)
 
-        airmass = final[0].header['AIRMASS']
-        exptime = final[0].header['EXPTIME']
+    airmass = final[0].header['AIRMASS']
+    exptime = final[0].header['EXPTIME']
 
-        response_0 = spectrum / exptime
-        valid = response_0 > 0
-        # In magAB
-        # f(Jy) = 3631 * 10^-0.4 mAB
+    response_0 = spectrum / exptime
+    r0max = response_0.max()
+    valid = response_0 > 0
+    if r0max <= 0:
+        raise ValueError("maximum of 'spectrum' is <= 0")
+    if sum(valid) <= 0:
+        raise ValueError("'spectrum' is <= 0")
 
-        mag_ref = (star_interp(wavelen_aa) + extinc_interp(wavelen_aa) * airmass) * u.ABmag
-        response_1 = mag_ref.to(u.Jy).value
+    # In magAB
+    # f(Jy) = 3631 * 10^-0.4 mAB
+    mag_ref = (star_interp(wavelen_aa) + extinc_interp(wavelen_aa) * airmass) * u.ABmag
+    response_1 = mag_ref.to(u.Jy).value
 
-        r0max = response_0.max()
-        r1max = response_1.max()
-        r0 = response_0 / r0max
-        r1 = response_1 / r1max
+    r1max = response_1.max()
+    if r1max <= 0:
+        raise ValueError("maximum of 'star_interp' is <= 0")
 
-        pixm1 = wl_coverage1.start
-        pixm2 = wl_coverage1.stop
-        pixr1 = wl_coverage2.start
-        pixr2 = wl_coverage2.stop
+    r0 = response_0 / r0max
+    r1 = response_1 / r1max
 
-        pixlims = {}
-        pixlims['PIXLIMR1'] = pixr1 + 1  # Convert to 1-ref
-        pixlims['PIXLIMR2'] = pixr2
-        pixlims['PIXLIMM1'] = pixm1 + 1  # Convert to 1-ref
-        pixlims['PIXLIMM2'] = pixm2
+    pixm1 = wl_coverage1.start
+    pixm2 = wl_coverage1.stop
+    pixr1 = wl_coverage2.start
+    pixr2 = wl_coverage2.stop
 
-        max_valid = numpy.zeros_like(valid)
-        max_valid[wl_coverage1] = True
+    pixlims = {}
+    pixlims['PIXLIMR1'] = pixr1 + 1  # Convert to 1-ref
+    pixlims['PIXLIMR2'] = pixr2
+    pixlims['PIXLIMM1'] = pixm1 + 1  # Convert to 1-ref
+    pixlims['PIXLIMM2'] = pixm2
 
-        partial_valid = numpy.zeros_like(valid)
-        partial_valid[wl_coverage2] = True
+    max_valid = numpy.zeros_like(valid)
+    max_valid[wl_coverage1] = True
 
-        valid = numpy.zeros_like(response_0)
-        valid[wl_coverage1] = 1
+    partial_valid = numpy.zeros_like(valid)
+    partial_valid[wl_coverage2] = True
 
-        pixf1, pixf2 = int(math.floor(pixm1 +  2* sigma)), int(math.ceil(pixm2 - 2 * sigma))
+    valid = numpy.zeros_like(response_0)
+    valid[wl_coverage1] = 1
 
-        pixlims['PIXLIMF1'] = pixf1 + 1
-        pixlims['PIXLIMF2'] = pixf2
+    pixf1, pixf2 = int(math.floor(pixm1 +  2* sigma)), int(math.ceil(pixm2 - 2 * sigma))
 
-        flux_valid = numpy.zeros_like(valid, dtype='bool')
-        flux_valid[pixf1:pixf2] = True
+    pixlims['PIXLIMF1'] = pixf1 + 1
+    pixlims['PIXLIMF2'] = pixf2
 
-        if sigma > 0:
-            r0_ens = gaussian_filter(r0, sigma=sigma)
-        else:
-            r0_ens = r0
+    flux_valid = numpy.zeros_like(valid, dtype='bool')
+    flux_valid[pixf1:pixf2] = True
 
-        ratio2 = r0_ens / r1
-        s_response = ratio2 * (r0max / r1max)
+    if sigma > 0:
+        r0_ens = gaussian_filter(r0, sigma=sigma)
+    else:
+        r0_ens = r0
 
-        # FIXME: add history
-        sens = fits.PrimaryHDU(s_response, header=final[0].header)
-        # delete second axis keywords
-        # FIXME: delete axis with wcslib
-        for key in ['CRPIX2', 'CRVAL2', 'CDELT2', 'CTYPE2']:
-            if key in sens.header:
-                del sens.header[key]
+    ratio2 = r0_ens / r1
+    s_response = ratio2 * (r0max / r1max)
 
-        sens.header['uuid'] = str(uuid.uuid1())
-        sens.header['tunit'] = ('Jy', "Final units")
+    # FIXME: add history
+    sens = fits.PrimaryHDU(s_response, header=final[0].header)
+    # delete second axis keywords
+    # FIXME: delete axis with wcslib
+    for key in ['CRPIX2', 'CRVAL2', 'CDELT2', 'CTYPE2']:
+        if key in sens.header:
+            del sens.header[key]
 
-        update_flux_limits(sens.header, pixlims, wcs=wcsl, ref=0)
+    sens.header['uuid'] = str(uuid.uuid1())
+    sens.header['tunit'] = ('Jy', "Final units")
 
-        return sens
+    update_flux_limits(sens.header, pixlims, wcs=wcsl, ref=0)
+
+    return sens
 
 
