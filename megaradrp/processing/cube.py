@@ -336,9 +336,9 @@ def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
     cube[0].data = np.moveaxis(cube_data, 2, 0)
     cube[0].data.astype('float32')
 
-    # Merge headers
-    merge_wcs(rss['FIBERS'].header, rss[0].header, out=cube[0].header)
-    # Update values of WCS
+    sky_header = rss['FIBERS'].header.copy()
+    spec_header = rss[0].header
+    # Update values of sky WCS
     # CRPIX1, CRPIX2
     # CDELT1, CDELT2
     # minx, miny
@@ -347,14 +347,16 @@ def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
     crpix_x = -refx / target_scale - j1min
     crpix_y = -refy / target_scale - i1min
     # Map the center of original field
-    #
-    #
-    cube[0].header['CRPIX1'] = crpix_x
-    cube[0].header['CRPIX2'] = crpix_y
-    cube[0].header['CDELT1'] = -target_scale_arcsec / (3600.0)
-    cube[0].header['CDELT2'] = target_scale_arcsec / (3600.0)
+    sky_header['CRPIX1'] = crpix_x
+    sky_header['CRPIX2'] = crpix_y
+    sky_header['CDELT1'] = -target_scale_arcsec / (3600.0)
+    sky_header['CDELT2'] = target_scale_arcsec / (3600.0)
+
+    # Merge headers
     # 2D from FIBERS
     # WL from PRIMARY
+    merge_wcs(sky_header, spec_header, out=cube[0].header)
+
     # done
     return cube
 
@@ -371,54 +373,77 @@ def recompute_wcs(hdr):
 
 
 def merge_wcs(hdr_sky, hdr_spec, out=None):
-    """Merge sky WCS with spectral WCS"""
+    """Merge sky WCS with spectral WCS
+
+    Works only with main WCS and B WCS
+
+    """
     if out is None:
         hdr = hdr_spec.copy()
     else:
         hdr = out
 
     allw = astropy.wcs.find_all_wcs(hdr_spec)
-    for w in allw:
-        ss = w.wcs.alt
+    wcsnames = [w.wcs.alt for w in allw]
+    for ss in wcsnames:
         merge_wcs_alt(hdr_sky, hdr_spec, hdr, spec_suffix=ss)
-
     return hdr
 
 
-def merge_wcs_alt(hdr_sky, hdr_spec, out, spec_suffix=''):
+def merge_wcs_alt(hdr_sky, hdr_spec, out, spec_suffix=' '):
     """Merge sky WCS with spectral WCS"""
 
     hdr = out
-    s = spec_suffix
-    sf = s
+    if spec_suffix == ' ':
+        sf = ''
+    else:
+        sf = spec_suffix
     # Extend header for third axis
     c_crpix = 'Pixel coordinate of reference point'
     c_cunit = 'Units of coordinate increment and value'
-    hdr.set('CUNIT1{}'.format(sf), comment=c_cunit, after='CDELT1{}'.format(sf))
-    hdr.set('CUNIT2{}'.format(sf), comment=c_cunit, after='CUNIT1{}'.format(sf))
-    hdr.set('CUNIT3{}'.format(sf), value='', comment=c_cunit, after='CUNIT2{}'.format(sf))
-    hdr.set('CRPIX2{}'.format(sf), value=1, comment=c_crpix, after='CRPIX1{}'.format(sf))
-    hdr.set('CRPIX3{}'.format(sf), value=1, comment=c_crpix, after='CRPIX2{}'.format(sf))
-    hdr.set('CDELT3{}'.format(sf), after='CDELT2{}'.format(sf))
-    hdr.set('CTYPE3{}'.format(sf), after='CTYPE2{}'.format(sf))
-    hdr.set('CRVAL3{}'.format(sf), after='CRVAL2{}'.format(sf))
+    wcsname_s = 'WCSNAME{}'.format(sf)
+    if wcsname_s in hdr:
+        prev = wcsname_s
+    else:
+        prev = 'CTYPE1{}'.format(sf)
+
+    hdr.set('WCSAXES{}'.format(sf), value=3, before=prev)
+    if sf != '':
+        hdr.set('WCSNAME{}'.format(sf), value='', after='PC3_3')
+        hdr.set('CTYPE1{}'.format(sf), value='', after='WCSNAME{}'.format(sf))
+        hdr.set('CRPIX1{}'.format(sf), value=1.0, after='CTYPE1{}'.format(sf))
+        hdr.set('CRVAL1{}'.format(sf), value=0.0, after='CRPIX1{}'.format(sf))
+        hdr.set('CDELT1{}'.format(sf), value=1.0, after='CRVAL1{}'.format(sf))
+    hdr.set('CUNIT1{}'.format(sf), value='deg', comment=c_cunit, after='CDELT1{}'.format(sf))
+    hdr.set('CTYPE2{}'.format(sf), after='CUNIT1{}'.format(sf))
+    if sf != '':
+        hdr.set('CRPIX2{}'.format(sf), value=1.0, after='CTYPE2{}'.format(sf))
+        hdr.set('CRVAL2{}'.format(sf), value=0.0, after='CRPIX2{}'.format(sf))
+        hdr.set('CDELT2{}'.format(sf), value=1.0, after='CRVAL2{}'.format(sf))
+    hdr.set('CUNIT2{}'.format(sf), value='deg', comment=c_cunit, after='CDELT2{}'.format(sf))
+    hdr.set('CRPIX2{}'.format(sf), value=1, comment=c_crpix, after='CTYPE2{}'.format(sf))
+    hdr.set('CTYPE3{}'.format(sf), after='CUNIT2{}'.format(sf))
+    hdr.set('CRPIX3{}'.format(sf), value=1, comment=c_crpix, after='CTYPE3{}'.format(sf))
+    hdr.set('CRVAL3{}'.format(sf), after='CRPIX3{}'.format(sf))
+    hdr.set('CDELT3{}'.format(sf), after='CRVAL3{}'.format(sf))
+    hdr.set('CUNIT3{}'.format(sf), comment=c_cunit, after='CDELT3{}'.format(sf))
     c_pc = 'Coordinate transformation matrix element'
-    hdr.set('PC1_1{}'.format(sf), value=1.0, comment=c_pc, after='CRVAL3{}'.format(sf))
+    hdr.set('PC1_1{}'.format(sf), value=1.0, comment=c_pc, after='CUNIT3{}'.format(sf))
     hdr.set('PC1_2{}'.format(sf), value=0.0, comment=c_pc, after='PC1_1{}'.format(sf))
     hdr.set('PC2_1{}'.format(sf), value=0.0, comment=c_pc, after='PC1_2{}'.format(sf))
     hdr.set('PC2_2{}'.format(sf), value=1.0, comment=c_pc, after='PC2_1{}'.format(sf))
     hdr.set('PC3_3{}'.format(sf), value=1.0, comment=c_pc, after='PC2_2{}'.format(sf))
 
     # Mapping, which keyword comes from each header
-    mappings = [('CRPIX3', 'CRPIX1', s, 0),
-                ('CDELT3', 'CDELT1', s, 0),
-                ('CRVAL3', 'CRVAL1', s, 0),
-                ('CTYPE3', 'CTYPE1', s, 0),
+    mappings = [('CRPIX3', 'CRPIX1', sf, 0),
+                ('CDELT3', 'CDELT1', sf, 0),
+                ('CRVAL3', 'CRVAL1', sf, 0),
+                ('CTYPE3', 'CTYPE1', sf, 0),
                 ('CRPIX1', 'CRPIX1', '', 1),
                 ('CDELT1', 'CDELT1', '', 1),
                 ('CRVAL1', 'CRVAL1', '', 1),
                 ('CTYPE1', 'CTYPE1', '', 1),
-                ('CUNIT1', 'CUNIT1', '', 1),
+                ('CUNIT3', 'CUNIT1', sf, 0),
                 ('PC1_1', 'PC1_1', '', 1),
                 ('PC1_2', 'PC1_2', '', 1),
                 ('CRPIX2', 'CRPIX2', '', 1),
@@ -429,10 +454,13 @@ def merge_wcs_alt(hdr_sky, hdr_spec, out, spec_suffix=''):
                 ('PC2_1', 'PC2_1', '', 1),
                 ('PC2_2', 'PC2_2', '', 1),
                 ('LONPOLE', 'LONPOLE', '', 1),
-                ('RADESYS', 'READESYS', '', 1),
-                ('specsys', 'SPECSYS', s, 0),
-                ('ssysobs', 'SSYSOBS', s, 0),
-                ('velosys', 'VELOSYS', s, 0)
+                ('LATPOLE', 'LATPOLE', '', 1),
+                ('RADESYS', 'RADESYS', '', 1),
+                ('EQUINOX', 'EQUINOX', '', 1),
+                ('WCSNAME', 'WCSNAME', sf, 0),
+                ('specsys', 'SPECSYS', sf, 0),
+                ('ssysobs', 'SSYSOBS', sf, 0),
+                ('velosys', 'VELOSYS', sf, 0)
                 ]
 
     hdr_in = {}
