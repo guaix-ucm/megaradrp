@@ -123,16 +123,20 @@ class MegaraDataModel(DataModel):
         return [self.gather_info_dframe(f) for f in val.images]
 
     def fiber_scale_unit(self, img, unit=False):
-        funit = img['FIBERS'].header.get("FUNIT", "arcsec")
+        return fiber_scale_unit(img, unit=unit)
 
-        if funit == "arcsec":
-            scale = 1
-        else:
-            scale = self.PLATESCALE
-        if unit:
-            return scale, funit
-        else:
-            return scale
+
+def fiber_scale_unit(img, unit=False):
+    funit = img['FIBERS'].header.get("FUNIT", "arcsec")
+
+    if funit == "arcsec":
+        scale = 1
+    else:
+        scale = cons.GTC_FC_A_PLATESCALE.value
+    if unit:
+        return scale, funit
+    else:
+        return scale
 
 
 def get_fiberconf(img):
@@ -189,7 +193,6 @@ def read_fibers_extension(hdr, insmode='LCB'):
     """
     import megaradrp.instrument.focalplane as fp
     return fp.FocalPlaneConf.from_header(hdr)
-
 
 
 def describe_hdulist_megara(hdulist):

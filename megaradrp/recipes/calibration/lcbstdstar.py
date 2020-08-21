@@ -14,7 +14,6 @@ from astropy import constants as const
 import astropy.io.fits as fits
 import astropy.units as u
 import astropy.wcs
-
 from scipy.interpolate import interp1d
 
 from numina.array.numsplines import AdaptiveLSQUnivariateSpline
@@ -25,12 +24,14 @@ from numina.exceptions import RecipeError
 from numina.types.array import ArrayType
 
 from megaradrp.instrument.focalplane import FocalPlaneConf
-from megaradrp.processing.extractobj import extract_star, generate_sensitivity
-from megaradrp.processing.extractobj import mix_values, compute_broadening
-from megaradrp.recipes.scientific.base import ImageRecipe
+from megaradrp.ntypes import Point2D
 from megaradrp.ntypes import ProcessedRSS, ProcessedFrame, ProcessedSpectrum
 from megaradrp.ntypes import ReferenceSpectrumTable, ReferenceExtinctionTable
 from megaradrp.ntypes import MasterSensitivity
+from megaradrp.processing.extractobj import extract_star, generate_sensitivity
+from megaradrp.processing.extractobj import mix_values, compute_broadening
+from megaradrp.processing.centroid import calc_centroid_brightest
+from megaradrp.recipes.scientific.base import ImageRecipe
 
 
 class LCBStandardRecipe(ImageRecipe):
@@ -71,7 +72,7 @@ class LCBStandardRecipe(ImageRecipe):
     the central spaxel containing the star and returned as `star_spectrum`.
 
     """
-    position = Requirement(list, "Position of the reference object", default=(0, 0))
+    position = Requirement(Point2D, "Position of the reference object", optional=True)
     nrings = Parameter(3, "Number of rings to extract the star",
                        validator=range_validator(minval=1))
     reference_spectrum = Requirement(ReferenceSpectrumTable, "Spectrum of reference star")
@@ -140,12 +141,24 @@ class LCBStandardRecipe(ImageRecipe):
         # 1 + 6  + 12  + 18 for third ring
         # 1 + 6 * Sum_i=0^n =  1 + 3 * n * (n +1)
         # Using three rings around central point
+
+        # If position is None, find the brightest spaxel
+        # and use the centroid
+        if rinput.position is None:
+            self.logger.info('finding centroid of brightest spaxel')
+            extraction_region = [1000, 3000]
+            nrings = rinput.nrings
+            position = calc_centroid_brightest(final, extraction_region, nrings)
+        else:
+            position = rinput.position
+        self.logger.info('central position is %s', position)
+
         self.logger.debug('adding %d nrings', rinput.nrings)
         npoints = 1 + 3 * rinput.nrings * (rinput.nrings +1)
         self.logger.debug('adding %d fibers', npoints)
 
         fp_conf = FocalPlaneConf.from_img(final)
-        spectra_pack = extract_star(final, rinput.position, npoints,
+        spectra_pack = extract_star(final, position, npoints,
                                     fp_conf, logger=self.logger)
 
         spectrum, colids, wl_cover1, wl_cover2 = spectra_pack
