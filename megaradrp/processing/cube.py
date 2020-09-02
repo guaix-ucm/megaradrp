@@ -361,9 +361,8 @@ def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
     return cube
 
 
-def recompute_wcs(hdr):
+def recompute_wcs(hdr, ipa):
     """Recompute the WCS rotations from IPA """
-    ipa = hdr['IPA']
     pa = mwcs.compute_pa_from_ipa(ipa)
     print('IPA angle is:', ipa, 'PA angle is', math.fmod(pa, 360))
     x = hdr['PC1_1']
@@ -545,6 +544,37 @@ def _visualization(zval, scale=1.0):
     plt.show()
 
 
+def fix_missing_fiber(rss, fibid):
+    hdr = rss['FIBERS'].header
+    # Ignoring fibid for the moment
+    # Change fiber 623 by the average of surrounding fibers
+    fin = 622
+    # Fibers around 623 are
+    idxs = [619, 524, 528, 184, 183, 621]
+    avg = np.zeros_like(rss[0].data[fin])
+    for idx in idxs:
+        avg += rss[0].data[idx]
+    avg /= len(idxs)
+
+    l1fmt = "FIB{:03d}W1"
+    l2fmt = "FIB{:03d}W2"
+    # Change limits in header to the min-max of surrounding fibers
+    for sub, func in [(l1fmt, max), (l2fmt, min)]:
+        keys = []
+        for idx in idxs:
+            keys.append(hdr[sub.format(idx + 1)])
+        hdr[sub.format(fin + 1)] = func(keys)
+
+    l1 = hdr[l1fmt.format(fin + 1)]
+    l2 = hdr[l2fmt.format(fin + 1)]
+    if l1 > 1:
+        avg[0:l1 - 1] = 0
+    if l2 < len(avg):
+        avg[l2 - 1:] = 0
+    rss[0].data[fin] = avg
+    return rss
+
+
 def main(args=None):
     import argparse
     import astropy.io.fits as fits
@@ -569,6 +599,8 @@ def main(args=None):
                         default='nn', help="Method of interpolation")
     parser.add_argument('--wcs-pa-from-header', action='store_true',
                         help="Use PA angle from header", dest='pa_from_header')
+    parser.add_argument('--fix-missing', action='store_true',
+                        help="Interpolate missing fibers")
 
     args = parser.parse_args(args=args)
 
@@ -583,7 +615,13 @@ def main(args=None):
             # Doing it here so the change is propagated to
             # all alternative coordinates
             print('recompute WCS from IPA')
-            rss['FIBERS'].header = recompute_wcs(rss['FIBERS'].header)
+            ipa = rss['PRIMARY'].header['IPA']
+            rss['FIBERS'].header = recompute_wcs(rss['FIBERS'].header, ipa=ipa)
+        if args.fix_missing:
+            fibid = 623
+            print('interpolate fiber {}'.format(fibid))
+            rss = fix_missing_fiber(rss, fibid)
+
         cube = create_cube_from_rss(rss, p, target_scale, conserve_flux=conserve_flux)
 
     cube.writeto(args.outfile, overwrite=True)
