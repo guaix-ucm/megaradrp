@@ -19,6 +19,8 @@ import matplotlib.transforms as mtransforms
 import numpy as np
 
 import megaradrp.instrument.constants as cons
+import megaradrp.processing.fixrss as fixrss
+
 
 M_SQRT3 = math.sqrt(3)
 
@@ -219,6 +221,8 @@ def main(argv=None):
                         help='Display WCS grid')
     parser.add_argument('--wcs-pa-from-header', action='store_true',
                         help="Use PA angle from PC keys", dest='pa_from_header')
+    parser.add_argument('--fix-missing', action='store_true',
+                        help="Interpolate missing fibers")
     parser.add_argument('--average-region', nargs=2, default=[1000, 3000],
                         type=int, help='Region of the RSS averaged on display')
     parser.add_argument('--extname', '-e', default='PRIMARY',
@@ -288,6 +292,10 @@ def main(argv=None):
 
     for fname in args.rss:
         with fits.open(fname) as img:
+            if args.fix_missing:
+                fibid = 623
+                print('interpolate fiber {}'.format(fibid))
+                rss = fixrss.fix_missing_fiber(rss, fibid)
             if args.plot_nominal_config:
                 insmode = img['FIBERS'].header['INSMODE']
                 fp_conf = dm.get_fiberconf_default(insmode)

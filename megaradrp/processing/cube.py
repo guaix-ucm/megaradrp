@@ -15,8 +15,6 @@ van de Ville et al. IEEE Transactions on Image Processing 2004, 13, 6
 
 from __future__ import print_function
 
-import math
-
 import numpy as np
 from scipy import signal
 import astropy.units as u
@@ -26,55 +24,14 @@ from numina.frame.utils import copy_img
 from megaradrp.instrument.focalplane import FocalPlaneConf
 # from megaradrp.datamodel import MegaraDataModel
 from megaradrp.core.utils import atleast_2d_last
-import megaradrp.processing.wcs as mwcs
+import megaradrp.processing.fixrss as fixrss
+import megaradrp.processing.hexgrid as hg
 import megaradrp.processing.hexspline as hspline
 import megaradrp.instrument.constants as cons
-
-# Normalized hexagon geometry
-M_SQRT3 = math.sqrt(3)
-H_HEX = 0.5
-R_HEX = 1 / M_SQRT3
-A_HEX = 0.5 * H_HEX * R_HEX
-HA_HEX = 6 * A_HEX # detR0 == ha
 
 
 # Size scale of the spaxel grid in arcseconds
 HEX_SCALE = (cons.GTC_FC_A_PLATESCALE * cons.SPAXEL_SCALE).to(u.arcsec).value
-
-
-def calc_matrix(nrow, ncol, grid_type=2):
-    """
-
-    Parameters
-    ----------
-    nrow : int
-    ncol : int
-    grid_type : int
-
-    Returns
-    -------
-
-    """
-
-    R0 = np.array([[M_SQRT3 / 2,0], [-0.5,1]]) # Unit scale
-
-    if grid_type == 2:
-        f = 0
-    else:
-        f = 1
-
-    kcol = []
-    krow = []
-    for i in range(ncol):
-        s = (i + f * (i % 2)) // 2
-        for j in range(nrow):
-            kcol.append(i)
-            krow.append(j+s)
-
-    sl = np.array([kcol, krow]) # x y
-    r0l = np.dot(R0, sl)
-    # r0l = R0 @ sl
-    return r0l
 
 
 def calc_matrix_from_fiberconf(fibersconf):
@@ -82,7 +39,7 @@ def calc_matrix_from_fiberconf(fibersconf):
 
     Parameters
     ----------
-    fibersconf : megaradrp.instrument.focalplance.FocalPlabeConf
+    fibersconf : megaradrp.instrument.focalplane.FocalPlaneConf
 
     Returns
     -------
@@ -100,8 +57,8 @@ def calc_matrix_from_fiberconf(fibersconf):
 
     # FIXME: workaround
     # FIBER in LOW LEFT corner is 614
-    REFID = 614
-    ref_fiber = fibersconf.fibers[REFID]
+    refid = 614
+    ref_fiber = fibersconf.fibers[refid]
     minx, miny = ref_fiber.x, ref_fiber.y
     if ref_fiber.x < -6:
         # arcsec
@@ -111,64 +68,11 @@ def calc_matrix_from_fiberconf(fibersconf):
         # mm
         ascale = cons.SPAXEL_SCALE.to(u.mm).value
         # print('fiber coordinates in mm')
-    refx, refy = minx / ascale, miny / ascale
+    ref = minx / ascale, miny / ascale
     rpos1_x = (spos1_x - minx) / ascale
     rpos1_y = (spos1_y - miny) / ascale
     r0l_1 = np.array([rpos1_x, rpos1_y])
-    return r0l_1, (refx, refy)
-
-
-def calc_grid(scale=1.0):
-    """
-
-    Parameters
-    ----------
-    scale : float
-
-    Returns
-    -------
-
-    """
-
-    G_TYPE = 2 # Values for MEGARA
-    ncol = 27 #
-    nrow = 21 #
-    r0l = calc_matrix(nrow, ncol, grid_type=G_TYPE)
-    # r0l = R0 @ sl
-    spos_x = scale * (r0l[0] - r0l[0].max() / 2)
-    spos_y = scale * (r0l[1] - r0l[1].max() / 2)
-
-    return spos_x, spos_y
-
-
-def hexgrid_extremes(r0l, target_scale):
-    """
-
-    Parameters
-    ----------
-    r0l
-    target_scale : float
-
-    Returns
-    -------
-
-    """
-    # geometry
-    # ha_hex = 6 * a_hex # detR0 == ha
-    # compute extremes of hexgrid to rectangular grid
-    # with pixel size 'scale'
-    x0min, y0min = r0l.min(axis=1)
-    x0max, y0max = r0l.max(axis=1)
-    y1min = y0min - H_HEX
-    y1max = y0max + H_HEX
-    x1min = x0min - R_HEX
-    x1max = x0max + R_HEX
-
-    j1min = int(math.floor(x1min / target_scale + 0.5))
-    i1min = int(math.floor(y1min / target_scale + 0.5))
-    j1max = int(math.ceil(x1max / target_scale - 0.5))
-    i1max = int(math.ceil(y1max / target_scale - 0.5))
-    return (i1min, i1max), (j1min, j1max)
+    return r0l_1, ref
 
 
 def create_cube(r0l, zval, p=1, target_scale=1.0):
@@ -197,12 +101,12 @@ def create_cube(r0l, zval, p=1, target_scale=1.0):
     if p > 2:
         raise ValueError('p > 2 not implemented')
 
-    R1 = target_scale * np.array([[1.0 ,0], [0,1]]) # Unit scale
+    rr1 = target_scale * np.array([[1.0, 0], [0, 1]])  # Unit scale
 
     # compute extremes of hexgrid to rectangular grid
     # with pixel size 'scale'
 
-    (i1min, i1max), (j1min, j1max) = hexgrid_extremes(r0l, target_scale)
+    (i1min, i1max), (j1min, j1max) = hg.hexgrid_extremes(r0l, target_scale)
 
     # Rectangular grid
     mk1 = np.arange(i1min, i1max + 1)
@@ -215,9 +119,9 @@ def create_cube(r0l, zval, p=1, target_scale=1.0):
     # disp axis is last axis...
     dk = np.zeros((crow, ccol, zval2.shape[-1]))
     # print('result shape is ', dk.shape)
-    # r1k = R1 @ sk
+    # r1k = rr1 @ sk
     sk = np.flipud(np.transpose([np.tile(mk1, len(mk2)), np.repeat(mk2, len(mk1))]).T)  # x y
-    r1k = np.dot(R1, sk)
+    r1k = np.dot(rr1, sk)
 
     # Prefiltering
     # For p = 1, prefilter coefficients with p = 1, coeff = 1
@@ -279,11 +183,11 @@ def create_cube_from_array(rss_data, fiberconf, p=1, target_scale_arcsec=1.0, co
 
     region = rss_data[rows, :]
 
-    r0l, (refx, refy) = calc_matrix_from_fiberconf(fiberconf)
+    r0l, _ = calc_matrix_from_fiberconf(fiberconf)
     cube_data = create_cube(r0l, region[:, :], p, target_scale)
     # scale with areas
     if conserve_flux:
-        cube_data *= (target_scale ** 2 / HA_HEX)
+        cube_data *= (target_scale ** 2 / hg.HA_HEX)
     result = np.moveaxis(cube_data, 2, 0)
     result.astype('float32')
     return result
@@ -320,12 +224,12 @@ def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
     # Get FUNIT keyword
     r0l, (refx, refy) = calc_matrix_from_fiberconf(fiberconf)
 
-    (i1min, i1max), (j1min, j1max) = hexgrid_extremes(r0l, target_scale)
+    (i1min, i1max), (j1min, j1max) = hg.hexgrid_extremes(r0l, target_scale)
     cube_data = create_cube(r0l, region[:, :], p, target_scale)
 
     if conserve_flux:
         # scale with areas
-        cube_data *= (target_scale ** 2 / HA_HEX)
+        cube_data *= (target_scale ** 2 / hg.HA_HEX)
 
     cube = copy_img(rss)
     # Move axis to put WL first
@@ -349,8 +253,8 @@ def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
     # Map the center of original field
     sky_header['CRPIX1'] = crpix_x
     sky_header['CRPIX2'] = crpix_y
-    sky_header['CDELT1'] = -target_scale_arcsec / (3600.0)
-    sky_header['CDELT2'] = target_scale_arcsec / (3600.0)
+    sky_header['CDELT1'] = -target_scale_arcsec / 3600.0
+    sky_header['CDELT2'] = target_scale_arcsec / 3600.0
 
     # Merge headers
     # 2D from FIBERS
@@ -359,16 +263,6 @@ def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
 
     # done
     return cube
-
-
-def recompute_wcs(hdr, ipa):
-    """Recompute the WCS rotations from IPA """
-    pa = mwcs.compute_pa_from_ipa(ipa)
-    print('IPA angle is:', ipa, 'PA angle is', math.fmod(pa, 360))
-    x = hdr['PC1_1']
-    y = hdr['PC1_2']
-    print('PA from header is:', np.rad2deg(math.atan2(y, x)))
-    return mwcs.update_wcs_from_ipa(hdr, pa)
 
 
 def merge_wcs(hdr_sky, hdr_spec, out=None):
@@ -462,7 +356,7 @@ def merge_wcs_alt(hdr_sky, hdr_spec, out, spec_suffix=' '):
                 ('velosys', 'VELOSYS', sf, 0)
                 ]
 
-    hdr_in = {}
+    hdr_in = dict()
     hdr_in[0] = hdr_spec
     hdr_in[1] = hdr_sky
 
@@ -477,102 +371,6 @@ def merge_wcs_alt(hdr_sky, hdr_spec, out, spec_suffix=' '):
             pass
 
     return hdr
-
-
-def _simulate(seeing_fwhm=1.0, hex_scale=HEX_SCALE):
-    # simulation tools
-    from numina.instrument.simulation.atmosphere import generate_gaussian_profile
-    from megaradrp.simulation.actions import simulate_point_like_profile
-
-    FIBRAD_ANG = R_HEX * hex_scale
-
-    fibrad = FIBRAD_ANG  # arcsec
-    seeing_profile = generate_gaussian_profile(seeing_fwhm)
-    psf = None
-    fraction_of_flux = simulate_point_like_profile(seeing_profile, psf, fibrad)
-
-    spos_x, spos_y = calc_grid(scale=hex_scale)
-
-    offpos0 = spos_x - 1.5
-    offpos1 = spos_y + 1.6
-    f_o_f = fraction_of_flux(offpos0, offpos1)
-    b = 0.2
-    zval = b + f_o_f
-    zval = np.tile(zval[:, None], (1, 1000))
-    zval = np.random.normal(zval, 0.01)
-    return zval
-
-
-def _demo():
-    import matplotlib.pyplot as plt
-
-    seeing_fwhm = 1.1  # arcsec
-    print('simulation')
-    zval = _simulate(seeing_fwhm)
-    print('done')
-
-    _visualization(zval, scale=HEX_SCALE)
-
-    print('zval shape is', zval.shape)
-    G_TYPE = 2
-    ncol = 27
-    nrow = 21
-    r0l = calc_matrix(nrow, ncol, grid_type=G_TYPE)
-
-    result = create_cube(r0l, zval, target_scale=0.5)
-    print('result shape is', result.shape)
-    plt.imshow(result[:,:,0], origin='lower', interpolation='bicubic')
-    plt.show()
-
-
-def _visualization(zval, scale=1.0):
-
-    import matplotlib.pyplot as plt
-    import megaradrp.visualization as vi
-
-    spos_x, spos_y = calc_grid(scale=scale)
-    plt.subplots_adjust(hspace=0.5)
-    plt.subplot(111)
-    ax = plt.gca()
-    ll = 6.1
-    plt.xlim([-ll, ll])
-    plt.ylim([-ll, ll])
-    col = vi.hexplot(ax, spos_x, spos_y, zval, scale=scale, cmap=plt.cm.YlOrRd_r)
-    # plt.title("Fiber map")
-    # cb = plt.colorbar(col)
-    # cb.set_label('counts')
-    plt.show()
-
-
-def fix_missing_fiber(rss, fibid):
-    hdr = rss['FIBERS'].header
-    # Ignoring fibid for the moment
-    # Change fiber 623 by the average of surrounding fibers
-    fin = 622
-    # Fibers around 623 are
-    idxs = [619, 524, 528, 184, 183, 621]
-    avg = np.zeros_like(rss[0].data[fin])
-    for idx in idxs:
-        avg += rss[0].data[idx]
-    avg /= len(idxs)
-
-    l1fmt = "FIB{:03d}W1"
-    l2fmt = "FIB{:03d}W2"
-    # Change limits in header to the min-max of surrounding fibers
-    for sub, func in [(l1fmt, max), (l2fmt, min)]:
-        keys = []
-        for idx in idxs:
-            keys.append(hdr[sub.format(idx + 1)])
-        hdr[sub.format(fin + 1)] = func(keys)
-
-    l1 = hdr[l1fmt.format(fin + 1)]
-    l2 = hdr[l2fmt.format(fin + 1)]
-    if l1 > 1:
-        avg[0:l1 - 1] = 0
-    if l2 < len(avg):
-        avg[l2 - 1:] = 0
-    rss[0].data[fin] = avg
-    return rss
 
 
 def main(args=None):
@@ -604,7 +402,7 @@ def main(args=None):
 
     args = parser.parse_args(args=args)
 
-    target_scale = args.pixel_size # Arcsec
+    target_scale = args.pixel_size  # Arcsec
     p = methods[args.method]
     print('interpolation method is "{}"'.format(args.method))
     print('target scale is', target_scale, 'arcsec')
@@ -616,11 +414,11 @@ def main(args=None):
             # all alternative coordinates
             print('recompute WCS from IPA')
             ipa = rss['PRIMARY'].header['IPA']
-            rss['FIBERS'].header = recompute_wcs(rss['FIBERS'].header, ipa=ipa)
+            rss['FIBERS'].header = fixrss.recompute_wcs(rss['FIBERS'].header, ipa=ipa)
         if args.fix_missing:
             fibid = 623
             print('interpolate fiber {}'.format(fibid))
-            rss = fix_missing_fiber(rss, fibid)
+            rss = fixrss.fix_missing_fiber(rss, fibid)
 
         cube = create_cube_from_rss(rss, p, target_scale, conserve_flux=conserve_flux)
 
