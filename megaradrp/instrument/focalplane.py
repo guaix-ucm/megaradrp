@@ -11,9 +11,15 @@
 
 from __future__ import division
 
-import re
+
 import enum
+import math
+import re
 import warnings
+
+import six
+
+from megaradrp.processing.hexgrid import connected6
 
 
 class FocalPlaneConf(object):
@@ -31,7 +37,7 @@ class FocalPlaneConf(object):
     def from_header(cls, hdr):
         """Create a FocalPlaneConf object from map-like header"""
         conf = FocalPlaneConf()
-        defaults = {}
+        defaults = dict()
         defaults['LCB'] = (9, 623)
         defaults['MOS'] = (92, 644)
 
@@ -40,11 +46,12 @@ class FocalPlaneConf(object):
         conf.conf_id = hdr.get('CONFID', 1)
         conf.nbundles = hdr.get('NBUNDLES', defaults[insmode][0])
         conf.nfibers = hdr.get('NFIBERS', defaults[insmode][1])
-        conf.funit = funit = hdr.get("FUNIT", "arcsec")
+        conf.funit = hdr.get("FUNIT", "arcsec")
         # Read bundles
 
         bun_ids = []
         fib_ids = []
+        bun_fib = {}
         bundles = conf.bundles
         fibers = conf.fibers
 
@@ -61,23 +68,8 @@ class FocalPlaneConf(object):
                 fib_idx = int(fib_re.group(1))
                 fib_ids.append(fib_idx)
 
-        for i in bun_ids:
-            bb = BundleConf()
-            bb.id = i
-            bb.target_priority = hdr["BUN%03d_P" % i]
-            bb.target_name = hdr["BUN%03d_I" % i]
-            bb.target_type = TargetType[hdr["BUN%03d_T" % i]]
-            bb.enabled = hdr.get("BUN%03d_E" % i, True)
-            bb.x = hdr.get("BUN%03d_X" % i, 0.0)
-            bb.y = hdr.get("BUN%03d_Y" % i, 0.0)
-            bb.pa = hdr.get("BUN%03d_O" % i, 0.0)
-            bb.fibers = {}
-            bundles[i] = bb
-
         for fibid in fib_ids:
-            ff = FiberConf()
-            ff.fibid = fibid
-
+            ff = FiberConf(fibid=fibid)
             # Coordinates
             ff.d = hdr["FIB%03d_D" % fibid]
             ff.r = hdr["FIB%03d_R" % fibid]
@@ -101,8 +93,22 @@ class FocalPlaneConf(object):
             else:
                 ff.valid = hdr.get("FIB%03d_V" % fibid, True)
 
-            bundles[ff.bundle_id].fibers[ff.fibid] = ff
+            if ff.bundle_id not in bun_fib:
+                bun_fib[ff.bundle_id] = []
+            bun_fib[ff.bundle_id].append(ff.fibid)
             fibers[ff.fibid] = ff
+
+        for bid in bun_ids:
+            bun_fibers = {fibid: fibers[fibid] for fibid in bun_fib[bid]}
+            bb = BundleConf(bid, bun_fibers)
+            bb.target_priority = hdr["BUN%03d_P" % bid]
+            bb.target_name = hdr["BUN%03d_I" % bid]
+            bb.target_type = TargetType[hdr["BUN%03d_T" % bid]]
+            bb.enabled = hdr.get("BUN%03d_E" % bid, True)
+            bb.x = hdr.get("BUN%03d_X" % bid, 0.0)
+            bb.y = hdr.get("BUN%03d_Y" % bid, 0.0)
+            bb.pa = hdr.get("BUN%03d_O" % bid, 0.0)
+            bundles[bid] = bb
 
         return conf
 
@@ -129,7 +135,7 @@ class FocalPlaneConf(object):
         return result
 
     def connected_fibers(self, valid_only=False):
-
+        """Return the fibers connected in the IFU"""
         if self.name == 'MOS':
             raise ValueError('not working for MOS')
 
@@ -143,6 +149,21 @@ class FocalPlaneConf(object):
                 else:
                     result.extend(bundle.fibers.values())
         return result
+
+    def nearby_fibers(self, fibid):
+        """Obtain the fiber IDs of fibers around fibid"""
+
+        # Find the bundle the fiber belongs to
+        try:
+            fiber_conf = self.fibers[fibid]
+            bundle = self.bundles[fiber_conf.bundle_id]
+            result = bundle.nearby(fibid)
+            return result
+        except KeyError:
+            # equivalent to
+            # raise ValueError from None
+            ex = ValueError('fibid {} does not exist'.format(fibid))
+            six.raise_from(ex, None)
 
     def inactive_fibers(self):
         result = []
@@ -194,7 +215,7 @@ class FocalPlaneConf(object):
         import astropy.table
 
         attrnames = ['id', 'x', 'y', 'pa', 'enabled',
-                  'target_type', 'target_priority', 'target_name']
+                     'target_type', 'target_priority', 'target_name']
         cnames = ['bundle_id', 'x', 'y', 'pa', 'enabled',
                   'target_type', 'target_priority', 'target_name']
         obj_data = {}
@@ -250,27 +271,52 @@ class TargetType(enum.Enum):
 
 class BundleConf(object):
     """Description of a bundle"""
-    def __init__(self):
-        self.id = 0
-        self.target_type = TargetType.UNASSIGNED
-        self.target_priority = 0
-        self.target_name = 'unknown'
+    def __init__(self, bundle_id, fibers, target_type=TargetType.UNASSIGNED,
+                 target_priority=0, target_name='unknown', enabled=True):
+        self.id = bundle_id
+        self.fibers = fibers
+        self.target_type = target_type
+        self.target_priority = target_priority
+        self.target_name = target_name
+        self.enabled = enabled
         self.x_fix = 0
         self.y_fix = 0
         self.pa_fix = 0
         self.x = 0
         self.y = 0
         self.pa = 0
-        self.enabled = True
+        # Experimental
+
+        cos_30 = math.sqrt(3) / 2
+        dd = 0.44225029050703585
+        self._map1 = {}
+        self._map2 = {}
+        for r in self.fibers.values():
+            ii = r.x / (dd * cos_30)
+            jj = (r.y / dd - 0.5) - ii * 0.5
+            uv = (round(ii), round(jj))
+            self._map1[r.fibid] = uv
+            self._map2[uv] = r.fibid
+
+    def nearby(self, fibid):
+        """Find fiber ids around a central fibid"""
+        uv1 = self._map1[fibid]
+        result = []
+        for con in connected6(*uv1):
+            try:
+                result.append(self._map2[con])
+            except KeyError:
+                pass
+        return result
 
 
 class FiberConf(object):
     """Description of the fiber"""
-    def __init__(self):
-        self.fibid = 0
+    def __init__(self, fibid=0, bundle_id=None, inactive=False):
+        self.fibid = fibid
         self.name = 'unknown'
-        self.bundle_id = None
-        self.inactive = False
+        self.bundle_id = bundle_id
+        self.inactive = inactive
         self.valid = True
         self.x = 0.0
         self.y = 0.0

@@ -1,0 +1,1668 @@
+{
+  "uuid": "276a1976-0e1c-4424-9c31-e86e38f6c8d8", 
+  "title": "Default config", 
+  "instrument": "MEGARA", 
+  "description": "Coordinates in mm. All RPs in default positions",
+  "slit": "MOS", 
+  "focal_plane": [
+    {
+      "fibers": [
+        1, 
+        2, 
+        3, 
+        4, 
+        5, 
+        6, 
+        7
+      ], 
+      "reference_fiber": 4, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 0.0, 
+      "position_y": 52.221, 
+      "type": "rp", 
+      "id": 1
+    }, 
+    {
+      "fibers": [
+        8, 
+        9, 
+        10, 
+        11, 
+        12, 
+        13, 
+        14
+      ], 
+      "reference_fiber": 11, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -60.3, 
+      "position_y": 87.036, 
+      "type": "rp", 
+      "id": 2
+    }, 
+    {
+      "fibers": [
+        15, 
+        16, 
+        17, 
+        18, 
+        19, 
+        20, 
+        21
+      ], 
+      "reference_fiber": 18, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 20.1, 
+      "position_y": 87.036, 
+      "type": "rp", 
+      "id": 3
+    }, 
+    {
+      "fibers": [
+        22, 
+        23, 
+        24, 
+        25, 
+        26, 
+        27, 
+        28
+      ], 
+      "reference_fiber": 25, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -40.2, 
+      "position_y": 87.036, 
+      "type": "rp", 
+      "id": 4
+    }, 
+    {
+      "fibers": [
+        29, 
+        30, 
+        31, 
+        32, 
+        33, 
+        34, 
+        35
+      ], 
+      "reference_fiber": 32, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 40.2, 
+      "position_y": 87.036, 
+      "type": "rp", 
+      "id": 5
+    }, 
+    {
+      "fibers": [
+        36, 
+        37, 
+        38, 
+        39, 
+        40, 
+        41, 
+        42
+      ], 
+      "reference_fiber": 39, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -20.1, 
+      "position_y": 87.036, 
+      "type": "rp", 
+      "id": 6
+    }, 
+    {
+      "fibers": [
+        43, 
+        44, 
+        45, 
+        46, 
+        47, 
+        48, 
+        49
+      ], 
+      "reference_fiber": 46, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 60.3, 
+      "position_y": 87.036, 
+      "type": "rp", 
+      "id": 7
+    }, 
+    {
+      "fibers": [
+        50, 
+        51, 
+        52, 
+        53, 
+        54, 
+        55, 
+        56
+      ], 
+      "reference_fiber": 53, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -90.45, 
+      "position_y": 69.628, 
+      "type": "rp", 
+      "id": 8
+    }, 
+    {
+      "fibers": [
+        57, 
+        58, 
+        59, 
+        60, 
+        61, 
+        62, 
+        63
+      ], 
+      "reference_fiber": 60, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 10.05, 
+      "position_y": 69.628, 
+      "type": "rp", 
+      "id": 9
+    }, 
+    {
+      "fibers": [
+        64, 
+        65, 
+        66, 
+        67, 
+        68, 
+        69, 
+        70
+      ], 
+      "reference_fiber": 67, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -70.35, 
+      "position_y": 69.628, 
+      "type": "rp", 
+      "id": 10
+    }, 
+    {
+      "fibers": [
+        71, 
+        72, 
+        73, 
+        74, 
+        75, 
+        76, 
+        77
+      ], 
+      "reference_fiber": 74, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 30.15, 
+      "position_y": 69.628, 
+      "type": "rp", 
+      "id": 11
+    }, 
+    {
+      "fibers": [
+        78, 
+        79, 
+        80, 
+        81, 
+        82, 
+        83, 
+        84
+      ], 
+      "reference_fiber": 81, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -50.25, 
+      "position_y": 69.628, 
+      "type": "rp", 
+      "id": 12
+    }, 
+    {
+      "fibers": [
+        85, 
+        86, 
+        87, 
+        88, 
+        89, 
+        90, 
+        91
+      ], 
+      "reference_fiber": 88, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 50.25, 
+      "position_y": 69.628, 
+      "type": "rp", 
+      "id": 13
+    }, 
+    {
+      "fibers": [
+        92, 
+        93, 
+        94, 
+        95, 
+        96, 
+        97, 
+        98
+      ], 
+      "reference_fiber": 95, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -30.15, 
+      "position_y": 69.628, 
+      "type": "rp", 
+      "id": 14
+    }, 
+    {
+      "fibers": [
+        99, 
+        100, 
+        101, 
+        102, 
+        103, 
+        104, 
+        105
+      ], 
+      "reference_fiber": 102, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 70.35, 
+      "position_y": 69.628, 
+      "type": "rp", 
+      "id": 15
+    }, 
+    {
+      "fibers": [
+        106, 
+        107, 
+        108, 
+        109, 
+        110, 
+        111, 
+        112
+      ], 
+      "reference_fiber": 109, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -10.05, 
+      "position_y": 69.628, 
+      "type": "rp", 
+      "id": 16
+    }, 
+    {
+      "fibers": [
+        113, 
+        114, 
+        115, 
+        116, 
+        117, 
+        118, 
+        119
+      ], 
+      "reference_fiber": 116, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 90.45, 
+      "position_y": 69.628, 
+      "type": "rp", 
+      "id": 17
+    }, 
+    {
+      "fibers": [
+        120, 
+        121, 
+        122, 
+        123, 
+        124, 
+        125, 
+        126
+      ], 
+      "reference_fiber": 123, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -80.4, 
+      "position_y": 52.221, 
+      "type": "rp", 
+      "id": 18
+    }, 
+    {
+      "fibers": [
+        127, 
+        128, 
+        129, 
+        130, 
+        131, 
+        132, 
+        133
+      ], 
+      "reference_fiber": 130, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 20.1, 
+      "position_y": 52.221, 
+      "type": "rp", 
+      "id": 19
+    }, 
+    {
+      "fibers": [
+        134, 
+        135, 
+        136, 
+        137, 
+        138, 
+        139, 
+        140
+      ], 
+      "reference_fiber": 137, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -60.3, 
+      "position_y": 52.221, 
+      "type": "rp", 
+      "id": 20
+    }, 
+    {
+      "fibers": [
+        141, 
+        142, 
+        143, 
+        144, 
+        145, 
+        146, 
+        147
+      ], 
+      "reference_fiber": 144, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 40.2, 
+      "position_y": 52.221, 
+      "type": "rp", 
+      "id": 21
+    }, 
+    {
+      "fibers": [
+        148, 
+        149, 
+        150, 
+        151, 
+        152, 
+        153, 
+        154
+      ], 
+      "reference_fiber": 151, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -40.2, 
+      "position_y": 52.221, 
+      "type": "rp", 
+      "id": 22
+    }, 
+    {
+      "fibers": [
+        155, 
+        156, 
+        157, 
+        158, 
+        159, 
+        160, 
+        161
+      ], 
+      "reference_fiber": 158, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 60.3, 
+      "position_y": 52.221, 
+      "type": "rp", 
+      "id": 23
+    }, 
+    {
+      "fibers": [
+        162, 
+        163, 
+        164, 
+        165, 
+        166, 
+        167, 
+        168
+      ], 
+      "reference_fiber": 165, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -20.1, 
+      "position_y": 52.221, 
+      "type": "rp", 
+      "id": 24
+    }, 
+    {
+      "fibers": [
+        169, 
+        170, 
+        171, 
+        172, 
+        173, 
+        174, 
+        175
+      ], 
+      "reference_fiber": 172, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 80.4, 
+      "position_y": 52.221, 
+      "type": "rp", 
+      "id": 25
+    }, 
+    {
+      "fibers": [
+        176, 
+        177, 
+        178, 
+        179, 
+        180, 
+        181, 
+        182
+      ], 
+      "reference_fiber": 179, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -90.45, 
+      "position_y": 34.814, 
+      "type": "rp", 
+      "id": 26
+    }, 
+    {
+      "fibers": [
+        183, 
+        184, 
+        185, 
+        186, 
+        187, 
+        188, 
+        189
+      ], 
+      "reference_fiber": 186, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 10.05, 
+      "position_y": 34.814, 
+      "type": "rp", 
+      "id": 27
+    }, 
+    {
+      "fibers": [
+        190, 
+        191, 
+        192, 
+        193, 
+        194, 
+        195, 
+        196
+      ], 
+      "reference_fiber": 193, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -70.35, 
+      "position_y": 34.814, 
+      "type": "rp", 
+      "id": 28
+    }, 
+    {
+      "fibers": [
+        197, 
+        198, 
+        199, 
+        200, 
+        201, 
+        202, 
+        203
+      ], 
+      "reference_fiber": 200, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 30.15, 
+      "position_y": 34.814, 
+      "type": "rp", 
+      "id": 29
+    }, 
+    {
+      "fibers": [
+        204, 
+        205, 
+        206, 
+        207, 
+        208, 
+        209, 
+        210
+      ], 
+      "reference_fiber": 207, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -50.25, 
+      "position_y": 34.814, 
+      "type": "rp", 
+      "id": 30
+    }, 
+    {
+      "fibers": [
+        211, 
+        212, 
+        213, 
+        214, 
+        215, 
+        216, 
+        217
+      ], 
+      "reference_fiber": 214, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 50.25, 
+      "position_y": 34.814, 
+      "type": "rp", 
+      "id": 31
+    }, 
+    {
+      "fibers": [
+        218, 
+        219, 
+        220, 
+        221, 
+        222, 
+        223, 
+        224
+      ], 
+      "reference_fiber": 221, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -30.15, 
+      "position_y": 34.814, 
+      "type": "rp", 
+      "id": 32
+    }, 
+    {
+      "fibers": [
+        225, 
+        226, 
+        227, 
+        228, 
+        229, 
+        230, 
+        231
+      ], 
+      "reference_fiber": 228, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 70.35, 
+      "position_y": 34.814, 
+      "type": "rp", 
+      "id": 33
+    }, 
+    {
+      "fibers": [
+        232, 
+        233, 
+        234, 
+        235, 
+        236, 
+        237, 
+        238
+      ], 
+      "reference_fiber": 235, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -10.05, 
+      "position_y": 34.814, 
+      "type": "rp", 
+      "id": 34
+    }, 
+    {
+      "fibers": [
+        239, 
+        240, 
+        241, 
+        242, 
+        243, 
+        244, 
+        245
+      ], 
+      "reference_fiber": 242, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 90.45, 
+      "position_y": 34.814, 
+      "type": "rp", 
+      "id": 35
+    }, 
+    {
+      "fibers": [
+        246, 
+        247, 
+        248, 
+        249, 
+        250, 
+        251, 
+        252
+      ], 
+      "reference_fiber": 249, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -80.4, 
+      "position_y": 17.407, 
+      "type": "rp", 
+      "id": 36
+    }, 
+    {
+      "fibers": [
+        253, 
+        254, 
+        255, 
+        256, 
+        257, 
+        258, 
+        259
+      ], 
+      "reference_fiber": 256, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 20.1, 
+      "position_y": 17.407, 
+      "type": "rp", 
+      "id": 37
+    }, 
+    {
+      "fibers": [
+        260, 
+        261, 
+        262, 
+        263, 
+        264, 
+        265, 
+        266
+      ], 
+      "reference_fiber": 263, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -60.3, 
+      "position_y": 17.407, 
+      "type": "rp", 
+      "id": 38
+    }, 
+    {
+      "fibers": [
+        267, 
+        268, 
+        269, 
+        270, 
+        271, 
+        272, 
+        273
+      ], 
+      "reference_fiber": 270, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 40.2, 
+      "position_y": 17.407, 
+      "type": "rp", 
+      "id": 39
+    }, 
+    {
+      "fibers": [
+        274, 
+        275, 
+        276, 
+        277, 
+        278, 
+        279, 
+        280
+      ], 
+      "reference_fiber": 277, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -40.2, 
+      "position_y": 17.407, 
+      "type": "rp", 
+      "id": 40
+    }, 
+    {
+      "fibers": [
+        281, 
+        282, 
+        283, 
+        284, 
+        285, 
+        286, 
+        287
+      ], 
+      "reference_fiber": 284, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 60.3, 
+      "position_y": 17.407, 
+      "type": "rp", 
+      "id": 41
+    }, 
+    {
+      "fibers": [
+        288, 
+        289, 
+        290, 
+        291, 
+        292, 
+        293, 
+        294
+      ], 
+      "reference_fiber": 291, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -20.1, 
+      "position_y": 17.407, 
+      "type": "rp", 
+      "id": 42
+    }, 
+    {
+      "fibers": [
+        295, 
+        296, 
+        297, 
+        298, 
+        299, 
+        300, 
+        301
+      ], 
+      "reference_fiber": 298, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 80.4, 
+      "position_y": 17.407, 
+      "type": "rp", 
+      "id": 43
+    }, 
+    {
+      "fibers": [
+        302, 
+        303, 
+        304, 
+        305, 
+        306, 
+        307, 
+        308
+      ], 
+      "reference_fiber": 305, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -70.35, 
+      "position_y": 0.0, 
+      "type": "rp", 
+      "id": 44
+    }, 
+    {
+      "fibers": [
+        309, 
+        310, 
+        311, 
+        312, 
+        313, 
+        314, 
+        315
+      ], 
+      "reference_fiber": 312, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 30.15, 
+      "position_y": 0.0, 
+      "type": "rp", 
+      "id": 45
+    }, 
+    {
+      "fibers": [
+        316, 
+        317, 
+        318, 
+        319, 
+        320, 
+        321, 
+        322
+      ], 
+      "reference_fiber": 319, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -50.25, 
+      "position_y": 0.0, 
+      "type": "rp", 
+      "id": 46
+    }, 
+    {
+      "fibers": [
+        323, 
+        324, 
+        325, 
+        326, 
+        327, 
+        328, 
+        329
+      ], 
+      "reference_fiber": 326, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 50.25, 
+      "position_y": 0.0, 
+      "type": "rp", 
+      "id": 47
+    }, 
+    {
+      "fibers": [
+        330, 
+        331, 
+        332, 
+        333, 
+        334, 
+        335, 
+        336
+      ], 
+      "reference_fiber": 333, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -30.15, 
+      "position_y": 0.0, 
+      "type": "rp", 
+      "id": 48
+    }, 
+    {
+      "fibers": [
+        337, 
+        338, 
+        339, 
+        340, 
+        341, 
+        342, 
+        343
+      ], 
+      "reference_fiber": 340, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 70.35, 
+      "position_y": 0.0, 
+      "type": "rp", 
+      "id": 49
+    }, 
+    {
+      "fibers": [
+        344, 
+        345, 
+        346, 
+        347, 
+        348, 
+        349, 
+        350
+      ], 
+      "reference_fiber": 347, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -80.4, 
+      "position_y": -17.407, 
+      "type": "rp", 
+      "id": 50
+    }, 
+    {
+      "fibers": [
+        351, 
+        352, 
+        353, 
+        354, 
+        355, 
+        356, 
+        357
+      ], 
+      "reference_fiber": 354, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 20.1, 
+      "position_y": -17.407, 
+      "type": "rp", 
+      "id": 51
+    }, 
+    {
+      "fibers": [
+        358, 
+        359, 
+        360, 
+        361, 
+        362, 
+        363, 
+        364
+      ], 
+      "reference_fiber": 361, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -60.3, 
+      "position_y": -17.407, 
+      "type": "rp", 
+      "id": 52
+    }, 
+    {
+      "fibers": [
+        365, 
+        366, 
+        367, 
+        368, 
+        369, 
+        370, 
+        371
+      ], 
+      "reference_fiber": 368, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 40.2, 
+      "position_y": -17.407, 
+      "type": "rp", 
+      "id": 53
+    }, 
+    {
+      "fibers": [
+        372, 
+        373, 
+        374, 
+        375, 
+        376, 
+        377, 
+        378
+      ], 
+      "reference_fiber": 375, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -40.2, 
+      "position_y": -17.407, 
+      "type": "rp", 
+      "id": 54
+    }, 
+    {
+      "fibers": [
+        379, 
+        380, 
+        381, 
+        382, 
+        383, 
+        384, 
+        385
+      ], 
+      "reference_fiber": 382, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 60.3, 
+      "position_y": -17.407, 
+      "type": "rp", 
+      "id": 55
+    }, 
+    {
+      "fibers": [
+        386, 
+        387, 
+        388, 
+        389, 
+        390, 
+        391, 
+        392
+      ], 
+      "reference_fiber": 389, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -20.1, 
+      "position_y": -17.407, 
+      "type": "rp", 
+      "id": 56
+    }, 
+    {
+      "fibers": [
+        393, 
+        394, 
+        395, 
+        396, 
+        397, 
+        398, 
+        399
+      ], 
+      "reference_fiber": 396, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 80.4, 
+      "position_y": -17.407, 
+      "type": "rp", 
+      "id": 57
+    }, 
+    {
+      "fibers": [
+        400, 
+        401, 
+        402, 
+        403, 
+        404, 
+        405, 
+        406
+      ], 
+      "reference_fiber": 403, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -90.45, 
+      "position_y": -34.814, 
+      "type": "rp", 
+      "id": 58
+    }, 
+    {
+      "fibers": [
+        407, 
+        408, 
+        409, 
+        410, 
+        411, 
+        412, 
+        413
+      ], 
+      "reference_fiber": 410, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 10.05, 
+      "position_y": -34.814, 
+      "type": "rp", 
+      "id": 59
+    }, 
+    {
+      "fibers": [
+        414, 
+        415, 
+        416, 
+        417, 
+        418, 
+        419, 
+        420
+      ], 
+      "reference_fiber": 417, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -70.35, 
+      "position_y": -34.814, 
+      "type": "rp", 
+      "id": 60
+    }, 
+    {
+      "fibers": [
+        421, 
+        422, 
+        423, 
+        424, 
+        425, 
+        426, 
+        427
+      ], 
+      "reference_fiber": 424, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 30.15, 
+      "position_y": -34.814, 
+      "type": "rp", 
+      "id": 61
+    }, 
+    {
+      "fibers": [
+        428, 
+        429, 
+        430, 
+        431, 
+        432, 
+        433, 
+        434
+      ], 
+      "reference_fiber": 431, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -50.25, 
+      "position_y": -34.814, 
+      "type": "rp", 
+      "id": 62
+    }, 
+    {
+      "fibers": [
+        435, 
+        436, 
+        437, 
+        438, 
+        439, 
+        440, 
+        441
+      ], 
+      "reference_fiber": 438, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 50.25, 
+      "position_y": -34.814, 
+      "type": "rp", 
+      "id": 63
+    }, 
+    {
+      "fibers": [
+        442, 
+        443, 
+        444, 
+        445, 
+        446, 
+        447, 
+        448
+      ], 
+      "reference_fiber": 445, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -30.15, 
+      "position_y": -34.814, 
+      "type": "rp", 
+      "id": 64
+    }, 
+    {
+      "fibers": [
+        449, 
+        450, 
+        451, 
+        452, 
+        453, 
+        454, 
+        455
+      ], 
+      "reference_fiber": 452, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 70.35, 
+      "position_y": -34.814, 
+      "type": "rp", 
+      "id": 65
+    }, 
+    {
+      "fibers": [
+        456, 
+        457, 
+        458, 
+        459, 
+        460, 
+        461, 
+        462
+      ], 
+      "reference_fiber": 459, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -10.05, 
+      "position_y": -34.814, 
+      "type": "rp", 
+      "id": 66
+    }, 
+    {
+      "fibers": [
+        463, 
+        464, 
+        465, 
+        466, 
+        467, 
+        468, 
+        469
+      ], 
+      "reference_fiber": 466, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 90.45, 
+      "position_y": -34.814, 
+      "type": "rp", 
+      "id": 67
+    }, 
+    {
+      "fibers": [
+        470, 
+        471, 
+        472, 
+        473, 
+        474, 
+        475, 
+        476
+      ], 
+      "reference_fiber": 473, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -80.4, 
+      "position_y": -52.221, 
+      "type": "rp", 
+      "id": 68
+    }, 
+    {
+      "fibers": [
+        477, 
+        478, 
+        479, 
+        480, 
+        481, 
+        482, 
+        483
+      ], 
+      "reference_fiber": 480, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 20.1, 
+      "position_y": -52.221, 
+      "type": "rp", 
+      "id": 69
+    }, 
+    {
+      "fibers": [
+        484, 
+        485, 
+        486, 
+        487, 
+        488, 
+        489, 
+        490
+      ], 
+      "reference_fiber": 487, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -60.3, 
+      "position_y": -52.221, 
+      "type": "rp", 
+      "id": 70
+    }, 
+    {
+      "fibers": [
+        491, 
+        492, 
+        493, 
+        494, 
+        495, 
+        496, 
+        497
+      ], 
+      "reference_fiber": 494, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 40.2, 
+      "position_y": -52.221, 
+      "type": "rp", 
+      "id": 71
+    }, 
+    {
+      "fibers": [
+        498, 
+        499, 
+        500, 
+        501, 
+        502, 
+        503, 
+        504
+      ], 
+      "reference_fiber": 501, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -40.2, 
+      "position_y": -52.221, 
+      "type": "rp", 
+      "id": 72
+    }, 
+    {
+      "fibers": [
+        505, 
+        506, 
+        507, 
+        508, 
+        509, 
+        510, 
+        511
+      ], 
+      "reference_fiber": 508, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 60.3, 
+      "position_y": -52.221, 
+      "type": "rp", 
+      "id": 73
+    }, 
+    {
+      "fibers": [
+        512, 
+        513, 
+        514, 
+        515, 
+        516, 
+        517, 
+        518
+      ], 
+      "reference_fiber": 515, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -20.1, 
+      "position_y": -52.221, 
+      "type": "rp", 
+      "id": 74
+    }, 
+    {
+      "fibers": [
+        519, 
+        520, 
+        521, 
+        522, 
+        523, 
+        524, 
+        525
+      ], 
+      "reference_fiber": 522, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 80.4, 
+      "position_y": -52.221, 
+      "type": "rp", 
+      "id": 75
+    }, 
+    {
+      "fibers": [
+        526, 
+        527, 
+        528, 
+        529, 
+        530, 
+        531, 
+        532
+      ], 
+      "reference_fiber": 529, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -90.45, 
+      "position_y": -69.628, 
+      "type": "rp", 
+      "id": 76
+    }, 
+    {
+      "fibers": [
+        533, 
+        534, 
+        535, 
+        536, 
+        537, 
+        538, 
+        539
+      ], 
+      "reference_fiber": 536, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 10.05, 
+      "position_y": -69.628, 
+      "type": "rp", 
+      "id": 77
+    }, 
+    {
+      "fibers": [
+        540, 
+        541, 
+        542, 
+        543, 
+        544, 
+        545, 
+        546
+      ], 
+      "reference_fiber": 543, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -70.35, 
+      "position_y": -69.628, 
+      "type": "rp", 
+      "id": 78
+    }, 
+    {
+      "fibers": [
+        547, 
+        548, 
+        549, 
+        550, 
+        551, 
+        552, 
+        553
+      ], 
+      "reference_fiber": 550, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 30.15, 
+      "position_y": -69.628, 
+      "type": "rp", 
+      "id": 79
+    }, 
+    {
+      "fibers": [
+        554, 
+        555, 
+        556, 
+        557, 
+        558, 
+        559, 
+        560
+      ], 
+      "reference_fiber": 557, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -50.25, 
+      "position_y": -69.628, 
+      "type": "rp", 
+      "id": 80
+    }, 
+    {
+      "fibers": [
+        561, 
+        562, 
+        563, 
+        564, 
+        565, 
+        566, 
+        567
+      ], 
+      "reference_fiber": 564, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 50.25, 
+      "position_y": -69.628, 
+      "type": "rp", 
+      "id": 81
+    }, 
+    {
+      "fibers": [
+        568, 
+        569, 
+        570, 
+        571, 
+        572, 
+        573, 
+        574
+      ], 
+      "reference_fiber": 571, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -30.15, 
+      "position_y": -69.628, 
+      "type": "rp", 
+      "id": 82
+    }, 
+    {
+      "fibers": [
+        575, 
+        576, 
+        577, 
+        578, 
+        579, 
+        580, 
+        581
+      ], 
+      "reference_fiber": 578, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 70.35, 
+      "position_y": -69.628, 
+      "type": "rp", 
+      "id": 83
+    }, 
+    {
+      "fibers": [
+        582, 
+        583, 
+        584, 
+        585, 
+        586, 
+        587, 
+        588
+      ], 
+      "reference_fiber": 585, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -10.05, 
+      "position_y": -69.628, 
+      "type": "rp", 
+      "id": 84
+    }, 
+    {
+      "fibers": [
+        589, 
+        590, 
+        591, 
+        592, 
+        593, 
+        594, 
+        595
+      ], 
+      "reference_fiber": 592, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 90.45, 
+      "position_y": -69.628, 
+      "type": "rp", 
+      "id": 85
+    }, 
+    {
+      "fibers": [
+        596, 
+        597, 
+        598, 
+        599, 
+        600, 
+        601, 
+        602
+      ], 
+      "reference_fiber": 599, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -60.3, 
+      "position_y": -87.036, 
+      "type": "rp", 
+      "id": 86
+    }, 
+    {
+      "fibers": [
+        603, 
+        604, 
+        605, 
+        606, 
+        607, 
+        608, 
+        609
+      ], 
+      "reference_fiber": 606, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 20.1, 
+      "position_y": -87.036, 
+      "type": "rp", 
+      "id": 87
+    }, 
+    {
+      "fibers": [
+        610, 
+        611, 
+        612, 
+        613, 
+        614, 
+        615, 
+        616
+      ], 
+      "reference_fiber": 613, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -40.2, 
+      "position_y": -87.036, 
+      "type": "rp", 
+      "id": 88
+    }, 
+    {
+      "fibers": [
+        617, 
+        618, 
+        619, 
+        620, 
+        621, 
+        622, 
+        623
+      ], 
+      "reference_fiber": 620, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 40.2, 
+      "position_y": -87.036, 
+      "type": "rp", 
+      "id": 89
+    }, 
+    {
+      "fibers": [
+        624, 
+        625, 
+        626, 
+        627, 
+        628, 
+        629, 
+        630
+      ], 
+      "reference_fiber": 627, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": -20.1, 
+      "position_y": -87.036, 
+      "type": "rp", 
+      "id": 90
+    }, 
+    {
+      "fibers": [
+        631, 
+        632, 
+        633, 
+        634, 
+        635, 
+        636, 
+        637
+      ], 
+      "reference_fiber": 634, 
+      "skip_fibers": [
+         636
+      ], 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 60.3, 
+      "position_y": -87.036, 
+      "type": "rp", 
+      "id": 91
+    }, 
+    {
+      "fibers": [
+        638, 
+        639, 
+        640, 
+        641, 
+        642, 
+        643, 
+        644
+      ], 
+      "reference_fiber": 641, 
+      "pattern": "rp", 
+      "position_angle": 0, 
+      "position_x": 0.0, 
+      "position_y": -52.221, 
+      "type": "rp", 
+      "id": 92
+    }
+  ]
+}
