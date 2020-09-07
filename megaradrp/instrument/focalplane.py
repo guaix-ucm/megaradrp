@@ -110,6 +110,18 @@ class FocalPlaneConf(object):
             bb.pa = hdr.get("BUN%03d_O" % bid, 0.0)
             bundles[bid] = bb
 
+        # Double check
+        if conf.name == 'LCB':
+            refid = 614
+            ref_fiber = conf.fibers[refid]
+            if ref_fiber.x < -6:
+                # arcsec
+                if conf.funit != 'arcsec':
+                    print('warning')
+            else:
+                # mm
+                if conf.funit != 'mm':
+                    print('warning')
         return conf
 
     @classmethod
@@ -288,6 +300,7 @@ class BundleConf(object):
         # Experimental
 
         cos_30 = math.sqrt(3) / 2
+        # This is ~= SPAXEL_SCALE
         dd = 0.44225029050703585
         self._map1 = {}
         self._map2 = {}

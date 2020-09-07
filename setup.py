@@ -24,6 +24,9 @@ setup(
             'instrument-*.json',
             'properties-*.json',
         ],
+        'megaradrp.instrument.configs.extras': [
+            '*.json'
+        ],
         'megaradrp.schemas': [
             'baseimage.json',
             'basestruct.json'

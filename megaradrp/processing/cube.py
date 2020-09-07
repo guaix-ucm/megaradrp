@@ -29,18 +29,20 @@ import megaradrp.processing.hexgrid as hg
 import megaradrp.processing.hexspline as hspline
 import megaradrp.instrument.constants as cons
 
-
+# Helper function for equivalence conversion
+GTC_PLATESCALE = u.plate_scale(cons.GTC_FC_A_PLATESCALE)
 # Size scale of the spaxel grid in arcseconds
-HEX_SCALE = (cons.GTC_FC_A_PLATESCALE * cons.SPAXEL_SCALE).to(u.arcsec).value
+HEX_SCALE = cons.SPAXEL_SCALE.to(u.arcsec, GTC_PLATESCALE).value
 
 
-def calc_matrix_from_fiberconf(fibersconf):
+def calc_matrix_from_fiberconf(fpconf, refid=614):
     """
 
     Parameters
     ----------
-    fibersconf : megaradrp.instrument.focalplane.FocalPlaneConf
-
+    fpconf : megaradrp.instrument.focalplane.FocalPlaneConf
+    refid : int
+        fiber ID of reference fiber for grid coordinates
     Returns
     -------
 
@@ -49,25 +51,22 @@ def calc_matrix_from_fiberconf(fibersconf):
     # TODO: This should be in FIBERCONFS...
     spos1_x = []
     spos1_y = []
-    for fiber in fibersconf.connected_fibers():
+    for fiber in fpconf.connected_fibers():
         spos1_x.append(fiber.x)
         spos1_y.append(fiber.y)
     spos1_x = np.asarray(spos1_x)
     spos1_y = np.asarray(spos1_y)
 
-    # FIXME: workaround
     # FIBER in LOW LEFT corner is 614
-    refid = 614
-    ref_fiber = fibersconf.fibers[refid]
+    ref_fiber = fpconf.fibers[refid]
     minx, miny = ref_fiber.x, ref_fiber.y
-    if ref_fiber.x < -6:
+    if fpconf.funit == 'arcsec':
         # arcsec
         ascale = HEX_SCALE
-        # print('fiber coordinates in arcsec')
     else:
         # mm
+        # fpconf.funit == 'mm'
         ascale = cons.SPAXEL_SCALE.to(u.mm).value
-        # print('fiber coordinates in mm')
     ref = minx / ascale, miny / ascale
     rpos1_x = (spos1_x - minx) / ascale
     rpos1_y = (spos1_y - miny) / ascale
@@ -165,7 +164,7 @@ def create_cube_from_array(rss_data, fiberconf, p=1, target_scale_arcsec=1.0, co
     Parameters
     ----------
     rss_data
-    fiberconf : megaradrp.instrument.focalplance.FocalPlaneConf
+    fiberconf : megaradrp.instrument.focalplane.FocalPlaneConf
     p : {1, 2}
     target_scale_arcsec : float
     conserve_flux : bool
