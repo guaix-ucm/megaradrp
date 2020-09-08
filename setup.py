@@ -49,7 +49,7 @@ setup(
         'DB': ['sqlalchemy', 'numinadb'],
         'test': [
             'pytest<3.7; python_version<"3"', 
-            'pytest; python_version>="3"',
+            'pytest>=6; python_version>="3"',
             'pytest-remotedata'
             ]
     },
