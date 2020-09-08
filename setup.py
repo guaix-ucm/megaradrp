@@ -47,7 +47,11 @@ setup(
     ],
     extras_require={
         'DB': ['sqlalchemy', 'numinadb'],
-        'test': ['pytest', 'pytest-remotedata']
+        'test': [
+            'pytest<3.7; python_version<"3"', 
+            'pytest; python_version>="3"',
+            'pytest-remotedata'
+            ]
     },
     zip_safe=False,
     entry_points={
