@@ -12,48 +12,80 @@
 from __future__ import division
 
 
-import enum
 import math
 import re
 import warnings
 
 import six
+import astropy.coordinates
 
+from .ienums import TargetType, BundleType
 from megaradrp.processing.hexgrid import connected6
 
 
 class FocalPlaneConf(object):
     """Configuration of focal plane"""
-    def __init__(self, name=""):
+    def __init__(self, name='LCB'):
         self.name = name
-        self.conf_id = 1
-        self.nbundles = 0
-        self.nfibers = 0
-        self.bundles = {}
+        self.conf_id = "00000000-0000-0000-0000-000000000000"
+        bundles = dict()
+        if name == 'LCB':
+            # 1 LCB + 8 SKY
+            bundles[0] = LcbBundleConf()
+            for i in range(93, 100 + 1):
+                bundles[i] = SkyBundleConf(i)
+
+        elif name == 'MOS':
+            # 92 RPs
+            for i in range(1, 92 + 1):
+                bundles[i] = BundleConf(i, BundleType.RP)
+        else:
+            raise ValueError("name {} is invalid".format(name))
+        self.nbundles = len(bundles)
+        self.nfibers = sum(bundle.nfibers for bundle in bundles.values())
+        self.bundles = bundles
         self.fibers = {}
         self.funit = "mm"
+
+    def attach_fibers(self, fibers):
+        bun_fib = {}
+        # Fibers in each bundle
+        for fibid, ff in fibers.items():
+            if ff.bundle_id not in bun_fib:
+                bun_fib[ff.bundle_id] = []
+            bun_fib[ff.bundle_id].append(ff.fibid)
+
+        for bid, bundle in self.bundles.items():
+            # Attach the fibers
+            bun_fibers = {fibid: fibers[fibid] for fibid in bun_fib[bid]}
+            bundle.attach_fibers(bun_fibers)
+        self.fibers = fibers
 
     @classmethod
     def from_header(cls, hdr):
         """Create a FocalPlaneConf object from map-like header"""
-        conf = FocalPlaneConf()
-        defaults = dict()
-        defaults['LCB'] = (9, 623)
-        defaults['MOS'] = (92, 644)
 
-        conf.name = hdr.get('INSMODE')
-        insmode = conf.name
-        conf.conf_id = hdr.get('CONFID', 1)
-        conf.nbundles = hdr.get('NBUNDLES', defaults[insmode][0])
-        conf.nfibers = hdr.get('NFIBERS', defaults[insmode][1])
+        # defaults = dict()
+        # defaults['LCB'] = (9, 623)
+        # defaults['MOS'] = (92, 644)
+
+        insmode = hdr.get('INSMODE')
+        confid = hdr.get('CONFID', "00000000-0000-0000-0000-000000000000")
+
+        conf = FocalPlaneConf(insmode)
+        conf.conf_id = confid
+
+        if conf.nbundles != hdr.get('NBUNDLES'):
+            raise ValueError('checking NBUNDLES != {}'.format(conf.nbundles))
+        if conf.nfibers != hdr.get('NFIBERS'):
+            raise ValueError('checking NFIBERS != {}'.format(conf.nfibers))
+
         conf.funit = hdr.get("FUNIT", "arcsec")
         # Read bundles
 
         bun_ids = []
         fib_ids = []
-        bun_fib = {}
-        bundles = conf.bundles
-        fibers = conf.fibers
+        fibers = {}
 
         # loop over everything, count BUN%03d_P and FIB%03d_B
         pattern1 = re.compile(r"BUN(\d+)_P")
@@ -69,38 +101,15 @@ class FocalPlaneConf(object):
                 fib_ids.append(fib_idx)
 
         for fibid in fib_ids:
-            ff = FiberConf(fibid=fibid)
-            # Coordinates
-            ff.d = hdr["FIB%03d_D" % fibid]
-            ff.r = hdr["FIB%03d_R" % fibid]
-            ff.o = 0  # hdr["FIB%03d_O" % fibid]
-            # Active
-            ff.inactive = not hdr["FIB%03d_A" % fibid]
-
-            # Coordinates XY
-            ff.x = hdr["FIB%03d_X" % fibid]
-            ff.y = hdr["FIB%03d_Y" % fibid]
-
-            ff.bundle_id = hdr["FIB%03d_B" % fibid]
-            ff.name = hdr.get("FIB%03d_N" % fibid, 'unknown')
-
-            ff.w1 = hdr.get("FIB%03dW1" % fibid, None)
-            ff.w2 = hdr.get("FIB%03dW2" % fibid, None)
-
-            # Validity
-            if ff.inactive:
-                ff.valid = False
-            else:
-                ff.valid = hdr.get("FIB%03d_V" % fibid, True)
-
-            if ff.bundle_id not in bun_fib:
-                bun_fib[ff.bundle_id] = []
-            bun_fib[ff.bundle_id].append(ff.fibid)
+            ff = FiberConf.from_header(hdr, fibid)
+            # if ff.bundle_id not in bun_fib:
+            #     bun_fib[ff.bundle_id] = []
+            # bun_fib[ff.bundle_id].append(ff.fibid)
             fibers[ff.fibid] = ff
 
         for bid in bun_ids:
-            bun_fibers = {fibid: fibers[fibid] for fibid in bun_fib[bid]}
-            bb = BundleConf(bid, bun_fibers)
+            # Get bundle
+            bb = conf.bundles[bid]
             bb.target_priority = hdr["BUN%03d_P" % bid]
             bb.target_name = hdr["BUN%03d_I" % bid]
             bb.target_type = TargetType[hdr["BUN%03d_T" % bid]]
@@ -108,7 +117,8 @@ class FocalPlaneConf(object):
             bb.x = hdr.get("BUN%03d_X" % bid, 0.0)
             bb.y = hdr.get("BUN%03d_Y" % bid, 0.0)
             bb.pa = hdr.get("BUN%03d_O" % bid, 0.0)
-            bundles[bid] = bb
+
+        conf.attach_fibers(fibers)
 
         # Double check
         if conf.name == 'LCB':
@@ -149,7 +159,7 @@ class FocalPlaneConf(object):
     def connected_fibers(self, valid_only=False):
         """Return the fibers connected in the IFU"""
         if self.name == 'MOS':
-            raise ValueError('not working for MOS')
+            return []
 
         result = []
         for bundle in self.bundles.values():
@@ -269,28 +279,19 @@ class FiberConfs(FocalPlaneConf):
         warnings.warn("The 'FiberConfs' class was renamed to 'FocalPlaneConf'", DeprecationWarning, stacklevel=2)
 
 
-class TargetType(enum.Enum):
-    """Possible targest in a fiber bundle"""
-    SOURCE = 1
-    UNKNOWN = 2
-    UNASSIGNED = 3
-    SKY = 4
-    REFERENCE = 5
-    # aliases for the other fields
-    STAR = 5
-    BLANK = 4
-
-
 class BundleConf(object):
     """Description of a bundle"""
-    def __init__(self, bundle_id, fibers, target_type=TargetType.UNASSIGNED,
+    def __init__(self, bundle_id, bundle_type, target_type=TargetType.UNASSIGNED,
                  target_priority=0, target_name='unknown', enabled=True):
         self.id = bundle_id
-        self.fibers = fibers
+        self.bundle_type = bundle_type
         self.target_type = target_type
         self.target_priority = target_priority
         self.target_name = target_name
         self.enabled = enabled
+        self.nfibers = 7
+        if self.bundle_type == BundleType.LCB:
+            self.nfibers = 567
         self.x_fix = 0
         self.y_fix = 0
         self.pa_fix = 0
@@ -298,7 +299,13 @@ class BundleConf(object):
         self.y = 0
         self.pa = 0
         # Experimental
+        self.fibers = {}
+        self._map1 = {}
+        self._map2 = {}
 
+    def attach_fibers(self, fibers):
+        self.fibers = fibers
+        # Experimental
         cos_30 = math.sqrt(3) / 2
         # This is ~= SPAXEL_SCALE
         dd = 0.44225029050703585
@@ -323,6 +330,23 @@ class BundleConf(object):
         return result
 
 
+class LcbBundleConf(BundleConf):
+    """Description of the LCB bundle"""
+    def __init__(self, bundle_id=0):
+        super(LcbBundleConf, self).__init__(bundle_id=bundle_id, bundle_type=BundleType.LCB)
+        self.nrows = 21
+        self.ncols = 27
+
+
+class SkyBundleConf(BundleConf):
+    """Description of a sky bundle"""
+    def __init__(self, bundle_id):
+        super(SkyBundleConf, self).__init__(
+            bundle_id=bundle_id, bundle_type=BundleType.SKY,
+            target_type=TargetType.SKY
+        )
+
+
 class FiberConf(object):
     """Description of the fiber"""
     def __init__(self, fibid=0, bundle_id=None, inactive=False):
@@ -333,3 +357,37 @@ class FiberConf(object):
         self.valid = True
         self.x = 0.0
         self.y = 0.0
+        self.coord = None
+
+    @classmethod
+    def from_header(cls, hdr, fibid):
+        ff = FiberConf(fibid=fibid)
+        # Coordinates
+        dec = hdr["FIB%03d_D" % fibid]
+        ra = hdr["FIB%03d_R" % fibid]
+        frame = 'icrs'
+        ff.d = dec
+        ff.r = ra
+        ff.coord = astropy.coordinates.SkyCoord(
+            ra, dec, frame=frame, unit='deg'
+        )
+        ff.o = 0  # hdr["FIB%03d_O" % fibid]
+        # Active
+        ff.inactive = not hdr["FIB%03d_A" % fibid]
+
+        # Coordinates XY
+        ff.x = hdr["FIB%03d_X" % fibid]
+        ff.y = hdr["FIB%03d_Y" % fibid]
+
+        ff.bundle_id = hdr["FIB%03d_B" % fibid]
+        ff.name = hdr.get("FIB%03d_N" % fibid, 'unknown')
+
+        ff.w1 = hdr.get("FIB%03dW1" % fibid, None)
+        ff.w2 = hdr.get("FIB%03dW2" % fibid, None)
+
+        # Validity
+        if ff.inactive:
+            ff.valid = False
+        else:
+            ff.valid = hdr.get("FIB%03d_V" % fibid, True)
+        return ff
