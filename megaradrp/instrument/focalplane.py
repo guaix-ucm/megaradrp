@@ -282,13 +282,15 @@ class FiberConfs(FocalPlaneConf):
 class BundleConf(object):
     """Description of a bundle"""
     def __init__(self, bundle_id, bundle_type, target_type=TargetType.UNASSIGNED,
-                 target_priority=0, target_name='unknown', enabled=True):
+                 target_priority=0, target_name='unknown', enabled=True, movable=True):
         self.id = bundle_id
+        self.name = "unknown"
         self.bundle_type = bundle_type
         self.target_type = target_type
         self.target_priority = target_priority
         self.target_name = target_name
         self.enabled = enabled
+        self.movable = movable
         self.nfibers = 7
         if self.bundle_type == BundleType.LCB:
             self.nfibers = 567
@@ -333,7 +335,11 @@ class BundleConf(object):
 class LcbBundleConf(BundleConf):
     """Description of the LCB bundle"""
     def __init__(self, bundle_id=0):
-        super(LcbBundleConf, self).__init__(bundle_id=bundle_id, bundle_type=BundleType.LCB)
+        super(LcbBundleConf, self).__init__(
+            bundle_id=bundle_id, bundle_type=BundleType.LCB,
+            movable=False
+        )
+        self.name = "LCB"
         self.nrows = 21
         self.ncols = 27
 
@@ -343,7 +349,7 @@ class SkyBundleConf(BundleConf):
     def __init__(self, bundle_id):
         super(SkyBundleConf, self).__init__(
             bundle_id=bundle_id, bundle_type=BundleType.SKY,
-            target_type=TargetType.SKY
+            target_type=TargetType.SKY, movable=False
         )
 
 
