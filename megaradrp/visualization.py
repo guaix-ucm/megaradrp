@@ -295,7 +295,7 @@ def main(argv=None):
             if args.fix_missing:
                 fibid = 623
                 print('interpolate fiber {}'.format(fibid))
-                rss = fixrss.fix_missing_fiber(rss, fibid)
+                img = fixrss.fix_missing_fiber(img, fibid)
             if args.plot_nominal_config:
                 insmode = img['FIBERS'].header['INSMODE']
                 fp_conf = dm.get_fiberconf_default(insmode)

@@ -31,19 +31,23 @@ def fix_missing_fiber(rss, fibid):
 
     l1fmt = "FIB{:03d}W1"
     l2fmt = "FIB{:03d}W2"
-    # Change limits in header to the min-max of surrounding fibers
-    for sub, func in [(l1fmt, max), (l2fmt, min)]:
-        keys = []
-        for idx in idxs:
-            keys.append(hdr[sub.format(idx)])
-        hdr[sub.format(fibid)] = func(keys)
+    try:
+        # Change limits in header to the min-max of surrounding fibers
+        for sub, func in [(l1fmt, max), (l2fmt, min)]:
+            keys = []
+            for idx in idxs:
+                keys.append(hdr[sub.format(idx)])
+            hdr[sub.format(fibid)] = func(keys)
 
-    l1 = hdr[l1fmt.format(fibid)]
-    l2 = hdr[l2fmt.format(fibid)]
-    if l1 > 1:
-        avg[0:l1 - 1] = 0
-    if l2 < len(avg):
-        avg[l2 - 1:] = 0
+        l1 = hdr[l1fmt.format(fibid)]
+        l2 = hdr[l2fmt.format(fibid)]
+        if l1 > 1:
+            avg[0:l1 - 1] = 0
+        if l2 < len(avg):
+            avg[l2 - 1:] = 0
+    except KeyError:
+        pass
+
     rss[0].data[fibid - 1] = avg
     return rss
 
