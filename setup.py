@@ -47,6 +47,7 @@ setup(
     ],
     extras_require={
         'DB': ['sqlalchemy', 'numinadb'],
+        'docs': ['sphinx', 'numpydocs'],
         'test': [
             'pytest<3.7; python_version<"3"', 
             'pytest>=6; python_version>="3"',
