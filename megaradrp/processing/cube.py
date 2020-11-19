@@ -184,9 +184,12 @@ def create_cube_from_array(rss_data, fiberconf, p=1, target_scale_arcsec=1.0, co
 
     r0l, _ = calc_matrix_from_fiberconf(fiberconf)
     cube_data = create_cube(r0l, region[:, :], p, target_scale)
-    # scale with areas
+
     if conserve_flux:
+        # scale with areas
         cube_data *= (target_scale ** 2 / hg.HA_HEX)
+    # Move axis to put WL first
+    # so that is last in FITS
     result = np.moveaxis(cube_data, 2, 0)
     result.astype('float32')
     return result
@@ -207,37 +210,15 @@ def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
 
     """
 
-    target_scale = target_scale_arcsec / HEX_SCALE
-    # print('target scale is', target_scale)
-
-    rss_data = rss[0].data
-    # Operate on non-SKY fibers
-
     fiberconf = FocalPlaneConf.from_img(rss)
-    conected = fiberconf.connected_fibers()
-    rows = [conf.fibid - 1 for conf in conected]
-    #
-    region = rss_data[rows, :]
-
-    # FIXME: workaround
-    # Get FUNIT keyword
-    r0l, (refx, refy) = calc_matrix_from_fiberconf(fiberconf)
-
-    (i1min, i1max), (j1min, j1max) = hg.hexgrid_extremes(r0l, target_scale)
-    cube_data = create_cube(r0l, region[:, :], p, target_scale)
-
-    if conserve_flux:
-        # scale with areas
-        cube_data *= (target_scale ** 2 / hg.HA_HEX)
+    result_arr = create_cube_from_array(
+        rss[0].data, fiberconf, p=p,
+        target_scale_arcsec=target_scale_arcsec,
+        conserve_flux=conserve_flux
+    )
 
     cube = copy_img(rss)
-    # Move axis to put WL first
-    # so that is last in FITS
-    # plt.imshow(cube_data[:, :, 0], origin='lower', interpolation='bicubic')
-    # plt.show()
-
-    cube[0].data = np.moveaxis(cube_data, 2, 0)
-    cube[0].data.astype('float32')
+    cube[0].data = result_arr
 
     sky_header = rss['FIBERS'].header.copy()
     spec_header = rss[0].header
@@ -247,6 +228,9 @@ def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
     # minx, miny
     # After shifting the array
     # refpixel is -i1min, -j1min
+    target_scale = target_scale_arcsec / HEX_SCALE
+    r0l, (refx, refy) = calc_matrix_from_fiberconf(fiberconf)
+    (i1min, i1max), (j1min, j1max) = hg.hexgrid_extremes(r0l, target_scale)
     crpix_x = -refx / target_scale - j1min
     crpix_y = -refy / target_scale - i1min
     # Map the center of original field
