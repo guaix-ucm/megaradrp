@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2020 Universidad Complutense de Madrid
+# Copyright 2016-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -9,10 +9,9 @@
 
 """Validators for Observing modes"""
 
-import sys
-import six
+
 import pkgutil
-from six import StringIO
+from io import StringIO
 
 import json
 import jsonschema
@@ -35,9 +34,8 @@ def validate_focus(mode, obresult):
                 if focus_val not in image_groups:
                     image_groups[focus_val] = []
                 image_groups[focus_val].append(frame)
-            except Exception:
-                _type, exc, tb = sys.exc_info()
-                six.reraise(ValidationError, exc, tb)
+            except Exception as exc:
+                raise ValidationError from exc
 
     if len(image_groups) < 2:
         raise ValidationError('We have only {} different focus in OB'.format(len(image_groups)))
@@ -57,9 +55,8 @@ def validate_key(mode, obresult, key):
             try:
                 spec_val = img[0].header[key]
                 kval.append(spec_val)
-            except Exception:
-                _type, exc, tb = sys.exc_info()
-                six.reraise(ValidationError, exc, tb)
+            except Exception as exc:
+                raise ValidationError from exc
 
     if kval[:-1] == kval[1:]:
         return True
@@ -207,7 +204,7 @@ _sub_schema_rss = {
     {
         "type": "object",
         "properties": {
-            #"NAXIS1": {"const": 4300},
+            # "NAXIS1": {"const": 4300},
             "NAXIS2": {"const": 623},
             "INSMODE": {"const": "LCB"}
         }
@@ -215,7 +212,7 @@ _sub_schema_rss = {
     {
         "type": "object",
         "properties": {
-            #"NAXIS1": {"const": 4300},
+            # "NAXIS1": {"const": 4300},
             "NAXIS2": {"const": 644},
             "INSMODE": {"const": "MOS"}
         }
@@ -245,7 +242,7 @@ _sub_schema_master_bpm = {
 _sub_schema_master_bias = {
     "type": "object",
     "properties": {
-        #"OBJECT": {"const": "BIAS"},
+        # "OBJECT": {"const": "BIAS"},
         "OBSMODE": {"const": "MegaraBiasImage"},
         "IMAGETYP": {"const": "MASTER_BIAS"},
         "EXPTIME": {"type": "number", "maximum": 0},
@@ -416,6 +413,7 @@ class MasterFlatRSSChecker(ExtChecker):
             [_sub_schema_rss], n_ext=3
         )
 
+
 class MasterSensitivityChecker(ExtChecker):
     def __init__(self, schema):
         super(MasterSensitivityChecker, self).__init__(schema,
@@ -425,7 +423,6 @@ class MasterSensitivityChecker(ExtChecker):
 
 def check_header_additional(values_primary, values_fibers):
     """Additional checks than can't be done with schema"""
-
 
     if values_primary['INSMODE'] != values_fibers['INSMODE']:
         raise ValueError('insmode in PRIMARY != insmode in FIBERS')
@@ -458,7 +455,7 @@ def check_header_additional(values_primary, values_fibers):
             if keyname not in values_fibers:
                 msg = "keyword {} not in values_fibers".format(keyname)
                 print(msg)
-                #raise ValueError(msg)
+                # raise ValueError(msg)
 
 
 class CheckAsDatatype(object):

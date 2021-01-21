@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -12,9 +12,6 @@
 
 import itertools
 import collections
-
-
-from six.moves import filter as ifilter
 
 
 FIBER_PEAK, FIBER_DEAD = (0, 1)
@@ -37,7 +34,7 @@ def generate_box_model(nfibers, start=1,
         missing_relids = []
 
     iter1 = itertools.count(start)
-    iter2 = ifilter(lambda x:x not in skip_fibids, iter1)
+    iter2 = filter(lambda x: x not in skip_fibids, iter1)
     iter3 = itertools.islice(iter2, nfibers)
 
     result = []
@@ -153,7 +150,7 @@ def complete_solutions(model, values, borders, scale=6.0):
         if valid_match(model, itertools.chain(pre, values, post)):
             # print('computing score')
             # print(border1, border2)
-            ratios = [d1 / (pl +1 ), d2 / (pr + 1)]
+            ratios = [d1 / (pl + 1), d2 / (pr + 1)]
             # print('ratios:', ratios)
             exp_dist = scale
             score = sum([(c - exp_dist) ** 2 for c in ratios])
@@ -176,4 +173,4 @@ def iter_best_solution(model, values, solutions):
     for xx, yy in zip(comp_sol, model):
         fibid = yy[0]
         match = xx[3]
-        yield (fibid, match)
+        yield fibid, match

@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2020 Universidad Complutense de Madrid
+# Copyright 2016-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -11,12 +11,12 @@
 
 from __future__ import division
 
-import re
+
 import pkgutil
 import logging
 
 import astropy.io.fits as fits
-from six import StringIO
+from io import StringIO
 from numina.datamodel import DataModel, QueryAttribute, KeyDefinition
 from numina.util.convert import convert_date
 

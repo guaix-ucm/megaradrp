@@ -34,7 +34,6 @@ setup(
     },
     install_requires=[
         'setuptools>=36.2.1',
-        'six',
         'numpy',
         'matplotlib',
         'astropy >= 2',

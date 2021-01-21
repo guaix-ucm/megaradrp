@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2020 Universidad Complutense de Madrid
+# Copyright 2016-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -16,7 +16,6 @@ import math
 import re
 import warnings
 
-import six
 import astropy.coordinates
 
 from .ienums import TargetType, BundleType
@@ -181,11 +180,11 @@ class FocalPlaneConf(object):
             bundle = self.bundles[fiber_conf.bundle_id]
             result = bundle.nearby(fibid)
             return result
-        except KeyError:
+        except KeyError as err:
             # equivalent to
             # raise ValueError from None
             ex = ValueError('fibid {} does not exist'.format(fibid))
-            six.raise_from(ex, None)
+            raise ex from err
 
     def inactive_fibers(self):
         result = []
