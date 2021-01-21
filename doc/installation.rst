@@ -6,7 +6,7 @@ The easiest way to install megaradrp is using `pip`, the default Python
 package manager. We support also conda.
 
 
-megaradrp works in Python 2.7 and Python >= 3.5 (but we will drop Python 2.7 soon).
+megaradrp works with Python >= 3.6.
 
 
 ******************
