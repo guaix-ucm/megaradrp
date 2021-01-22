@@ -5,11 +5,11 @@ os: linux
 jobs:
   include:
     - python: "3.6"
-      env: DEPS="numpy>=1.16 pytest>=6"
+      env: DEPS="numpy>=1.17 pytest>=6"
     - python: "3.7"
-      env: DEPS="numpy>=1.16 pytest>=6" COVERAGE=true
+      env: DEPS="numpy>=1.17 pytest>=6" COVERAGE=true
     - python: "3.8"
-      env: DEPS="numpy>=1.16 pytest>=6"
+      env: DEPS="numpy>=1.17 pytest>=6"
 
 cache: pip
 
