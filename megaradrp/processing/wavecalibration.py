@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2019 Universidad Complutense de Madrid
+# Copyright 2016-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -179,11 +179,11 @@ def calibrate_wl_rss(rss, solutionwl, npix, targetwcs, dtype='float32', span=0, 
         _logger.warning('Missing key %s, cannot add barycentric correction', error)
     _logger.debug('Add calibration headers')
     hdr['NUM-WAV'] = solutionwl.calibid
-    hdr['history'] = 'Wavelength calibration with {}'.format(solutionwl.calibid)
+    hdr['history'] = f'Wavelength calibration with {solutionwl.calibid}'
     hdr['history'] = 'Aperture extraction offsets are {}'.format(
         solutionwl.global_offset.coef.tolist())
-    hdr['history'] = 'Wavelength calibration time {}'.format(datetime.datetime.utcnow().isoformat())
-    hdr['history'] = 'Resample span={}'.format(span)
+    hdr['history'] = f'Wavelength calibration time {datetime.datetime.utcnow().isoformat()}'
+    hdr['history'] = f'Resample span={span}'
     # Update UUID
     hdr['UUID'] = str(uuid.uuid1())
 
@@ -199,9 +199,9 @@ def calibrate_wl_rss(rss, solutionwl, npix, targetwcs, dtype='float32', span=0, 
         idx = fibid - 1
         map_data[idx, lower:upper+1] = 1
         # Update Fibers
-        key = "FIB{:03d}W1".format(fibid)
+        key = f"FIB{fibid:03d}W1"
         fibers_ext_headers[key] =  (lower + 1, "Start of spectral coverage")
-        key = "FIB{:03d}W2".format(fibid)
+        key = f"FIB{fibid:03d}W2"
         fibers_ext_headers[key] =  (upper + 1, "End of spectral coverage")
 
     # Update KEYWORDS
@@ -295,24 +295,24 @@ def header_add_barycentric_correction(hdr, key='B', out=None):
     if out is None:
         out = hdr
 
-    out['WCSNAME{}'.format(key)] = 'Barycentric correction'
+    out[f'WCSNAME{key}'] = 'Barycentric correction'
     # out['CNAME1{}'.format(key)] = 'AxisV'
-    out['CTYPE1{}'.format(key)] = hdr['CTYPE1']
-    out['CRPIX1{}'.format(key)] = hdr['CRPIX1']
-    out['CRVAL1{}'.format(key)] = hdr['CRVAL1'] * factor
-    out['CDELT1{}'.format(key)] = hdr['CDELT1'] * factor
-    out['CUNIT1{}'.format(key)] = hdr['CUNIT1']
+    out[f'CTYPE1{key}'] = hdr['CTYPE1']
+    out[f'CRPIX1{key}'] = hdr['CRPIX1']
+    out[f'CRVAL1{key}'] = hdr['CRVAL1'] * factor
+    out[f'CDELT1{key}'] = hdr['CDELT1'] * factor
+    out[f'CUNIT1{key}'] = hdr['CUNIT1']
 
     for keyword in ['CRPIX2', 'CRVAL2', 'CDELT2', 'CTYPE2']:
         try:
-            out['{}{}'.format(keyword, key)] = hdr['{}'.format(keyword)]
+            out[f'{keyword}{key}'] = hdr[f'{keyword}']
         except KeyError:
             # Ignore non-existing key
             pass
 
-    out['VELOSYS{}'.format(key)] = rv.to('m / s').value
-    out['SPECSYS{}'.format(key)] = 'BARYCENT'
-    out['SSYSOBS{}'.format(key)] = 'TOPOCENT'
+    out[f'VELOSYS{key}'] = rv.to('m / s').value
+    out[f'SPECSYS{key}'] = 'BARYCENT'
+    out[f'SSYSOBS{key}'] = 'TOPOCENT'
     return out
 
 

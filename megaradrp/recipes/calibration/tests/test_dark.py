@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2019 Universidad Complutense de Madrid
+# Copyright 2015-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -40,7 +40,7 @@ def test_dark():
     config_uuid = '4fd05b24-2ed9-457b-b563-a3c618bb1d4c'
     date_obs = '2017-11-09T11:00:00.0'
     temporary_path = mkdtemp()
-    fits.writeto('{}/eq.fits'.format(temporary_path), qe, overwrite=True)
+    fits.writeto(f'{temporary_path}/eq.fits', qe, overwrite=True)
 
     readpars1 = ReadParams(gain=gain, ron=ron, bias=bias)
     readpars2 = ReadParams(gain=gain, ron=ron, bias=bias)
@@ -55,7 +55,7 @@ def test_dark():
     fs = simulate_dark_fits(factory, detector, exposure=3600, repeat=number)
 
     for idx, aux in enumerate(fs):
-        aux.writeto('{}/dark_{}.fits'.format(temporary_path, idx), overwrite=True)
+        aux.writeto(f'{temporary_path}/dark_{idx}.fits', overwrite=True)
 
     header = fits.Header()
     header['DATE-OBS'] = date_obs
@@ -81,7 +81,7 @@ def test_dark():
 
     names = []
     for aux in range(number):
-        names.append('{}/dark_{}.fits'.format(temporary_path, aux))
+        names.append(f'{temporary_path}/dark_{aux}.fits')
     ob.frames = [DataFrame(filename=open(nombre).name) for nombre in names]
 
     ob.configuration = insmodel

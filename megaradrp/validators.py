@@ -30,7 +30,7 @@ def validate_focus(mode, obresult):
                 focus_val = img[0].header['FOCUS']
                 # FIXME: This should be done using an scheme for MEGARA
                 if not isinstance(focus_val, (int, float)):
-                    raise ValidationError("FOCUS must be integer, not {}".format(type(focus_val)))
+                    raise ValidationError(f"FOCUS must be integer, not {type(focus_val)}")
                 if focus_val not in image_groups:
                     image_groups[focus_val] = []
                 image_groups[focus_val].append(frame)
@@ -38,7 +38,7 @@ def validate_focus(mode, obresult):
                 raise ValidationError from exc
 
     if len(image_groups) < 2:
-        raise ValidationError('We have only {} different focus in OB'.format(len(image_groups)))
+        raise ValidationError(f'We have only {len(image_groups)} different focus in OB')
 
     return True
 
@@ -61,7 +61,7 @@ def validate_key(mode, obresult, key):
     if kval[:-1] == kval[1:]:
         return True
     else:
-        raise ValidationError("{} value is incorrect".format(key))
+        raise ValidationError(f"{key} value is incorrect")
 
 
 def validate_arc(mode, obresult):
@@ -82,7 +82,7 @@ def validate_keyword_exists(header, key):
     """Verify that the keyword exists"""
     value = header.get(key)
     if value is None:
-        msg = 'Expected keyword "{}" is not present'.format(key)
+        msg = f'Expected keyword "{key}" is not present'
         raise ValidationError(msg)
     return True
 
@@ -94,7 +94,7 @@ def validate_keyword_value(header, key, expected):
     value = header.get(key)
 
     if value != expected:
-        msg = 'Keyword "{0}" has value "{1}" != "{2}"'.format(key, value, expected)
+        msg = f'Keyword "{key}" has value "{value}" != "{expected}"'
         raise ValidationError(msg)
 
 
@@ -109,7 +109,7 @@ def validate_keyword_any_value(header, key, any_expected):
         if value == expected:
             break
     else:
-        msg = 'Keyword "{0}" has value "{1}" not in "{2}"'.format(key, value, any_expected)
+        msg = f'Keyword "{key}" has value "{value}" not in "{any_expected}"'
         raise ValidationError(msg)
 
 
@@ -285,7 +285,7 @@ class ExtChecker(BaseChecker):
         # Image must have only one extension
         if self.n_ext is not None:
             if len(dheaders) != self.n_ext:
-                msg = 'image has not expected number of HDUs ({})'.format(self.n_ext)
+                msg = f'image has not expected number of HDUs ({self.n_ext})'
                 raise ValueError(msg)
 
         for sub_schema in self.sub_schemas:
@@ -330,7 +330,7 @@ class FlatImageChecker(ExtChecker):
             raise ValidationError(msg)
         lamp_s_s = True
         for idx in range(1, 6):
-            label = 'LAMPS{}S'.format(idx)
+            label = f'LAMPS{idx}S'
             lamp_s_s = lamp_s_s and hdr[label]
         if lamp_s_s:
             msg = 'some comparation lamps are ON'
@@ -365,7 +365,7 @@ class CompImageChecker(ExtChecker):
             raise ValidationError(msg)
         lamp_s_s = False
         for idx in range(1, 6):
-            label = 'LAMPS{}S'.format(idx)
+            label = f'LAMPS{idx}S'
             lamp_s_s = lamp_s_s or hdr[label]
         if not lamp_s_s:
             msg = 'all comparation lamps are OFF'
@@ -400,7 +400,7 @@ class TargetImageChecker(ExtChecker):
             raise ValidationError(msg)
         lamp_s_s = False
         for idx in range(1, 6):
-            label = 'LAMPS{}S'.format(idx)
+            label = f'LAMPS{idx}S'
             lamp_s_s = lamp_s_s or hdr[label]
         if lamp_s_s:
             msg = 'some comparation lamps are ON'
@@ -438,22 +438,22 @@ def check_header_additional(values_primary, values_fibers):
     for idbundle in rbundles:
         # types are check in the json schema
         for stype in ['P', "I", "T", "X", "Y", "O", "E"]:
-            keyname = "BUN{:03d}_{}".format(idbundle, stype)
+            keyname = f"BUN{idbundle:03d}_{stype}"
             if keyname not in values_fibers:
-                raise ValueError("keyname {} not in values_fibers".format(keyname))
+                raise ValueError(f"keyname {keyname} not in values_fibers")
 
     for idfiber in range(1, nfibers + 1):
         # types are check in the json schema
         for stype in ['A', "D", "R", "X", "Y", "B"]:
-            keyname = "FIB{:03d}_{}".format(idfiber, stype)
+            keyname = f"FIB{idfiber:03d}_{stype}"
             if keyname not in values_fibers:
-                msg = "keyname {} not in values_fibers".format(keyname)
+                msg = f"keyname {keyname} not in values_fibers"
                 raise ValueError(msg)
 
         for stype in ["N"]:
-            keyname = "FIB{:03d}_{}".format(idfiber, stype)
+            keyname = f"FIB{idfiber:03d}_{stype}"
             if keyname not in values_fibers:
-                msg = "keyword {} not in values_fibers".format(keyname)
+                msg = f"keyword {keyname} not in values_fibers"
                 print(msg)
                 # raise ValueError(msg)
 

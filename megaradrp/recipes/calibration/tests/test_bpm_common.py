@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2019 Universidad Complutense de Madrid
+# Copyright 2015-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -29,11 +29,11 @@ def generate_bias(detector, number, temporary_path):
     header['VPH'] = 'LR-U'
     header['INSMODE'] = 'MOS'
     for aux in range(len(fs)):
-        fits.writeto('%s/bias_%s.fits' % (temporary_path, aux), fs[aux],
+        fits.writeto(f'{temporary_path}/bias_{aux}.fits', fs[aux],
                      header=header,
                      overwrite=True)
 
-    fs = ["%s/bias_%s.fits" % (temporary_path, i) for i in range(number)]
+    fs = [f"{temporary_path}/bias_{i}.fits" for i in range(number)]
 
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
@@ -89,13 +89,13 @@ def crear_archivos(temporary_path, number=5):
     header['VPH'] = 'LR-U'
     header['INSMODE'] = 'MOS'
     for aux in range(len(fs)):
-        fits.writeto('%s/flat_%s.fits' % (temporary_path, aux), fs[aux],
+        fits.writeto(f'{temporary_path}/flat_{aux}.fits', fs[aux],
                      header=header,
                      overwrite=True)
 
     result = generate_bias(detector, number, temporary_path)
     result.master_bias.frame.writeto(
-        '%s/master_bias_data0.fits' % temporary_path,
+        f'{temporary_path}/master_bias_data0.fits',
         overwrite=True)  # Master Bias
 
     ob = ObservationResult()
@@ -109,13 +109,13 @@ def crear_archivos(temporary_path, number=5):
 
     names = []
     for aux in range(number):
-        names.append('%s/flat_%s.fits' % (temporary_path, aux))
+        names.append(f'{temporary_path}/flat_{aux}.fits')
     ob.frames = [DataFrame(filename=open(nombre).name) for nombre in names]
 
     recipe = BadPixelsMaskRecipe()
     ri = recipe.create_input(obresult=ob, master_bias=DataFrame(
         filename=open(temporary_path + '/master_bias_data0.fits').name))
     aux = recipe.run(ri)
-    aux.master_bpm.frame.writeto('%s/master_bpm.fits' % temporary_path, overwrite=True)
+    aux.master_bpm.frame.writeto(f'{temporary_path}/master_bpm.fits', overwrite=True)
 
     return names

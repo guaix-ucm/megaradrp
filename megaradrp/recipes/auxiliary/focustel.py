@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2020 Universidad Complutense de Madrid
+# Copyright 2016-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -92,7 +92,7 @@ class FocusTelescopeRecipe(ImageRecipe):
                 image_groups[focus_val].append(frame)
 
         if len(image_groups) < 2:
-            raise RecipeError('We have only {} different focus'.format(len(image_groups)))
+            raise RecipeError(f'We have only {len(image_groups)} different focus')
 
         all_images = {}
         for focus, frames in image_groups.items():
@@ -101,7 +101,7 @@ class FocusTelescopeRecipe(ImageRecipe):
             try:
                 img = basic_processing_with_combination_frames(frames, flow, method=combine.median, errors=False)
 
-                self.save_intermediate_img(img, 'focus2d-%s.fits' % (focus,))
+                self.save_intermediate_img(img, f'focus2d-{focus}.fits')
 
                 # 1D, extraction, Wl calibration, Flat fielding
                 _, img1d = self.run_reduction_1d(
@@ -123,7 +123,7 @@ class FocusTelescopeRecipe(ImageRecipe):
                     origin = final
                     sky = final
 
-                self.save_intermediate_img(final, 'focus1d-%s.fits' % (focus,))
+                self.save_intermediate_img(final, f'focus1d-{focus}.fits')
 
                 self.logger.info('find lines and compute FWHM')
                 star_rss_fwhm = self.run_on_image(final, coors)

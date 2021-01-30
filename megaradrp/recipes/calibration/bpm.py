@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -114,7 +114,7 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
         # Check that the number of frames is even
         nimages = len(obresult.frames)
         if nimages % 2 != 0:
-            msg = 'expected even number of frames, received {} instead'.format(nimages)
+            msg = f'expected even number of frames, received {nimages} instead'
             raise numina.exceptions.ValidationError(msg)
         # Continue with additional checks
         return super(BadPixelsMaskRecipe, self).validate_input(recipe_input)

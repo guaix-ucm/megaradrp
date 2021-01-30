@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2020 Universidad Complutense de Madrid
+# Copyright 2017-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -245,7 +245,7 @@ def main(argv=None):
     parser.add_argument('--title', help='Title of the plot')
     parser.add_argument('--label', help='Legend of the colorbar')
     parser.add_argument('--hex-size', type=float,
-                        help='Size of the hexagons (default is {})'.format(scale_lcb),
+                        help=f'Size of the hexagons (default is {scale_lcb})',
                         default=scale_lcb)
     parser.add_argument('--hex-rel-size', type=float,
                         help='Scale the size of hexagons by a factor',
@@ -289,7 +289,7 @@ def main(argv=None):
         with fits.open(fname) as img:
             if args.fix_missing:
                 fibid = 623
-                print('interpolate fiber {}'.format(fibid))
+                print(f'interpolate fiber {fibid}')
                 img = fixrss.fix_missing_fiber(img, fibid)
             if args.plot_nominal_config:
                 insmode = img['FIBERS'].header['INSMODE']
@@ -380,9 +380,9 @@ def main(argv=None):
                 # Plot spaxel labels
                 for xx, yy, fid in zip(x, y, num):
                     tp1 = TextPath(
-                        (xx-0.05, yy+0.16), "{:03d}".format(fid), size=0.045)
+                        (xx-0.05, yy+0.16), f"{fid:03d}", size=0.045)
                     tp2 = TextPath(
-                        (xx-0.05, yy-0.18), "{}".format(names[fid]), size=0.045)
+                        (xx-0.05, yy-0.18), f"{names[fid]}", size=0.045)
                     ax.add_patch(PathPatch(tp1, zorder=2, lw=0, fc="black"))
                     ax.add_patch(PathPatch(tp2, zorder=2, lw=0, fc="black"))
 

@@ -89,7 +89,7 @@ def count_peaks(peaks, tol=1.2, distance=6.0, start=1, max_scale_jump=3):
                 # print('increase scale to:', scale)
                 if scale > max_scale_jump:
                     # print('moving to far')
-                    msg = 'peak {} not found within expected distance from {}'.format(pid, last_info[0])
+                    msg = f'peak {pid} not found within expected distance from {last_info[0]}'
                     raise ValueError(msg)
 
         p1, rest = rest[0], rest[1:]

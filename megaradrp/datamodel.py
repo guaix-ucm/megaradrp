@@ -161,7 +161,7 @@ def create_default_fiber_header(insmode):
         slit_file = 'mos_default_header.txt'
     else:
         # Read fiber info from headers
-        raise ValueError('Invalid INSMODE {}'.format(insmode))
+        raise ValueError(f'Invalid INSMODE {insmode}')
 
     data = pkgutil.get_data('megaradrp.instrument.configs', slit_file)
     default_hdr = StringIO(data.decode('utf8'))
@@ -237,7 +237,7 @@ def megara_inferr_datatype(obj):
     elif isinstance(obj, dict):
         return megara_inferr_datetype_from_dict(obj)
     else:
-        raise TypeError("I don't know how to inferr datatype from {}".format(obj))
+        raise TypeError(f"I don't know how to inferr datatype from {obj}")
 
 
 def megara_inferr_datetype_from_dict(obj):
@@ -334,10 +334,10 @@ def check_obj_megara(obj, astype=None, level=None):
     import megaradrp.validators as val
     if astype is None:
         datatype = megara_inferr_datatype(obj)
-        _logger.debug('check object as it says it is ({})'.format(datatype))
+        _logger.debug(f'check object as it says it is ({datatype})')
         thistype = datatype
     else:
-        _logger.debug('check object as {}'.format(astype))
+        _logger.debug(f'check object as {astype}')
         thistype = astype
     checker = val.check_as_datatype(thistype)
     res = checker(obj, level=level)

@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -60,5 +60,5 @@ class TwilightCorrector(Corrector):
         hdr['NUM-TWIF'] = self.calibid
         cap = self.flattag.capitalize()
         now = datetime.datetime.utcnow().isoformat()
-        hdr['history'] = '{} flat correction {}'.format(cap, imgid)
-        hdr['history'] = '{} flat correction time {}'.format(cap, now)
+        hdr['history'] = f'{cap} flat correction {imgid}'
+        hdr['history'] = f'{cap} flat correction time {now}'

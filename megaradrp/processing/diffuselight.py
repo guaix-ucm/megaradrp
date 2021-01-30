@@ -1,5 +1,5 @@
 #
-# Copyright 2019 Universidad Complutense de Madrid
+# Copyright 2019-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -38,8 +38,8 @@ class DiffuseLightCorrector(Corrector):
 
     def header_update(self, hdr, imgid):
         hdr['NUM-DFL'] = self.calibid
-        hdr['history'] = 'Diffuse light correction {}'.format(imgid)
-        hdr['history'] = 'Diffuse light correction time {}'.format(datetime.datetime.utcnow().isoformat())
+        hdr['history'] = f'Diffuse light correction {imgid}'
+        hdr['history'] = f'Diffuse light correction time {datetime.datetime.utcnow().isoformat()}'
 
     def run(self, img):
         imgid = self.get_imgid(img)

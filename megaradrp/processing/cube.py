@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2020 Universidad Complutense de Madrid
+# Copyright 2017-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -293,38 +293,38 @@ def merge_wcs_alt(hdr_sky, hdr_spec, out, spec_suffix=' '):
     # Extend header for third axis
     c_crpix = 'Pixel coordinate of reference point'
     c_cunit = 'Units of coordinate increment and value'
-    wcsname_s = 'WCSNAME{}'.format(sf)
+    wcsname_s = f'WCSNAME{sf}'
     if wcsname_s in hdr:
         prev = wcsname_s
     else:
-        prev = 'CTYPE1{}'.format(sf)
+        prev = f'CTYPE1{sf}'
 
-    hdr.set('WCSAXES{}'.format(sf), value=3, before=prev)
+    hdr.set(f'WCSAXES{sf}', value=3, before=prev)
     if sf != '':
-        hdr.set('WCSNAME{}'.format(sf), value='', after='PC3_3')
-        hdr.set('CTYPE1{}'.format(sf), value='', after='WCSNAME{}'.format(sf))
-        hdr.set('CRPIX1{}'.format(sf), value=1.0, after='CTYPE1{}'.format(sf))
-        hdr.set('CRVAL1{}'.format(sf), value=0.0, after='CRPIX1{}'.format(sf))
-        hdr.set('CDELT1{}'.format(sf), value=1.0, after='CRVAL1{}'.format(sf))
-    hdr.set('CUNIT1{}'.format(sf), value='deg', comment=c_cunit, after='CDELT1{}'.format(sf))
-    hdr.set('CTYPE2{}'.format(sf), after='CUNIT1{}'.format(sf))
+        hdr.set(f'WCSNAME{sf}', value='', after='PC3_3')
+        hdr.set(f'CTYPE1{sf}', value='', after=f'WCSNAME{sf}')
+        hdr.set(f'CRPIX1{sf}', value=1.0, after=f'CTYPE1{sf}')
+        hdr.set(f'CRVAL1{sf}', value=0.0, after=f'CRPIX1{sf}')
+        hdr.set(f'CDELT1{sf}', value=1.0, after=f'CRVAL1{sf}')
+    hdr.set(f'CUNIT1{sf}', value='deg', comment=c_cunit, after=f'CDELT1{sf}')
+    hdr.set(f'CTYPE2{sf}', after=f'CUNIT1{sf}')
     if sf != '':
-        hdr.set('CRPIX2{}'.format(sf), value=1.0, after='CTYPE2{}'.format(sf))
-        hdr.set('CRVAL2{}'.format(sf), value=0.0, after='CRPIX2{}'.format(sf))
-        hdr.set('CDELT2{}'.format(sf), value=1.0, after='CRVAL2{}'.format(sf))
-    hdr.set('CUNIT2{}'.format(sf), value='deg', comment=c_cunit, after='CDELT2{}'.format(sf))
-    hdr.set('CRPIX2{}'.format(sf), value=1, comment=c_crpix, after='CTYPE2{}'.format(sf))
-    hdr.set('CTYPE3{}'.format(sf), after='CUNIT2{}'.format(sf))
-    hdr.set('CRPIX3{}'.format(sf), value=1, comment=c_crpix, after='CTYPE3{}'.format(sf))
-    hdr.set('CRVAL3{}'.format(sf), after='CRPIX3{}'.format(sf))
-    hdr.set('CDELT3{}'.format(sf), after='CRVAL3{}'.format(sf))
-    hdr.set('CUNIT3{}'.format(sf), comment=c_cunit, after='CDELT3{}'.format(sf))
+        hdr.set(f'CRPIX2{sf}', value=1.0, after=f'CTYPE2{sf}')
+        hdr.set(f'CRVAL2{sf}', value=0.0, after=f'CRPIX2{sf}')
+        hdr.set(f'CDELT2{sf}', value=1.0, after=f'CRVAL2{sf}')
+    hdr.set(f'CUNIT2{sf}', value='deg', comment=c_cunit, after=f'CDELT2{sf}')
+    hdr.set(f'CRPIX2{sf}', value=1, comment=c_crpix, after=f'CTYPE2{sf}')
+    hdr.set(f'CTYPE3{sf}', after=f'CUNIT2{sf}')
+    hdr.set(f'CRPIX3{sf}', value=1, comment=c_crpix, after=f'CTYPE3{sf}')
+    hdr.set(f'CRVAL3{sf}', after=f'CRPIX3{sf}')
+    hdr.set(f'CDELT3{sf}', after=f'CRVAL3{sf}')
+    hdr.set(f'CUNIT3{sf}', comment=c_cunit, after=f'CDELT3{sf}')
     c_pc = 'Coordinate transformation matrix element'
-    hdr.set('PC1_1{}'.format(sf), value=1.0, comment=c_pc, after='CUNIT3{}'.format(sf))
-    hdr.set('PC1_2{}'.format(sf), value=0.0, comment=c_pc, after='PC1_1{}'.format(sf))
-    hdr.set('PC2_1{}'.format(sf), value=0.0, comment=c_pc, after='PC1_2{}'.format(sf))
-    hdr.set('PC2_2{}'.format(sf), value=1.0, comment=c_pc, after='PC2_1{}'.format(sf))
-    hdr.set('PC3_3{}'.format(sf), value=1.0, comment=c_pc, after='PC2_2{}'.format(sf))
+    hdr.set(f'PC1_1{sf}', value=1.0, comment=c_pc, after=f'CUNIT3{sf}')
+    hdr.set(f'PC1_2{sf}', value=0.0, comment=c_pc, after=f'PC1_1{sf}')
+    hdr.set(f'PC2_1{sf}', value=0.0, comment=c_pc, after=f'PC1_2{sf}')
+    hdr.set(f'PC2_2{sf}', value=1.0, comment=c_pc, after=f'PC2_1{sf}')
+    hdr.set(f'PC3_3{sf}', value=1.0, comment=c_pc, after=f'PC2_2{sf}')
 
     # Mapping, which keyword comes from each header
     mappings = [('CRPIX3', 'CRPIX1', sf, 0),
@@ -403,7 +403,7 @@ def main(args=None):
 
     target_scale = args.pixel_size  # Arcsec
     p = methods[args.method]
-    print('interpolation method is "{}"'.format(args.method))
+    print(f'interpolation method is "{args.method}"')
     print('target scale is', target_scale, 'arcsec')
     conserve_flux = not args.disable_scaling
 
@@ -416,7 +416,7 @@ def main(args=None):
             rss['FIBERS'].header = fixrss.recompute_wcs(rss['FIBERS'].header, ipa=ipa)
         if args.fix_missing:
             fibid = 623
-            print('interpolate fiber {}'.format(fibid))
+            print(f'interpolate fiber {fibid}')
             rss = fixrss.fix_missing_fiber(rss, fibid)
 
         cube = create_cube_from_rss(rss, p, target_scale, conserve_flux=conserve_flux)

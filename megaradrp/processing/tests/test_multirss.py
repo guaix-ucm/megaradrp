@@ -33,7 +33,7 @@ def test_multirss():
     assert primary.header['MEG-NRSS'] == nimages
     # Check
     for idx, ext in enumerate(result[1:], 1):
-        assert ext.header['EXTNAME'] == "FIBERS{}".format(idx)
+        assert ext.header['EXTNAME'] == f"FIBERS{idx}"
 
 
 def test_multirss_error():

@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2020 Universidad Complutense de Madrid
+# Copyright 2011-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -193,7 +193,7 @@ class LCBStandardRecipe(ImageRecipe):
             sigma = sigma_broad
             self.logger.info('computed sigma=%3.0f', sigma)
         else:
-            msg = "'degrade_resolution_method' has value {}".format(rinput.degrade_resolution_method)
+            msg = f"'degrade_resolution_method' has value {rinput.degrade_resolution_method}"
             raise ValueError(msg)
 
         sens_raw = generate_sensitivity(final, spectrum, star_interp, extinc_interp, wl_cover1, wl_cover2, sigma)

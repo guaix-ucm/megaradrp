@@ -44,14 +44,14 @@ def test_trim_and_o(direction):
         'bng': [1,1]
     }
     fs = generate_bias_file()
-    fits.writeto('%s/flat.fits' % (temporary_path), fs, overwrite=True)
+    fits.writeto(f'{temporary_path}/flat.fits', fs, overwrite=True)
     trimOut(
-        '%s/flat.fits' % (temporary_path),
+        f'{temporary_path}/flat.fits',
         detconf,
-        out='%s/result.fits' % (temporary_path),
+        out=f'{temporary_path}/result.fits',
         direction=direction,
     )
-    with fits.open('%s/result.fits' % (temporary_path)) as hdul:
+    with fits.open(f'{temporary_path}/result.fits') as hdul:
         assert hdul[0].shape[0] + 100 == fs.shape[0]
         assert hdul[0].shape[1] + 100 == fs.shape[1]
 
@@ -61,7 +61,7 @@ def test_trim_and_o(direction):
 def test_trim_and_o_fail():
     temporary_path = mkdtemp()
     fs = generate_bias_file()
-    fits.writeto('%s/flat.fits' % (temporary_path), fs, overwrite=True)
+    fits.writeto(f'{temporary_path}/flat.fits', fs, overwrite=True)
 
     direction = 'fails'
     detconf = {
@@ -71,19 +71,19 @@ def test_trim_and_o_fail():
     }
     with pytest.raises(ValueError) as excinfo:
         trimOut(
-            '%s/flat.fits' % (temporary_path),
+            f'{temporary_path}/flat.fits',
             detconf,
-            out='%s/result.fits' % (temporary_path),
+            out=f'{temporary_path}/result.fits',
             direction=direction
         )
     shutil.rmtree(temporary_path)
-    assert excinfo.value.args[0] == "%s must be either 'normal' or 'mirror'" % direction
+    assert excinfo.value.args[0] == f"{direction} must be either 'normal' or 'mirror'"
 
 
 def test_trim_and_o_fail2():
     temporary_path = mkdtemp()
     fs = generate_bias_file()
-    fits.writeto('%s/flat.fits' % (temporary_path), fs, overwrite=True)
+    fits.writeto(f'{temporary_path}/flat.fits', fs, overwrite=True)
 
     bins = 'fail'
     detconf = {
@@ -93,12 +93,12 @@ def test_trim_and_o_fail2():
     }
     with pytest.raises(ValueError) as excinfo:
         trimOut(
-            '%s/flat.fits' % (temporary_path),
+            f'{temporary_path}/flat.fits',
             detconf,
-            out='%s/result.fits' % (temporary_path)
+            out=f'{temporary_path}/result.fits'
         )
     shutil.rmtree(temporary_path)
-    assert excinfo.value.args[0] == "%s must be one if '11', '12', '21, '22'" % bins
+    assert excinfo.value.args[0] == f"{bins} must be one if '11', '12', '21, '22'"
 
 
 @pytest.mark.skipif(not os.path.exists('master_weights_LCB_10img_1exp.tar'),

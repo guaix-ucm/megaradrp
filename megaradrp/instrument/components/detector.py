@@ -71,7 +71,7 @@ class MegaraDetector(DetectorBase):
     def _set_binning(self, bins):
 
         if bins not in self._binning:
-            raise ValueError("%s must be one if '11', '12', '21, '22'" % bins)
+            raise ValueError(f"{bins} must be one if '11', '12', '21, '22'")
 
         self.bins = bins
         self.blocks = self._binning[self.bins]
@@ -84,7 +84,7 @@ class MegaraDetector(DetectorBase):
     def _set_direction(self, direction):
 
         if direction not in self._direc:
-            raise ValueError("%s must be either 'normal' or 'mirror'" % direction)
+            raise ValueError(f"{direction} must be either 'normal' or 'mirror'")
 
         if direction == 'normal':
             directfun = lambda x: x

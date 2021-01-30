@@ -1,5 +1,5 @@
 
-# Copyright 2011-2020 Universidad Complutense de Madrid
+# Copyright 2011-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -275,7 +275,7 @@ def compute_dar(img, logger=None, debug_plot=False):
         plt.xlim([-8, 8])
         plt.ylim([-8, 8])
         col = vis.hexplot(ax, x, y, z, cmap=plt.cm.YlOrRd_r)
-        plt.title("Fiber map, %s %s" % (c1, c2))
+        plt.title(f"Fiber map, {c1} {c2}")
         cb = plt.colorbar(col)
         cb.set_label('counts')
         plt.show()

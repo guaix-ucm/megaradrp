@@ -40,12 +40,12 @@ def assign_boxes_to_fibers(pseudo_slit_config, insmode):
         name = dumbox['name']
         n2 = n1 + nfibers
         fibid_with_box += \
-            ["{}  [{}]".format(val1, val2)
+            [f"{val1}  [{val2}]"
              for val1, val2 in zip(range(n1, n2), [name] * nfibers)]
-        dumstr ='Box {:>2},  fibers {:3d} - {:3d}'.format(name, n1, n2 - 1)
+        dumstr =f'Box {name:>2},  fibers {n1:3d} - {n2 - 1:3d}'
         list_to_print.append(dumstr)
         n1 = n2
-    print('\n* Fiber description for INSMODE={}'.format(insmode))
+    print(f'\n* Fiber description for INSMODE={insmode}')
     for dumstr in reversed(list_to_print):
         print(dumstr)
     print('---------------------------------')
@@ -440,8 +440,7 @@ def main(args=None):
                 box_ini = fibid_with_box[fibid_ini - 1][4:]
                 box_end = fibid_with_box[fibid_end - 1][4:]
                 if box_ini != box_end:
-                    print('ERROR: box_ini={}, box_end={}'.format(box_ini,
-                                                                 box_end))
+                    print(f'ERROR: box_ini={box_ini}, box_end={box_end}')
                     raise ValueError('fibid_ini and fibid_end correspond to '
                                      'different fiber boxes')
                 fibid_shift = operation['fibid_shift']

@@ -39,7 +39,7 @@ class FocalPlaneConf(object):
             for i in range(1, 92 + 1):
                 bundles[i] = BundleConf(i, BundleType.RP)
         else:
-            raise ValueError("name {} is invalid".format(name))
+            raise ValueError(f"name {name} is invalid")
         self.nbundles = len(bundles)
         self.nfibers = sum(bundle.nfibers for bundle in bundles.values())
         self.bundles = bundles
@@ -75,9 +75,9 @@ class FocalPlaneConf(object):
         conf.conf_id = confid
 
         if conf.nbundles != hdr.get('NBUNDLES'):
-            raise ValueError('checking NBUNDLES != {}'.format(conf.nbundles))
+            raise ValueError(f'checking NBUNDLES != {conf.nbundles}')
         if conf.nfibers != hdr.get('NFIBERS'):
-            raise ValueError('checking NFIBERS != {}'.format(conf.nfibers))
+            raise ValueError(f'checking NFIBERS != {conf.nfibers}')
 
         conf.funit = hdr.get("FUNIT", "arcsec")
         # Read bundles
@@ -183,7 +183,7 @@ class FocalPlaneConf(object):
         except KeyError as err:
             # equivalent to
             # raise ValueError from None
-            ex = ValueError('fibid {} does not exist'.format(fibid))
+            ex = ValueError(f'fibid {fibid} does not exist')
             raise ex from err
 
     def inactive_fibers(self):

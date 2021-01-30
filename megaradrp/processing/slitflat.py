@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2017 Universidad Complutense de Madrid
+# Copyright 2016-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -26,5 +26,5 @@ class SlitFlatCorrector(CommonFlatCorrector):
 
     def header_update(self, hdr, imgid):
         hdr['NUM-SLTF'] = self.calibid
-        hdr['history'] = 'Slit flat correction {}'.format(imgid)
-        hdr['history'] = 'Slit flat correction time {}'.format(datetime.datetime.utcnow().isoformat())
+        hdr['history'] = f'Slit flat correction {imgid}'
+        hdr['history'] = f'Slit flat correction time {datetime.datetime.utcnow().isoformat()}'
