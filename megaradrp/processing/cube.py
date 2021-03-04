@@ -37,6 +37,7 @@ HEX_SCALE = cons.SPAXEL_SCALE.to(u.arcsec, GTC_PLATESCALE).value
 
 def calc_matrix_from_fiberconf(fpconf, refid=614):
     """
+    Compute hexagonal grid matrix from FocalPlaneConf
 
     Parameters
     ----------
@@ -160,6 +161,7 @@ def create_cube(r0l, zval, p=1, target_scale=1.0):
 
 def create_cube_from_array(rss_data, fiberconf, p=1, target_scale_arcsec=1.0, conserve_flux=True):
     """
+    Create a cube array from a 2D or 1D array and focal plane configuration
 
     Parameters
     ----------
@@ -171,6 +173,7 @@ def create_cube_from_array(rss_data, fiberconf, p=1, target_scale_arcsec=1.0, co
 
     Returns
     -------
+    np.ndarray
 
     """
 
@@ -197,17 +200,18 @@ def create_cube_from_array(rss_data, fiberconf, p=1, target_scale_arcsec=1.0, co
 
 def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
     """
+    Create a cube HDUlist from a RSS HDUList
 
     Parameters
     ----------
-    rss
+    rss : fits.HDUList
     p : {1, 2}
     target_scale_arcsec : float, optional
     conserve_flux : bool, optional
 
     Returns
     -------
-
+    fits.HDUList
     """
 
     fiberconf = FocalPlaneConf.from_img(rss)
