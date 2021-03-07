@@ -36,7 +36,7 @@ setup(
         'setuptools>=36.2.1',
         'numpy',
         'matplotlib',
-        'astropy >= 2',
+        'astropy',
         'scipy',
         'numina >= 0.22',
         'scikit-image',
@@ -46,10 +46,9 @@ setup(
         'DB': ['sqlalchemy', 'numinadb'],
         'docs': ['sphinx', 'numpydocs'],
         'test': [
-            'pytest<3.7; python_version<"3"', 
-            'pytest>=6; python_version>="3"',
+            'pytest',
             'pytest-remotedata'
-            ]
+        ]
     },
     zip_safe=False,
     entry_points={
