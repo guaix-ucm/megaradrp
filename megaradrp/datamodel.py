@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2020 Universidad Complutense de Madrid
+# Copyright 2016-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -11,12 +11,12 @@
 
 from __future__ import division
 
-import re
+
 import pkgutil
 import logging
 
 import astropy.io.fits as fits
-from six import StringIO
+from io import StringIO
 from numina.datamodel import DataModel, QueryAttribute, KeyDefinition
 from numina.util.convert import convert_date
 
@@ -123,16 +123,20 @@ class MegaraDataModel(DataModel):
         return [self.gather_info_dframe(f) for f in val.images]
 
     def fiber_scale_unit(self, img, unit=False):
-        funit = img['FIBERS'].header.get("FUNIT", "arcsec")
+        return fiber_scale_unit(img, unit=unit)
 
-        if funit == "arcsec":
-            scale = 1
-        else:
-            scale = self.PLATESCALE
-        if unit:
-            return scale, funit
-        else:
-            return scale
+
+def fiber_scale_unit(img, unit=False):
+    funit = img['FIBERS'].header.get("FUNIT", "arcsec")
+
+    if funit == "arcsec":
+        scale = 1
+    else:
+        scale = cons.GTC_FC_A_PLATESCALE.value
+    if unit:
+        return scale, funit
+    else:
+        return scale
 
 
 def get_fiberconf(img):
@@ -157,7 +161,7 @@ def create_default_fiber_header(insmode):
         slit_file = 'mos_default_header.txt'
     else:
         # Read fiber info from headers
-        raise ValueError('Invalid INSMODE {}'.format(insmode))
+        raise ValueError(f'Invalid INSMODE {insmode}')
 
     data = pkgutil.get_data('megaradrp.instrument.configs', slit_file)
     default_hdr = StringIO(data.decode('utf8'))
@@ -189,7 +193,6 @@ def read_fibers_extension(hdr, insmode='LCB'):
     """
     import megaradrp.instrument.focalplane as fp
     return fp.FocalPlaneConf.from_header(hdr)
-
 
 
 def describe_hdulist_megara(hdulist):
@@ -234,7 +237,7 @@ def megara_inferr_datatype(obj):
     elif isinstance(obj, dict):
         return megara_inferr_datetype_from_dict(obj)
     else:
-        raise TypeError("I don't know how to inferr datatype from {}".format(obj))
+        raise TypeError(f"I don't know how to inferr datatype from {obj}")
 
 
 def megara_inferr_datetype_from_dict(obj):
@@ -331,10 +334,10 @@ def check_obj_megara(obj, astype=None, level=None):
     import megaradrp.validators as val
     if astype is None:
         datatype = megara_inferr_datatype(obj)
-        _logger.debug('check object as it says it is ({})'.format(datatype))
+        _logger.debug(f'check object as it says it is ({datatype})')
         thistype = datatype
     else:
-        _logger.debug('check object as {}'.format(astype))
+        _logger.debug(f'check object as {astype}')
         thistype = astype
     checker = val.check_as_datatype(thistype)
     res = checker(obj, level=level)

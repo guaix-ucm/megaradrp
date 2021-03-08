@@ -1,36 +1,36 @@
 language: python
-sudo: false
 
-matrix:
+os: linux
+
+jobs:
   include:
-    - python: "2.7"
-      env: DEPS="numpy scipy astropy==2.0.16 enum34"
-    - python: "3.5"
-      env: DEPS="numpy scipy astropy==3.2.3"
     - python: "3.6"
-      env: DEPS="numpy scipy astropy==4.0.1"
+      env: DEPS="numpy>=1.17 pytest>=6"
     - python: "3.7"
-      env: DEPS="numpy scipy astropy==4.0.1" COVERAGE=true
+      env: DEPS="numpy>=1.17 pytest>=6" COVERAGE=true
     - python: "3.8"
-      env: DEPS="numpy scipy astropy==4.0.1"
+      env: DEPS="numpy>=1.17 pytest>=6"
 
-cache:
-  pip: true
+cache: pip
 
-# The preinstalled numpy 1.15 with python 3.5 breaks something
-# probably a wheel
+
+# Have to install manually numpy>=1.16 for astropy
+# Pip is not doing it
 install:
-  - pip install Cython
-  - pip install "numpy>=1.16"
-  - pip install git+git://github.com/guaix-ucm/numina.git#egg=numina
-  - pip install $DEPS scikit-image pytest setuptools six>=1.7 jsonschema
-  - pip install pytest-remotedata
-  - if [[ $COVERAGE == true ]]; then pip install coveralls; fi
-  - if [[ $COVERAGE == true ]]; then pip install codeclimate-test-reporter; fi
+  - pip install $DEPS
+  - pip install .[test]
+  - |
+    if [[ $COVERAGE == true ]]; then
+      pip install codeclimate-test-reporter coveralls;
+    fi
 
 script:
-  - pytest megaradrp
-  - if [[ $COVERAGE == true ]]; then coverage run --source megaradrp -m pytest; fi
+  - |
+    if [[ $COVERAGE == true ]]; then
+      coverage run --source megaradrp -m pytest
+    else
+      pytest -s -v megaradrp
+    fi
 
 after_success:
   - if [[ $COVERAGE == true ]]; then coveralls; fi

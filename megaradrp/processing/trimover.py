@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -54,7 +54,7 @@ def trim_and_o_array(array, detconf, direction='normal'):
     """Trim a MEGARA array with overscan."""
 
     if direction not in _direc:
-        raise ValueError("%s must be either 'normal' or 'mirror'" % direction)
+        raise ValueError(f"{direction} must be either 'normal' or 'mirror'")
 
     if direction == 'normal':
         direcfun = lambda x: x
@@ -66,7 +66,7 @@ def trim_and_o_array(array, detconf, direction='normal'):
     bng = get_conf_value(detconf, 'bng')
 
     if bng not in [[1,1],[1,2],[2,1],[2,2]]:
-        raise ValueError("%s must be one if '11', '12', '21, '22'" % bng)
+        raise ValueError(f"{bng} must be one if '11', '12', '21, '22'")
 
     nr2 = ((trim1[0][1] - trim1[0][0]) + (trim2[0][1]-trim2[0][0])) // bng[0]
     nc2 = (trim1[1][1] - trim1[1][0]) // bng[1]
@@ -136,7 +136,7 @@ def load_files_paralell(col, path):
     """
     from scipy.sparse import csr_matrix
 
-    filename = '%s/%s.npz' % (path, col)
+    filename = f'{path}/{col}.npz'
     loader = numpy.load(filename)
     return csr_matrix(
         (loader['data'], loader['indices'], loader['indptr']),
@@ -253,20 +253,20 @@ class OverscanCorrector(Corrector):
 
         hdr = img['primary'].header
         hdr['NUM-OVPE'] = self.calibid
-        hdr['history'] = 'Overscan correction with {}'.format(self.calibid)
-        hdr['history'] = 'Overscan correction time {}'.format(datetime.datetime.utcnow().isoformat())
+        hdr['history'] = f'Overscan correction with {self.calibid}'
+        hdr['history'] = f'Overscan correction time {datetime.datetime.utcnow().isoformat()}'
         # hdr['history'] = 'Mean of prescan1 is %f' % p1
-        hdr['history'] = 'Median of col overscan1 is {}'.format(oc1)
-        hdr['history'] = 'Overscan1 correction is {}'.format('spline3')
+        hdr['history'] = f'Median of col overscan1 is {oc1}'
+        hdr['history'] = "Overscan1 correction is spline3"
         # hdr['history'] = 'prescan2 is %f' %  p2
-        hdr['history'] = 'Median of col overscan2 is {}'.format(oc2)
-        hdr['history'] = 'Overscan2 correction is {}'.format('spline3')
+        hdr['history'] = f'Median of col overscan2 is {oc2}'
+        hdr['history'] = "Overscan2 correction is spline3"
 
         for spl, label in zip([spl1, spl2], ['overscan1', 'overscan2']):
             k, c, deg = spl._eval_args
-            hdr['history'] = '{} deg {}'.format(label, deg)
-            hdr['history'] = '{} knots {}'.format(label, list(k))
-            hdr['history'] = '{} coeffs {}'.format(label, list(c))
+            hdr['history'] = f'{label} deg {deg}'
+            hdr['history'] = f'{label} knots {list(k)}'
+            hdr['history'] = f'{label} coeffs {list(c)}'
 
         return img
 
@@ -320,8 +320,8 @@ class TrimImage(Corrector):
         img[0] = trimOut(img[0], self.detconf)
         hdr = img['primary'].header
         hdr['NUM-TRIM'] = self.calibid
-        hdr['history'] = 'Trimming correction with {}'.format(self.calibid)
-        hdr['history'] = 'Trimming correction time {}'.format(datetime.datetime.utcnow().isoformat())
+        hdr['history'] = f'Trimming correction with {self.calibid}'
+        hdr['history'] = f'Trimming correction time {datetime.datetime.utcnow().isoformat()}'
 
         return img
 
@@ -353,8 +353,8 @@ class GainCorrector(Corrector):
         img[0].data[:part] *= self.gain1
         img[0].data[part:] *= self.gain2
 
-        hdr['history'] = 'Gain correction with {}'.format(self.calibid)
-        hdr['history'] = 'Gain correction time {}'.format(datetime.datetime.utcnow().isoformat())
-        hdr['history'] = 'Gain1 correction value {}'.format(self.gain1)
-        hdr['history'] = 'Gain2 correction value {}'.format(self.gain2)
+        hdr['history'] = f'Gain correction with {self.calibid}'
+        hdr['history'] = f'Gain correction time {datetime.datetime.utcnow().isoformat()}'
+        hdr['history'] = f'Gain1 correction value {self.gain1}'
+        hdr['history'] = f'Gain2 correction value {self.gain2}'
         return img

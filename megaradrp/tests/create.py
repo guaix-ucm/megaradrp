@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -21,7 +21,7 @@ def create(image, direction='normal', bins='11'):
     """Create a image with overscan for testing."""
 
     if direction not in _direc:
-        raise ValueError("%s must be either 'normal' or 'mirror'" % direction)
+        raise ValueError(f"{direction} must be either 'normal' or 'mirror'")
 
     if direction == 'normal':
         direcfun = lambda x: x
@@ -29,7 +29,7 @@ def create(image, direction='normal', bins='11'):
         direcfun = np.fliplr
 
     if bins not in _binning:
-        raise ValueError("%s must be one if '11', '12', '21, '22'" % bins)
+        raise ValueError(f"{bins} must be one if '11', '12', '21, '22'")
 
     bng = _binning[bins]
 

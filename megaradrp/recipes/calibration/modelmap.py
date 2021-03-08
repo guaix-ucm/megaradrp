@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2020 Universidad Complutense de Madrid
+# Copyright 2015-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -199,15 +199,15 @@ class ModelMapRecipe(MegaraBaseRecipe):
             if self.intermediate_results:
                 if dolog:
                     self.logger.debug('saving plots')
-                plt.title('std fib{:03d}'.format(fibid))
+                plt.title(f'std fib{fibid:03d}')
                 plt.plot(g_col, g_std, 'b*')
                 plt.plot(g_col, interpol_std(g_col), 'r')
-                plt.savefig('fib_{:03d}_std.png'.format(fibid))
+                plt.savefig(f'fib_{fibid:03d}_std.png')
                 plt.close()
-                plt.title('mean fin{:03d}'.format(fibid))
+                plt.title(f'mean fin{fibid:03d}')
                 plt.plot(g_col, g_mean, 'b*')
                 plt.plot(g_col, interpol_mean(g_col), 'r')
-                plt.savefig('fib_{:03d}_mean.png'.format(fibid))
+                plt.savefig(f'fib_{fibid:03d}_mean.png')
                 plt.close()
                 if dolog:
                     self.logger.debug('saving plots end')

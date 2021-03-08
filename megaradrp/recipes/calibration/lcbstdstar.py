@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2020 Universidad Complutense de Madrid
+# Copyright 2011-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -14,22 +14,24 @@ from astropy import constants as const
 import astropy.io.fits as fits
 import astropy.units as u
 import astropy.wcs
-
 from scipy.interpolate import interp1d
 
 from numina.array.numsplines import AdaptiveLSQUnivariateSpline
 from numina.core import Result, Parameter
 from numina.core.requirements import Requirement
 from numina.core.validator import range_validator
+from numina.exceptions import RecipeError
 from numina.types.array import ArrayType
 
 from megaradrp.instrument.focalplane import FocalPlaneConf
-from megaradrp.processing.extractobj import extract_star, generate_sensitivity
-from megaradrp.processing.extractobj import mix_values, compute_broadening
-from megaradrp.recipes.scientific.base import ImageRecipe
+from megaradrp.ntypes import Point2D
 from megaradrp.ntypes import ProcessedRSS, ProcessedFrame, ProcessedSpectrum
 from megaradrp.ntypes import ReferenceSpectrumTable, ReferenceExtinctionTable
 from megaradrp.ntypes import MasterSensitivity
+from megaradrp.processing.extractobj import extract_star, generate_sensitivity
+from megaradrp.processing.extractobj import mix_values, compute_broadening
+from megaradrp.processing.centroid import calc_centroid_brightest
+from megaradrp.recipes.scientific.base import ImageRecipe
 
 
 class LCBStandardRecipe(ImageRecipe):
@@ -70,7 +72,7 @@ class LCBStandardRecipe(ImageRecipe):
     the central spaxel containing the star and returned as `star_spectrum`.
 
     """
-    position = Requirement(list, "Position of the reference object", default=(0, 0))
+    position = Requirement(Point2D, "Position of the reference object", optional=True)
     nrings = Parameter(3, "Number of rings to extract the star",
                        validator=range_validator(minval=1))
     reference_spectrum = Requirement(ReferenceSpectrumTable, "Spectrum of reference star")
@@ -109,6 +111,16 @@ class LCBStandardRecipe(ImageRecipe):
 
         self.logger.info('starting LCBStandardRecipe reduction')
 
+        # Try to guard against receiving here something
+        # that is not in magAB
+        # TODO: implement this in ReferenceSpectrumTable
+        maxm = max(rinput.reference_spectrum[:, 1])
+        if maxm > 100:
+            # If the column here has values greater than 100
+            # this could not be a magnitude
+            raise RecipeError("the maximum flux of 'reference_spectrum' is > 100, "
+                              "check the flux unit (it has to be magAB)")
+
         # Create InstrumentModel
         # ins1 = rinput.obresult.configuration
         #
@@ -129,12 +141,24 @@ class LCBStandardRecipe(ImageRecipe):
         # 1 + 6  + 12  + 18 for third ring
         # 1 + 6 * Sum_i=0^n =  1 + 3 * n * (n +1)
         # Using three rings around central point
+
+        # If position is None, find the brightest spaxel
+        # and use the centroid
+        if rinput.position is None:
+            self.logger.info('finding centroid of brightest spaxel')
+            extraction_region = [1000, 3000]
+            nrings = rinput.nrings
+            position = calc_centroid_brightest(final, extraction_region, nrings)
+        else:
+            position = rinput.position
+        self.logger.info('central position is %s', position)
+
         self.logger.debug('adding %d nrings', rinput.nrings)
         npoints = 1 + 3 * rinput.nrings * (rinput.nrings +1)
         self.logger.debug('adding %d fibers', npoints)
 
         fp_conf = FocalPlaneConf.from_img(final)
-        spectra_pack = extract_star(final, rinput.position, npoints,
+        spectra_pack = extract_star(final, position, npoints,
                                     fp_conf, logger=self.logger)
 
         spectrum, colids, wl_cover1, wl_cover2 = spectra_pack
@@ -142,6 +166,7 @@ class LCBStandardRecipe(ImageRecipe):
 
         rad_vel = rinput.reference_spectrum_velocity * u.km / u.s
         factor = 1 + rad_vel / const.c
+
         star_interp = interp1d(rinput.reference_spectrum[:,0] / factor,
                                rinput.reference_spectrum[:,1])
 
@@ -168,7 +193,7 @@ class LCBStandardRecipe(ImageRecipe):
             sigma = sigma_broad
             self.logger.info('computed sigma=%3.0f', sigma)
         else:
-            msg = "'degrade_resolution_method' has value {}".format(rinput.degrade_resolution_method)
+            msg = f"'degrade_resolution_method' has value {rinput.degrade_resolution_method}"
             raise ValueError(msg)
 
         sens_raw = generate_sensitivity(final, spectrum, star_interp, extinc_interp, wl_cover1, wl_cover2, sigma)

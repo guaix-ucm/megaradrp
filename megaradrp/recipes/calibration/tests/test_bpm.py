@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2019 Universidad Complutense de Madrid
+# Copyright 2015-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -40,7 +40,7 @@ def test_bpm():
     date_obs = '2017-11-09T11:00:00.0'
     temporary_path = mkdtemp()
 
-    fits.writeto('{}/eq.fits'.format(temporary_path), qe, overwrite=True)
+    fits.writeto(f'{temporary_path}/eq.fits', qe, overwrite=True)
 
     readpars1 = ReadParams(gain=gain, ron=ron, bias=bias)
     readpars2 = ReadParams(gain=gain, ron=ron, bias=bias)
@@ -65,16 +65,16 @@ def test_bpm():
     header['VPH'] = 'LR-U'
     header['INSMODE'] = 'MOS'
     for aux in range(len(fs)):
-        fits.writeto('{}/flat_{}.fits'.format(temporary_path, aux), fs[aux],
+        fits.writeto(f'{temporary_path}/flat_{aux}.fits', fs[aux],
                      header=header,
                      overwrite=True)
-        fits.writeto('{}/flat_{}.fits'.format(temporary_path, aux + number), fs2[aux],
+        fits.writeto(f'{temporary_path}/flat_{aux + number}.fits', fs2[aux],
                      header=header,
                      overwrite=True)
 
     result = generate_bias(detector, number, temporary_path)
     result.master_bias.frame.writeto(
-        '{}/master_bias_data0.fits'.format(temporary_path),
+        f'{temporary_path}/master_bias_data0.fits',
         overwrite=True
     )
 
@@ -89,14 +89,14 @@ def test_bpm():
 
     names = []
     for aux in range(number * 2):
-        names.append('{}/flat_{}.fits'.format(temporary_path, aux))
+        names.append(f'{temporary_path}/flat_{aux}.fits')
     ob.frames = [DataFrame(filename=open(nombre).name) for nombre in names]
 
     recipe = BadPixelsMaskRecipe()
     ri = recipe.create_input(obresult=ob, master_bias=DataFrame(
         filename=open(temporary_path + '/master_bias_data0.fits').name))
     aux = recipe.run(ri)
-    aux.master_bpm.frame.writeto('{}/master_bpm.fits'.format(temporary_path), overwrite=True)
+    aux.master_bpm.frame.writeto(f'{temporary_path}/master_bpm.fits', overwrite=True)
     shutil.rmtree(temporary_path)
 
 

@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2019 Universidad Complutense de Madrid
+# Copyright 2017-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -63,8 +63,8 @@ class FluxCalibration(Corrector):
 
         update_flux_limits(hdr, self.pixlims, ref=0)
 
-        hdr['history'] = 'Flux calibration in {}'.format(imgid)
-        hdr['history'] = 'Flux calibration time {}'.format(datetime.datetime.utcnow().isoformat())
+        hdr['history'] = f'Flux calibration in {imgid}'
+        hdr['history'] = f'Flux calibration time {datetime.datetime.utcnow().isoformat()}'
 
 
 def update_flux_limits(header, pixlims, wcs=None, ref=1):

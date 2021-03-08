@@ -53,6 +53,21 @@ def create_test_tracemap():
     return data, state
 
 
+def create_test_tracemap2():
+    instrument = 'MEGARA'
+    tags = {'insmode': 'LCB', 'vph': 'LR-R'}
+    uuid = '123456789'
+    data = tm.TraceMap(instrument=instrument)
+    data.tags = tags
+    data.uuid = uuid
+    data.total_fibers = 623
+    data.expected_range = [2, 4092]
+    data.ref_column = 2001
+    data.contents = [tm.GeometricTrace(fibid, 1, 4, 4090, fitparms=[200 + fibid * 3.5, 0.0]) for fibid in range(1, 624)]
+
+    return data
+
+
 state1 = {
     'fibid': 100,
     'boxid': 12,
@@ -75,6 +90,7 @@ state3 = {
     'stop': 2000,
     'fitparms': []
 }
+
 
 @pytest.mark.parametrize("state", [state1, state2])
 def test_geotrace(state):
@@ -190,6 +206,14 @@ def test_query_fields():
     tracemap = tm.TraceMap()
     assert tracemap.query_expr.fields() == {'insmode', 'vph'}
     assert tracemap.query_expr.tags() == {'insmode', 'vph'}
+
+
+def test_query_ds9(tmpdir):
+    tracemap = create_test_tracemap2()
+    p = tmpdir.join("ds9.reg")
+    with p.open('w') as ds9reg:
+        tracemap.to_ds9_reg(ds9reg)
+    assert True
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2019 Universidad Complutense de Madrid
+# Copyright 2015-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -495,9 +495,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     if store_pdf_with_refined_fits == 1:
                         if self.intermediate_results:
                             from matplotlib.backends.backend_pdf import PdfPages
-                            plottitle = 'fiber #{0:03d}'.format(fibid)
+                            plottitle = f'fiber #{fibid:03d}'
                             pdf = PdfPages(
-                                'refined_wavecal/{0:03d}.pdf'.format(fibid)
+                                f'refined_wavecal/{fibid:03d}.pdf'
                             )
                         else:
                             plottitle = None

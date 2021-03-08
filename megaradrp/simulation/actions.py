@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2018 Universidad Complutense de Madrid
+# Copyright 2015-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -62,7 +62,7 @@ def simulate_dark_fits(factory, instrument, exposure, repeat=1):
         fitsfile = factory.create_from_instrument(mode='MegaraDarkImage',
                                                   instrument=detector,
                                                   data=final,
-                                                  name='dark_%s.fits'%i
+                                                  name=f'dark_{i}.fits'
                                                   )
 
         yield fitsfile
@@ -134,7 +134,7 @@ class MegaraLampSequence(Sequence):
         # Get active lamp
         lamp = cu.current()
         if lamp == 'EMPTY':
-            raise ValueError('LAMP is %s, exiting' %  lamp)
+            raise ValueError(f'LAMP is {lamp}, exiting')
 
         self.lamp_check(lamp)
         # Simulated arc spectrum
@@ -238,7 +238,7 @@ class MegaraSlitFlatSequence(MegaraLampSequence):
         # Get active lamp
         lamp = cu.current()
         if lamp == 'EMPTY':
-            raise ValueError('LAMP is %s, exiting' % lamp)
+            raise ValueError(f'LAMP is {lamp}, exiting')
 
         # Simulated arc spectrum
         wl_in, lamp_illum = self.lamp_in_focal_plane(lamp, instrument)

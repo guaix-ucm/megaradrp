@@ -1,5 +1,5 @@
 #
-# Copyright 2017 Universidad Complutense de Madrid
+# Copyright 2017-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -45,9 +45,9 @@ def to_ds9_reg(obj, ds9reg, rawimage=False, numpix=100, fibid_at=0):
         'normal roman" select=1 highlite=1 dash=1 fixed=0 edit=1 '
         'move=1 delete=1 include=1 source=1\n')
     ds9reg.write('physical\n')
-    ds9reg.write('#\n# insmode: {0}\n'.format(obj.tags['insmode']))
-    ds9reg.write('# vph: {0}\n'.format(obj.tags['vph']))
-    ds9reg.write('# uuid: {0}\n'.format(obj.uuid))
+    ds9reg.write(f"#\n# insmode: {obj.tags['insmode']}\n")
+    ds9reg.write(f"# vph: {obj.tags['vph']}\n")
+    ds9reg.write(f'# uuid: {obj.uuid}\n')
     colorbox = ['#ff77ff', '#4444ff']
     itercolors = itertools.cycle(colorbox)
     for fiberdict in obj.contents:
@@ -55,7 +55,7 @@ def to_ds9_reg(obj, ds9reg, rawimage=False, numpix=100, fibid_at=0):
         # boxid = fiberdict.boxid
         xmin = fiberdict.start
         xmax = fiberdict.stop
-        ds9reg.write('#\n# fibid: {0}\n'.format(fibid))
+        ds9reg.write(f'#\n# fibid: {fibid}\n')
         # skip fibers without trace
         if fiberdict.valid:
             xp = numpy.linspace(start=xmin, stop=xmax, num=numpix)
@@ -68,10 +68,10 @@ def to_ds9_reg(obj, ds9reg, rawimage=False, numpix=100, fibid_at=0):
                 y1 = yp[i] + 1
                 x2 = xp[i + 1] + ix_offset
                 y2 = yp[i + 1] + 1
-                ds9reg.write('line {0} {1} {2} {3}'.format(x1, y1, x2, y2))
+                ds9reg.write(f'line {x1} {y1} {x2} {y2}')
                 # Alternate colors
                 next_color = next(itercolors)
-                ds9reg.write(' # color={0}\n'.format(next_color))
+                ds9reg.write(f' # color={next_color}\n')
                 if fibid_at != 0:
                     if x1 <= fibid_at <= x2:
                         ds9reg.write('text {0} {1} {{{2}}} # color=green '

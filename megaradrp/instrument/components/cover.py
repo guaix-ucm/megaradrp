@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -146,7 +146,7 @@ class MegaraCover(FullCover):
     def set_mode(self, mode):
         """Cover in the focal plane."""
         if mode.upper() not in self.NAMES:
-            raise ValueError('"%s" mode is not recognized' % mode)
+            raise ValueError(f'"{mode}" mode is not recognized')
 
         pos = self.NAMES[mode.upper()]
         super(MegaraCover, self).set(pos)

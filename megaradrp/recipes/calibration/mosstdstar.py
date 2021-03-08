@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2020 Universidad Complutense de Madrid
+# Copyright 2011-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -10,24 +10,27 @@
 """MOS Standard Star Image Recipe for Megara"""
 
 
-from scipy.interpolate import interp1d
 import astropy.io.fits as fits
 import astropy.units as u
 import astropy.wcs
 from astropy import constants as const
+from scipy.interpolate import interp1d
 
 from numina.array.numsplines import AdaptiveLSQUnivariateSpline
 from numina.core import Result, Parameter
 from numina.core.requirements import Requirement
+from numina.exceptions import RecipeError
 from numina.types.array import ArrayType
 
 from megaradrp.instrument.focalplane import FocalPlaneConf
-from megaradrp.processing.extractobj import extract_star, generate_sensitivity
-from megaradrp.processing.extractobj import mix_values, compute_broadening
-from megaradrp.recipes.scientific.base import ImageRecipe
+from megaradrp.ntypes import Point2D
 from megaradrp.ntypes import ProcessedRSS, ProcessedFrame, ProcessedSpectrum
 from megaradrp.ntypes import ReferenceSpectrumTable, ReferenceExtinctionTable
 from megaradrp.ntypes import MasterSensitivity
+from megaradrp.processing.extractobj import extract_star, generate_sensitivity
+from megaradrp.processing.extractobj import mix_values, compute_broadening
+from megaradrp.processing.centroid import calc_centroid_brightest
+from megaradrp.recipes.scientific.base import ImageRecipe
 
 
 class MOSStandardRecipe(ImageRecipe):
@@ -68,7 +71,7 @@ class MOSStandardRecipe(ImageRecipe):
     containing the star and returned as `star_spectrum`.
 
     """
-    position = Requirement(list, "Position of the reference object", default=(0, 0))
+    position = Requirement(Point2D, "Position of the reference object", optional=True)
     # nrings = 1
     reference_spectrum = Requirement(ReferenceSpectrumTable, "Spectrum of reference star")
     reference_spectrum_velocity = Parameter(0.0, 'Radial velocity of reference spectrum')
@@ -76,7 +79,7 @@ class MOSStandardRecipe(ImageRecipe):
     degrade_resolution_target = Parameter('object', 'Spectrum with higher resolution',
                                           choices=['object']
                                           )
-    # TODO: Implement the posibility of the reference having higher resolution
+    # TODO: Implement the possibility of the reference having higher resolution
     # degrade_resolution_target = Parameter('object', 'Spectrum with higher resolution',
     #                                       choices=['object', 'reference']
     #                                      )
@@ -99,6 +102,16 @@ class MOSStandardRecipe(ImageRecipe):
 
         self.logger.info('starting MOSStandardRecipe reduction')
 
+        # Try to guard against receiving here something
+        # that is not in magAB
+        # TODO: implement this in ReferenceSpectrumTable
+        maxm = max(rinput.reference_spectrum[:, 1])
+        if maxm > 100:
+            # If the column here has values greater than 100
+            # this could not be a magnitude
+            raise RecipeError("the maximum flux of 'reference_spectrum' is > 100, "
+                              "check the flux unit (it has to be magAB)")
+
         reduced2d, rss_data = super(MOSStandardRecipe, self).base_run(rinput)
 
         self.logger.info('start sky subtraction')
@@ -114,12 +127,23 @@ class MOSStandardRecipe(ImageRecipe):
         # 1 + 6  + 12  + 18 for third ring
         # 1 + 6 * Sum_i=0^n =  1 + 3 * n * (n +1)
         # In MOS, only 1 ring around central point
+        # If position is None, find the brightest spaxel
+        # and use the centroid
+        if rinput.position is None:
+            self.logger.info('finding centroid of brightest spaxel')
+            extraction_region = [1000, 3000]
+            nrings = rinput.nrings
+            position = calc_centroid_brightest(final, extraction_region, nrings)
+        else:
+            position = rinput.position
+        self.logger.info('central position is %s', position)
+
         self.logger.debug('adding %d nrings', 1)
         npoints = 7
         self.logger.debug('adding %d fibers', npoints)
 
         fp_conf = FocalPlaneConf.from_img(final)
-        spectra_pack = extract_star(final, rinput.position, npoints,
+        spectra_pack = extract_star(final, position, npoints,
                                     fp_conf, logger=self.logger)
 
         spectrum, colids, wl_cover1, wl_cover2 = spectra_pack
@@ -127,6 +151,7 @@ class MOSStandardRecipe(ImageRecipe):
 
         rad_vel = rinput.reference_spectrum_velocity * u.km / u.s
         factor = 1 + rad_vel / const.c
+
         star_interp = interp1d(rinput.reference_spectrum[:, 0] / factor,
                                rinput.reference_spectrum[:, 1])
         
@@ -153,7 +178,7 @@ class MOSStandardRecipe(ImageRecipe):
             sigma = sigma_broad
             self.logger.info('computed sigma=%3.0f', sigma)
         else:
-            msg = "'degrade_resolution_method' has value {}".format(rinput.degrade_resolution_method)
+            msg = f"'degrade_resolution_method' has value {rinput.degrade_resolution_method}"
             raise ValueError(msg)
 
         sens_raw = generate_sensitivity(final, spectrum, star_interp, extinc_interp, wl_cover1, wl_cover2, sigma)

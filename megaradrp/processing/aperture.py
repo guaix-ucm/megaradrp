@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2020 Universidad Complutense de Madrid
+# Copyright 2011-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -195,10 +195,10 @@ class ApertureExtractor(numina.processing.Corrector):
         hdr = img[0].header
 
         hdr['NUM-APE'] = self.calibid
-        hdr['history'] = 'Aperture extraction method {}'.format(method_name)
-        hdr['history'] = 'Aperture extraction with {}'.format(self.calibid)
-        hdr['history'] = 'Aperture extraction offsets are {}'.format(self.trace_repr.global_offset.coef.tolist())
-        hdr['history'] = 'Aperture extraction time {}'.format(datetime.datetime.utcnow().isoformat())
+        hdr['history'] = f'Aperture extraction method {method_name}'
+        hdr['history'] = f'Aperture extraction with {self.calibid}'
+        hdr['history'] = f'Aperture extraction offsets are {self.trace_repr.global_offset.coef.tolist()}'
+        hdr['history'] = f'Aperture extraction time {datetime.datetime.utcnow().isoformat()}'
 
         # Update Fibers
         fibers_ext = img['FIBERS']
@@ -206,11 +206,11 @@ class ApertureExtractor(numina.processing.Corrector):
         for aper in self.trace_repr.contents:
             # set the value only if invalid
             if not aper.valid:
-                key = "FIB{:03d}_V".format(aper.fibid)
+                key = f"FIB{aper.fibid:03d}_V"
                 fibers_ext_headers[key] = (aper.valid, "Fiber is invalid")
-            key = "FIB{:03d}S1".format(aper.fibid)
+            key = f"FIB{aper.fibid:03d}S1"
             fibers_ext_headers[key] = (aper.start, "[pix] Start of trace")
-            key = "FIB{:03d}S2".format(aper.fibid)
+            key = f"FIB{aper.fibid:03d}S2"
             fibers_ext_headers[key] = (aper.stop, "[pix] End of trace")
 
         newimg = fits.HDUList([img[0], fibers_ext])

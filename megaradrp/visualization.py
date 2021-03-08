@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2020 Universidad Complutense de Madrid
+# Copyright 2017-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -16,11 +16,17 @@ import matplotlib.collections as mcoll
 import matplotlib.colors as mcolors
 import matplotlib.transforms as mtrans
 import matplotlib.transforms as mtransforms
+from matplotlib.textpath import TextPath
+from matplotlib.patches import PathPatch
+
 import numpy as np
 
 import megaradrp.instrument.constants as cons
+import megaradrp.processing.fixrss as fixrss
+
 
 M_SQRT3 = math.sqrt(3)
+M_1_SQRT3 = 1 / M_SQRT3
 
 
 def hexplot(axis, x, y, z, scale=1.0, extent=None,
@@ -42,7 +48,7 @@ def hexplot(axis, x, y, z, scale=1.0, extent=None,
     x = np.array(x, float)
     y = np.array(y, float)
 
-    sx = 2 / M_SQRT3 * scale * 0.99
+    sx = 2 * M_1_SQRT3 * scale * 0.99
     sy = scale * 0.99
 
     if extent is not None:
@@ -62,9 +68,9 @@ def hexplot(axis, x, y, z, scale=1.0, extent=None,
     n = len(x)
     polygon = np.zeros((6, 2), float)
 
-    S = 1 / M_SQRT3
     mx = my = 0.99 * scale
-    polygon[:, 0] = mx * np.array([-0.5 * S, 0.5 * S, 1.0 * S, 0.5 * S, -0.5 * S, -1.0 * S])
+    polygon[:, 0] = mx * np.array([-0.5 * M_1_SQRT3, 0.5 * M_1_SQRT3, 1.0 * M_1_SQRT3,
+                                   0.5 * M_1_SQRT3, -0.5 * M_1_SQRT3, -1.0 * M_1_SQRT3])
     polygon[:, 1] = my * np.array([0.5, 0.5, 0.0, -0.5, -0.5, 0.0])
 
     offsets = np.zeros((n, 2), float)
@@ -198,27 +204,22 @@ def main(argv=None):
     from astropy.wcs import WCS
     from astropy.visualization import simple_norm
     import astropy.units as u
-    import matplotlib.transforms as mtransforms
 
     import megaradrp.datamodel as dm
     from megaradrp.instrument.focalplane import FocalPlaneConf
+    from megaradrp.processing.cube import create_cube_from_rss
     from megaradrp.processing.wcs import update_wcs_from_ipa, compute_pa_from_ipa
 
     # scale of the LCB grid in mm
-    SCALE = cons.SPAXEL_SCALE.to(u.mm).value
-
-    try:
-        from megaradrp.processing.cube import create_cube_from_rss
-        has_contours = True
-    except ImportError:
-        create_cube_from_rss = None
-        has_contours = False
+    scale_lcb = cons.SPAXEL_SCALE.to(u.mm).value
 
     parser = argparse.ArgumentParser(description='Display MEGARA RSS images')
-    parser.add_argument('--wcs-grid', action='store_true',
+    parser.add_argument('--wcs-grid', '--display-wcs-grid', action='store_true',
                         help='Display WCS grid')
     parser.add_argument('--wcs-pa-from-header', action='store_true',
                         help="Use PA angle from PC keys", dest='pa_from_header')
+    parser.add_argument('--fix-missing', action='store_true',
+                        help="Interpolate missing fibers")
     parser.add_argument('--average-region', nargs=2, default=[1000, 3000],
                         type=int, help='Region of the RSS averaged on display')
     parser.add_argument('--extname', '-e', default='PRIMARY',
@@ -233,8 +234,10 @@ def main(argv=None):
                         help='Types of coordinates used')
     parser.add_argument('--colormap', type=plt.get_cmap,
                         help='Name of a valid matplotlib colormap')
-    parser.add_argument('--plot-sky', action='store_true',
-                        help='Plot SKY bundles')
+    parser.add_argument('--plot-sky', '--display-sky', action='store_true',
+                        help='Display SKY bundles')
+    parser.add_argument('--display-fibid', '--plot-fibid', action='store_true',
+                        help='Display fiber IDs of the spaxels')
     parser.add_argument('--plot-nominal-config', action='store_true',
                         help='Plot nominal configuration, do not use the header')
     parser.add_argument('--hide-values', action='store_true',
@@ -242,8 +245,8 @@ def main(argv=None):
     parser.add_argument('--title', help='Title of the plot')
     parser.add_argument('--label', help='Legend of the colorbar')
     parser.add_argument('--hex-size', type=float,
-                        help='Size of the hexagons (default is {})'.format(SCALE),
-                        default=SCALE)
+                        help=f'Size of the hexagons (default is {scale_lcb})',
+                        default=scale_lcb)
     parser.add_argument('--hex-rel-size', type=float,
                         help='Scale the size of hexagons by a factor',
                         default=1.0)
@@ -258,28 +261,24 @@ def main(argv=None):
                         default='linear',
                         help='Name of the strech method used for display'
                         )
-    if has_contours:
-        parser.set_defaults(has_contours=True)
-        group_c = parser.add_argument_group('contouring')
-        group_c.add_argument('--contour-pixel-size', type=float, default=0.4,
-                             help="Pixel size in arc seconds for image reconstruction")
-        group_c.add_argument('--contour-levels',
-                             help="Contour levels")
-        group_c.add_argument('--contour', action='store_true',
-                             help="Draw contours")
-        group_c.add_argument('--contour-image',
-                             help="Image for computing contours")
-        group_c.add_argument('--contour-image-column', type=int,
-                             help='Column of image used for contouring')
-        group_c.add_argument('--contour-image-save',
-                             help='Save image used for contouring')
-        group_c.add_argument('--contour-image-region', nargs=2, default=[1000, 3000],
-                             type=int, help='Region of the image used for contouring')
-        group_c.add_argument('--contour-is-density', action='store_true',
-                             help='The data is a magnitude that does not require scaling')
 
-    else:
-        parser.set_defaults(has_contours=False)
+    group_c = parser.add_argument_group('contouring')
+    group_c.add_argument('--contour-pixel-size', type=float, default=0.4,
+                         help="Pixel size in arc seconds for image reconstruction")
+    group_c.add_argument('--contour-levels',
+                         help="Contour levels")
+    group_c.add_argument('--contour', action='store_true',
+                         help="Draw contours")
+    group_c.add_argument('--contour-image',
+                         help="Image for computing contours")
+    group_c.add_argument('--contour-image-column', type=int,
+                         help='Column of image used for contouring')
+    group_c.add_argument('--contour-image-save',
+                         help='Save image used for contouring')
+    group_c.add_argument('--contour-image-region', nargs=2, default=[1000, 3000],
+                         type=int, help='Region of the image used for contouring')
+    group_c.add_argument('--contour-is-density', action='store_true',
+                         help='The data is a magnitude that does not require scaling')
 
     parser.add_argument('rss', metavar='RSS', nargs='+',
                         help='RSS images to process')
@@ -288,6 +287,10 @@ def main(argv=None):
 
     for fname in args.rss:
         with fits.open(fname) as img:
+            if args.fix_missing:
+                fibid = 623
+                print(f'interpolate fiber {fibid}')
+                img = fixrss.fix_missing_fiber(img, fibid)
             if args.plot_nominal_config:
                 insmode = img['FIBERS'].header['INSMODE']
                 fp_conf = dm.get_fiberconf_default(insmode)
@@ -300,13 +303,17 @@ def main(argv=None):
                 skyfibers_idx = [(fibid - 1) for fibid in skyfibers]
                 plot_mask[skyfibers_idx] = False
 
-            x = np.empty((fp_conf.nfibers,))
-            y = np.empty((fp_conf.nfibers,))
+            x0 = np.empty((fp_conf.nfibers,))
+            y0 = np.empty((fp_conf.nfibers,))
+            num = {}
+            names = {}
             # Key is fibid
             for _, fiber in sorted(fp_conf.fibers.items()):
                 idx = fiber.fibid - 1
-                x[idx] = fiber.x
-                y[idx] = fiber.y
+                x0[idx] = fiber.x
+                y0[idx] = fiber.y
+                num[idx] = fiber.fibid
+                names[idx] = fiber.name
 
             extname = args.extname
             if args.coordinate_type == 'wcs':
@@ -317,18 +324,15 @@ def main(argv=None):
 
             rssdata = np.squeeze(img[extname].data)
 
-            zval = extract_zval(rssdata,
-                                wcs_wl,
-                                args.coordinate_type,
-                                args.column,
-                                args.average_region,
-                                args.continuum_region
-                                )
+            zval0 = extract_zval(
+                rssdata, wcs_wl, args.coordinate_type,
+                args.column, args.average_region, args.continuum_region
+            )
             fig = plt.figure()
             
-            x = x[plot_mask]
-            y = y[plot_mask]
-            zval = zval[plot_mask]
+            x = x0[plot_mask]
+            y = y0[plot_mask]
+            zval = zval0[plot_mask]
             projection = None
 
             if args.wcs_grid:
@@ -369,6 +373,15 @@ def main(argv=None):
                 zdisp = zval
             scale = args.hex_rel_size * args.hex_size
             col = hexplot(ax, x, y, zdisp, scale=scale, cmap=args.colormap, norm=norm)
+            if args.display_fibid:
+                # Plot spaxel labels
+                for xx, yy, fid in zip(x, y, num):
+                    tp1 = TextPath(
+                        (xx-0.05, yy+0.16), f"{fid:03d}", size=0.045)
+                    tp2 = TextPath(
+                        (xx-0.05, yy-0.18), f"{names[fid]}", size=0.045)
+                    ax.add_patch(PathPatch(tp1, zorder=2, lw=0, fc="black"))
+                    ax.add_patch(PathPatch(tp2, zorder=2, lw=0, fc="black"))
 
             if args.title is not None:
                 ax.set_title(args.title)
@@ -377,7 +390,7 @@ def main(argv=None):
             if args.label is not None:
                 cb.set_label(args.label)
 
-            if args.has_contours and args.contour:
+            if args.contour:
                 target_scale_arcsec = args.contour_pixel_size
 
                 if args.contour_image is not None:
@@ -399,7 +412,7 @@ def main(argv=None):
                                               average_region=args.contour_image_region,
                                               continuum_region=None)
                 else:
-                    zval_c = zval
+                    zval_c = zval0
 
                 # Build synthetic rss... for reconstruction
                 primary = fits.PrimaryHDU(data=zval_c[:, np.newaxis], header=img[extname].header)
@@ -411,27 +424,6 @@ def main(argv=None):
                 conserve_flux = not args.contour_is_density
                 order = 1
                 s_cube = create_cube_from_rss(synt, order, target_scale_arcsec, conserve_flux=conserve_flux)
-                cube_wcs = WCS(s_cube[0].header).celestial
-                px, py = cube_wcs.wcs.crpix
-                interp = np.squeeze(s_cube[0].data)
-                td = mtransforms.Affine2D().translate(-px, -py).scale(target_scale_arcsec, target_scale_arcsec)
-                tt_d = td + ax.transData
-                # im = ax.imshow(interp, alpha=0.9, cmap='jet', transform=tt_d)
-                # im = ax.imshow(interp, alpha=0.9, cmap='jet', transform=ax.get_transform(cube_wcs))
-                if args.contour_levels is not None:
-                    levels = json.loads(args.contour_levels)
-                    mm = ax.contour(interp, levels, transform=tt_d)
-                else:
-                    mm = ax.contour(interp, transform=tt_d)
-                print('contour levels', mm.levels)
-
-            if args.has_contours and args.contour:
-                target_scale_arcsec = args.pixel_size
-                # Build synthetic rss... for reconstruction
-                primary = fits.PrimaryHDU(data=zval[:, np.newaxis], header=img[extname].header)
-                synt = fits.HDUList([primary, img['FIBERS']])
-                order = 1
-                s_cube = create_cube_from_rss(synt, order, target_scale_arcsec)
                 cube_wcs = WCS(s_cube[0].header).celestial
                 px, py = cube_wcs.wcs.crpix
                 interp = np.squeeze(s_cube[0].data)

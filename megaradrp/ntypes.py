@@ -14,7 +14,7 @@ import logging
 from numina.core import DataFrameType
 from numina.types.product import DataProductMixin
 from numina.types.datatype import DataType
-from numina.types.array import ArrayType
+from numina.types.array import ArrayType, ArrayNType
 from numina.types.linescatalog import LinesCatalog
 from numina.exceptions import ValidationError
 
@@ -28,6 +28,12 @@ _logger = logging.getLogger(__name__)
 
 def validate_fiber_ext(header_f):
     _logger.debug('validate fiber extension')
+
+
+class Point2D(ArrayNType):
+    """A type of 2D cartesian coordinates"""
+    def __init__(self, *args, **kwds):
+        super(ArrayNType, self).__init__(2)
 
 
 class MegaraFrame(DataFrameType):

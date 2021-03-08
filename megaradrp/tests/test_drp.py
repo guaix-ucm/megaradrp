@@ -191,7 +191,7 @@ def test_recipes_extract_tags(current_drp, ob_repo, results):
                             for entry in table:
                                 match = expr2.eval(**entry['tags'])
                                 if isinstance(match, tagexpr.Expression):
-                                    msg = '{}  tags are not complete: {}'.format(rkey, match)
+                                    msg = f'{rkey}  tags are not complete: {match}'
                                     raise ValueError(msg)
 
                                 if match == True:

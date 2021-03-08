@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -54,8 +54,8 @@ class CommonFlatCorrector(Corrector):
 
     def header_update(self, hdr, imgid):
         hdr['NUM-FLT'] = self.calibid
-        hdr['history'] = 'Flat correction {}'.format(imgid)
-        hdr['history'] = 'Flat correction time {}'.format(datetime.datetime.utcnow().isoformat())
+        hdr['history'] = f'Flat correction {imgid}'
+        hdr['history'] = f'Flat correction time {datetime.datetime.utcnow().isoformat()}'
 
 
 class FiberFlatCorrector(CommonFlatCorrector):
@@ -73,8 +73,8 @@ class FiberFlatCorrector(CommonFlatCorrector):
 
     def header_update(self, hdr, imgid):
         hdr['NUM-FIBF'] = self.calibid
-        hdr['history'] = 'Fiber flat correction {}'.format(imgid)
-        hdr['history'] = 'Fiber flat correction time {}'.format(datetime.datetime.utcnow().isoformat())
+        hdr['history'] = f'Fiber flat correction {imgid}'
+        hdr['history'] = f'Fiber flat correction time {datetime.datetime.utcnow().isoformat()}'
 
 
 class Splitter(Corrector):

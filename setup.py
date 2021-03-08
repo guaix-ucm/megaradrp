@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name='megaradrp',
-    version='0.10.1',
+    version='0.11',
     author='Sergio Pascual',
     author_email='sergiopr@fis.ucm.es',
     url='https://github.com/guaix-ucm/megaradrp',
@@ -24,6 +24,9 @@ setup(
             'instrument-*.json',
             'properties-*.json',
         ],
+        'megaradrp.instrument.configs.extras': [
+            '*.json'
+        ],
         'megaradrp.schemas': [
             'baseimage.json',
             'basestruct.json'
@@ -32,17 +35,20 @@ setup(
     install_requires=[
         'setuptools>=36.2.1',
         'numpy',
-        'astropy >= 2',
+        'matplotlib',
+        'astropy',
         'scipy',
         'numina >= 0.22',
         'scikit-image',
-        'enum34;python_version<"3.4"',
-        'contextlib2;python_version<"3.5"',
         'jsonschema'
     ],
     extras_require={
         'DB': ['sqlalchemy', 'numinadb'],
-        'test': ['pytest', 'pytest-remotedata']
+        'docs': ['sphinx', 'numpydocs'],
+        'test': [
+            'pytest',
+            'pytest-remotedata'
+        ]
     },
     zip_safe=False,
     entry_points={
@@ -59,11 +65,10 @@ setup(
         ],
     },
     classifiers=[
-        "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         'Development Status :: 3 - Alpha',
         "Environment :: Console",
         "Intended Audience :: Science/Research",

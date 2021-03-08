@@ -1,12 +1,12 @@
 
 import pytest
-
+import numpy as np
 import astropy.wcs
 
-from megaradrp.tests.simpleobj import create_spec_header, create_sky_header
+from megaradrp.tests.simpleobj import create_spec_header2, create_sky_header2
 from megaradrp.processing.wavecalibration import header_add_barycentric_correction
 
-from ..cube import create_cube, merge_wcs, merge_wcs_alt
+from ..cube import create_cube, merge_wcs
 
 
 def test_create_cube_raise():
@@ -14,32 +14,9 @@ def test_create_cube_raise():
         create_cube(None, None, 3)
 
 
-def test_merge_wcs():
-    hdr1 = create_spec_header()
-    hdr1 = header_add_barycentric_correction(hdr1)
-    hdr2 = create_sky_header()
-    res = merge_wcs(hdr2, hdr1)
-    cunit3 = res['CUNIT3']
-    assert cunit3 == ''
-
-
-def test_merge_wcs_2():
-    import astropy.wcs
-    hdr_sky = create_sky_header()
-    hdr_spec = create_spec_header()
-    hdr_spec = header_add_barycentric_correction(hdr_spec)
-    allw = astropy.wcs.find_all_wcs(hdr_spec)
-    out = hdr_spec.copy()
-    for w in allw:
-        ss = w.wcs.alt
-        merge_wcs_alt(hdr_sky, hdr_spec, out, spec_suffix=ss)
-
-    assert True
-
-
-def test_merge2_wcs():
-    hdr_sky = create_sky_header()
-    hdr_spec = create_spec_header()
+def test_sub_wcs():
+    hdr_sky = create_sky_header2()
+    hdr_spec = create_spec_header2()
     hdr_spec = header_add_barycentric_correction(hdr_spec)
     wcs_sky = astropy.wcs.WCS(header=hdr_sky)
     wcs_spec = astropy.wcs.WCS(header=hdr_spec, key='B')
@@ -54,3 +31,25 @@ def test_merge2_wcs():
     wcs3.wcs.velosys = wcs_spec.wcs.velosys
     hdr3 = wcs3.to_header(key='B')
     assert True
+
+
+def test_merge_wcs():
+    hdr_spec = create_spec_header2()
+    hdr_spec = header_add_barycentric_correction(hdr_spec)
+    hdr_sky = create_sky_header2()
+    out = hdr_spec.copy()
+    merge_wcs(hdr_sky, hdr_spec, out=out)
+
+    wcs0 = astropy.wcs.WCS(header=out)
+    wcsB = astropy.wcs.WCS(header=out, key='B')
+
+    assert list(wcs0.wcs.ctype) == ['RA---TAN', 'DEC--TAN', 'AWAV']
+    assert np.allclose([out['CRVAL1'], out['CRVAL2'], out['CRVAL3']],
+                       [hdr_sky['CRVAL1'], hdr_sky['CRVAL2'], hdr_spec['CRVAL1']])
+    assert np.allclose([out['CDELT1'], out['CDELT2'], out['CDELT3']],
+                       [hdr_sky['CDELT1'], hdr_sky['CDELT2'], hdr_spec['CDELT1']])
+    assert list(wcsB.wcs.ctype) == ['RA---TAN', 'DEC--TAN', 'AWAV']
+    assert np.allclose([out['CRVAL1B'], out['CRVAL2B'], out['CRVAL3B']],
+                       [hdr_sky['CRVAL1'], hdr_sky['CRVAL2'], hdr_spec['CRVAL1B']])
+    assert np.allclose([out['CDELT1B'], out['CDELT2B'], out['CDELT3B']],
+                       [hdr_sky['CDELT1'], hdr_sky['CDELT2'], hdr_spec['CDELT1B']])

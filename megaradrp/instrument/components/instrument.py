@@ -103,7 +103,7 @@ class MegaraInstrument(HWDevice):
         """Set overall mode of the instrument."""
         mode_u = mode.upper()
         if mode_u not in ['MOS', 'LCB']:
-            raise ValueError('mode "%s" not valid' % (mode, ))
+            raise ValueError(f'mode "{mode}" not valid')
 
         self._mode = mode_u
         self.pseudo_slit_sel.select(self._mode)

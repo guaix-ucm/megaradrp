@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2020 Universidad Complutense de Madrid
+# Copyright 2011-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 import numina.types.qc as qc
 from numina.array import combine
 from numina.array.wavecalib.crosscorrelation import cosinebell
+from numina.array.wavecalib.crosscorrelation import convolve_comb_lines
 from skimage.filters import threshold_otsu
 from skimage.feature import peak_local_max
 from scipy.ndimage.filters import minimum_filter
@@ -132,11 +133,11 @@ class TraceMapRecipe(MegaraBaseRecipe):
                 continue
             if trace.start > start_min:
                 cost_ids[idx] += 1
-                msg = 'In fiber {}, trace start > {}'.format(trace.fibid, start_min)
+                msg = f'In fiber {trace.fibid}, trace start > {start_min}'
                 warnings.warn(msg)
             if trace.stop < end_max:
                 cost_ids[idx] += 1
-                msg = 'In fiber {}, trace end < {}'.format(trace.fibid, end_max)
+                msg = f'In fiber {trace.fibid}, trace end < {end_max}'
                 warnings.warn(msg)
 
         total = sum(cost_ids)
@@ -148,7 +149,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         else:
             tracemap.quality_control = qc.QC.GOOD
 
-    #@numina.core.validator.validate
+    # @numina.core.validator.validate
     def run(self, rinput):
         """Execute the recipe.
 
@@ -294,8 +295,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
         res = numpy.fft.ifft(yv)
         final = res.real
         plt.plot(final)
-        #trend = detrend(final)
-        #plt.plot(final - trend)
+        # trend = detrend(final)
+        # plt.plot(final - trend)
         plt.show()
 
         idx = find_peaks_indexes(final, window_width=3, threshold=0.3, fpeak=1)
@@ -310,7 +311,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         nidxs = numpy.sort(nidx)
 
         plt.plot(final)
-        #plt.scatter(idx, [0.9 for m in idx])
+        # plt.scatter(idx, [0.9 for m in idx])
         plt.scatter(nidx, [0.95 for m in nidx], c='r')
         plt.scatter(expected, [1.0 for m in expected])
         plt.show()
@@ -348,11 +349,72 @@ class TraceMapRecipe(MegaraBaseRecipe):
         res = numpy.fft.ifft(yv)
         final = res.real
 
-        refined = expected[:]
+        # initial determination of global offset (integer number) by
+        # cross-correlating an artificial spectrum (with lines placed at
+        # the expected locations of the frontiers)
+        expected_arr = numpy.array(expected)
+        comb_lines_flux = numpy.ones_like(expected_arr)
+        naxis1 = len(final)
+        ioffset_max = 100  # pixels
+        xcorr = []
+        ycorr = []
+        xwave = None   # avoid PyCharm warning
+        sp_comb_lines0 = None   # avoid PyCharm warning
+        for ioffset in range(-ioffset_max, ioffset_max + 1):
+            xwave, sp_comb_lines = convolve_comb_lines(
+                lines_wave=expected_arr + ioffset,
+                lines_flux=comb_lines_flux,
+                sigma=3,
+                crpix1=0, crval1=0, cdelt1=1, naxis1=naxis1
+            )
+            factor = max(final) / max(sp_comb_lines)
+            sp_comb_lines = sp_comb_lines * factor
+            fpeak = numpy.sum(sp_comb_lines * final)
+            xcorr.append(ioffset)
+            ycorr.append(fpeak)
+            if ioffset == 0:
+                sp_comb_lines0 = sp_comb_lines.copy()  # store for plot
 
+        # initial offset
+        ioffset = xcorr[ycorr.index(max(ycorr))]
+
+        # auxiliary plot showing the cross-correlation work
+        if self.intermediate_results:
+            fig, ax = plt.subplots(ncols=1, nrows=1)
+            ax.plot(xcorr, ycorr, 'o-')
+            ax.set_xlabel('ioffset')
+            ax.set_ylabel('peak of corrrelation function')
+            ax.axvline(ioffset, linestyle=':', color='C1')
+            ax.set_title('optimal initial offset: {}'.format(ioffset))
+            plt.savefig('offset_borders_cross.png')
+            plt.close()
+
+        # using the initial offset, refine the peak search around the new
+        # expected location, looking for a maximum in +/- nsearch pixels
+        refined = expected[:]    # initialize list with the same length
         for ibox, box in enumerate(expected):
-            iargmax = final[box - nsearch: box + nsearch + 1].argmax()
-            refined[ibox] = iargmax + box - nsearch
+            box_ini = box - nsearch + ioffset
+            box_end = box + nsearch + 1 + ioffset
+            iargmax = final[box_ini:box_end].argmax()
+            refined[ibox] = iargmax + box - nsearch + ioffset
+
+        # auxiliary plot showing the initial and final frontier locations
+        if self.intermediate_results:
+            fig, ax = plt.subplots(ncols=1, nrows=1)
+            ax.plot(final, label='cross section at x={}'.format(cstart))
+            ax.plot(xwave, sp_comb_lines0, label='expected location of frontiers')
+            for idum, item in enumerate(expected):
+                if idum == 0:
+                    label = 'refined frontier location'
+                else:
+                    label = None
+                ax.plot(refined, final[refined], 'ro', label=label)
+            ax.legend()
+            ax.set_title('optimal initial offset: {}'.format(ioffset))
+            ax.set_xlabel('pixel number - 1')
+            ax.set_ylabel('inverted normalized signal')
+            plt.savefig('frontiers_between_pseudoslits.png')
+            plt.close()
 
         return refined, cstart
 
@@ -420,10 +482,10 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
                     if debug_plot:
                         plt.plot(mm[:, 0], mm[:, 1], '.')
-                        plt.savefig('trace-xy-{:03d}.png'.format(dtrace.fibid))
+                        plt.savefig(f'trace-xy-{dtrace.fibid:03d}.png')
                         plt.close()
                         plt.plot(mm[:, 0], mm[:, 2], '.')
-                        plt.savefig('trace-xz-{:03d}.png'.format(dtrace.fibid))
+                        plt.savefig(f'trace-xz-{dtrace.fibid:03d}.png')
                         plt.close()
                     if len(mm) < poldeg + 1:
                         self.logger.warning('in fibid %d, only %d points to fit pol of degree %d',
@@ -491,6 +553,8 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
     counted_fibers = 0
     boxes_with_missing_fibers = []
 
+    ioffset = 0  # correction to be applied to each successive fiber block
+
     for boxid, box in enumerate(boxes):
         nfibers = box['nfibers']
         mfibers = box.get('missing', [])
@@ -502,7 +566,11 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         counted_fibers += nfibers
         b1 = int(box_borders[boxid])
         b2 = int(box_borders[boxid + 1])
-        _logger.debug('box borders: %s %s', b1, b2)
+        _logger.debug('initial box borders: %s %s', b1, b2)
+        _logger.debug('offset for borders: %s', ioffset)
+        b1 += ioffset
+        b2 += ioffset
+        _logger.debug('updated box borders: %s %s', b1, b2)
         borders = [b1, b2]
 
         region = colcut[borders[0]:borders[1]+1]
@@ -543,11 +611,20 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         peaks_y[:, 0] = ipeaks_int + b1
         peaks_y[:, 1] = ipeaks_float + b1
         peaks_y[:, 2] = region[ipeaks_int]
+        peak1 = peaks_y[0, 0]
+        peak2 = peaks_y[-1, 0]
+        border1 = peak1 - b1  # distance from left border to first peak
+        border2 = b2 - peak2  # distance from last peak to right border
+        delta_ioffset = int((border1 - border2) / 2)
+        ioffset += delta_ioffset  # new offset to recenter next fiber block
 
         if debug_plot:
-            plt.plot(region)
-            plt.plot(ipeaks_int, region[ipeaks_int], 'r*')
-            plt.savefig('central_cut_{:02d}.png'.format(boxid))
+            plt.plot(numpy.arange(len(region))+b1, region)
+            plt.plot(ipeaks_int+b1, region[ipeaks_int], 'r*')
+            plt.xlabel('pixel number - 1')
+            plt.ylabel('number of counts')
+            plt.title(f'pseudoslit box: {box["name"]}, id: {boxid}')
+            plt.savefig(f'central_cut_{boxid:02d}.png')
             plt.close()
 
         startid = lastid + 1

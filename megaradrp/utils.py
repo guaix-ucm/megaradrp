@@ -1,5 +1,5 @@
 #
-# Copyright 2017 Universidad Complutense de Madrid
+# Copyright 2017-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -35,7 +35,7 @@ def add_collapsed_mos_extension(img, size=7, axis=0):
     elif axis == 1:
         reshaped = img[0].data.reshape((shape[0], size, 1, -1)).mean(axis=(1, 2))
     else:
-        raise ValueError('invalid axis={}'.format(axis))
+        raise ValueError(f'invalid axis={axis}')
 
     ext.data = reshaped
 

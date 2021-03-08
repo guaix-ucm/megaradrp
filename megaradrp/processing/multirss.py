@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -34,7 +34,7 @@ def generate_multi_rss(imgs):
     allhdus = [hdu]
     for idx, img in enumerate(imgs, 1):
         fibers = img['FIBERS']
-        fibers.header['EXTNAME'] = 'FIBERS{}'.format(idx)
+        fibers.header['EXTNAME'] = f'FIBERS{idx}'
         allhdus.append(fibers)
     result = fits.HDUList(allhdus)
     return result

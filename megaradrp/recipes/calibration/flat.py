@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2020 Universidad Complutense de Madrid
+# Copyright 2011-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -177,8 +177,8 @@ class FiberFlatRecipe(MegaraBaseRecipe):
             numpy.savetxt('mask_noinfo.txt', mask_noinfo)
             fig, ax = plt.subplots()
             ax.plot(xx, collapse, '.', label='collapsed')
-            ax.plot(xx, collapse_smooth, '-', label='savgol{}'.format(degree))
-            ax.plot(xx, collapse_smooth_s, '--', label='spline{}'.format(degree_s))
+            ax.plot(xx, collapse_smooth, '-', label=f'savgol{degree}')
+            ax.plot(xx, collapse_smooth_s, '--', label=f'spline{degree_s}')
             ax.legend()
             plt.savefig('collapsed_smooth.png')
             plt.close()

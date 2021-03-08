@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2020 Universidad Complutense de Madrid
+# Copyright 2016-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -147,7 +147,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                 image_groups[focus_val].append(frame)
 
         if len(image_groups) < 2:
-            raise RecipeError('We have only {} different focus'.format(len(image_groups)))
+            raise RecipeError(f'We have only {len(image_groups)} different focus')
 
         # Loop only over fibers with WL calibration
         valid_traces = [fibsol.fibid for fibsol in rinput.master_wlcalib.contents]
@@ -168,9 +168,9 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                     offset=rinput.extraction_offset
                 )
 
-                self.save_intermediate_img(img, 'focus2d-%s.fits' % (focus,))
+                self.save_intermediate_img(img, f'focus2d-{focus}.fits')
                 img1d = calibrator_aper(img)
-                self.save_intermediate_img(img1d, 'focus1d-%s.fits' % (focus,))
+                self.save_intermediate_img(img1d, f'focus1d-{focus}.fits')
 
                 self.logger.info('find lines and compute FWHM')
                 lines_rss_fwhm = self.run_on_image(img1d, rinput.master_apertures,
