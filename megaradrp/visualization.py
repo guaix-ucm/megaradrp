@@ -10,7 +10,9 @@
 from __future__ import print_function
 
 import math
+from packaging.version import parse, Version
 
+import matplotlib
 import matplotlib.cbook as cbook
 import matplotlib.collections as mcoll
 import matplotlib.colors as mcolors
@@ -41,7 +43,12 @@ def hexplot(axis, x, y, z, scale=1.0, extent=None,
     object: matplotlib.collections.PolyCollection
 
     """
-    axis._process_unit_info(xdata=x, ydata=y, kwargs=kwargs)
+
+    # I have to add these due to changes in private and protected interfaces
+    if parse(matplotlib.__version__) >= Version("3.4"):
+        axis._process_unit_info([("x", x), ("y", y)], kwargs, convert=False)
+    else:
+        axis._process_unit_info(xdata=x, ydata=y, kwargs=kwargs)
 
     x, y, z = cbook.delete_masked_points(x, y, z)
 

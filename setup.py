@@ -40,7 +40,8 @@ setup(
         'scipy',
         'numina >= 0.22',
         'scikit-image',
-        'jsonschema'
+        'jsonschema',
+        'packaging'
     ],
     extras_require={
         'DB': ['sqlalchemy', 'numinadb'],
