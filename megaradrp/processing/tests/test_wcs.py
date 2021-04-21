@@ -44,7 +44,7 @@ def test_update_wcs_from_ipa(cdelt1, pa):
     pa_rad = numpy.deg2rad(pa)
     cos_a = math.cos(pa_rad)
     sin_a = math.sin(pa_rad)
-    res = [[cos_a, sin_a], [-sin_a, cos_a]]
+    res = [[cos_a, -sin_a], [ sin_a, cos_a]]
     val = [[hdr['PC1_1'], hdr['PC1_2']], [hdr['PC2_1'], hdr['PC2_2']]]
 
     assert hdr['CDELT1'] == -abs(cdelt1)
