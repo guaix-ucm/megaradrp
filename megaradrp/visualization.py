@@ -82,8 +82,7 @@ def hexplot(axis, x, y, z, scale=1.0, extent=None,
         edgecolors=edgecolors,
         linewidths=linewidths,
         offsets=offsets,
-        transOffset=mtransforms.IdentityTransform(),
-        offset_position="data"
+        transOffset=mtransforms.AffineDeltaTransform(axis.transData)
     )
 
     if isinstance(norm, mcolors.LogNorm):
@@ -296,7 +295,7 @@ def main(argv=None):
                 fp_conf = dm.get_fiberconf_default(insmode)
             else:
                 fp_conf = FocalPlaneConf.from_img(img)
-            plot_mask = np.ones((fp_conf.nfibers,), dtype=np.bool)
+            plot_mask = np.ones((fp_conf.nfibers,), dtype=bool)
             if not args.plot_sky:
                 skyfibers = fp_conf.sky_fibers()
                 skyfibers.sort()
