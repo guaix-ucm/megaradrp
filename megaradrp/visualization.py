@@ -45,7 +45,8 @@ def hexplot(axis, x, y, z, scale=1.0, extent=None,
     """
 
     # I have to add these due to changes in private and protected interfaces
-    if parse(matplotlib.__version__) >= Version("3.4"):
+    mpl_version = parse(matplotlib.__version__)
+    if mpl_version >= Version("3.4"):
         axis._process_unit_info([("x", x), ("y", y)], kwargs, convert=False)
     else:
         axis._process_unit_info(xdata=x, ydata=y, kwargs=kwargs)
@@ -84,13 +85,24 @@ def hexplot(axis, x, y, z, scale=1.0, extent=None,
     offsets[:, 0] = x
     offsets[:, 1] = y
 
-    collection = mcoll.PolyCollection(
-        [polygon],
-        edgecolors=edgecolors,
-        linewidths=linewidths,
-        offsets=offsets,
-        transOffset=mtransforms.AffineDeltaTransform(axis.transData)
-    )
+    # I have to add these due to changes in private and protected interfaces
+    if mpl_version >= Version("3.3"):
+        collection = mcoll.PolyCollection(
+            [polygon],
+            edgecolors=edgecolors,
+            linewidths=linewidths,
+            offsets=offsets,
+            transOffset=mtransforms.AffineDeltaTransform(axis.transData)
+        )
+    else:
+        collection = mcoll.PolyCollection(
+            [polygon],
+            edgecolors=edgecolors,
+            linewidths=linewidths,
+            offsets=offsets,
+            transOffset=mtransforms.IdentityTransform(),
+            offset_position="data"
+        )
 
     if isinstance(norm, mcolors.LogNorm):
         if (z == 0).any():
