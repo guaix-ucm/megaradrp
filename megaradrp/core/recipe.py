@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2020 Universidad Complutense de Madrid
+# Copyright 2011-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -86,7 +86,6 @@ class MegaraBaseRecipe(BaseRecipe):
         if val_results:
             raise ValueError('Validation error', val_results)
 
-
     def run_qc(self, recipe_input, recipe_result):
         """Run Quality Control checks."""
         recipe_result.qc = QC.GOOD
@@ -104,13 +103,13 @@ class MegaraBaseRecipe(BaseRecipe):
         return imgtypes, getters
 
     def get_filters(self, imgtypes, getters):
-        import collections
+        import collections.abc
         used_getters = []
         for rtype, getter in zip(imgtypes, getters):
             self.logger.debug('get_filters, %s  %s', rtype, getter)
             if rtype is None:
                 # Unconditional
-                if isinstance(getter, collections.Iterable):
+                if isinstance(getter, collections.abc.Iterable):
                     used_getters.extend(getter)
                 else:
                     used_getters.append(getter)
@@ -118,7 +117,7 @@ class MegaraBaseRecipe(BaseRecipe):
                 # Search
                 for key, val in self.RecipeInput.stored().items():
                     if isinstance(val.type, rtype):
-                        if isinstance(getter, collections.Iterable):
+                        if isinstance(getter, collections.abc.Iterable):
                             used_getters.extend(getter)
                         else:
                             used_getters.append(getter)
