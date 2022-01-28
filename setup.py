@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name='megaradrp',
-    version='0.12.dev0',
+    version='0.13.dev0',
     author='Sergio Pascual',
     author_email='sergiopr@fis.ucm.es',
     url='https://github.com/guaix-ucm/megaradrp',
