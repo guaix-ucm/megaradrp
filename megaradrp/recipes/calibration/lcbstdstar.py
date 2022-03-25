@@ -16,6 +16,9 @@ import astropy.units as u
 import astropy.wcs
 from scipy.interpolate import interp1d
 
+from numina.types.datatype import PlainPythonType
+from numina.types.datatype import ListOfType
+from numina.types.multitype import MultiType
 from numina.array.numsplines import AdaptiveLSQUnivariateSpline
 from numina.core import Result, Parameter
 from numina.core.requirements import Requirement
@@ -89,6 +92,14 @@ class LCBStandardRecipe(ImageRecipe):
                                           choices=['none', 'fixed', 'auto']
                                           )
     sigma_resolution = Parameter(20.0, 'sigma Gaussian filter to degrade resolution ')
+    smoothing_knots = Requirement(
+        MultiType(
+            PlainPythonType(ref=3, validator=range_validator(minval=3)),
+            ListOfType(PlainPythonType(ref=0.0), nmin=3)
+        ),
+        description='List  of nodes or number of nodes for sensitivity smoothing',
+        optional=True
+    )
 
     reduced_image = Result(ProcessedFrame)
     final_rss = Result(ProcessedRSS)
@@ -202,8 +213,8 @@ class LCBStandardRecipe(ImageRecipe):
         self.logger.info('compute smoothed sensitivity')
 
         sens = sens_raw.copy()
-        i_knots = 3
-        self.logger.debug('using sdaptive spline with t=%d interior knots', i_knots)
+        i_knots = rinput.smoothing_knots
+        self.logger.debug(f'using adaptive spline with t={i_knots} interior knots')
         spl = AdaptiveLSQUnivariateSpline(x=wl_aa.value, y=sens_raw.data, t=i_knots)
         sens.data = spl(wl_aa.value)
 

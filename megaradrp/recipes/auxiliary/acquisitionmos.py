@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2020 Universidad Complutense de Madrid
+# Copyright 2011-2021 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -15,7 +15,7 @@ import math
 import numpy as np
 from numina.array.offrot import fit_offset_and_rotation
 from numina.core import Result, Parameter
-from numina.core.qc import QC
+from numina.types.qc import QC
 
 from megaradrp.instrument.focalplane import TargetType, FocalPlaneConf
 from megaradrp.recipes.scientific.base import ImageRecipe
@@ -97,7 +97,7 @@ class AcquireMOSRecipe(ImageRecipe):
             )
             self.logger.info('end sky subtraction')
         else:
-            final =  reduced1d
+            final = reduced1d
             origin = final
             sky = final
 
@@ -118,13 +118,13 @@ class AcquireMOSRecipe(ImageRecipe):
             if bundle.target_type == TargetType.REFERENCE:
                 self.logger.debug("%s %s %s", key, bundle.target_name, bundle.target_type)
                 sorted_fibers = [bundle.fibers[key] for key in sorted(bundle.fibers)]
-                central_fiber = sorted_fibers[3] # Central fiber is number 4 in the list
+                central_fiber = sorted_fibers[3]  # Central fiber is number 4 in the list
                 central_coords = [central_fiber.x * scale, central_fiber.y * scale]
-                #central_fiber_pair_id
+                # central_fiber_pair_id
                 # Central fiber is
                 self.logger.debug('Center fiber is %d', central_fiber.fibid)
-                self.logger.debug('Center fiber coordinates %f %f arcsec', 
-                             central_fiber.x * scale, central_fiber.y * scale)
+                self.logger.debug('Center fiber coordinates %f %f arcsec',
+                                  central_fiber.x * scale, central_fiber.y * scale)
 
                 colids = []
                 coords = []
@@ -150,7 +150,8 @@ class AcquireMOSRecipe(ImageRecipe):
 
                 p1.append(central_coords)
                 q1.append(centroid)
-                temp.append((bundle.id, central_fiber.fibid, central_fiber.x * scale, central_fiber.y * scale, centroid[0], centroid[1]))
+                temp.append((bundle.id, central_fiber.fibid, central_fiber.x * scale,
+                             central_fiber.y * scale, centroid[0], centroid[1]))
 
         if self.intermediate_results:
             with open("centroids.txt", "w") as fd:

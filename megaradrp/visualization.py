@@ -10,7 +10,9 @@
 from __future__ import print_function
 
 import math
+from packaging.version import parse, Version
 
+import matplotlib
 import matplotlib.cbook as cbook
 import matplotlib.collections as mcoll
 import matplotlib.colors as mcolors
@@ -41,7 +43,13 @@ def hexplot(axis, x, y, z, scale=1.0, extent=None,
     object: matplotlib.collections.PolyCollection
 
     """
-    axis._process_unit_info(xdata=x, ydata=y, kwargs=kwargs)
+
+    # I have to add these due to changes in private and protected interfaces
+    mpl_version = parse(matplotlib.__version__)
+    if mpl_version >= Version("3.4"):
+        axis._process_unit_info([("x", x), ("y", y)], kwargs, convert=False)
+    else:
+        axis._process_unit_info(xdata=x, ydata=y, kwargs=kwargs)
 
     x, y, z = cbook.delete_masked_points(x, y, z)
 
@@ -77,14 +85,24 @@ def hexplot(axis, x, y, z, scale=1.0, extent=None,
     offsets[:, 0] = x
     offsets[:, 1] = y
 
-    collection = mcoll.PolyCollection(
-        [polygon],
-        edgecolors=edgecolors,
-        linewidths=linewidths,
-        offsets=offsets,
-        transOffset=mtransforms.IdentityTransform(),
-        offset_position="data"
-    )
+    # I have to add these due to changes in private and protected interfaces
+    if mpl_version >= Version("3.3"):
+        collection = mcoll.PolyCollection(
+            [polygon],
+            edgecolors=edgecolors,
+            linewidths=linewidths,
+            offsets=offsets,
+            transOffset=mtransforms.AffineDeltaTransform(axis.transData)
+        )
+    else:
+        collection = mcoll.PolyCollection(
+            [polygon],
+            edgecolors=edgecolors,
+            linewidths=linewidths,
+            offsets=offsets,
+            transOffset=mtransforms.IdentityTransform(),
+            offset_position="data"
+        )
 
     if isinstance(norm, mcolors.LogNorm):
         if (z == 0).any():
@@ -296,7 +314,7 @@ def main(argv=None):
                 fp_conf = dm.get_fiberconf_default(insmode)
             else:
                 fp_conf = FocalPlaneConf.from_img(img)
-            plot_mask = np.ones((fp_conf.nfibers,), dtype=np.bool)
+            plot_mask = np.ones((fp_conf.nfibers,), dtype=bool)
             if not args.plot_sky:
                 skyfibers = fp_conf.sky_fibers()
                 skyfibers.sort()

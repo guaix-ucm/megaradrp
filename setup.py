@@ -5,7 +5,7 @@ from setuptools import setup
 
 setup(
     name='megaradrp',
-    version='0.11',
+    version='0.12.0',
     author='Sergio Pascual',
     author_email='sergiopr@fis.ucm.es',
     url='https://github.com/guaix-ucm/megaradrp',
@@ -40,7 +40,8 @@ setup(
         'scipy',
         'numina >= 0.22',
         'scikit-image',
-        'jsonschema'
+        'jsonschema',
+        'packaging'
     ],
     extras_require={
         'DB': ['sqlalchemy', 'numinadb'],
@@ -65,10 +66,10 @@ setup(
         ],
     },
     classifiers=[
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         'Development Status :: 3 - Alpha',
         "Environment :: Console",
         "Intended Audience :: Science/Research",

@@ -385,7 +385,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
             ax.set_xlabel('ioffset')
             ax.set_ylabel('peak of corrrelation function')
             ax.axvline(ioffset, linestyle=':', color='C1')
-            ax.set_title('optimal initial offset: {}'.format(ioffset))
+            ax.set_title(f'optimal initial offset: {ioffset}')
             plt.savefig('offset_borders_cross.png')
             plt.close()
 
@@ -401,7 +401,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         # auxiliary plot showing the initial and final frontier locations
         if self.intermediate_results:
             fig, ax = plt.subplots(ncols=1, nrows=1)
-            ax.plot(final, label='cross section at x={}'.format(cstart))
+            ax.plot(final, label=f'cross section at x={cstart}')
             ax.plot(xwave, sp_comb_lines0, label='expected location of frontiers')
             for idum, item in enumerate(expected):
                 if idum == 0:
@@ -410,7 +410,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
                     label = None
                 ax.plot(refined, final[refined], 'ro', label=label)
             ax.legend()
-            ax.set_title('optimal initial offset: {}'.format(ioffset))
+            ax.set_title(f'optimal initial offset: {ioffset}')
             ax.set_xlabel('pixel number - 1')
             ax.set_ylabel('inverted normalized signal')
             plt.savefig('frontiers_between_pseudoslits.png')
