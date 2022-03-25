@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2021 Universidad Complutense de Madrid
+# Copyright 2011-2022 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -96,7 +96,8 @@ class MOSStandardRecipe(ImageRecipe):
             PlainPythonType(ref=3, validator=range_validator(minval=3)),
             ListOfType(PlainPythonType(ref=0.0), nmin=3)
         ),
-        description='List  of nodes or number of nodes for sensitivity smoothing',
+        description='List of nodes or number of nodes for sensitivity smoothing',
+        default=3,
         optional=True
     )
 
