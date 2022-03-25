@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2021 Universidad Complutense de Madrid
+# Copyright 2011-2022 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -97,7 +97,8 @@ class LCBStandardRecipe(ImageRecipe):
             PlainPythonType(ref=3, validator=range_validator(minval=3)),
             ListOfType(PlainPythonType(ref=0.0), nmin=3)
         ),
-        description='List  of nodes or number of nodes for sensitivity smoothing',
+        description='List of nodes or number of nodes for sensitivity smoothing',
+        default=3,
         optional=True
     )
 
@@ -165,7 +166,7 @@ class LCBStandardRecipe(ImageRecipe):
         self.logger.info('central position is %s', position)
 
         self.logger.debug('adding %d nrings', rinput.nrings)
-        npoints = 1 + 3 * rinput.nrings * (rinput.nrings +1)
+        npoints = 1 + 3 * rinput.nrings * (rinput.nrings + 1)
         self.logger.debug('adding %d fibers', npoints)
 
         fp_conf = FocalPlaneConf.from_img(final)
@@ -178,11 +179,11 @@ class LCBStandardRecipe(ImageRecipe):
         rad_vel = rinput.reference_spectrum_velocity * u.km / u.s
         factor = 1 + rad_vel / const.c
 
-        star_interp = interp1d(rinput.reference_spectrum[:,0] / factor,
-                               rinput.reference_spectrum[:,1])
+        star_interp = interp1d(rinput.reference_spectrum[:, 0] / factor,
+                               rinput.reference_spectrum[:, 1])
 
         extinc_interp = interp1d(rinput.reference_extinction[:, 0],
-                               rinput.reference_extinction[:, 1])
+                                 rinput.reference_extinction[:, 1])
 
         fiber_ids = [colid + 1 for colid in colids]
 

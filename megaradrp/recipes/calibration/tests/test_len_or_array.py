@@ -13,14 +13,14 @@ from numina.types.datatype import ListOfType
 from numina.types.multitype import MultiType
 
 
-class Dal(object):
+class TestDal(object):
     def search_parameter(self, name, type_, obsres, options=None):
         if name == 'req_null':
             return numina.dal.stored.StoredParameter(content=None)
         elif name == 'req_int':
             return numina.dal.stored.StoredParameter(content=2)
         elif name == 'smoothing_knots':
-            return numina.dal.stored.StoredParameter(content=[1.0,2.0,3.0])
+            return numina.dal.stored.StoredParameter(content=[1.0, 2.0, 3.0])
         else:
             raise numina.exceptions.NoResultFound('value not found')
 
@@ -66,12 +66,34 @@ def test_requirement():
         PlainPythonType(ref=3, validator=range_validator(minval=3)),
         ListOfType(PlainPythonType(ref=0.0), nmin=3)
     )
-    req = Requirement(len_or_array, 'List  of nodes or number of nodes',
+    req = Requirement(len_or_array, 'List of nodes or number of nodes',
                       default=3, optional=True, destination='smoothing_knots')
 
-
-    dal = Dal()
+    dal = TestDal()
     obsres = numina.core.ObservationResult()
 
     value = req.query(dal, obsres)
-    assert value == [1.0,2.0,3.0]
+    assert value == [1.0, 2.0, 3.0]
+
+
+def test_requirement_default():
+    from megaradrp.core.recipe import MegaraBaseRecipe
+
+    len_or_array = MultiType(
+        PlainPythonType(ref=3, validator=range_validator(minval=3)),
+        ListOfType(PlainPythonType(ref=0.0), nmin=3)
+    )
+    req = Requirement(len_or_array, 'List of nodes or number of nodes',
+                      default=3, optional=True, destination='smoothing_knots_alt')
+
+    dal = TestDal()
+    obsres = numina.core.ObservationResult()
+
+    class TestRecipe1(MegaraBaseRecipe):
+        smoothing_knots_alt = req
+
+    recipe = TestRecipe1()
+
+    ri = recipe.build_recipe_input(obsres, dal)
+
+    assert ri.smoothing_knots_alt == 3
