@@ -45,8 +45,13 @@ jobs:
         with:
           python-version: '3.7'
 
-      - name: Build sdist
-        run: python setup.py sdist
+      - name: Install build
+        run: |
+          python -m pip install build
+
+      - name: Install sdist
+        # This builds both the wheel and sdist
+        run: python -m build
 
       - uses: actions/upload-artifact@v2
         with:

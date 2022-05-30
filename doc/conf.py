@@ -26,7 +26,7 @@ templates_path = ['_templates']
 exclude_patterns = ['_build']
 
 project = u'MEGARA Data Reduction Pipeline'
-copyright = u'2013-2021, Universidad Complutense de Madrid'
+copyright = u'2013-2022, Universidad Complutense de Madrid'
 version = '0.13'
 release = '0.13.dev0'
 show_authors = True
