@@ -1,5 +1,0 @@
-numina
-astropy
-numpy
-scipy
-scikit-image
