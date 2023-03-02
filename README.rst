@@ -3,7 +3,7 @@
 MEGARA DRP
 ==========
 
-|zenodo| |docs| |pypi| |travis| |coveralls|
+|zenodo| |docs| |pypi| 
 
 
 This is Megara DRP, the data reduction pipeline for MEGARA, 
@@ -42,12 +42,3 @@ Maintainers: Sergio Pascual <sergiopr@fis.ucm.es>, Nicolás Cardiel <cardiel@ucm
  
 .. |pypi| image:: https://badge.fury.io/py/megaradrp.svg
     :target: https://badge.fury.io/py/megaradrp
-
-.. |travis| image:: https://img.shields.io/travis/guaix-ucm/megaradrp/master?logo=travis%20ci&logoColor=white&label=Travis%20CI
-    :target: https://travis-ci.org/guaix-ucm/megaradrp
-    :alt: megaradrp's Travis CI Status
-
-.. |coveralls| image:: https://coveralls.io/repos/guaix-ucm/megaradrp/badge.svg?branch=master&service=github
-    :target: https://coveralls.io/github/guaix-ucm/megaradrp?branch=master
-     :alt: megaradrp's Coverall Status
-

@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2021 Universidad Complutense de Madrid
+# Copyright 2016-2022 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -239,6 +239,9 @@ def rss_add_wcs(hdr, crval, cdelt, crpix):
     hdr['CRVAL2'] = 0.0, c_crval
     hdr['CDELT2'] = 1.0, c_cdelt
     hdr['CTYPE2'] = ''
+
+    hdr['SPECSYS'] = 'TOPOCENT'
+    hdr['SSYSOBS'] = 'TOPOCENT'
     return hdr
 
 
