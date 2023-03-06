@@ -11,7 +11,9 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os
+import importlib.metadata
+import os
+import sys
 
 # This is required by autodoc to work
 sys.path.insert(0, os.path.abspath('../'))
@@ -27,8 +29,8 @@ exclude_patterns = ['_build']
 
 project = u'MEGARA Data Reduction Pipeline'
 copyright = u'2013-2023, Universidad Complutense de Madrid'
-version = '0.13'
-release = '0.13'
+release = importlib.metadata.version('megaradrp')
+version = '.'.join(release.split('.')[:2])
 show_authors = True
 
 numpydoc_show_class_members = False
