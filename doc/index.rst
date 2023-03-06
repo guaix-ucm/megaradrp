@@ -3,7 +3,7 @@
 MEGARA DRP documentation
 ========================
 
-Welcome. This is the Documentation for MEGARA DRP (version |version|).
+Welcome. This is the Documentation for MEGARA DRP (release |release|).
 
 MEGARA (Multi-Espectrógrafo en GTC de Alta Resolución para Astronomía) is 
 an optical Integral-Field Unit (IFU) and Multi-Object Spectrograph (MOS) 
