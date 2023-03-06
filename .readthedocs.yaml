@@ -13,6 +13,5 @@ build:
 
 # Build documentation in the doc/ directory with Sphinx
 sphinx:
-   configuration: doc/conf.py
-
+   fail_on_warning: false
 
