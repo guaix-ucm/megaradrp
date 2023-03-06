@@ -11,6 +11,11 @@ build:
   tools:
     python: "3.11"
 
+python:
+  install:
+    - method: pip
+      path: .
+
 # Build documentation in the doc/ directory with Sphinx
 sphinx:
    fail_on_warning: false
