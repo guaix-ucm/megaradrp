@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2019 Universidad Complutense de Madrid
+# Copyright 2017-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -55,7 +55,7 @@ class GeometricModel(GeometricAperture):
         if model:
             params = {}
             for key, val in model['params'].items():
-                params[key] =  convert_function(val)
+                params[key] = convert_function(val)
             model['params'] = params
 
     @property
@@ -130,7 +130,6 @@ class ModelMap(BaseStructuredCalibration):
                                    numpix=numpix,
                                    fibid_at=fibid_at
                                    )
-
 
 
 # BUILD MATRICES
