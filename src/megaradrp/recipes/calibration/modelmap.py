@@ -155,7 +155,7 @@ class ModelMapRecipe(MegaraBaseRecipe):
         cols = range(100, 4100, 100)
         # cols = range(100, 200, 100)
         valid_fibers = [f.fibid for f in tracemap.contents if f.valid]
-        ncol = tracemap.total_fibers
+        # ncol = tracemap.total_fibers
 
         nfit = data.shape[1]
 
@@ -163,78 +163,67 @@ class ModelMapRecipe(MegaraBaseRecipe):
         model_kwargs = {'sigma': sigma}
         model_obj = GaussBoxModelDescription(**model_kwargs)
 
+        # Perform fitting with multiprocessing
         results_get = fit_model(model_obj, data, tracemap, cols,
-                                model_kwargs=model_kwargs,
                                 processes=processes)
 
         self.logger.info('perform model fitting end')
 
         self.logger.info('interpolate parameters')
-        xcol = np.arange(nfit)
-        array_mean = np.zeros((ncol, nfit))
-        array_std = np.zeros((ncol, nfit))
 
-        mean_splines = {}
-        std_splines = {}
+        # summarize values
+        params_save = model_obj.params_save
+        params = model_obj.params_fit
+        spline_degrees = model_obj.deg_save
+
+        # vector of columns where we have performed the fit
+        g_col = np.asarray(cols)
 
         for fibid in valid_fibers:
-            g_amp = []
-            g_std = []
-            g_mean = []
+            # interpolator of the parameters of a given fiber
+            interpolators = {name: None for name in params_save}
+            # Values of the parameters of a given fiber
+            g_vals = {name: [] for name in params}
 
-            g_col = []
-
+            # log only 1 in 100 fibers
             dolog = (fibid % 100 == 0)
 
             if dolog:
                 self.logger.debug('compute fibid %d', fibid)
 
             for calc_col, vals in results_get:
-                param = vals[fibid]
-                g_col.append(calc_col)
+                # Parameters in a given column and fiber fibid
+                param_col_fib = vals[fibid]
+                for name in params:
+                    g_vals[name].append(param_col_fib[name])
 
-                g_std.append(param['stddev'])
-                g_mean.append(param['mean'])
-                g_amp.append(param['amplitude'])
-
-            interpol_std = UnivariateSpline(g_col, g_std, k=5)
-            interpol_mean = UnivariateSpline(g_col, g_mean, k=3)
+            # Fit a UnivariateSpline to each storable parameter
+            for name, deg in zip(params_save, spline_degrees):
+                interpolators[name] = UnivariateSpline(g_col, g_vals[name], k=deg)
 
             if self.intermediate_results:
                 if dolog:
-                    self.logger.debug('saving plots')
-                plt.title(f'std fib{fibid:03d}')
-                plt.plot(g_col, g_std, 'b*')
-                plt.plot(g_col, interpol_std(g_col), 'r')
-                plt.savefig(f'fib_{fibid:03d}_std.png')
-                plt.close()
-                plt.title(f'mean fin{fibid:03d}')
-                plt.plot(g_col, g_mean, 'b*')
-                plt.plot(g_col, interpol_mean(g_col), 'r')
-                plt.savefig(f'fib_{fibid:03d}_mean.png')
-                plt.close()
+                    self.logger.debug('creating plots')
+                # plot each storable parameter
+                for name in params_save:
+                    plt.title(f'{name} fib{fibid:03d}')
+                    plt.plot(g_col, g_vals[name], 'b*')
+                    plt.plot(g_col, interpolators[name](g_col), 'r')
+                    plt.savefig(f'fib_{fibid:03d}_{name}.png')
+                    plt.close()
+
                 if dolog:
-                    self.logger.debug('saving plots end')
+                    self.logger.debug('creating plots end')
 
-            mean_splines[fibid] = interpol_mean
-            std_splines[fibid] = interpol_std
-
-            row = fibid - 1
-            array_mean[row] = interpol_mean(xcol)
-            array_std[row] = interpol_std(xcol)
-
-            params = {'stddev': interpol_std, 'mean': interpol_mean}
-            model = {'model_name': model_obj.name, 'params': params}
+            # summary of model for this fiber
+            model_fib = {'model_name': model_obj.name, 'params': interpolators}
             # if invalid. missing, model = {}
-            m = GeometricModel(
-                fibid,
-                boxid=1, # FIXME: not counting this
-                start=1,
-                stop=nfit,
-                model=model
+            gm = GeometricModel(fibid,
+                                boxid=1, # FIXME: not counting this
+                                start=1, stop=nfit, model=model_fib
             )
 
-            model_map.contents.append(m)
+            model_map.contents.append(gm)
 
         self.logger.info('interpolate parameters end')
 
@@ -261,26 +250,6 @@ class ModelMapRecipe(MegaraBaseRecipe):
         return result
 
 
-def initial_base(boxd1d, ecenters, npix=5):
-    nfib = len(ecenters)
-
-    offset = npix // 2
-    yfit = np.empty((npix, nfib))
-    xfit = np.arange(npix) - offset
-
-    for i in range(npix):
-        yfit[i, :] = boxd1d[ecenters + (i - offset)]
-
-    coeff = np.polyfit(xfit, np.log(yfit), deg=2)
-    c, b, a = coeff
-
-    sig2 = -1 / (2 * c)
-    mu = b / sig2
-    ampl = np.exp(a - mu ** 2)
-
-    return ampl, mu, sig2
-
-
 def calc_parallel(model_desc, data, calc_col, tracemap, valid_fibers,
                   nloop=10, average=0):
 
@@ -296,7 +265,7 @@ def calc_parallel(model_desc, data, calc_col, tracemap, valid_fibers,
     scale = column.max()
     column_norm = column / scale
 
-    final = calc1d_M(model_desc, column_norm, valid_fibers, calc_col, lateral=2, nloop=nloop)
+    final = calc1d_M(model_desc, column_norm, centers, valid_fibers, calc_col, lateral=2, nloop=nloop)
 
     # TODO: we may need a function to perform scaling in general
     for idx, params in final.items():
