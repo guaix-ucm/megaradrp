@@ -9,14 +9,11 @@
 
 import abc
 from collections.abc import Sequence  # for typing
-import bisect
-import math
 
-from astropy.modeling import fitting
-from astropy.modeling.functional_models import Const1D, Moffat1D
-from numina.modeling.gaussbox import GaussBox, gauss_box_model
+
+from astropy.modeling.functional_models import Moffat1D
+from numina.modeling.gaussbox import GaussBox
 import numpy as np
-#import numpy.typing as npt
 
 
 class ModelDescription(metaclass=abc.ABCMeta):
@@ -28,17 +25,17 @@ class ModelDescription(metaclass=abc.ABCMeta):
         self.fixed_center = fixed_center
 
     @abc.abstractmethod
-    def init_values(self, column) -> dict:
+    def init_values(self, column: np.array, centers: Sequence[float]) -> dict:
         """Compute initial values for the parameters of the model"""
         raise NotImplementedError
 
-    def init_values_per_profile(self, column, fibers: Sequence[int]) -> dict:
+    def init_values_per_profile(self, column: np.array, centers: Sequence[float], fibers: Sequence[int]) -> dict:
         """Rearrange the parameters of the profiles.
 
         Convert a dictionary with Np key parameters, with Nf values each
         into a dictionary with Nf keys and Np parameters each.
         """
-        vals1 = self.init_values(column)
+        vals1 = self.init_values(column, centers)
 
         current = {}
         for idx, fibid in enumerate(fibers):
@@ -64,17 +61,15 @@ class ModelDescription(metaclass=abc.ABCMeta):
 
 class MoffatModelDescription(ModelDescription):
 
-    def __init__(self, centers1d, fixed_center=True):
+    def __init__(self, fixed_center=True):
         super().__init__("moffat", Moffat1D, fixed_center=fixed_center)
-        self.nfib = len(centers1d)
-        self.centers1d = centers1d
 
-    def init_values(self, column):
+    def init_values(self, column: np.array, centers: Sequence[float]) -> dict:
         _params = {
-            'x_0': self.centers1d,
-            'gamma': 3.9 * np.ones_like(self.centers1d),
-            'amplitude': 1 * np.ones_like(self.centers1d),
-            'alpha': 2.9 * np.ones_like(self.centers1d)
+            'x_0': centers,
+            'gamma': 3.9 * np.ones_like(centers),
+            'amplitude': 1 * np.ones_like(centers),
+            'alpha': 2.9 * np.ones_like(centers)
         }
         return _params
 
@@ -106,18 +101,39 @@ class MoffatModelDescription(ModelDescription):
 
 class GaussBoxModelDescription(ModelDescription):
 
-    def __init__(self, centers1d, fixed_center=True, init_simple=False, npix=5, sigma=3.0):
+    def __init__(self, fixed_center=True, init_simple=False, npix=5, sigma=3.0):
         super().__init__("gaussbox", GaussBox, fixed_center=fixed_center)
-        self.nfib = len(centers1d)
-        self.centers1d = centers1d
         self.npix = npix
         self.sigma = sigma
         self.init_simple = init_simple
 
-    def _init_1(self, column):
+    @classmethod
+    def create_from_centers(cls, fixed_center=True, **kwargs):
+
+        # Parameters of __init__ for GaussBox
+        init_simple = kwargs.get('init_simple', False)
+        npix = kwargs.get('npix', 5)
+        sigma = kwargs.get('sigma', 3.0)
+
+        # TODO: this method can be completely general
+        # using inspect to obtain the signature of __init__
+
+        # obj = cls.__new__(cls)
+        # obj.__init__(fixed_center=fixed_center,
+        #     init_simple=init_simple,
+        #     npix=npix, sigma=sigma)
+
+        obj = GaussBoxModelDescription(
+            fixed_center=fixed_center, init_simple=init_simple,
+            npix=npix, sigma=sigma
+        )
+
+        return obj
+
+    def _init_1(self, column: np.array, centers: Sequence[float]):
         """init simple"""
         npix = self.npix
-        ecenters = np.ceil(self.centers1d - 0.5).astype('int')
+        ecenters = np.ceil(centers - 0.5).astype('int')
         nfib = len(ecenters)
 
         offset = npix // 2
@@ -135,28 +151,28 @@ class GaussBoxModelDescription(ModelDescription):
         ampl = np.exp(a - mu ** 2)
 
         params = {
-            'mean': self.centers1d,
+            'mean': centers,
             'stddev': np.sqrt(sig2),
             'amplitude': ampl
         }
         return params
 
-    def _init_2(self, column):
-        ecenters = np.ceil(self.centers1d - 0.5).astype('int')
-        nfib = len(self.centers1d)
+    def _init_2(self, column: np.array, centers: Sequence[float]) -> dict:
+        ecenters = np.ceil(centers - 0.5).astype('int')
+        nfib = len(centers)
         sigma = self.sigma
         params = {
-            'mean': self.centers1d,
-            'stddev': sigma * np.ones_like(self.centers1d),
+            'mean': centers,
+            'stddev': sigma * np.ones_like(centers),
             'amplitude': [column[ecenters[i]] / 0.25 for i in range(nfib)]
         }
         return params
 
-    def init_value(self, column):
+    def init_values(self, column: np.array, centers: Sequence[float]):
         if self.init_simple:
-            return self._init_1(column)
+            return self._init_1(column, centers)
         else:
-            return self._init_2(column)
+            return self._init_2(column, centers)
 
     def params_fixed(self, values, fibid, col):
         result = {

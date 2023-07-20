@@ -11,24 +11,21 @@
 
 from __future__ import division, print_function
 
-import math
-import bisect
 import multiprocessing as mp
 
 import numpy as np
 from scipy.interpolate import UnivariateSpline
 import matplotlib.pyplot as plt
-from astropy.modeling import fitting
-from astropy.modeling.functional_models import Const1D
 from numina.core import Result, Requirement, Parameter
 from numina.array import combine
-from numina.modeling.gaussbox import GaussBox, gauss_box_model
 from numina.frame.utils import copy_img
 
 from megaradrp.instrument.focalplane import FocalPlaneConf
 from megaradrp.products.modelmap import ModelMap
 from megaradrp.products.modelmap import GeometricModel
 from megaradrp.processing.aperture import ApertureExtractor
+from megaradrp.processing.modelmap import calc1d_M
+from megaradrp.processing.modeldesc import GaussBoxModelDescription
 from megaradrp.ntypes import ProcessedImage, ProcessedRSS
 from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.core.recipe import MegaraBaseRecipe
@@ -154,31 +151,37 @@ class ModelMapRecipe(MegaraBaseRecipe):
 
         tracemap = rinput.master_traces
         data = reduced[0].data
-        sigma = 1.53
+
         cols = range(100, 4100, 100)
         # cols = range(100, 200, 100)
-        valid = [f.fibid for f in tracemap.contents if f.valid]
+        valid_fibers = [f.fibid for f in tracemap.contents if f.valid]
         ncol = tracemap.total_fibers
-        nrow = data.shape[0]
+
         nfit = data.shape[1]
-        results_get = fit_model(data, tracemap, valid, nrow, ncol, sigma, cols, processes)
+
+        sigma = 1.53
+        model_kwargs = {'sigma': sigma}
+        model_obj = GaussBoxModelDescription(**model_kwargs)
+
+        results_get = fit_model(model_obj, data, tracemap, cols,
+                                model_kwargs=model_kwargs,
+                                processes=processes)
 
         self.logger.info('perform model fitting end')
 
         self.logger.info('interpolate parameters')
-
+        xcol = np.arange(nfit)
         array_mean = np.zeros((ncol, nfit))
         array_std = np.zeros((ncol, nfit))
-
-        xcol = np.arange(nfit)
 
         mean_splines = {}
         std_splines = {}
 
-        for fibid in valid:
+        for fibid in valid_fibers:
             g_amp = []
             g_std = []
             g_mean = []
+
             g_col = []
 
             dolog = (fibid % 100 == 0)
@@ -189,6 +192,7 @@ class ModelMapRecipe(MegaraBaseRecipe):
             for calc_col, vals in results_get:
                 param = vals[fibid]
                 g_col.append(calc_col)
+
                 g_std.append(param['stddev'])
                 g_mean.append(param['mean'])
                 g_amp.append(param['amplitude'])
@@ -220,7 +224,7 @@ class ModelMapRecipe(MegaraBaseRecipe):
             array_std[row] = interpol_std(xcol)
 
             params = {'stddev': interpol_std, 'mean': interpol_mean}
-            model = {'model_name': 'gaussbox', 'params': params}
+            model = {'model_name': model_obj.name, 'params': params}
             # if invalid. missing, model = {}
             m = GeometricModel(
                 fibid,
@@ -277,164 +281,38 @@ def initial_base(boxd1d, ecenters, npix=5):
     return ampl, mu, sig2
 
 
-def calc1d_N(boxd1d, valid, centers1d, sigma, lateral=0, reject=3, nloop=1,
-             fixed_centers=False, init_simple=False):
+def calc_parallel(model_desc, data, calc_col, tracemap, valid_fibers,
+                  nloop=10, average=0):
 
-    ecenters = np.ceil(centers1d - 0.5).astype('int')
-    nfib = len(centers1d)
-
-    # FIXME, hardcoded
-    xl = np.arange(4112.0)
-
-    if init_simple:
-        ampl, mu, sig2 = initial_base(boxd1d, ecenters, npix=5)
-        sig_calc = np.sqrt(sig2)
-    else:
-        sig_calc = sigma * np.ones((nfib,))
-        ampl = [boxd1d[ecenters[i]] / 0.25 for i in range(nfib)]
-
-    init = {}
-    for i in range(nfib):
-        fibid = valid[i]
-        init[fibid] = {}
-        init[fibid]['mean'] = centers1d[i]
-        init[fibid]['stddev'] = sig_calc[i]
-        init[fibid]['amplitude'] = ampl[i]
-
-    # plt.plot(sig_calc / sigma)
-    # plt.show()
-
-    # total fits is 2 * lateral + 1
-    total = reject + lateral
-    yl = boxd1d
-
-    for il in range(nloop):
-
-        # print 'loop', il, datetime.datetime.now()
-
-        # permutation of the valid fibers
-        values = np.random.permutation(valid)
-
-        for val in values:
-            #
-
-            m1 = max(0, int(math.ceil(init[val]['mean'] - 0.5)) - 6 * total)
-            m2 = int(math.ceil(init[val]['mean'] - 0.5)) + 6 * total
-
-            y = yl[m1:m2].copy()
-            xt = xl[m1:m2]
-
-            pos = bisect.bisect(valid, val)
-            candidates = valid[max(pos - total - 1, 0): pos + total]
-            dis_f = [abs(c - val) for c in candidates]
-            # for p in range(max(0, val-S), min(nfib, val+S+1)):
-            fit_ids = []
-            for c, df in zip(candidates, dis_f):
-                if df > lateral:
-                    # remove contribution
-                    y -= gauss_box_model(xt, **init[c])
-                else:
-                    fit_ids.append(c)
-
-            # num_of_fibers = len(fit_ids)
-            # print('lateral', lateral, val, fit_ids)
-            # print('num', num_of_fibers)
-
-            # Extract values to create initials
-            model = Const1D(amplitude=0.0)
-            for fib_id in fit_ids:
-                newg = GaussBox(
-                    amplitude=init[fib_id]['amplitude'],
-                    mean=init[fib_id]['mean'],
-                    stddev=init[fib_id]['stddev']
-                )
-                model = model + newg
-
-            # Set fit conditions
-            model.amplitude_0.fixed = True
-            for idx, fib_id in enumerate(fit_ids, 1):
-                key = "mean_%d" % idx
-                m_mean = getattr(model, key)
-                if fixed_centers:
-                    m_mean.fixed = True
-                else:
-                    m_mean.min = init[fib_id]['mean'] - 0.5
-                    m_mean.max = init[fib_id]['mean'] + 0.5
-
-                key = "stddev_%d" % idx
-                m_stddev = getattr(model, key)
-                m_stddev.min = init[fib_id]['stddev'] - 0.5
-                m_stddev.max = init[fib_id]['stddev'] + 0.5
-
-                key = "hpix_%d" % idx
-                m_hpix = getattr(model, key)
-                m_hpix.fixed = True
-
-            fitter = fitting.LevMarLSQFitter()
-            model_fitted = fitter(model, xt, y)
-
-            # Extract values
-            # This extracts only val
-            # val_idx = fit_ids.index(val) + 1
-            # na = getattr(model_fitted, 'amplitude_%d' % val_idx).value
-            # nm = getattr(model_fitted, 'mean_%d' % val_idx).value
-            # ns = getattr(model_fitted, 'stddev_%d' % val_idx).value
-
-            # init[val]['amplitude'] = na
-            # init[val]['mean'] = nm
-            # init[val]['stddev'] = ns
-
-            for val_idx, fibid in enumerate(fit_ids, 1):
-                # This will overwrite fits with fits performed later
-                # if fibid == val:
-                na = getattr(model_fitted, 'amplitude_%d' % val_idx).value
-                nm = getattr(model_fitted, 'mean_%d' % val_idx).value
-                ns = getattr(model_fitted, 'stddev_%d' % val_idx).value
-
-                init[fibid]['amplitude'] = na
-                init[fibid]['mean'] = nm
-                init[fibid]['stddev'] = ns
-                # break
-
-    return init
-
-
-def calc2_base(column, centers, valid, sigma, nloop=10, do_plot=False):
-    scale = column.max()
-    column_norm = column / scale
-    final = calc1d_N(column_norm, valid, centers, sigma, lateral=2, nloop=nloop)
-
-    for idx, params in final.items():
-        final[idx]['amplitude'] *= scale
-
-    if do_plot:
-        pass # calc2_plot(final, centers, valid, sigma)
-
-    return final
-
-
-def calc_para_2(data, calc_col, tracemap, valid, nrow, ncol, sigma,
-                nloop=10, average=0, calc_init=True):
     if average > 0:
-        yl = data[:, calc_col - average:calc_col - average + 1].mean(axis=1)
+        column = data[:, calc_col - average:calc_col - average + 1].mean(axis=1)
     else:
-        yl = data[:, calc_col]
+        column = data[:, calc_col]
 
     centers = np.array([f.polynomial(calc_col) for f in tracemap.contents if f.valid])
-    print ('calc_col is', calc_col)
+    print('computing in column', calc_col)
 
-    final = calc2_base(yl, centers, valid, sigma, nloop=nloop, do_plot=False)
+    # Scale image value
+    scale = column.max()
+    column_norm = column / scale
+
+    final = calc1d_M(model_desc, column_norm, valid_fibers, calc_col, lateral=2, nloop=nloop)
+
+    # TODO: we may need a function to perform scaling in general
+    for idx, params in final.items():
+        final[idx]['amplitude'] *= scale
 
     return calc_col, final
 
 
-def fit_model(data, tracemap, valid, nrow, ncol, sigma, cols, processes=20):
+def fit_model(model_desc, data, tracemap, cols, processes=20):
 
     pool = mp.Pool(processes)
+    valid_fibers = [f.fibid for f in tracemap.contents if f.valid]
 
     results = [pool.apply_async(
-        calc_para_2,
-        args=(data, col, tracemap, valid, nrow, ncol, sigma),
+        calc_parallel,
+        args=(model_desc, data, col, tracemap, valid_fibers),
         kwds={'nloop': 3, 'average': 2}
     ) for col in cols]
 

@@ -19,11 +19,13 @@ import numpy as np
 from .modeldesc import ModelDescription
 
 
-def calc1d_M(model_desc: ModelDescription, boxd1d: np.ndarray, valid: Sequence[int], col: int,
+def calc1d_M(model_desc: ModelDescription, column: np.ndarray,
+             centers: Sequence[float],
+             valid: Sequence[int], col: int,
              lateral=2, reject=3, nloop=1) -> dict:
     """Fit a sum of profiles along a 1D column vector"""
 
-    nfib = model_desc.nfib
+    nfib = len(centers)
     if nfib != len(valid):
         raise ValueError("len(valid) fibers must equal to len(centers)")
 
@@ -35,13 +37,13 @@ def calc1d_M(model_desc: ModelDescription, boxd1d: np.ndarray, valid: Sequence[i
 
     xl = np.arange(nrows, dtype=float)
 
-    if boxd1d.shape != xl.shape:
+    if column.shape != xl.shape:
         raise ValueError(f"boxd1d must have len {nrows}")
 
     # 'current' contains the values of the parameters
     # for each fiber
     # it is initially filled with initial values
-    current = model_desc.init_values_per_profile(boxd1d, valid)
+    current = model_desc.init_values_per_profile(column, centers, valid)
 
     # total fits is 2 * lateral + 1
     total = reject + lateral
@@ -66,7 +68,7 @@ def calc1d_M(model_desc: ModelDescription, boxd1d: np.ndarray, valid: Sequence[i
 
             logging.debug(f'm1:m2 is {m1}:{m2}')
             # Cut regions in the arrays
-            yt = boxd1d[m1:m2].copy()
+            yt = column[m1:m2].copy()
             xt = xl[m1:m2]
 
             pos = bisect.bisect(valid, fib_id_reorder)
