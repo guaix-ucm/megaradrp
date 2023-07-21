@@ -2,8 +2,8 @@
 from astropy.modeling.functional_models import Moffat1D
 import math
 import numpy as np
-from ..modeldesc import MoffatModelDescription
-
+from ..modeldesc.moffat import MoffatModelDescription
+from ..modeldesc.gaussbox import GaussBoxModelDescription
 
 def create_moffat_column(gamma, alpha):
     xval = np.arange(4112, dtype=float)
@@ -33,8 +33,6 @@ def test_0():
 
 
 def test_3():
-    from ..modeldesc import GaussBoxModelDescription
-
     centers = np.array([4,5,6])
 
     model_cls = GaussBoxModelDescription
@@ -43,5 +41,3 @@ def test_3():
     model_desc = model_cls.create_from_centers(centers, **kwds)
 
     assert isinstance(model_desc, GaussBoxModelDescription)
-
-

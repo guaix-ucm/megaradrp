@@ -4,7 +4,8 @@ import math
 import numpy as np
 import pytest
 from ..modelmap import calc1d_model, calc_matrix
-from ..modeldesc import MoffatModelDescription, GaussBoxModelDescription
+from ..modeldesc.moffat import MoffatModelDescription
+from ..modeldesc.gaussbox import GaussBoxModelDescription
 
 
 def create_column(gamma, alpha):

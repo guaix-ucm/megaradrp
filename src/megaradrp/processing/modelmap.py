@@ -15,9 +15,11 @@ import math
 
 from astropy.modeling import fitting
 from astropy.modeling.functional_models import Const1D
+from numina.util.objimport import import_object
 import numpy
 
-from .modeldesc import ModelDescription
+from .modeldesc.base import ModelDescription
+from megaradrp.processing.modeldesc import config
 
 
 def calc1d_model(model_desc: ModelDescription, column: numpy.ndarray,
@@ -182,21 +184,25 @@ def calc_matrix_cols(model_map, datashape, processes=0):
     shape = (nfibs, dncol)
     wshape = (dnrow, nfibs)
     #
-    from megaradrp.processing.modeldesc import GaussBoxModelDescription
-    modeldesc = GaussBoxModelDescription()
-    model = modeldesc.model_cls
-
     params_reorder = collections.defaultdict(lambda: numpy.zeros(shape))
-
+    model_name = 'undefined'
     xcol = numpy.arange(dncol)
     for fibermodel in model_map.contents:
         if fibermodel.valid:
             row = fibermodel.fibid - 1
             interpol_params = fibermodel.model['params']
             # it only makes sense to use one model specification
-            # model_names[row] = fibermodel.model['model_name']
+            model_name = fibermodel.model['model_name']
             for name, value in interpol_params.items():
                 params_reorder[name][row] = value(xcol)
+
+    if model_name not in config:
+        raise ValueError(f"model name {model_name} is not defined")
+
+    objpath = config[model_name]
+    model_class = import_object(objpath)
+    modeldesc = model_class()
+    model = modeldesc.model_cls
 
     # shift center parameter according to global_offset
     mask = numpy.zeros((model_map.total_fibers,), dtype='bool')

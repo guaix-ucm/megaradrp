@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2021 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -19,13 +19,14 @@ import matplotlib.pyplot as plt
 from numina.core import Result, Requirement, Parameter
 from numina.array import combine
 from numina.frame.utils import copy_img
+from numina.util.objimport import import_object
 
 from megaradrp.instrument.focalplane import FocalPlaneConf
 from megaradrp.products.modelmap import ModelMap
 from megaradrp.products.modelmap import GeometricModel
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.modelmap import calc1d_model
-from megaradrp.processing.modeldesc import GaussBoxModelDescription
+from megaradrp.processing.modeldesc import config
 from megaradrp.ntypes import ProcessedImage, ProcessedRSS
 from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.core.recipe import MegaraBaseRecipe
@@ -132,6 +133,9 @@ class ModelMapRecipe(MegaraBaseRecipe):
         # self.logger.debug("original boxes: %s", box_borders0)
         # self.logger.debug("refined boxes: %s", box_borders)
 
+        # model name for fitting (this could be a parameter
+        model_name = 'gaussbox'
+
         model_map = ModelMap(instrument=obresult.instrument)
 
         self.logger.debug('update metadata in model')
@@ -159,9 +163,17 @@ class ModelMapRecipe(MegaraBaseRecipe):
 
         nfit = data.shape[1]
 
-        sigma = 1.53
-        model_kwargs = {'sigma': sigma}
-        model_obj = GaussBoxModelDescription(**model_kwargs)
+        if model_name == 'gaussbox':
+            # parameters for this model
+            sigma = 1.53
+            model_kwargs = {'sigma': sigma}
+        else:
+            raise ValueError(f'model name {model_name} is undefined')
+
+        objpath = config[model_name]
+        model_class = import_object(objpath)
+        model_obj = model_class(**model_kwargs)
+
 
         # Perform fitting with multiprocessing
         results_get = fit_model(model_obj, data, tracemap, cols,
@@ -259,6 +271,8 @@ def calc_parallel(model_desc, data, calc_col, tracemap, valid_fibers,
         column = data[:, calc_col]
 
     centers = np.array([f.polynomial(calc_col) for f in tracemap.contents if f.valid])
+    # we might need a better approach to logging in multiprocessing
+    # https://www.jamesfheath.com/2020/06/logging-in-python-while-multiprocessing.html
     print('computing in column', calc_col)
 
     # Scale image value
