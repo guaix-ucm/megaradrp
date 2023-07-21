@@ -8,21 +8,22 @@
 #
 
 import bisect
+import collections
 from collections.abc import Sequence  # for typing
 import logging
 import math
 
 from astropy.modeling import fitting
 from astropy.modeling.functional_models import Const1D
-import numpy as np
+import numpy
 
 from .modeldesc import ModelDescription
 
 
-def calc1d_M(model_desc: ModelDescription, column: np.ndarray,
-             centers: Sequence[float],
-             valid: Sequence[int], col: int,
-             lateral=2, reject=3, nloop=1) -> dict:
+def calc1d_model(model_desc: ModelDescription, column: numpy.ndarray,
+                 centers: Sequence[float],
+                 valid: Sequence[int], col: int,
+                 lateral=2, reject=3, nloop=1) -> dict:
     """Fit a sum of profiles along a 1D column vector"""
 
     nfib = len(centers)
@@ -35,7 +36,7 @@ def calc1d_M(model_desc: ModelDescription, column: np.ndarray,
     nfibers = 623
     nrows = 4112
 
-    xl = np.arange(nrows, dtype=float)
+    xl = numpy.arange(nrows, dtype=float)
 
     if column.shape != xl.shape:
         raise ValueError(f"boxd1d must have len {nrows}")
@@ -51,7 +52,7 @@ def calc1d_M(model_desc: ModelDescription, column: np.ndarray,
     for il in range(nloop):
         # print('loop', il, datetime.datetime.now())
         # permutation of the valid fibers
-        permutated_fibers = np.random.permutation(valid)
+        permutated_fibers = numpy.random.permutation(valid)
         for fib_id_reorder in permutated_fibers:
             #
             # print(f'val is {val}')
@@ -125,3 +126,134 @@ def calc1d_M(model_desc: ModelDescription, column: np.ndarray,
                     current[fibid][name] = fvalue[name]
 
     return current
+
+
+def calc_matrix(wshape, model, params, valid, clip=1.0e-6, extra=10):
+    from scipy.sparse import lil_matrix
+
+    # calc w
+    # this is valid for 1 column (there are more broadcasts for N)
+    g_mean = params['mean']
+
+    begpix = numpy.ceil(g_mean - 0.5).astype('int')
+
+    steps = numpy.arange(-extra, extra)
+    # ref is a bidimensional matrix +-10 pixels around the trace
+    ref = begpix + steps[:, numpy.newaxis]
+
+    for key in model.param_names:
+        if key not in params:
+            model_param = getattr(model, key)
+            params[key] = model_param.value
+
+    rr = model.evaluate(ref, **params)
+    rrb = begpix - extra
+
+    # This was sending warnings. Is there a NaN somewhere?
+    with numpy.errstate(invalid='ignore'):
+        rr[rr < clip] = 0.0
+
+    # Calc Ws matrix
+    block, valid_nfib = rr.shape
+
+    w_init = lil_matrix(wshape)
+    for fibid in valid:
+        idx = fibid - 1
+        w_init[rrb[idx]:rrb[idx] + block, idx] = rr[:, idx, numpy.newaxis]
+
+    wcol = w_init.tocsr()
+    return wcol
+
+
+def calc_matrix_adapt(wshape, col, model, params, valid, clip=1.0e-6, extra=10):
+    """Adapted function to return the column number"""
+
+    # For parallel processing
+    wcol = calc_matrix(wshape, model, params, valid, clip=clip, extra=extra)
+
+    return col, wcol
+
+
+def calc_matrix_cols(model_map, datashape, processes=0):
+
+    dnrow, dncol = datashape
+    nfibs = model_map.total_fibers
+
+    shape = (nfibs, dncol)
+    wshape = (dnrow, nfibs)
+    #
+    from megaradrp.processing.modeldesc import GaussBoxModelDescription
+    modeldesc = GaussBoxModelDescription()
+    model = modeldesc.model_cls
+
+    params_reorder = collections.defaultdict(lambda: numpy.zeros(shape))
+
+    xcol = numpy.arange(dncol)
+    for fibermodel in model_map.contents:
+        if fibermodel.valid:
+            row = fibermodel.fibid - 1
+            interpol_params = fibermodel.model['params']
+            # it only makes sense to use one model specification
+            # model_names[row] = fibermodel.model['model_name']
+            for name, value in interpol_params.items():
+                params_reorder[name][row] = value(xcol)
+
+    # shift center parameter according to global_offset
+    mask = numpy.zeros((model_map.total_fibers,), dtype='bool')
+    valid_r = [(f.fibid - 1) for f in model_map.contents if f.valid]
+    mask[valid_r] = True
+
+    params_reorder_c = modeldesc.fiber_center(params_reorder)
+    mean_at_ref = params_reorder_c[mask, model_map.ref_column]
+    offset = model_map.global_offset(mean_at_ref)
+    params_reorder_c[mask, :] = params_reorder_c[mask, :] + offset[:, numpy.newaxis]
+
+    wcols = {}
+    valid = [f.fibid for f in model_map.contents if f.valid]
+
+    # parameters per colum
+    params_col = {}
+    for col in xcol:
+        mpar = {}
+        for key in model.param_names:
+            if key not in params_reorder:
+                model_param = getattr(model, key)
+                mpar[key] = model_param.value
+            else:
+                mpar[key] = params_reorder[key][:, col]
+        params_col[col] = mpar
+
+    if processes < 2:
+        for col in xcol:
+            result = calc_matrix(wshape, model, params_col[col], valid, clip=1e-6,
+                                 extra=10)
+            wcols[col] = result
+    else:
+        import multiprocessing as mp
+        pool = mp.Pool(processes=processes)
+
+        results = [pool.apply_async(
+            calc_matrix_adapt,
+            args=(wshape, col, model, params_col[col], valid),
+            kwds={'clip': 1e-6, 'extra': 10}
+        ) for col in xcol]
+
+        for p in results:
+            col, wcol = p.get()
+            wcols[col] = wcol
+
+    return wcols
+
+
+def aper_extract(model_map, wcols, img):
+    from scipy.sparse.linalg import lsqr
+
+    n0 = model_map.total_fibers
+    n1 = img.shape[1]
+    rss = numpy.zeros((n0, n1))
+    for key, val in wcols.items():
+        yl = img[:, key]
+        res = lsqr(val, yl)
+        rss[:, key] = res[0]
+
+    return rss

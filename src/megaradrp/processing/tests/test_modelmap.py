@@ -3,8 +3,8 @@ from astropy.modeling.functional_models import Moffat1D
 import math
 import numpy as np
 import pytest
-from ..modelmap import calc1d_M
-from ..modeldesc import MoffatModelDescription
+from ..modelmap import calc1d_model, calc_matrix
+from ..modeldesc import MoffatModelDescription, GaussBoxModelDescription
 
 
 def create_column(gamma, alpha):
@@ -44,7 +44,7 @@ def _test_1():
     x_0, box = create_column(gamma, alpha)
     valid = range(1, 623+1)
     model_desc = MoffatModelDescription(fixed_center=True)
-    res = calc1d_M(model_desc, box, x_0, valid, 0, lateral=2, nloop=1)
+    res = calc1d_model(model_desc, box, x_0, valid, 0, lateral=2, nloop=1)
 
     ref_values = {
         'x_0': x_0,
@@ -69,4 +69,18 @@ def test_2():
     centers = np.array([3, 38])
     helper = MoffatModelDescription()
     with pytest.raises(ValueError):
-        calc1d_M(helper, box, centers, valid, 0)
+        calc1d_model(helper, box, centers, valid, 0)
+
+
+def test_calc1():
+    import scipy.sparse.csr
+    model = GaussBoxModelDescription().model_cls
+    g_mean = 100 + 6 * np.arange(623)
+    g_std = 1 + np.zeros_like(g_mean)
+    valid = range(623)
+    wshape = (4112, 623)
+    params = {}
+    params['mean'] = g_mean
+    params['stddev'] = g_std
+    wm = calc_matrix(wshape, model, params, valid)
+    assert isinstance(wm, scipy.sparse.csr.csr_matrix)

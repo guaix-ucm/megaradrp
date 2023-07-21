@@ -24,7 +24,7 @@ from megaradrp.instrument.focalplane import FocalPlaneConf
 from megaradrp.products.modelmap import ModelMap
 from megaradrp.products.modelmap import GeometricModel
 from megaradrp.processing.aperture import ApertureExtractor
-from megaradrp.processing.modelmap import calc1d_M
+from megaradrp.processing.modelmap import calc1d_model
 from megaradrp.processing.modeldesc import GaussBoxModelDescription
 from megaradrp.ntypes import ProcessedImage, ProcessedRSS
 from megaradrp.processing.combine import basic_processing_with_combination
@@ -265,7 +265,7 @@ def calc_parallel(model_desc, data, calc_col, tracemap, valid_fibers,
     scale = column.max()
     column_norm = column / scale
 
-    final = calc1d_M(model_desc, column_norm, centers, valid_fibers, calc_col, lateral=2, nloop=nloop)
+    final = calc1d_model(model_desc, column_norm, centers, valid_fibers, calc_col, lateral=2, nloop=nloop)
 
     # TODO: we may need a function to perform scaling in general
     for idx, params in final.items():
