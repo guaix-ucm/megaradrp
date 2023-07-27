@@ -2,6 +2,71 @@
 requires = ["setuptools >= 45", "wheel", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "megaradrp"
+dynamic = ["version"]
+description = "MEGARA Data Reduction Pipeline"
+readme = "README.rst"
+requires-python = ">=3.8"
+license = {text = "GPL-3.0-or-later"}
+authors = [
+  {name = "Sergio Pascual", email = "sergiopr@fis.ucm.es"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License (GPL)",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Astronomy",
+]
+dependencies = [
+   "setuptools>=39.2",
+   "numpy >= 1.20",
+   "astropy",
+   "scipy",
+   "matplotlib",
+   "numina >= 0.22",
+   "jsonschema",
+   "scikit-image",
+   "packaging",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=6",
+    "pytest-remotedata",
+]
+docs = [
+    "sphinx",
+    "numpydoc"
+]
+DB = [
+    "sqlalchemy",
+    "numinadb"
+]
+
+[project.urls]
+Homepage = "https://github.com/guaix-ucm/megaradrp"
+Repository = "https://github.com/guaix-ucm/megaradrp.git"
+Documentation = "https://megaradrp.readthedocs.io/en/stable/"
+
+[project.scripts]
+megaradrp-overplot_traces = "megaradrp.tools.overplot_traces:main"
+megaradrp-heal_traces = "megaradrp.tools.heal_traces:main"
+megaradrp-cube = "megaradrp.processing.cube:main"
+
+[project.entry-points."numina.pipeline.1"]
+MEGARA = "megaradrp.loader:load_drp"
+
+[project.entry-points."numinadb.extra.1"]
+MEGARA = "megaradrp.db"
+
 # pyproject.toml
 [tool.setuptools_scm]
 write_to = "src/megaradrp/_version.py"
