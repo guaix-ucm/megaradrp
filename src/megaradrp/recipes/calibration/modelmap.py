@@ -158,7 +158,7 @@ class ModelMapRecipe(MegaraBaseRecipe):
 
         cols = range(100, 4100, 100)
         # cols = range(100, 200, 100)
-        valid_fibers = [f.fibid for f in tracemap.contents if f.valid]
+        valid_fibers = [(f.fibid, f.boixid) for f in tracemap.contents if f.valid]
         # ncol = tracemap.total_fibers
 
         nfit = data.shape[1]
@@ -191,7 +191,7 @@ class ModelMapRecipe(MegaraBaseRecipe):
         # vector of columns where we have performed the fit
         g_col = np.asarray(cols)
 
-        for fibid in valid_fibers:
+        for fibid, boxid in valid_fibers:
             # interpolator of the parameters of a given fiber
             interpolators = {name: None for name in params_save}
             # Values of the parameters of a given fiber
@@ -230,8 +230,7 @@ class ModelMapRecipe(MegaraBaseRecipe):
             # summary of model for this fiber
             model_fib = {'model_name': model_obj.name, 'params': interpolators}
             # if invalid. missing, model = {}
-            gm = GeometricModel(fibid,
-                                boxid=1, # FIXME: not counting this
+            gm = GeometricModel(fibid, boxid,
                                 start=1, stop=nfit, model=model_fib
             )
 
@@ -262,7 +261,7 @@ class ModelMapRecipe(MegaraBaseRecipe):
         return result
 
 
-def calc_parallel(model_desc, data, calc_col, tracemap, valid_fibers,
+def calc_parallel(model_desc, data, calc_col, tracemap,
                   nloop=10, average=0):
 
     if average > 0:
@@ -270,6 +269,7 @@ def calc_parallel(model_desc, data, calc_col, tracemap, valid_fibers,
     else:
         column = data[:, calc_col]
 
+    valid_fibers = [f.fibid for f in tracemap.contents if f.valid]
     centers = np.array([f.polynomial(calc_col) for f in tracemap.contents if f.valid])
     # we might need a better approach to logging in multiprocessing
     # https://www.jamesfheath.com/2020/06/logging-in-python-while-multiprocessing.html
@@ -291,11 +291,10 @@ def calc_parallel(model_desc, data, calc_col, tracemap, valid_fibers,
 def fit_model(model_desc, data, tracemap, cols, processes=20):
 
     pool = mp.Pool(processes)
-    valid_fibers = [f.fibid for f in tracemap.contents if f.valid]
 
     results = [pool.apply_async(
         calc_parallel,
-        args=(model_desc, data, col, tracemap, valid_fibers),
+        args=(model_desc, data, col, tracemap),
         kwds={'nloop': 3, 'average': 2}
     ) for col in cols]
 
