@@ -73,7 +73,8 @@ class GaussBoxModelDescription(ModelDescription):
         params = {
             'mean': centers,
             'stddev': np.sqrt(sig2),
-            'amplitude': ampl
+            'amplitude': ampl,
+            'hpix': 0.5 * np.ones_like(centers),
         }
         return params
 
@@ -84,7 +85,8 @@ class GaussBoxModelDescription(ModelDescription):
         params = {
             'mean': centers,
             'stddev': sigma * np.ones_like(centers),
-            'amplitude': [column[ecenters[i]] / 0.25 for i in range(nfib)]
+            'amplitude': [column[ecenters[i]] / 0.25 for i in range(nfib)],
+            'hpix': 0.5 * np.ones_like(centers),
         }
         return params
 
