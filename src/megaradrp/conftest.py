@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -7,4 +7,4 @@
 # License-Filename: LICENSE.txt
 #
 
-from numina.tests.plugins import *
+from numina.tests.plugins import *  # noqa: F403, F401

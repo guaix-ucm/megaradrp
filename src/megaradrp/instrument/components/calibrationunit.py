@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2019 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -12,4 +12,3 @@ from numina.instrument.components.wheel import Wheel
 
 class MegaraCalibrationUnit(Wheel):
     pass
-

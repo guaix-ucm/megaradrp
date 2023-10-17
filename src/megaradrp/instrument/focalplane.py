@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2021 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -24,6 +24,7 @@ from megaradrp.processing.hexgrid import connected6
 
 class FocalPlaneConf(object):
     """Configuration of focal plane"""
+
     def __init__(self, name='LCB'):
         self.name = name
         self.conf_id = "00000000-0000-0000-0000-000000000000"
@@ -273,13 +274,16 @@ class FiberConfs(FocalPlaneConf):
             be removed in 1.0
 
     """
+
     def __init__(self):
         super(FiberConfs, self).__init__()
-        warnings.warn("The 'FiberConfs' class was renamed to 'FocalPlaneConf'", DeprecationWarning, stacklevel=2)
+        warnings.warn("The 'FiberConfs' class was renamed to 'FocalPlaneConf'",
+                      DeprecationWarning, stacklevel=2)
 
 
 class BundleConf(object):
     """Description of a bundle"""
+
     def __init__(self, bundle_id, bundle_type, target_type=TargetType.UNASSIGNED,
                  target_priority=0, target_name='unknown', enabled=True, movable=True):
         self.id = bundle_id
@@ -333,6 +337,7 @@ class BundleConf(object):
 
 class LcbBundleConf(BundleConf):
     """Description of the LCB bundle"""
+
     def __init__(self, bundle_id=0):
         super(LcbBundleConf, self).__init__(
             bundle_id=bundle_id, bundle_type=BundleType.LCB,
@@ -345,6 +350,7 @@ class LcbBundleConf(BundleConf):
 
 class SkyBundleConf(BundleConf):
     """Description of a sky bundle"""
+
     def __init__(self, bundle_id):
         super(SkyBundleConf, self).__init__(
             bundle_id=bundle_id, bundle_type=BundleType.SKY,
@@ -354,6 +360,7 @@ class SkyBundleConf(BundleConf):
 
 class FiberConf(object):
     """Description of the fiber"""
+
     def __init__(self, fibid=0, bundle_id=None, inactive=False):
         self.fibid = fibid
         self.name = 'unknown'

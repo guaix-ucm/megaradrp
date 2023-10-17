@@ -1,6 +1,7 @@
 from megaradrp.processing.trimover import OverscanCorrector
 import numpy
 
+
 def test_OverscanCorrector():
 
     detconf = {
@@ -16,15 +17,15 @@ def test_OverscanCorrector():
     }
 
     oc = OverscanCorrector(detconf)
-    assert oc.trim1 == (slice(0, 2056, None),slice(50, 4146, None))
-    assert oc.pcol1 == (slice(0, 2056, None),slice(0, 50, None))
-    assert oc.ocol1 == (slice(0, 2056, None),slice(4149, 4196, None))
-    assert oc.orow1 == (slice(2056, 2106, None),slice(50, 4146, None))
+    assert oc.trim1 == (slice(0, 2056, None), slice(50, 4146, None))
+    assert oc.pcol1 == (slice(0, 2056, None), slice(0, 50, None))
+    assert oc.ocol1 == (slice(0, 2056, None), slice(4149, 4196, None))
+    assert oc.orow1 == (slice(2056, 2106, None), slice(50, 4146, None))
 
-    assert oc.trim2 == (slice(2156, 4212, None),slice(50, 4146, None))
-    assert oc.pcol2 == (slice(2156, 4212, None),slice(4145, 4196, None))
-    assert oc.ocol2 == (slice(2156, 4212, None),slice(0, 50, None))
-    assert oc.orow2 == (slice(2106, 2156, None),slice(50, 4146, None))
+    assert oc.trim2 == (slice(2156, 4212, None), slice(50, 4146, None))
+    assert oc.pcol2 == (slice(2156, 4212, None), slice(4145, 4196, None))
+    assert oc.ocol2 == (slice(2156, 4212, None), slice(0, 50, None))
+    assert oc.orow2 == (slice(2106, 2156, None), slice(50, 4146, None))
 
 
 def test_amp_1():

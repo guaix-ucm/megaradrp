@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -24,7 +24,7 @@ class FiberSolutionArcCalibration(object):
     def __getstate__(self):
         return {'fibid': self.fibid,
                 'solution': self.solution.__getstate__()
-        }
+                }
 
     def __setstate__(self, state):
         self.fibid = state['fibid']
@@ -57,7 +57,8 @@ class WavelengthCalibration(BaseStructuredCalibration):
     def __setstate__(self, state):
         super(WavelengthCalibration, self).__setstate__(state)
 
-        self.global_offset = nppol.Polynomial(state.get('global_offset', [0.0]))
+        self.global_offset = nppol.Polynomial(
+            state.get('global_offset', [0.0]))
 
         self.contents = []
         # Handle dictionary
@@ -67,6 +68,7 @@ class WavelengthCalibration(BaseStructuredCalibration):
             values = state['contents']
 
         for val in values:
-            new = FiberSolutionArcCalibration.__new__(FiberSolutionArcCalibration)
+            new = FiberSolutionArcCalibration.__new__(
+                FiberSolutionArcCalibration)
             new.__setstate__(val)
             self.contents.append(new)

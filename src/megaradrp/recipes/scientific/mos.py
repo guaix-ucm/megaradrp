@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2020 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -86,7 +86,8 @@ class MOSImageRecipe(ImageRecipe):
         # Flux calibration
         if rinput.master_sensitivity is not None:
             self.logger.info('start flux calibration')
-            node = FluxCalibration(rinput.master_sensitivity.open(), self.datamodel)
+            node = FluxCalibration(
+                rinput.master_sensitivity.open(), self.datamodel)
             final = node(final)
             origin = node(origin)
             sky = node(sky)
@@ -114,7 +115,8 @@ class MOSImageRecipe(ImageRecipe):
 
             airmass = final[0].header['AIRMASS']
 
-            extinc_corr = numpy.power(10.0, 0.4 * extinc_interp(wavelen_aa) * airmass)
+            extinc_corr = numpy.power(
+                10.0, 0.4 * extinc_interp(wavelen_aa) * airmass)
 
             final[0].data *= extinc_corr
             origin[0].data *= extinc_corr
@@ -134,6 +136,3 @@ class MOSImageRecipe(ImageRecipe):
             reduced_rss=origin,
             sky_rss=sky
         )
-
-
-

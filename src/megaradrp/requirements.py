@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2019 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -19,6 +19,7 @@ import megaradrp.products.modelmap
 
 class MasterBiasRequirement(Requirement):
     """Requirement for Master Bias images"""
+
     def __init__(self, optional=False):
         super(MasterBiasRequirement, self).__init__(
             megaradrp.ntypes.MasterBias,
@@ -106,7 +107,8 @@ class WavelengthCalibrationRequirement(Requirement):
 
 class LinesCatalogRequirement(Requirement):
     def __init__(self):
-        super(LinesCatalogRequirement, self).__init__(megaradrp.ntypes.MegaraLinesCatalog, 'Catalog of lines')
+        super(LinesCatalogRequirement, self).__init__(
+            megaradrp.ntypes.MegaraLinesCatalog, 'Catalog of lines')
 
 
 class SkyRSSRequirement(Requirement):

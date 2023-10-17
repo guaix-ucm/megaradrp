@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2021 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -148,7 +148,7 @@ class MegaraLampSequence(Sequence):
             yield final
 
     def lamp_check(self, lamp):
-        raise NotImplemented
+        raise NotImplementedError
 
     def lamp_in_focal_plane(self, lamp, instrument):
 
@@ -157,13 +157,14 @@ class MegaraLampSequence(Sequence):
         # Total number of fibers, defines RSS size
         nfibers = instrument.fiberset.nfibers
         # Radius of the fiber (on the focal plane, arcsecs)
-        fibrad = instrument.fiberset.size
+        # fibrad = instrument.fiberset.size
         fibarea = instrument.fiberset.area
         # Result, RSS like (with higher resolution in WL)
         final = np.zeros((nfibers, wl.shape[0]))
 
         # Centers of profiles
-        tab = instrument.focal_plane.get_visible_fibers(instrument.fiberset.name)
+        tab = instrument.focal_plane.get_visible_fibers(
+            instrument.fiberset.name)
         fibid = tab['fibid']
         pos_x = tab['x']
         pos_y = tab['y']
@@ -181,8 +182,9 @@ class MegaraLampSequence(Sequence):
         photon_energy = (cons.h * cons.c / wl)
 
         sed = lamp.flux(wl)
-        area = 1.0 * u.cm**2 # FIXME, area of the lamp?
-        nphot_area_t_wl_cgs = (sed / photon_energy * area * fibarea).to(u.s**-1 * u.micron**-1)
+        area = 1.0 * u.cm**2  # FIXME, area of the lamp?
+        nphot_area_t_wl_cgs = (sed / photon_energy *
+                               area * fibarea).to(u.s**-1 * u.micron**-1)
 
         final += scales[:, np.newaxis] * nphot_area_t_wl_cgs[np.newaxis, :]
 
@@ -252,7 +254,8 @@ class MegaraSlitFlatSequence(MegaraLampSequence):
 
 class MegaraTwilightFlatSequence(Sequence):
     def __init__(self):
-        super(MegaraTwilightFlatSequence, self).__init__('MEGARA', 'MegaraTwilightFlatImage')
+        super(MegaraTwilightFlatSequence, self).__init__(
+            'MEGARA', 'MegaraTwilightFlatImage')
 
     def setup_instrument(self, instrument):
         instrument.shutter = 'OPEN'
@@ -260,7 +263,7 @@ class MegaraTwilightFlatSequence(Sequence):
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
         telescope = control.get('GTC')
-        atm = telescope.inc # Atmosphere model
+        atm = telescope.inc  # Atmosphere model
         oe = control.get('OE')
 
         self.setup_instrument(instrument)
@@ -268,7 +271,8 @@ class MegaraTwilightFlatSequence(Sequence):
 
         targets2 = [atm.twilight_spectrum]
 
-        wl_in, ns_illum = all_targets_in_focal_plane([], targets2, [], atm, telescope, oe, instrument)
+        wl_in, ns_illum = all_targets_in_focal_plane(
+            [], targets2, [], atm, telescope, oe, instrument)
         out1 = instrument.apply_transmissions_only(wl_in, ns_illum)
         out2 = instrument.project_rss(wl_in, out1)
 
@@ -280,7 +284,8 @@ class MegaraTwilightFlatSequence(Sequence):
 
 class MegaraFocusSequence(MegaraLampSequence):
     def __init__(self):
-        super(MegaraFocusSequence, self).__init__(mode='MegaraFocusSpectrograph')
+        super(MegaraFocusSequence, self).__init__(
+            mode='MegaraFocusSpectrograph')
 
     def run(self, control, exposure, repeat):
         instrument = control.get(self.instrument)
@@ -325,13 +330,14 @@ class MegaraSkyImageSequence(MegaraSequence):
 
         telescope = control.get('GTC')
         oeng = control.get('OE')
-        atm = telescope.inc # Atmosphere model, incoming light
+        atm = telescope.inc  # Atmosphere model, incoming light
 
         # Get targets
         targets1 = control.targets
         targets2 = [atm.night_spectrum]
 
-        wl_in, ns_illum = all_targets_in_focal_plane(targets1, targets2, [], atm, telescope, oeng, instrument)
+        wl_in, ns_illum = all_targets_in_focal_plane(
+            targets1, targets2, [], atm, telescope, oeng, instrument)
 
         out1 = instrument.apply_transmissions_only(wl_in, ns_illum)
         out2 = instrument.project_rss(wl_in, out1)
@@ -358,12 +364,14 @@ class MegaraLCBImageSequence(MegaraSkyLCBImageSequence):
 
 class MegaraLCBAcquisitionSequence(MegaraSkyLCBImageSequence):
     def __init__(self):
-        super(MegaraLCBAcquisitionSequence, self).__init__('MegaraLcbAcquisition')
+        super(MegaraLCBAcquisitionSequence, self).__init__(
+            'MegaraLcbAcquisition')
 
 
 class MegaraFocusTelescopeSequence(MegaraSkyLCBImageSequence):
     def __init__(self):
-        super(MegaraFocusTelescopeSequence, self).__init__('MegaraFocusTelescope')
+        super(MegaraFocusTelescopeSequence, self).__init__(
+            'MegaraFocusTelescope')
 
     def run(self, control, exposure, repeat):
         telescope = control.get('GTC')
@@ -393,7 +401,8 @@ class MegaraMOSImageSequence(MegaraSkyMOSImageSequence):
 
 class MegaraMOSAcquisitionSequence(MegaraSkyMOSImageSequence):
     def __init__(self):
-        super(MegaraMOSAcquisitionSequence, self).__init__('MegaraMosAcquisition')
+        super(MegaraMOSAcquisitionSequence, self).__init__(
+            'MegaraMosAcquisition')
 
 
 def megara_sequences():
@@ -494,22 +503,26 @@ def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, oe, instrument
         for target in t1:
             _logger.debug('simulate MOS')
             _logger.debug('find robot nearest to %s', target.relposition)
-            result = base.query(target.relposition, distance_upper_bound=maxdis)
+            result = base.query(target.relposition,
+                                distance_upper_bound=maxdis)
             if result[1] >= instrument.fiberset.nfibers:
                 _logger.debug('no robot nearest to point within %f', maxdis)
                 continue
             val = ids[result[1]]
             _logger.debug('robot is number % d', val)
-            robot = instrument.get_device('MEGARA.MOS.RoboticPositioner_%d' % val)
-            fibid1, allpos1 =  robot.fibers_in_focal_plane()
-            tab1 = instrument.focal_plane.filter_visible_fibers(fibid1, allpos1)
+            robot = instrument.get_device(
+                'MEGARA.MOS.RoboticPositioner_%d' % val)
+            fibid1, allpos1 = robot.fibers_in_focal_plane()
+            tab1 = instrument.focal_plane.filter_visible_fibers(
+                fibid1, allpos1)
             fibid1 = tab1['fibid']
             pos_x = tab1['x']
             pos_y = tab1['y']
             subfinal = final[fibid1 - 1]
             # FIXME: check angles
             rotang = 90 - robot.pa
-            subfinal = add_target_mos(target, subfinal, wl, fibrad, pos_x, pos_y, rotang, oe, telescope, atmosphere)
+            subfinal = add_target_mos(
+                target, subfinal, wl, fibrad, pos_x, pos_y, rotang, oe, telescope, atmosphere)
             final[fibid1 - 1] = subfinal
 
         # Recompute all visible fibers
@@ -530,7 +543,8 @@ def all_targets_in_focal_plane(t1, t2, t3, atmosphere, telescope, oe, instrument
         pos_y = tab['y']
         cover_frac = tab['cover']
         subfinal = final[fibid - 1]
-        add_targets_lcb2(t1, subfinal, wl, fibrad, pos_x, pos_y, oe, telescope, atmosphere)
+        add_targets_lcb2(t1, subfinal, wl, fibrad, pos_x,
+                         pos_y, oe, telescope, atmosphere)
 
     add_sky(t2, subfinal, wl, fibarea, telescope)
 
@@ -552,23 +566,25 @@ def add_targets_lcb(targets, subfinal, wl, fibrad, pos_x, pos_y, oe, telescope, 
     _logger.debug('seeing FWHM is %', seeing_fwhm)
     # This is not really correct, but is simpler
     # than doing the whole PSF convolution
-    _logger.debug('internal focus factor %s', telescope.focus_actuator.internal_focus_factor)
+    _logger.debug('internal focus factor %s',
+                  telescope.focus_actuator.internal_focus_factor)
     # Scale with focus
     seeing_fwhm_focus = seeing_fwhm * telescope.focus_actuator.internal_focus_factor
     telescope.focus_actuator.focus = 1200
     print('intnl focus factor', telescope.focus_actuator.internal_focus_factor)
     seeing_profile = atmosphere.seeing.profile(seeing_fwhm_focus)
     psf = None
-    fraction_of_flux = simulate_point_like_profile(seeing_profile, psf, fibrad.value)
+    fraction_of_flux = simulate_point_like_profile(
+        seeing_profile, psf, fibrad.value)
 
-    energy_unit = u.erg * u.s**-1 * u.cm**-2 * u.AA **-1
+    energy_unit = u.erg * u.s**-1 * u.cm**-2 * u.AA ** -1
     photon_energy = (cons.h * cons.c / wl)
 
     for target in targets:
         _logger.debug('object name is %s', target.name)
         center = target.relposition
         # fraction of flux in each fiber
-        #scales = np.zeros((nfibers,))
+        # scales = np.zeros((nfibers,))
 
         # Offset fiber positions
         offpos0 = pos_x - center[0]
@@ -579,7 +595,8 @@ def add_targets_lcb(targets, subfinal, wl, fibrad, pos_x, pos_y, oe, telescope, 
         # Handle units
         sed = target.spectrum['sed'](wl) * extinction * energy_unit
 
-        nphotons = sed / photon_energy * telescope.area * telescope.transmission(wl)
+        nphotons = sed / photon_energy * \
+            telescope.area * telescope.transmission(wl)
         subfinal += f_o_f[:, np.newaxis] * nphotons.to(u.s**-1 * u.micron**-1)
 
     return subfinal
@@ -593,12 +610,14 @@ def add_targets_lcb2(targets, subfinal, wl, fibrad, pos_x, pos_y, oe, telescope,
     _logger.debug('seeing FWHM is %s', seeing_fwhm)
     # Scale with focus
     # telescope.focus_actuator.focus = 3000
-    _logger.debug('internal focus factor %s', telescope.focus_actuator.internal_focus_factor)
+    _logger.debug('internal focus factor %s',
+                  telescope.focus_actuator.internal_focus_factor)
     seeing_fwhm_focus = seeing_fwhm * telescope.focus_actuator.internal_focus_factor
     #
     seeing_profile = atmosphere.seeing.profile(seeing_fwhm_focus)
     psf = None
-    fraction_of_flux = simulate_point_like_profile(seeing_profile, psf, fibrad.value)
+    fraction_of_flux = simulate_point_like_profile(
+        seeing_profile, psf, fibrad.value)
 
     airmass = oe.airmass
     zenith_distance = oe.zenith_distance
@@ -607,7 +626,7 @@ def add_targets_lcb2(targets, subfinal, wl, fibrad, pos_x, pos_y, oe, telescope,
     dar = atmosphere.refraction(zenith_distance, wl, ref_wl).to(u.arcsec).value
     _logger.debug('extreme DAR %s %s', dar[0], dar[-1])
 
-    energy_unit = u.erg * u.s**-1 * u.cm**-2 * u.AA **-1
+    energy_unit = u.erg * u.s**-1 * u.cm**-2 * u.AA ** -1
     photon_energy = (cons.h * cons.c / wl)
 
     for target in targets:
@@ -637,7 +656,8 @@ def add_targets_lcb2(targets, subfinal, wl, fibrad, pos_x, pos_y, oe, telescope,
         # Handle units
         sed = target.spectrum['sed'](wl) * extinction * energy_unit
 
-        nphotons = sed / photon_energy * telescope.area * telescope.transmission(wl)
+        nphotons = sed / photon_energy * \
+            telescope.area * telescope.transmission(wl)
         flux_dar = f_o_f_dar * nphotons.to(u.s**-1 * u.micron**-1)
         # flux_no_dar = f_o_f[:, np.newaxis] * nphotons.to(u.s ** -1 * u.micron ** -1)
         subfinal += flux_dar
@@ -653,11 +673,13 @@ def add_target_mos(target, subfinal, wl, fibrad, pos_x, pos_y, rotang, oe, teles
     seeing_fwhm = atmosphere.seeing.fwhm(ref_wl, oe.zenith_distance)
     _logger.debug('seeing FWHM is %s', seeing_fwhm)
     # telescope.focus_actuator.focus = 3000
-    _logger.debug('internal focus factor %s', telescope.focus_actuator.internal_focus_factor)
+    _logger.debug('internal focus factor %s',
+                  telescope.focus_actuator.internal_focus_factor)
     seeing_fwhm_focus = seeing_fwhm * telescope.focus_actuator.internal_focus_factor
     seeing_profile = atmosphere.seeing.profile(seeing_fwhm_focus)
     psf = None
-    fraction_of_flux = simulate_point_like_profile(seeing_profile, psf, fibrad.value, angle=rotang, xsize=5.0, ysize=5.0)
+    fraction_of_flux = simulate_point_like_profile(
+        seeing_profile, psf, fibrad.value, angle=rotang, xsize=5.0, ysize=5.0)
 
     airmass = oe.airmass
     _logger.debug('airmass is %s', airmass)
@@ -666,13 +688,13 @@ def add_target_mos(target, subfinal, wl, fibrad, pos_x, pos_y, rotang, oe, teles
 
     extinction = np.power(10, -0.4 * airmass * atmosphere.extinction(wl))
 
-    energy_unit = u.erg * u.s**-1 * u.cm**-2 * u.AA **-1
+    energy_unit = u.erg * u.s**-1 * u.cm**-2 * u.AA ** -1
     photon_energy = (cons.h * cons.c / wl)
 
     _logger.debug('object is %s', target.name)
     center = target.relposition
 
-    ref_wl = 0.5 * (wl.max()  + wl.min())
+    ref_wl = 0.5 * (wl.max() + wl.min())
 
     _logger.debug('reference wl is %s', ref_wl)
     dar = atmosphere.refraction(zenith_distance, wl, ref_wl).to(u.arcsec).value
@@ -700,7 +722,8 @@ def add_target_mos(target, subfinal, wl, fibrad, pos_x, pos_y, rotang, oe, teles
     # Handle units
     sed = target.spectrum['sed'](wl) * extinction * energy_unit
 
-    nphotons = sed / photon_energy * telescope.area * telescope.transmission(wl)
+    nphotons = sed / photon_energy * \
+        telescope.area * telescope.transmission(wl)
     flux_dar = f_o_f_dar * nphotons.to(u.s**-1 * u.micron**-1)
     # flux_no_dar = f_o_f[:, np.newaxis] * nphotons.to(u.s ** -1 * u.micron ** -1)
     subfinal += flux_dar
@@ -717,7 +740,8 @@ def add_sky(targets, subfinal, wl, fibarea, telescope):
     _logger.debug('add sky targets')
     for target in targets:
         sed = target(wl) * energy_unit
-        nphotons = sed / photon_energy * fibarea * telescope.area * telescope.transmission(wl)
+        nphotons = sed / photon_energy * fibarea * \
+            telescope.area * telescope.transmission(wl)
         subfinal += nphotons.to(u.s**-1 * u.micron**-1)
 
     return subfinal
@@ -735,7 +759,8 @@ def add_lamp(lamps, subfinal, wl, fibarea, pos_x, pos_y):
 
         sed = lamp.flux(wl)
         area = 1.0 * u.cm ** 2  # FIXME, lamp surface area?
-        nphotons = (sed / photon_energy * area * fibarea).to(u.s ** -1 * u.micron ** -1)
+        nphotons = (sed / photon_energy * area *
+                    fibarea).to(u.s ** -1 * u.micron ** -1)
         subfinal += scales[:, np.newaxis] * nphotons[np.newaxis, :]
 
     return subfinal

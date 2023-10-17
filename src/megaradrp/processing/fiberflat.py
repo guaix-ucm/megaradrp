@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2021 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -25,8 +25,8 @@ class CommonFlatCorrector(Corrector):
     def __init__(self, flatdata, datamodel=None, calibid='calibid-unknown', dtype='float32'):
 
         super(CommonFlatCorrector, self).__init__(datamodel=datamodel,
-                                                 calibid=calibid,
-                                                 dtype=dtype)
+                                                  calibid=calibid,
+                                                  dtype=dtype)
         if isinstance(flatdata, fits.HDUList):
             self.corr = flatdata[0].data
         elif isinstance(flatdata, fits.ImageHDU):
@@ -79,6 +79,7 @@ class FiberFlatCorrector(CommonFlatCorrector):
 
 class Splitter(Corrector):
     """Make a copy of its input"""
+
     def __init__(self):
         super(Splitter, self).__init__()
         self.out = None
@@ -93,6 +94,7 @@ class Splitter(Corrector):
 
 class FlipLR(Corrector):
     """Make a copy of its input"""
+
     def __init__(self):
         super(FlipLR, self).__init__()
 

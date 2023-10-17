@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2017 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -23,7 +23,7 @@ def create_dummy_spectrum(wl_in):
     photons_in = np.zeros_like(wl_in)
 
     for c in wlc:
-        photons_in +=  4e4 * np.exp(-0.5*((wl_in-c) / s)**2)
+        photons_in += 4e4 * np.exp(-0.5*((wl_in-c) / s)**2)
 
     photons_in += 4.0e4
     return photons_in
@@ -51,6 +51,6 @@ def create_th_ar_arc_spectrum(wl_in):
 
     for cwl, flux in lines:
         c = cwl / 1e4
-        flux_out +=  flux * np.exp(-0.5*((wl_in-c) / s)**2)
+        flux_out += flux * np.exp(-0.5*((wl_in-c) / s)**2)
 
     return flux_out

@@ -1,5 +1,5 @@
 #
-# Copyright 2017 Universidad Complutense de Madrid
+# Copyright 2017-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -12,8 +12,7 @@
 
 from sqlalchemy import Integer, String, DateTime, Float
 from sqlalchemy import CHAR
-from sqlalchemy import Table, Column, ForeignKey
-from sqlalchemy.orm import relationship, synonym
+from sqlalchemy import Column, ForeignKey
 
 
 from numinadb.base import Base
@@ -32,7 +31,3 @@ class MegaraFrame(Base):
     insmode = Column(String)
     vph = Column(String)
     completion_time = Column(DateTime)
-
-
-
-

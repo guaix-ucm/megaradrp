@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2020 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -52,7 +52,8 @@ class ImageRecipe(MegaraBaseRecipe):
     master_twilight = reqs.MasterTwilightRequirement()
     master_apertures = reqs.MasterAperturesRequirement(alias='master_traces')
     sky_rss = reqs.SkyRSSRequirement(optional=True)
-    extraction_offset = Parameter([0.0], 'Offset traces for extraction', accept_scalar=True)
+    extraction_offset = Parameter(
+        [0.0], 'Offset traces for extraction', accept_scalar=True)
     ignored_sky_bundles = Parameter([], 'Ignore these sky bundles')
     master_sensitivity = reqs.SensitivityRequirement()
     reference_extinction = reqs.ReferenceExtinction()
@@ -79,10 +80,10 @@ class ImageRecipe(MegaraBaseRecipe):
 
         # 1D, extraction, Wl calibration, Flat fielding
         reduced_rss = self.run_reduction_1d(img,
-            rinput.master_apertures, rinput.master_wlcalib,
-            rinput.master_fiberflat, rinput.master_twilight,
-            offset=rinput.extraction_offset
-        )
+                                            rinput.master_apertures, rinput.master_wlcalib,
+                                            rinput.master_fiberflat, rinput.master_twilight,
+                                            offset=rinput.extraction_offset
+                                            )
         self.save_intermediate_img(reduced_rss, 'reduced_rss.fits')
 
         return reduced2d, reduced_rss
@@ -90,7 +91,8 @@ class ImageRecipe(MegaraBaseRecipe):
     def run_reduction_1d(self, img, tracemap, wlcalib, fiberflat, twflat=None, offset=None):
         # 1D, extraction, Wl calibration, Flat fielding
         correctors = []
-        correctors.append(ApertureExtractor(tracemap, self.datamodel, offset=offset))
+        correctors.append(ApertureExtractor(
+            tracemap, self.datamodel, offset=offset))
         correctors.append(FlipLR())
         correctors.append(WavelengthCalibrator(wlcalib, self.datamodel))
         correctors.append(FiberFlatCorrector(fiberflat.open(), self.datamodel))
@@ -118,7 +120,8 @@ class ImageRecipe(MegaraBaseRecipe):
         if sky_rss is None:
             self.logger.info('compute sky from SKY bundles')
             if ignored_sky_bundles:
-                self.logger.info('sky bundles ignored: %s', ignored_sky_bundles)
+                self.logger.info('sky bundles ignored: %s',
+                                 ignored_sky_bundles)
             return subtract_sky(img,
                                 ignored_sky_bundles=ignored_sky_bundles,
                                 logger=self.logger
@@ -126,5 +129,5 @@ class ImageRecipe(MegaraBaseRecipe):
         else:
             self.logger.info('use sky RSS image')
             return subtract_sky_rss(img, sky_img=sky_rss,
-                                logger=self.logger
-                                )
+                                    logger=self.logger
+                                    )

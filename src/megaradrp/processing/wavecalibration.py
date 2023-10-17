@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2022 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -32,6 +32,7 @@ _logger = logging.getLogger(__name__)
 
 class SimpleWcs1D(object):
     """Store parameters of a simple 1D WCS"""
+
     def __init__(self, crval=0, crpix=0, cdelt=1, ctype='', cunit='', **kwargs):
         self.crval = crval
         self.crpix = crpix
@@ -101,7 +102,8 @@ def calibrate_wl_rss_megara(rss, solutionwl, dtype='float32', span=0, inplace=Fa
     current_vph = rss[0].header['VPH']
     current_insmode = rss[0].header['INSMODE']
 
-    _logger.debug('Current INSMODE is %s, VPH is %s', current_insmode, current_vph)
+    _logger.debug('Current INSMODE is %s, VPH is %s',
+                  current_insmode, current_vph)
     if current_insmode in WLCALIB_PARAMS and current_vph in WLCALIB_PARAMS[current_insmode]:
         wvpar_dict = WLCALIB_PARAMS[current_insmode][current_vph]
         _logger.info('precomputed wl parameters are %s', wvpar_dict)
@@ -176,7 +178,8 @@ def calibrate_wl_rss(rss, solutionwl, npix, targetwcs, dtype='float32', span=0, 
     try:
         header_add_barycentric_correction(hdr, key='B')
     except KeyError as error:
-        _logger.warning('Missing key %s, cannot add barycentric correction', error)
+        _logger.warning(
+            'Missing key %s, cannot add barycentric correction', error)
     _logger.debug('Add calibration headers')
     hdr['NUM-WAV'] = solutionwl.calibid
     hdr['history'] = f'Wavelength calibration with {solutionwl.calibid}'
@@ -200,21 +203,21 @@ def calibrate_wl_rss(rss, solutionwl, npix, targetwcs, dtype='float32', span=0, 
         map_data[idx, lower:upper+1] = 1
         # Update Fibers
         key = f"FIB{fibid:03d}W1"
-        fibers_ext_headers[key] =  (lower + 1, "Start of spectral coverage")
+        fibers_ext_headers[key] = (lower + 1, "Start of spectral coverage")
         key = f"FIB{fibid:03d}W2"
-        fibers_ext_headers[key] =  (upper + 1, "End of spectral coverage")
+        fibers_ext_headers[key] = (upper + 1, "End of spectral coverage")
 
     # Update KEYWORDS
     # "FIB%03d_V"
     for fibid in solutionwl.error_fitting:
         # Update Fibers
         key = "FIB%03d_V" % fibid
-        fibers_ext_headers[key] =  False
+        fibers_ext_headers[key] = False
 
     for fibid in solutionwl.missing_fibers:
         # Update Fibers
         key = "FIB%03d_V" % fibid
-        fibers_ext_headers[key] =  False
+        fibers_ext_headers[key] = False
 
     rss_map = fits.ImageHDU(data=map_data, name='WLMAP')
 
@@ -277,7 +280,8 @@ def header_add_barycentric_correction(hdr, key='B', out=None):
     # Header must contain RADEG and DECDEG
 
     if 'OBSGEO-X' not in hdr:
-        warnings.warn('OBSGEO- keywords not defined, using default values for GTC', RuntimeWarning)
+        warnings.warn(
+            'OBSGEO- keywords not defined, using default values for GTC', RuntimeWarning)
         # Geocentric coordinates of GTC
         hdr['OBSGEO-X'] = 5327285.0921
         hdr['OBSGEO-Y'] = -1718777.1125
@@ -288,7 +292,8 @@ def header_add_barycentric_correction(hdr, key='B', out=None):
     if wcs0.wcs.spec == -1:
         # We don't have a spec axis
         raise TypeError('Header does not contain spectral axis')
-    gtc = EarthLocation.from_geocentric(wcs0.wcs.obsgeo[0], wcs0.wcs.obsgeo[1], wcs0.wcs.obsgeo[2], unit='m')
+    gtc = EarthLocation.from_geocentric(
+        wcs0.wcs.obsgeo[0], wcs0.wcs.obsgeo[1], wcs0.wcs.obsgeo[2], unit='m')
     date_obs = astropy.time.Time(wcs0.wcs.dateobs, format='fits')
     # if frame='fk5', we need to pass the epoch and equinox
     sc = SkyCoord(ra=hdr['RADEG'], dec=hdr['DECDEG'], unit='deg')
@@ -406,7 +411,8 @@ def resample_rss_flux(arr, solutionwl, npix, finalwcs, span=0, fill=0):
         )
 
         if lower + span > upper - span:
-            warnings.warn('lower limit + span is > upper limit - span', RuntimeWarning)
+            warnings.warn(
+                'lower limit + span is > upper limit - span', RuntimeWarning)
 
         fl_borders = interpolator(new_wl_borders)
         rss_resampled[idx] = fl_borders[1:] - fl_borders[:-1]

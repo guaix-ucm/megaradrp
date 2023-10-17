@@ -35,7 +35,7 @@ def calc1d_model(model_desc: ModelDescription, column: numpy.ndarray,
     model_cls = model_desc.model_cls
 
     # shape of LCB image
-    nfibers = 623
+    # nfibers = 623
     nrows = 4112
 
     xl = numpy.arange(nrows, dtype=float)
@@ -100,11 +100,14 @@ def calc1d_model(model_desc: ModelDescription, column: numpy.ndarray,
                 # The values of the parameters
                 permutated_fibers = current[fib_id]
                 # Parameters to be fixed
-                p_fixed = model_desc.params_fixed(permutated_fibers, fib_id, col)
+                p_fixed = model_desc.params_fixed(
+                    permutated_fibers, fib_id, col)
                 # Bounded parameters
-                p_bounds = model_desc.params_bounds(permutated_fibers, fib_id, col)
+                p_bounds = model_desc.params_bounds(
+                    permutated_fibers, fib_id, col)
                 # The values of the parameters in a tuple
-                args = tuple(permutated_fibers[name] for name in model_cls.param_names)
+                args = tuple(permutated_fibers[name]
+                             for name in model_cls.param_names)
                 # The model for this fiber
                 newg = model_cls(*args, fixed=p_fixed, bounds=p_bounds)
                 # Add to the current model
@@ -122,7 +125,8 @@ def calc1d_model(model_desc: ModelDescription, column: numpy.ndarray,
                 # if fibid == val:
                 fvalue = {}
                 for name in model_cls.param_names:
-                    fvalue[name] = getattr(model_fitted, f'{name}_{val_idx}').value
+                    fvalue[name] = getattr(
+                        model_fitted, f'{name}_{val_idx}').value
 
                 for name in model_cls.param_names:
                     current[fibid][name] = fvalue[name]
@@ -212,7 +216,8 @@ def calc_matrix_cols(model_map, datashape, processes=0):
     params_reorder_c = modeldesc.fiber_center(params_reorder)
     mean_at_ref = params_reorder_c[mask, model_map.ref_column]
     offset = model_map.global_offset(mean_at_ref)
-    params_reorder_c[mask, :] = params_reorder_c[mask, :] + offset[:, numpy.newaxis]
+    params_reorder_c[mask, :] = params_reorder_c[mask, :] + \
+        offset[:, numpy.newaxis]
 
     wcols = {}
     valid = [f.fibid for f in model_map.contents if f.valid]

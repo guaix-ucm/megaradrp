@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2019 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -11,7 +11,7 @@ import math
 
 import numpy as np
 from scipy.stats import norm
-import scipy.interpolate as ii
+import scipy.interpolate as interpol
 from scipy.ndimage.filters import convolve1d
 from numina.instrument.hwdevice import HWDevice
 from numina.instrument.simulation.efficiency import Efficiency
@@ -43,7 +43,8 @@ class FocusActuator(HWDevice):
         if x < -1000 or x > 3000:
             raise ValueError('focus out of limits')
 
-        self.internal_focus_factor = 1+ 1.9 * (math.cosh((x - self._ref_focus) / 3000.0) - 1)
+        self.internal_focus_factor = 1 + 1.9 * \
+            (math.cosh((x - self._ref_focus) / 3000.0) - 1)
         self._internal_focus = x
 
     @property
@@ -165,7 +166,8 @@ class MegaraInstrument(HWDevice):
 
     def project_rss_w(self):
         # This will compute only the illuminated fibers
-        visible_fib_ids = [fibid for fibid, _ in self.focal_plane.get_visible_fibers()]
+        visible_fib_ids = [fibid for fibid,
+                           _ in self.focal_plane.get_visible_fibers()]
         sigma = self.fiberset.sigma
         return project_rss_w(visible_fib_ids, self.pseudo_slit, self.vph, sigma)
 
@@ -212,7 +214,7 @@ class MegaraInstrument(HWDevice):
         fibid = tab['fibid']
 
         base_coverage[fibid-1, 0] = tab['cover']
-        
+
         # This should work with 1D and 2D
         photon_cover = base_coverage * photons_in
 
@@ -227,7 +229,7 @@ class MegaraInstrument(HWDevice):
         # QE of the detector
         spec_in *= self.detector.qe_wl(wltable_in)
 
-        return self.project_rss(self.focal_actuator.internal_focus_factor* self.fiberset.sigma, wltable_in, spec_in)
+        return self.project_rss(self.focal_actuator.internal_focus_factor * self.fiberset.sigma, wltable_in, spec_in)
 
     def illumination_in_focal_plane(self, photons, illumination=None):
 
@@ -257,11 +259,12 @@ def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, 
     xcenter = detector.dshape[1] // 2
     ycenter = detector.dshape[0] // 2
 
-    spos = PIXSCALE * (np.arange(0, DSHAPE[1] * scale) - scale * xcenter) / scale
+    spos = PIXSCALE * \
+        (np.arange(0, DSHAPE[1] * scale) - scale * xcenter) / scale
 
     wl_in_super = vph.ps_x_wl(y_ps_fibers, spos, grid=True)
     # revert
-    if wl_in_super[0,0] > wl_in_super[0,-1]:
+    if wl_in_super[0, 0] > wl_in_super[0, -1]:
         reversed = True
     else:
         reversed = False
@@ -272,7 +275,8 @@ def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, 
     # Resample to higher spatial resolution
     for i, fib_id in enumerate(vis_fibs_id):
         idx = fib_id - 1
-        interpolator = ii.interp1d(wl_in, spec_in[idx]) # This is not conserving flux?
+        # This is not conserving flux?
+        interpolator = interpol.interp1d(wl_in, spec_in[idx])
         spec_in_super[i] = interpolator(wl_in_super[i])
 
     # kernel is constant in pixels
@@ -281,8 +285,8 @@ def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, 
     out = convolve1d(spec_in_super, kernel, axis=1)
 
     # Downsample after convolution
-    spec_in_detector = out[:,::scale]
-    wl_in_detector = wl_in_super[:,::scale]
+    spec_in_detector = out[:, ::scale]
+    wl_in_detector = wl_in_super[:, ::scale]
 
     # fits.writeto('downsampled.fits', spec_in_detector, overwrite=True)
     ytrace = np.zeros_like(wl_in_detector)
@@ -299,8 +303,8 @@ def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, 
 
         ytrace[idx] = ycenter + compy / PIXSCALE
 
-    nsig = 6 # At 6 sigma, the value of the profile * 60000 counts is
-             # << 1
+    nsig = 6  # At 6 sigma, the value of the profile * 60000 counts is
+    # << 1
     final = np.zeros(DSHAPE)
 
     for idx, _ in enumerate(y_ps_fibers):
@@ -308,11 +312,11 @@ def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, 
         maxp = coor_to_pix(ytrace[idx].max() + nsig * sigma)
         yp = np.arange(minp, maxp)
         # Scale of the trace of width sigma
-        base = pixcont_int_pix(yp[:,np.newaxis], ytrace[idx, :], sigma)
-        #print base.sum(axis=0).max()
+        base = pixcont_int_pix(yp[:, np.newaxis], ytrace[idx, :], sigma)
+        # print base.sum(axis=0).max()
         yspec = base * spec_in_detector[idx]
-        #print yspec.sum(axis=0).max(), spec_in_detector[idx].max()
-        final[minp:maxp,:] += yspec
+        # print yspec.sum(axis=0).max(), spec_in_detector[idx].max()
+        final[minp:maxp, :] += yspec
 
     return final
 
@@ -329,15 +333,15 @@ def project_rss_w(visible_fib_ids, pseudo_slit, vph, detector, sigma):
     spos = -PIXSCALE * (np.arange(0, DSHAPE[1]) - xcenter)
     wl_in_detector = vph.ps_x_wl(y_ps_fibers, spos, grid=True)
     # revert
-    wl_in_detector = wl_in_detector[:,::-1]
+    wl_in_detector = wl_in_detector[:, ::-1]
 
     ytrace = np.zeros_like(wl_in_detector)
 
     for idx, y_pslit in enumerate(y_ps_fibers):
         ytrace[idx] = ycenter + vph.b(y_pslit, wl_in_detector[idx]) / PIXSCALE
 
-    nsig = 6 # At 6 sigma, the value of the profile * 60000 counts is
-             # << 1
+    nsig = 6  # At 6 sigma, the value of the profile * 60000 counts is
+    # << 1
     fvalue = 5e-6
 
     l1 = []
@@ -359,8 +363,9 @@ def project_rss_w(visible_fib_ids, pseudo_slit, vph, detector, sigma):
     return l1, l2, l3, l4
     #      row, col, val, fib
 
+
 def coor_to_pix(x):
-    return np.ceil(x -0.5).astype('int')
+    return np.ceil(x - 0.5).astype('int')
 
 
 def pixcont_int_pix(i, x0, sig, d=0.5):

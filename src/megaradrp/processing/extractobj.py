@@ -1,5 +1,5 @@
 
-# Copyright 2011-2021 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -20,7 +20,7 @@ from scipy.spatial import KDTree
 from scipy.ndimage.filters import gaussian_filter
 from numina.array.wavecalib.crosscorrelation import periodic_corr1d
 
-#import megaradrp.datamodel as dm
+# import megaradrp.datamodel as dm
 import megaradrp.instrument.focalplane as fp
 from megaradrp.processing.fluxcalib import update_flux_limits
 
@@ -43,13 +43,13 @@ def coverage_det(arr):
     diffa = numpy.diff(arr)
 
     # For the left, find first +1
-    val_f, = numpy.where(diffa==1)
+    val_f, = numpy.where(diffa == 1)
     pix_f = 0
     if len(val_f) > 0:
         pix_f = val_f[0] + 1
 
     # For the rigth, find first -1
-    val_l, = numpy.where(diffa==-1)
+    val_l, = numpy.where(diffa == -1)
     pix_l = maxcover
     if len(val_l) > 0:
         pix_l = val_l[0] + 1
@@ -107,12 +107,12 @@ def extract_star(rssimage, position, npoints, fiberconf, logger=None):
         max_cover = coverage_total.max()
         some_value_region = coverage_total > 0
         max_value_region = coverage_total == max_cover
-        valid_region = max_value_region
+        # valid_region = max_value_region
 
         # Interval with maximum coverage
-        #nz_max, = numpy.nonzero(numpy.diff(max_value_region))
+        # nz_max, = numpy.nonzero(numpy.diff(max_value_region))
         # Interval with at least 1 fiber
-        #nz_some, = numpy.nonzero(numpy.diff(some_value_region))
+        # nz_some, = numpy.nonzero(numpy.diff(some_value_region))
         nz_max_slice = coverage_det(max_value_region.astype('int'))
         nz_some_slice = coverage_det(some_value_region.astype('int'))
 
@@ -202,7 +202,8 @@ def compute_centroid(rssdata, fiberconf, c1, c2, point, logger=None):
         c_coords = coords - centroid
         scf0 = scf - centroid[:, numpy.newaxis] * flux_per_cell_norm
         mc2 = numpy.dot(scf0, c_coords)
-        logger.info('2nd order moments, x2=%f, y2=%f, xy=%f', mc2[0,0], mc2[1,1], mc2[0,1])
+        logger.info('2nd order moments, x2=%f, y2=%f, xy=%f',
+                    mc2[0, 0], mc2[1, 1], mc2[0, 1])
         return centroid
 
 
@@ -237,7 +238,8 @@ def compute_dar(img, logger=None, debug_plot=False):
         c2 = c + delt // 2
 
         z = rssdata[colids, c1:c2].mean(axis=1)
-        centroid = compute_centroid(rssdata, fp_conf, c1, c2, point, logger=logger)
+        centroid = compute_centroid(
+            rssdata, fp_conf, c1, c2, point, logger=logger)
         cols.append(c)
         xdar.append(centroid[0])
         ydar.append(centroid[1])
@@ -286,15 +288,15 @@ def compute_dar(img, logger=None, debug_plot=False):
         temp = 11.5 * u.deg_C
 
         ll = r.differential_p(
-                zenith_distance,
-                wl=world[:,0] * u.AA,
-                wl_reference=4025 * u.AA,
-                temperature=temp,
-                pressure=press,
-                relative_humidity=rel,
+            zenith_distance,
+            wl=world[:, 0] * u.AA,
+            wl_reference=4025 * u.AA,
+            temperature=temp,
+            pressure=press,
+            relative_humidity=rel,
         )
-        plt.plot(world[:,0], xdar, '*-')
-        plt.plot(world[:,0], ydar, '*-')
+        plt.plot(world[:, 0], xdar, '*-')
+        plt.plot(world[:, 0], ydar, '*-')
         plt.plot(world[:, 0], 2.0 * u.arcsec + ll.to(u.arcsec), '-')
         plt.show()
 
@@ -401,7 +403,8 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
 
     # In magAB
     # f(Jy) = 3631 * 10^-0.4 mAB
-    mag_ref = (star_interp(wavelen_aa) + extinc_interp(wavelen_aa) * airmass) * u.ABmag
+    mag_ref = (star_interp(wavelen_aa) +
+               extinc_interp(wavelen_aa) * airmass) * u.ABmag
     response_1 = mag_ref.to(u.Jy).value
 
     r1max = response_1.max()
@@ -431,7 +434,8 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
     valid = numpy.zeros_like(response_0)
     valid[wl_coverage1] = 1
 
-    pixf1, pixf2 = int(math.floor(pixm1 +  2* sigma)), int(math.ceil(pixm2 - 2 * sigma))
+    pixf1, pixf2 = int(math.floor(pixm1 + 2 * sigma)
+                       ), int(math.ceil(pixm2 - 2 * sigma))
 
     pixlims['PIXLIMF1'] = pixf1 + 1
     pixlims['PIXLIMF2'] = pixf2
@@ -461,5 +465,3 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
     update_flux_limits(sens.header, pixlims, wcs=wcsl, ref=0)
 
     return sens
-
-

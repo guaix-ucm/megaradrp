@@ -42,7 +42,7 @@ def assign_boxes_to_fibers(pseudo_slit_config, insmode):
         fibid_with_box += \
             [f"{val1}  [{val2}]"
              for val1, val2 in zip(range(n1, n2), [name] * nfibers)]
-        dumstr =f'Box {name:>2},  fibers {n1:3d} - {n2 - 1:3d}'
+        dumstr = f'Box {name:>2},  fibers {n1:3d} - {n2 - 1:3d}'
         list_to_print.append(dumstr)
         n1 = n2
     print(f'\n* Fiber description for INSMODE={insmode}')
@@ -178,7 +178,8 @@ def main(args=None):
     pkg_paths = ['megaradrp.instrument.configs']
     store = asb.load_paths_store(pkg_paths)
 
-    insmodel = asb.assembly_instrument(store, insconf_uuid, date_obs, by_key='uuid')
+    insmodel = asb.assembly_instrument(
+        store, insconf_uuid, date_obs, by_key='uuid')
 
     pseudo_slit_config = insmodel.get_value('pseudoslit.boxes', **tags)
 
@@ -459,16 +460,19 @@ def main(args=None):
                         if args.verbose:
                             print('(renumber_fibids) fibid:',
                                   fiblabel_ori, '-->', fiblabel_new)
-                        bigdict['contents'][fibid -1 + fibid_shift] = \
-                            deepcopy(bigdict['contents'][fibid -1])
-                        bigdict['contents'][fibid -1 + fibid_shift]['fibid'] += \
+                        bigdict['contents'][fibid - 1 + fibid_shift] = \
+                            deepcopy(bigdict['contents'][fibid - 1])
+                        bigdict['contents'][fibid - 1 + fibid_shift]['fibid'] += \
                             fibid_shift
                         # display updated trace
                         coeff = \
-                            bigdict['contents'][fibid -1 + fibid_shift]['fitparms']
+                            bigdict['contents'][fibid -
+                                                1 + fibid_shift]['fitparms']
                         start = \
-                            bigdict['contents'][fibid -1 + fibid_shift]['start']
-                        stop = bigdict['contents'][fibid -1 + fibid_shift]['stop']
+                            bigdict['contents'][fibid -
+                                                1 + fibid_shift]['start']
+                        stop = bigdict['contents'][fibid -
+                                                   1 + fibid_shift]['stop']
                         plot_trace(ax, coeff, start, stop, ix_offset,
                                    args.rawimage, args.fibids,
                                    fiblabel_ori + '-->' + fiblabel_new,

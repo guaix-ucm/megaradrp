@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2019 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -23,13 +23,13 @@ class MegaraVPH(object):
         self._res = resolution
 
         rr = numpy.loadtxt(vphtable)
-        r1 = rr[:,0] # Position in the pseudoslit
-        r2 = rr[:,1] # WL
-        r3 = rr[:,2] # X position
-        r4 = rr[:,3] # Y position
+        r1 = rr[:, 0]  # Position in the pseudoslit
+        r2 = rr[:, 1]  # WL
+        r3 = rr[:, 2]  # X position
+        r4 = rr[:, 3]  # Y position
 
-        self.wlmin = rr[:,1].min()
-        self.wlmax = rr[:,1].max()
+        self.wlmin = rr[:, 1].min()
+        self.wlmax = rr[:, 1].max()
 
         # Bivariate interpolations
         self.ps_wl_x = ii.SmoothBivariateSpline(r1, r2, r3)
@@ -57,13 +57,13 @@ class MegaraVPH(object):
         pass
 
     def resolution(self, wl):
-        return  self._res.response(wl)
+        return self._res.response(wl)
 
     def config_info(self):
         return {'name': self.name, 'setup': self.setup, 'wl_range': self.wl_range}
 
     def wltable_interp(self):
-        res_in = (self.wlmax/ self.resolution(self.wlmax)) / self.SAMPLING
+        res_in = (self.wlmax / self.resolution(self.wlmax)) / self.SAMPLING
         return numpy.arange(self.wlmin_in, self.wlmax_in, res_in) * u.micron
 
     def transmission(self, wl):
@@ -81,10 +81,9 @@ class DummyVPH(object):
         self.res = 6028.0
         self.name = name
 
-
     def resolution(self, wl):
         # This is as VPH405_LR_res
-        return  self.res * numpy.ones_like(wl)
+        return self.res * numpy.ones_like(wl)
 
     def config_info(self):
         return {'name': self.name}

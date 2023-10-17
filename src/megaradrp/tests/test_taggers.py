@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -97,6 +97,7 @@ def test_tagger_base_image_no_images():
     tags = tagger_base_image(ob)
 
     assert tags == {}
+
 
 if __name__ == "__main__":
     test_tagger_vph()

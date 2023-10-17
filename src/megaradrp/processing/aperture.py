@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2021 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -24,9 +24,9 @@ def apextract(data, trace):
     """Extract apertures."""
     rss = numpy.empty((trace.shape[0], data.shape[1]), dtype='float32')
     for idx, r in enumerate(trace):
-        l = r[0]
+        ll = r[0]
         r = r[2] + 1
-        sl = (slice(l, r), )
+        sl = (slice(ll, r), )
         m = data[sl].sum(axis=0)
         rss[idx] = m
     return rss
@@ -155,7 +155,8 @@ class ApertureExtractor(numina.processing.Corrector):
                  processes=0, offset=None):
 
         if offset:
-            trace_repr.global_offset = trace_repr.global_offset + nppol.Polynomial(offset)
+            trace_repr.global_offset = trace_repr.global_offset + \
+                nppol.Polynomial(offset)
 
         self.trace_repr = trace_repr
         self.processes = processes
@@ -188,7 +189,8 @@ class ApertureExtractor(numina.processing.Corrector):
         if simple:
             rssdata = apextract_tracemap(img[0].data, self.trace_repr)
         else:
-            rssdata = self.trace_repr.aper_extract(img[0].data, processes=self.processes)
+            rssdata = self.trace_repr.aper_extract(
+                img[0].data, processes=self.processes)
 
         img[0].data = rssdata
 

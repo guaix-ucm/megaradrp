@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2021 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -18,7 +18,8 @@ FIBER_PEAK, FIBER_DEAD = (0, 1)
 FOUND_PEAK, FOUND_VALLEY, EXPECT_VALLEY = (0, 1, 2)
 
 
-FiberModelElement = collections.namedtuple('FiberModelElement', ['fibid', 'mode'])
+FiberModelElement = collections.namedtuple(
+    'FiberModelElement', ['fibid', 'mode'])
 
 
 def generate_box_model(nfibers, start=1,

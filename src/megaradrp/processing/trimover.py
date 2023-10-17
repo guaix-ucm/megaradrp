@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2021 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -57,7 +57,7 @@ def trim_and_o_array(array, detconf, direction='normal'):
         raise ValueError(f"{direction} must be either 'normal' or 'mirror'")
 
     if direction == 'normal':
-        direcfun = lambda x: x
+        def direcfun(x): return x
     else:
         direcfun = numpy.fliplr
 
@@ -65,7 +65,7 @@ def trim_and_o_array(array, detconf, direction='normal'):
     trim2 = get_conf_value(detconf, 'trim2')
     bng = get_conf_value(detconf, 'bng')
 
-    if bng not in [[1,1],[1,2],[2,1],[2,2]]:
+    if bng not in [[1, 1], [1, 2], [2, 1], [2, 2]]:
         raise ValueError(f"{bng} must be one if '11', '12', '21, '22'")
 
     nr2 = ((trim1[0][1] - trim1[0][0]) + (trim2[0][1]-trim2[0][0])) // bng[0]
@@ -86,7 +86,8 @@ def trim_and_o_array(array, detconf, direction='normal'):
 
     finY = trim1[0][1] + trim2[0][0]
     finaldata[:nr, :] = direcfun(array[:trim1[0][1], trim1[1][0]:trim1[1][1]])
-    finaldata[nr:, :] = direcfun(array[trim2[0][0]:finY, trim2[1][0]:trim2[1][1]])
+    finaldata[nr:, :] = direcfun(
+        array[trim2[0][0]:finY, trim2[1][0]:trim2[1][1]])
 
     return finaldata
 
@@ -107,9 +108,8 @@ def apextract_weights(data, weights, size=4096):
         """
 
         name = tar_file.fileobj.name.split('.tar')[0]
-        aux = tar_file.extractall(name+'/')
+        # aux = tar_file.extractall(name+'/')
         return name
-
 
     processes = mp.cpu_count()-2
 
@@ -122,7 +122,7 @@ def apextract_weights(data, weights, size=4096):
 
     pool2 = mp.Pool(processes=processes)
     extracted_w = [pool2.apply_async(extract_w_paralell,
-                                args=(data[:,ite], results[ite])) for ite in range(size)]
+                                     args=(data[:, ite], results[ite])) for ite in range(size)]
     extracted_w = [p.get() for p in extracted_w]
 
     return numpy.array(extracted_w)
@@ -141,7 +141,6 @@ def load_files_paralell(col, path):
     return csr_matrix(
         (loader['data'], loader['indices'], loader['indptr']),
         shape=loader['shape'])
-
 
 
 def extract_w_paralell(img, mlist):
@@ -229,7 +228,7 @@ class OverscanCorrector(Corrector):
         fits.writeto('eq_estimado.fits', data, overwrite=True)
 
     def run(self, img):
-        imgid = self.get_imgid(img)
+        # imgid = self.get_imgid(img)
         data = img[0].data
 
         # p1 = data[self.pcol1].mean()

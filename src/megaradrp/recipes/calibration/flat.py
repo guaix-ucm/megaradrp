@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2021 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -34,7 +34,7 @@ from megaradrp.processing.fiberflat import Splitter, FlipLR
 
 def _smoothing_window_check(val):
     """Check 'smoothing_window' """
-    #raise ValueError("something")
+    # raise ValueError("something")
     if val < 5:
         raise numina.exceptions.ValidationError("must be >= 5")
     if val % 2 == 0:
@@ -101,7 +101,8 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     smoothing_window = Parameter(31, 'Window for smoothing (must be odd)',
                                  validator=_smoothing_window_check
                                  )
-    extraction_offset = Parameter([0.0], 'Offset traces for extraction', accept_scalar=True)
+    extraction_offset = Parameter(
+        [0.0], 'Offset traces for extraction', accept_scalar=True)
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
 
     # Results
@@ -217,14 +218,15 @@ class FiberFlatRecipe(MegaraBaseRecipe):
             offset=rinput.extraction_offset
         )
         splitter2 = Splitter()
-        calibrator_wl = WavelengthCalibrator(rinput.master_wlcalib, self.datamodel)
+        calibrator_wl = WavelengthCalibrator(
+            rinput.master_wlcalib, self.datamodel)
         flipcor = FlipLR()
 
         img = splitter1(img)
-        flat2d = splitter1.out # Copy before extraction
+        flat2d = splitter1.out  # Copy before extraction
         img = calibrator_aper(img)
         img = splitter2(img)
-        rss_base = splitter2.out # Copy before el calibration
+        rss_base = splitter2.out  # Copy before el calibration
         self.logger.debug('Flip RSS left-rigtht, before WL calibration')
         img = flipcor.run(img)
         # Calibrate in WL
@@ -233,7 +235,8 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
         # Obtain flat field
         self.logger.info('Normalize flat field')
-        rss_wl2 = self.obtain_fiber_flat(rss_wl, window=rinput.smoothing_window)
+        rss_wl2 = self.obtain_fiber_flat(
+            rss_wl, window=rinput.smoothing_window)
         rss_wl2[0].header = self.set_base_headers(rss_wl2[0].header)
         result = self.create_result(
             master_fiberflat=rss_wl2,

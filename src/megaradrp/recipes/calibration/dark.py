@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -29,7 +29,8 @@ class DarkRecipe(MegaraBaseRecipe):
     def run(self, rinput):
 
         flow = self.init_filters(rinput, rinput.obresult.configuration)
-        hdulist = basic_processing_with_combination(rinput, flow, method=combine.median)
+        hdulist = basic_processing_with_combination(
+            rinput, flow, method=combine.median)
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
 

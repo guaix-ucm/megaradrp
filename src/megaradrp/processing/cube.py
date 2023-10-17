@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2021 Universidad Complutense de Madrid
+# Copyright 2017-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -120,7 +120,8 @@ def create_cube(r0l, zval, p=1, target_scale=1.0):
     dk = np.zeros((crow, ccol, zval2.shape[-1]))
     # print('result shape is ', dk.shape)
     # r1k = rr1 @ sk
-    sk = np.flipud(np.transpose([np.tile(mk1, len(mk2)), np.repeat(mk2, len(mk1))]).T)  # x y
+    sk = np.flipud(np.transpose(
+        [np.tile(mk1, len(mk2)), np.repeat(mk2, len(mk1))]).T)  # x y
     r1k = np.dot(rr1, sk)
 
     # Prefiltering
@@ -134,7 +135,8 @@ def create_cube(r0l, zval, p=1, target_scale=1.0):
     for s, r in zip(sk.T, r1k.T):
         allpos = -(r0l - r[:, np.newaxis])
         we = np.abs((rbs.ev(allpos[1], allpos[0])))
-        dk[s[1] - i1min, s[0] - j1min] = np.sum(we[:, np.newaxis] * zval2, axis=0)
+        dk[s[1] - i1min, s[0] -
+            j1min] = np.sum(we[:, np.newaxis] * zval2, axis=0)
 
     # Postfiltering
     # For p = 1, final image in NN, postfilter coefficients with n = 1
@@ -401,13 +403,15 @@ def main(args=None):
             # all alternative coordinates
             print('recompute WCS from IPA')
             ipa = rss['PRIMARY'].header['IPA']
-            rss['FIBERS'].header = fixrss.recompute_wcs(rss['FIBERS'].header, ipa=ipa)
+            rss['FIBERS'].header = fixrss.recompute_wcs(
+                rss['FIBERS'].header, ipa=ipa)
         if args.fix_missing:
             fibid = 623
             print(f'interpolate fiber {fibid}')
             rss = fixrss.fix_missing_fiber(rss, fibid)
 
-        cube = create_cube_from_rss(rss, p, target_scale, conserve_flux=conserve_flux)
+        cube = create_cube_from_rss(
+            rss, p, target_scale, conserve_flux=conserve_flux)
 
     cube.writeto(args.outfile, overwrite=True)
 

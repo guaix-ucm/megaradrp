@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2021 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -30,7 +30,8 @@ def validate_focus(mode, obresult):
                 focus_val = img[0].header['FOCUS']
                 # FIXME: This should be done using an scheme for MEGARA
                 if not isinstance(focus_val, (int, float)):
-                    raise ValidationError(f"FOCUS must be integer, not {type(focus_val)}")
+                    raise ValidationError(
+                        f"FOCUS must be integer, not {type(focus_val)}")
                 if focus_val not in image_groups:
                     image_groups[focus_val] = []
                 image_groups[focus_val].append(frame)
@@ -38,7 +39,8 @@ def validate_focus(mode, obresult):
                 raise ValidationError from exc
 
     if len(image_groups) < 2:
-        raise ValidationError(f'We have only {len(image_groups)} different focus in OB')
+        raise ValidationError(
+            f'We have only {len(image_groups)} different focus in OB')
 
     return True
 
@@ -201,22 +203,22 @@ class BaseChecker(ImageChecker):
 # TODO: insert all subschemas in the general schema
 _sub_schema_rss = {
     "oneOf": [
-    {
-        "type": "object",
-        "properties": {
-            # "NAXIS1": {"const": 4300},
-            "NAXIS2": {"const": 623},
-            "INSMODE": {"const": "LCB"}
+        {
+            "type": "object",
+            "properties": {
+                # "NAXIS1": {"const": 4300},
+                "NAXIS2": {"const": 623},
+                "INSMODE": {"const": "LCB"}
+            }
+        },
+        {
+            "type": "object",
+            "properties": {
+                # "NAXIS1": {"const": 4300},
+                "NAXIS2": {"const": 644},
+                "INSMODE": {"const": "MOS"}
+            }
         }
-    },
-    {
-        "type": "object",
-        "properties": {
-            # "NAXIS1": {"const": 4300},
-            "NAXIS2": {"const": 644},
-            "INSMODE": {"const": "MOS"}
-        }
-    }
     ]
 }
 
@@ -313,7 +315,8 @@ class FlatImageChecker(ExtChecker):
             }
         }
 
-        super(FlatImageChecker, self).__init__(schema, ["#/definitions/raw_hdu_values", _sub_schema_flat], n_ext=2)
+        super(FlatImageChecker, self).__init__(
+            schema, ["#/definitions/raw_hdu_values", _sub_schema_flat], n_ext=2)
 
     def check_post(self, hdulist, level=None):
         """Additional checks"""
@@ -348,7 +351,8 @@ class CompImageChecker(ExtChecker):
             }
         }
 
-        super(CompImageChecker, self).__init__(schema, ["#/definitions/raw_hdu_values", _sub_schema_comp], n_ext=2)
+        super(CompImageChecker, self).__init__(
+            schema, ["#/definitions/raw_hdu_values", _sub_schema_comp], n_ext=2)
 
     def check_post(self, hdulist, level=None):
         """Additional checks"""
@@ -382,8 +386,8 @@ class TargetImageChecker(ExtChecker):
         }
 
         super(TargetImageChecker, self).__init__(schema,
-            ["#/definitions/raw_hdu_values", _sub_schema_target], n_ext=2
-        )
+                                                 ["#/definitions/raw_hdu_values", _sub_schema_target], n_ext=2
+                                                 )
 
     def check_post(self, hdulist, level=None):
         """Additional checks"""
@@ -410,14 +414,14 @@ class TargetImageChecker(ExtChecker):
 class MasterFlatRSSChecker(ExtChecker):
     def __init__(self, schema):
         super(MasterFlatRSSChecker, self).__init__(schema,
-            [_sub_schema_rss], n_ext=3
-        )
+                                                   [_sub_schema_rss], n_ext=3
+                                                   )
 
 
 class MasterSensitivityChecker(ExtChecker):
     def __init__(self, schema):
-        super(MasterSensitivityChecker, self).__init__(schema,
-            ["#/definitions/spec_hdu_values", "#/definitions/sensitivity_values"], n_ext=1
+        super(MasterSensitivityChecker, self).__init__(
+            schema, ["#/definitions/spec_hdu_values", "#/definitions/sensitivity_values"], n_ext=1
         )
 
 
@@ -433,7 +437,7 @@ def check_header_additional(values_primary, values_fibers):
         rbundles = range(1, 92 + 1)
 
     nfibers = values_fibers['NFIBERS']
-    nbundles = values_fibers['NBUNDLES']
+    # nbundles = values_fibers['NBUNDLES']
 
     for idbundle in rbundles:
         # types are check in the json schema
@@ -460,6 +464,7 @@ def check_header_additional(values_primary, values_fibers):
 
 class CheckAsDatatype(object):
     """Collection of schemas for validation"""
+
     def __init__(self):
 
         image_schema_path = "baseimage.json"
@@ -475,38 +480,51 @@ class CheckAsDatatype(object):
         ValClass = jsonschema.validators.validator_for(schema_json)
         self.validator_json = ValClass(schema_json)
 
-        raw_checker = ExtChecker(self.validator_image, ["#/definitions/raw_hdu_values"])
-        proc_checker = ExtChecker(self.validator_image, ["#/definitions/proc_hdu_values"])
+        raw_checker = ExtChecker(self.validator_image, [
+                                 "#/definitions/raw_hdu_values"])
+        proc_checker = ExtChecker(self.validator_image, [
+                                  "#/definitions/proc_hdu_values"])
         rss_checker = ExtChecker(self.validator_image, [_sub_schema_rss])
-        spec_checker = ExtChecker(self.validator_image, ["#/definitions/spec_hdu_values"])
+        spec_checker = ExtChecker(self.validator_image, [
+                                  "#/definitions/spec_hdu_values"])
         sens_checker = MasterSensitivityChecker(self.validator_image)
         struct_checker = StructChecker(self.validator_json)
 
         _megara_checkers = {}
         _megara_checkers[MegaraDataType.UNKNOWN] = check_null
         _megara_checkers[MegaraDataType.IMAGE_RAW] = raw_checker
-        _megara_checkers[MegaraDataType.IMAGE_BIAS] = ExtChecker(self.validator_image, ["#/definitions/raw_hdu_values", _sub_schema_bias], n_ext=1)
-        _megara_checkers[MegaraDataType.IMAGE_DARK] = ExtChecker(self.validator_image, ["#/definitions/raw_hdu_values", _sub_schema_dark], n_ext=1)
+        _megara_checkers[MegaraDataType.IMAGE_BIAS] = ExtChecker(
+            self.validator_image, ["#/definitions/raw_hdu_values", _sub_schema_bias], n_ext=1)
+        _megara_checkers[MegaraDataType.IMAGE_DARK] = ExtChecker(
+            self.validator_image, ["#/definitions/raw_hdu_values", _sub_schema_dark], n_ext=1)
         _megara_checkers[MegaraDataType.IMAGE_SLITFLAT] = raw_checker
-        _megara_checkers[MegaraDataType.IMAGE_FLAT] = FlatImageChecker(self.validator_image)
-        _megara_checkers[MegaraDataType.IMAGE_COMP] = CompImageChecker(self.validator_image)
+        _megara_checkers[MegaraDataType.IMAGE_FLAT] = FlatImageChecker(
+            self.validator_image)
+        _megara_checkers[MegaraDataType.IMAGE_COMP] = CompImageChecker(
+            self.validator_image)
         #
         _megara_checkers[MegaraDataType.IMAGE_TWILIGHT] = raw_checker
         _megara_checkers[MegaraDataType.IMAGE_TEST] = raw_checker
-        _megara_checkers[MegaraDataType.IMAGE_TARGET] = TargetImageChecker(self.validator_image)
+        _megara_checkers[MegaraDataType.IMAGE_TARGET] = TargetImageChecker(
+            self.validator_image)
         #
         _megara_checkers[MegaraDataType.IMAGE_PROCESSED] = proc_checker
         _megara_checkers[MegaraDataType.MASTER_BPM] = ExtChecker(self.validator_image, [
             "#/definitions/proc_hdu_values", _sub_schema_master_bpm
         ], n_ext=1)
-        _megara_checkers[MegaraDataType.MASTER_BIAS] = ExtChecker(self.validator_image, ["#/definitions/proc_hdu_values", _sub_schema_master_bias], n_ext=1)
-        _megara_checkers[MegaraDataType.MASTER_DARK] = ExtChecker(self.validator_image, ["#/definitions/proc_hdu_values", _sub_schema_master_dark], n_ext=1)
+        _megara_checkers[MegaraDataType.MASTER_BIAS] = ExtChecker(
+            self.validator_image, ["#/definitions/proc_hdu_values", _sub_schema_master_bias], n_ext=1
+        )
+        _megara_checkers[MegaraDataType.MASTER_DARK] = ExtChecker(
+            self.validator_image, ["#/definitions/proc_hdu_values", _sub_schema_master_dark], n_ext=1
+        )
         _megara_checkers[MegaraDataType.MASTER_SLITFLAT] = proc_checker
         _megara_checkers[MegaraDataType.DIFFUSE_LIGHT] = proc_checker
         #
         _megara_checkers[MegaraDataType.RSS_PROCESSED] = rss_checker
         _megara_checkers[MegaraDataType.RSS_WL_PROCESSED] = rss_checker
-        _megara_checkers[MegaraDataType.MASTER_FLAT] = MasterFlatRSSChecker(self.validator_image)
+        _megara_checkers[MegaraDataType.MASTER_FLAT] = MasterFlatRSSChecker(
+            self.validator_image)
         _megara_checkers[MegaraDataType.MASTER_TWILIGHT] = rss_checker
 
         _megara_checkers[MegaraDataType.SPEC_PROCESSED] = spec_checker

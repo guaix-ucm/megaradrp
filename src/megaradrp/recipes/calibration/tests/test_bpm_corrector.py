@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2019 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -24,7 +24,6 @@ from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.recipes.calibration.tests.test_bpm_common import crear_archivos
 
 
-
 class DerivedRecipe(MegaraBaseRecipe):
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
@@ -42,7 +41,8 @@ class DerivedRecipe(MegaraBaseRecipe):
         obresult1.frames = rinput.obresult.frames[:N]
 
         flow1 = self.init_filters(rinput, rinput.obresult.configuration)
-        img = basic_processing_with_combination(rinput, flow1, method=combine.median)
+        img = basic_processing_with_combination(
+            rinput, flow1, method=combine.median)
         hdr = img[0].header
         self.set_base_headers(hdr)
 
@@ -71,7 +71,8 @@ def test_bpm_corrector():
     ob.mode = 'MegaraBiasImage'
     pkg_paths = ['megaradrp.instrument.configs']
     store = asb.load_paths_store(pkg_paths)
-    insmodel = asb.assembly_instrument(store, config_uuid, date_obs, by_key='uuid')
+    insmodel = asb.assembly_instrument(
+        store, config_uuid, date_obs, by_key='uuid')
     header = fits.Header()
     header['DATE-OBS'] = date_obs
     header['INSCONF'] = config_uuid
@@ -85,11 +86,12 @@ def test_bpm_corrector():
     recipe = DerivedRecipe(directorio)
     ri = recipe.create_input(obresult=ob, master_bias=DataFrame(
         filename=open(directorio + '/master_bias_data0.fits').name),
-                             master_bpm=DataFrame(filename=open(
-                                 directorio + '/master_bpm.fits').name))
+        master_bpm=DataFrame(filename=open(
+            directorio + '/master_bpm.fits').name))
 
     recipe.run(ri)
     shutil.rmtree(directorio)
+
 
 if __name__ == "__main__":
     test_bpm_corrector()

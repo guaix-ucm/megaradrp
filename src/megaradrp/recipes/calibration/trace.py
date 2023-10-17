@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2021 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,7 +17,7 @@ import warnings
 import numpy
 import numpy.polynomial.polynomial as nppol
 from numina.array.peaks.peakdet import refine_peaks
-from numina.array.trace.traces import trace, tracing_limits
+from numina.array.trace.traces import trace as trace_func, tracing_limits
 from numina.core import Result, Parameter
 import matplotlib.pyplot as plt
 
@@ -177,7 +177,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         self.logger.info('start basic reduction')
         flow = self.init_filters(rinput, obresult.configuration)
-        reduced = basic_processing_with_combination(rinput, flow, method=combine.median)
+        reduced = basic_processing_with_combination(
+            rinput, flow, method=combine.median)
         self.logger.info('end basic reduction')
 
         self.save_intermediate_img(reduced, 'reduced_image.fits')
@@ -190,7 +191,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
         cstart0 = values['ref_column']
         box_borders0 = values['positions']
 
-        box_borders, cstart = self.refine_boxes_from_image(reduced, box_borders0, cstart0)
+        box_borders, cstart = self.refine_boxes_from_image(
+            reduced, box_borders0, cstart0)
 
         self.logger.debug("original boxes: %s", box_borders0)
         self.logger.debug("refined boxes: %s", box_borders)
@@ -200,10 +202,12 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         if current_insmode in vph_thr and current_vph in vph_thr[current_insmode]:
             threshold = vph_thr[current_insmode][current_vph]
-            self.logger.info('rel threshold for %s is %4.2f', current_vph, threshold)
+            self.logger.info('rel threshold for %s is %4.2f',
+                             current_vph, threshold)
         else:
             threshold = rinput.relative_threshold
-            self.logger.info('rel threshold not defined for %s, using %4.2f', current_vph, threshold)
+            self.logger.info(
+                'rel threshold not defined for %s, using %4.2f', current_vph, threshold)
 
         final = megaradrp.products.TraceMap(instrument=obresult.instrument)
         fp_conf = FocalPlaneConf.from_img(reduced)
@@ -217,7 +221,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
             inactive_fibers = [635]
 
         final.total_fibers = fp_conf.nfibers
-        final.tags = self.extract_tags_from_ref(reduced, final.tag_names(), base=obresult.labels)
+        final.tags = self.extract_tags_from_ref(
+            reduced, final.tag_names(), base=obresult.labels)
         final.boxes_positions = box_borders
         final.ref_column = cstart
 
@@ -227,13 +232,15 @@ class TraceMapRecipe(MegaraBaseRecipe):
         # number of the columns to add
         hs = 3
         # Expected range of computed traces
-        xx_start, xx_end = tracing_limits(reduced[0].shape[1], cstart, step, hs)
+        xx_start, xx_end = tracing_limits(
+            reduced[0].shape[1], cstart, step, hs)
         final.expected_range = [xx_start, xx_end]
 
         final.update_metadata(self)
         final.update_metadata_origin(obresult_meta)
         # Temperature in Celsius with 2 decimals
-        final.tags['temp'] = round(obresult_meta['info'][0]['temp'] - 273.15, 2)
+        final.tags['temp'] = round(
+            obresult_meta['info'][0]['temp'] - 273.15, 2)
 
         contents, error_fitting, missing_fibers = self.search_traces(
             reduced,
@@ -402,7 +409,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
         if self.intermediate_results:
             fig, ax = plt.subplots(ncols=1, nrows=1)
             ax.plot(final, label=f'cross section at x={cstart}')
-            ax.plot(xwave, sp_comb_lines0, label='expected location of frontiers')
+            ax.plot(xwave, sp_comb_lines0,
+                    label='expected location of frontiers')
             for idum, item in enumerate(expected):
                 if idum == 0:
                     label = 'refined frontier location'
@@ -429,7 +437,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
         self.logger.info('search for traces')
 
         self.logger.info('estimate background in ref column %i', cstart)
-        background = estimate_background(data, center=cstart, hs=hs, boxref=box_borders)
+        background = estimate_background(
+            data, center=cstart, hs=hs, boxref=box_borders)
         self.logger.info('background level is %f', background)
 
         self.logger.info('find peaks in reference column %i', cstart)
@@ -474,11 +483,12 @@ class TraceMapRecipe(MegaraBaseRecipe):
             if peak_ok:
                 if not conf_ok:
                     error_fitting.append(dtrace.fibid)
-                    self.logger.warning('found fibid %d, expected to be missing', dtrace.fibid)
+                    self.logger.warning(
+                        'found fibid %d, expected to be missing', dtrace.fibid)
                 else:
 
-                    mm = trace(image2, x=cstart, y=dtrace.start[1], step=step,
-                               hs=hs, background=local_trace_background, maxdis=maxdis)
+                    mm = trace_func(image2, x=cstart, y=dtrace.start[1], step=step,
+                                    hs=hs, background=local_trace_background, maxdis=maxdis)
 
                     if debug_plot:
                         plt.plot(mm[:, 0], mm[:, 1], '.')
@@ -496,13 +506,15 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
                     start = mm[0, 0]
                     stop = mm[-1, 0]
-                    self.logger.debug('trace start %d  stop %d', int(start), int(stop))
+                    self.logger.debug(
+                        'trace start %d  stop %d', int(start), int(stop))
             else:
                 if conf_ok:
                     self.logger.warning('error tracing fibid %d', dtrace.fibid)
                     error_fitting.append(dtrace.fibid)
                 else:
-                    self.logger.debug('expected missing fibid %d', dtrace.fibid)
+                    self.logger.debug(
+                        'expected missing fibid %d', dtrace.fibid)
                     missing_fibers.append(dtrace.fibid)
 
             this_trace = GeometricTrace(

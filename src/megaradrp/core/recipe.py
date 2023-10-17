@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2021 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -94,7 +94,8 @@ class MegaraBaseRecipe(BaseRecipe):
     def types_getter(self):
         from megaradrp.ntypes import MasterBias, MasterDark, MasterBPM, MasterSlitFlat
         from megaradrp.ntypes import DiffuseLightCorrection
-        imgtypes = [MasterBPM, MasterBias, MasterDark, MasterSlitFlat, DiffuseLightCorrection]
+        imgtypes = [MasterBPM, MasterBias, MasterDark,
+                    MasterSlitFlat, DiffuseLightCorrection]
         getters = [cor.get_corrector_bpm, cor.get_corrector_bias,
                    [cor.get_corrector_dark, cor.get_corrector_gain],
                    cor.get_corrector_slit_flat,
@@ -135,7 +136,8 @@ class MegaraBaseRecipe(BaseRecipe):
 
         reduction_flows = []
         for getters in getters_seq:
-            correctors = [getter(rinput, meta, ins, self.datamodel) for getter in getters]
+            correctors = [getter(rinput, meta, ins, self.datamodel)
+                          for getter in getters]
             reduction_flow = flowmod.SerialFlow(correctors)
             reduction_flows.append(reduction_flow)
 

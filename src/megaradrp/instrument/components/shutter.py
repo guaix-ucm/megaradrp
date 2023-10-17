@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2021 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -14,7 +14,8 @@ from numina.instrument.simulation.optics import Open, Stop, Filter
 
 class MegaraShutter(Wheel):
     def __init__(self, parent=None):
-        super(MegaraShutter, self).__init__(capacity=3, name='Shutter', parent=parent)
+        super(MegaraShutter, self).__init__(
+            capacity=3, name='Shutter', parent=parent)
         self.put_in_pos(Stop(name='STOP'), 0)  # FIXME
         self.put_in_pos(Open(name='OPEN'), 1)  # FIXME
         # sorting order filter

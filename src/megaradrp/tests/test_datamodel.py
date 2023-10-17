@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2018 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -37,6 +37,7 @@ FIBS_SKY_94_99 = [57, 58, 59, 60, 61, 62, 63,
                   561, 562, 563, 564, 565, 566, 567,
                   ]
 
+
 @pytest.mark.parametrize("name, confid, nbundles, nfibers",
                          [BASE_LCB, BASE_MOS])
 def test_fiberconf_1(name, confid, nbundles, nfibers):
@@ -52,7 +53,7 @@ def test_fiberconf_1(name, confid, nbundles, nfibers):
     assert conf.name == name
     assert conf.conf_id == confid
     assert conf.nbundles == nbundles
-    assert conf.nfibers ==  nfibers
+    assert conf.nfibers == nfibers
 
 
 def test_fiberconf_other():
@@ -101,8 +102,8 @@ def test_fibers_to_table(name, confid, nbundles, nfibers):
 
 
 @pytest.mark.parametrize("ignored, fibs",
-                         [([93,94,95,96,97,98,99,100], []),
-                          ([93,95,96,97,98,100], FIBS_SKY_94_99),
+                         [([93, 94, 95, 96, 97, 98, 99, 100], []),
+                          ([93, 95, 96, 97, 98, 100], FIBS_SKY_94_99),
                           ([], FIBS_SKY_ALL),
                           (None, FIBS_SKY_ALL),
                           ])
@@ -118,5 +119,3 @@ def test_sky_fibers(ignored, fibs):
                               ignored_bundles=ignored
                               )
     assert sorted(skyfibs) == fibs
-
-

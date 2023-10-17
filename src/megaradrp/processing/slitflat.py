@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2021 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -21,7 +21,8 @@ class SlitFlatCorrector(CommonFlatCorrector):
     def __init__(self, slitflat, datamodel=None, calibid='calibid-unknown',
                  dtype='float32'):
 
-        super(SlitFlatCorrector, self).__init__(slitflat, datamodel, calibid, dtype)
+        super(SlitFlatCorrector, self).__init__(
+            slitflat, datamodel, calibid, dtype)
         self.flattag = 'slitflat'
 
     def header_update(self, hdr, imgid):

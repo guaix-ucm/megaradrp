@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -15,6 +15,7 @@ import numina.core.tagexpr as tagexpr
 
 import megaradrp.datamodel
 from megaradrp.datatype import MegaraDataType
+
 
 class BaseStructuredCalibration(structured.BaseStructuredCalibration):
     DATATYPE = MegaraDataType.STRUCT_PROCESSED

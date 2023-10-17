@@ -16,7 +16,7 @@ import multiprocessing as mp
 import numpy as np
 from scipy.interpolate import UnivariateSpline
 import matplotlib.pyplot as plt
-from numina.core import Result, Requirement, Parameter
+from numina.core import Result, Parameter
 from numina.array import combine
 from numina.frame.utils import copy_img
 from numina.util.objimport import import_object
@@ -113,7 +113,8 @@ class ModelMapRecipe(MegaraBaseRecipe):
 
         self.logger.info('start basic reduction')
         flow1 = self.init_filters(rinput, rinput.obresult.configuration)
-        reduced = basic_processing_with_combination(rinput, flow1, method=combine.median)
+        reduced = basic_processing_with_combination(
+            rinput, flow1, method=combine.median)
         self.set_base_headers(reduced[0].header)
         self.logger.info('end basic reduction')
 
@@ -143,13 +144,15 @@ class ModelMapRecipe(MegaraBaseRecipe):
         fp_conf = FocalPlaneConf.from_img(reduced)
         model_map.total_fibers = fp_conf.nfibers
         model_map.missing_fibers = rinput.master_traces.missing_fibers
-        model_map.tags = self.extract_tags_from_ref(reduced, model_map.tag_names(), base=obresult.labels)
+        model_map.tags = self.extract_tags_from_ref(
+            reduced, model_map.tag_names(), base=obresult.labels)
         # model_map.boxes_positions = box_borders
         # model_map.ref_column = cstart
         model_map.update_metadata(self)
         model_map.update_metadata_origin(obresult_meta)
         # Temperature in Celsius with 2 decimals
-        model_map.tags['temp'] = round(obresult_meta['info'][0]['temp'] - 273.15, 2)
+        model_map.tags['temp'] = round(
+            obresult_meta['info'][0]['temp'] - 273.15, 2)
 
         self.logger.info('perform model fitting')
 
@@ -158,7 +161,8 @@ class ModelMapRecipe(MegaraBaseRecipe):
 
         cols = range(100, 4100, 100)
         # cols = range(100, 200, 100)
-        valid_fibers = [(f.fibid, f.boxid) for f in tracemap.contents if f.valid]
+        valid_fibers = [(f.fibid, f.boixid)
+                        for f in tracemap.contents if f.valid]
         # ncol = tracemap.total_fibers
 
         nfit = data.shape[1]
@@ -173,7 +177,6 @@ class ModelMapRecipe(MegaraBaseRecipe):
         objpath = config[model_name]
         model_class = import_object(objpath)
         model_obj = model_class(**model_kwargs)
-
 
         # Perform fitting with multiprocessing
         results_get = fit_model(model_obj, data, tracemap, cols,
@@ -211,7 +214,8 @@ class ModelMapRecipe(MegaraBaseRecipe):
 
             # Fit a UnivariateSpline to each storable parameter
             for name, deg in zip(params_save, spline_degrees):
-                interpolators[name] = UnivariateSpline(g_col, g_vals[name], k=deg)
+                interpolators[name] = UnivariateSpline(
+                    g_col, g_vals[name], k=deg)
 
             if self.intermediate_results:
                 if dolog:
@@ -232,7 +236,7 @@ class ModelMapRecipe(MegaraBaseRecipe):
             # if invalid. missing, model = {}
             gm = GeometricModel(fibid, boxid,
                                 start=1, stop=nfit, model=model_fib
-            )
+                                )
 
             model_map.contents.append(gm)
 
@@ -265,12 +269,14 @@ def calc_parallel(model_desc, data, calc_col, tracemap,
                   nloop=10, average=0):
 
     if average > 0:
-        column = data[:, calc_col - average:calc_col - average + 1].mean(axis=1)
+        column = data[:, calc_col -
+                      average:calc_col - average + 1].mean(axis=1)
     else:
         column = data[:, calc_col]
 
     valid_fibers = [f.fibid for f in tracemap.contents if f.valid]
-    centers = np.array([f.polynomial(calc_col) for f in tracemap.contents if f.valid])
+    centers = np.array([f.polynomial(calc_col)
+                       for f in tracemap.contents if f.valid])
     # we might need a better approach to logging in multiprocessing
     # https://www.jamesfheath.com/2020/06/logging-in-python-while-multiprocessing.html
     print('computing in column', calc_col)
@@ -279,7 +285,8 @@ def calc_parallel(model_desc, data, calc_col, tracemap,
     scale = column.max()
     column_norm = column / scale
 
-    final = calc1d_model(model_desc, column_norm, centers, valid_fibers, calc_col, lateral=2, nloop=nloop)
+    final = calc1d_model(model_desc, column_norm, centers,
+                         valid_fibers, calc_col, lateral=2, nloop=nloop)
 
     # TODO: we may need a function to perform scaling in general
     for idx, params in final.items():

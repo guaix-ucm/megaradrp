@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2021 Universidad Complutense de Madrid
+# Copyright 2017-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -21,8 +21,10 @@ from numina.processing import Corrector
 _logger = logging.getLogger(__name__)
 
 
-PIXLIM_KEYS = ['PIXLIMF1', 'PIXLIMF2', 'PIXLIMR1', 'PIXLIMR2', 'PIXLIMM1', 'PIXLIMM2']
-WAVLIM_KEYS = ['WAVLIMF1', 'WAVLIMF2', 'WAVLIMR1', 'WAVLIMR2', 'WAVLIMM1', 'WAVLIMM2']
+PIXLIM_KEYS = ['PIXLIMF1', 'PIXLIMF2', 'PIXLIMR1',
+               'PIXLIMR2', 'PIXLIMM1', 'PIXLIMM2']
+WAVLIM_KEYS = ['WAVLIMF1', 'WAVLIMF2', 'WAVLIMR1',
+               'WAVLIMR2', 'WAVLIMM1', 'WAVLIMM2']
 
 
 class FluxCalibration(Corrector):
@@ -31,7 +33,8 @@ class FluxCalibration(Corrector):
     def __init__(self, sensitivity, datamodel=None, dtype='float32'):
 
         self.sensp = sensitivity['primary']
-        self.pixlims = {key: (self.sensp.header[key] - 1) for key in PIXLIM_KEYS}
+        self.pixlims = {
+            key: (self.sensp.header[key] - 1) for key in PIXLIM_KEYS}
 
         calibid = datamodel.get_imgid(sensitivity)
         self.target_unit = self.sensp.header['TUNIT']
@@ -50,7 +53,8 @@ class FluxCalibration(Corrector):
         limr2 = self.pixlims['PIXLIMR2']
         validr = slice(limr1, limr2 + 1, 1)
         # with numpy.errstate(invalid='ignore', divide='ignore'):
-        newdata[:, validr] = img['primary'].data[:, validr] / self.sensp.data[validr]
+        newdata[:, validr] = img['primary'].data[:,
+                                                 validr] / self.sensp.data[validr]
         img['primary'].data = newdata
         self.header_update(hdr, imgid)
 

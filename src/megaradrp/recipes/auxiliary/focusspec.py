@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2021 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,7 +17,7 @@ from scipy.spatial import cKDTree
 import astropy.io.fits as fits
 
 from numina.array import combine
-from numina.core import Requirement, Parameter
+from numina.core import Parameter
 from numina.core.dataholders import Result
 from numina.types.array import ArrayType
 from numina.core.requirements import ObservationResultRequirement
@@ -89,7 +89,8 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
     master_apertures = reqs.MasterAperturesRequirement(alias='master_traces')
-    extraction_offset = Parameter([0.0], 'Offset traces for extraction', accept_scalar=True)
+    extraction_offset = Parameter(
+        [0.0], 'Offset traces for extraction', accept_scalar=True)
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
 
     nfibers = Parameter(10, "The results are sampled every nfibers")
@@ -128,11 +129,14 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         current_insmode = obresult.tags['insmode']
 
         if current_insmode in vph_thr_arc and current_vph in vph_thr_arc[current_insmode]:
-            flux_limit = vph_thr_arc[current_insmode][current_vph].get('flux_limit', 200000)
-            self.logger.info('flux_limit for %s is %4.2f', current_vph, flux_limit)
+            flux_limit = vph_thr_arc[current_insmode][current_vph].get(
+                'flux_limit', 200000)
+            self.logger.info('flux_limit for %s is %4.2f',
+                             current_vph, flux_limit)
         else:
             flux_limit = 40000
-            self.logger.info('flux limit not defined for %s, using %4.2f', current_vph, flux_limit)
+            self.logger.info(
+                'flux limit not defined for %s, using %4.2f', current_vph, flux_limit)
 
         image_groups = {}
         self.logger.info('group images by focus')
@@ -147,10 +151,12 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                 image_groups[focus_val].append(frame)
 
         if len(image_groups) < 2:
-            raise RecipeError(f'We have only {len(image_groups)} different focus')
+            raise RecipeError(
+                f'We have only {len(image_groups)} different focus')
 
         # Loop only over fibers with WL calibration
-        valid_traces = [fibsol.fibid for fibsol in rinput.master_wlcalib.contents]
+        valid_traces = [
+            fibsol.fibid for fibsol in rinput.master_wlcalib.contents]
         # valid_traces = [aper.fibid for aper in rinput.tracemap.contents if aper.valid]
         # every tenth fiber
         nfibers = rinput.nfibers
@@ -161,7 +167,8 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
             self.logger.info('processing focus %s', focus)
 
             try:
-                img = basic_processing_with_combination_frames(frames, flow, method=combine.median, errors=False)
+                img = basic_processing_with_combination_frames(
+                    frames, flow, method=combine.median, errors=False)
                 calibrator_aper = ApertureExtractor(
                     rinput.master_apertures,
                     self.datamodel,
@@ -209,8 +216,9 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         rssdata = img[0].data
 
         if valid_traces:
-            valid_traces_s = set(valid_traces) # use set for fast membership
-            valid_apers = [aper for aper in tracemap.contents if aper.valid and aper.fibid in valid_traces_s]
+            valid_traces_s = set(valid_traces)  # use set for fast membership
+            valid_apers = [
+                aper for aper in tracemap.contents if aper.valid and aper.fibid in valid_traces_s]
         else:
             valid_apers = [aper for aper in tracemap.contents if aper.valid]
 
@@ -241,7 +249,8 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
             self.logger.debug('ipeaks_int: %s', ipeaks_int)
             ipeaks_float = refine_peaks(row, ipeaks_int, nwinwidth)[0]
 
-            # self.pintarGrafica(refine_peaks(row, ipeaks_int, nwinwidth)[0] - refinePeaks_spectrum(row, ipeaks_int, nwinwidth))
+            # self.pintarGrafica(refine_peaks(row, ipeaks_int,
+            # nwinwidth)[0] - refinePeaks_spectrum(row, ipeaks_int, nwinwidth))
 
             fpeaks[fibid] = []
             for peak, peak_f in zip(ipeaks_int, ipeaks_float):
@@ -249,14 +258,18 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                     sl = numina.array.utils.slice_create(peak, lwidth)
                     rel_peak = peak - sl.start
                     qslit = row[sl]
-                    peak_val, fwhm = fmod.compute_fwhm_1d_simple(qslit, rel_peak)
+                    peak_val, fwhm = fmod.compute_fwhm_1d_simple(
+                        qslit, rel_peak)
                     peak_on_trace = the_pol(peak)
                     fpeaks[fibid].append((peak_f, peak_on_trace, fwhm))
                 except ValueError as error:
-                    self.logger.warning('Error %s computing FWHM in fiber %d', error, fibid)
+                    self.logger.warning(
+                        'Error %s computing FWHM in fiber %d', error, fibid)
                 except IndexError as error:
-                    self.logger.warning('Error %s computing FWHM in fiber %d', error, fibid)
-            self.logger.debug('found %d peaks in fiber %d', len(fpeaks[fibid]), fibid)
+                    self.logger.warning(
+                        'Error %s computing FWHM in fiber %d', error, fibid)
+            self.logger.debug('found %d peaks in fiber %d',
+                              len(fpeaks[fibid]), fibid)
         return fpeaks
 
     def generate_image(self, final):
@@ -270,13 +283,14 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
 
         voronoi_kdtree = cKDTree(voronoi_points)
 
-        test_point_dist, test_point_regions = voronoi_kdtree.query(test_points, k=1)
-        final_image = test_point_regions.reshape((4112, 4096)).astype('float32')
+        test_point_dist, test_point_regions = voronoi_kdtree.query(
+            test_points, k=1)
+        final_image = test_point_regions.reshape(
+            (4112, 4096)).astype('float32')
         final_image[:, :] = final[final_image[:, :].astype('int32'), 2]
         return final_image
 
     def generate_focus_wl(self, all_measures, wlcalib):
-
 
         self.logger.info('start result generation')
 
@@ -298,7 +312,8 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                         res = polynomial.polyval(x, wlfib[fiber].coeff)
                         cresult[fiber].append([arco[0], arco[1], arco[2], res])
                     except KeyError:
-                        self.logger.warning("Fiber %d hasn't WL calibration, skipping", fiber)
+                        self.logger.warning(
+                            "Fiber %d hasn't WL calibration, skipping", fiber)
 
         self.logger.info('end result generation')
 
@@ -333,7 +348,8 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         center = ntotal // 2
         center_focus = values[center]
         base = all_measures[center_focus]
-        self.logger.debug('use image #%d as reference, focus=%s', center, center_focus)
+        self.logger.debug(
+            'use image #%d as reference, focus=%s', center, center_focus)
         line_fibers = {}
 
         self.logger.debug('matching lines up to %3.1f pixels', maxdis)
@@ -361,14 +377,17 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                             ref[j, :2])
                         savelines[j]['centers'].append(ref[j, 2])
                     continue
-                self.logger.debug('Matching lines in fiber %d in image # %d', fiberid, i)
+                self.logger.debug(
+                    'Matching lines in fiber %d in image # %d', fiberid, i)
                 comp = numpy.array(all_measures[values[i]][fiberid])
 
                 if comp.size == 0:
-                    self.logger.debug('No lines in fiber %d in image # %d', fiberid, i)
+                    self.logger.debug(
+                        'No lines in fiber %d in image # %d', fiberid, i)
                     continue
                 else:
-                    self.logger.debug('Using %d lines in fiber %d in image # %d', comp.size, fiberid, i)
+                    self.logger.debug(
+                        'Using %d lines in fiber %d in image # %d', comp.size, fiberid, i)
 
                 qdis, qidx = kdtree.query(comp[:, :2],
                                           distance_upper_bound=maxdis)
@@ -384,7 +403,7 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
 
             for ir in remove_groups:
                 self.logger.debug('remove group of lines %d in fiber %d', ir,
-                              fiberid)
+                                  fiberid)
                 del savelines[ir]
 
         return line_fibers
@@ -392,17 +411,17 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
     def reorder_and_fit(self, line_fibers, focii):
         """Fit all the values of FWHM to a 2nd degree polynomial and return minimum."""
 
-        l = sum(len(value) for key, value in line_fibers.items())
-        self.logger.debug('there are %d groups of lines to fit', l)
-        ally = numpy.zeros((len(focii), l))
-        final = numpy.zeros((l, 3))
+        ll = sum(len(value) for key, value in line_fibers.items())
+        self.logger.debug('there are %d groups of lines to fit', ll)
+        ally = numpy.zeros((len(focii), ll))
+        final = numpy.zeros((ll, 3))
         self.logger.debug('focci are %s', focii)
-        l = 0
+        lu = 0
         for i in line_fibers:
             for j in line_fibers[i]:
-                ally[:, l] = line_fibers[i][j]['centers']
-                final[l, :2] = line_fibers[i][j]['basedata']['coordinates']
-                l += 1
+                ally[:, lu] = line_fibers[i][j]['centers']
+                final[lu, :2] = line_fibers[i][j]['basedata']['coordinates']
+                lu += 1
 
         self.logger.debug('line widths are %s', ally)
         try:

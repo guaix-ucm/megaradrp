@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2019 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -70,7 +70,7 @@ vph_thr_arc = {
          'MR-U': {'min_distance': 10,
                   'threshold': 0.00},
          'MR-UB': {'min_distance': 10,
-                  'threshold': 0.00},
+                   'threshold': 0.00},
          'MR-B': {'min_distance': 10,
                   'threshold': 0.00},
          'MR-G': {'min_distance': 10,
@@ -82,7 +82,7 @@ vph_thr_arc = {
          'MR-R': {'min_distance': 10,
                   'threshold': 0.00},
          'MR-RI': {'min_distance': 10,
-                  'threshold': 0.00},
+                   'threshold': 0.00},
          'MR-I': {'min_distance': 10,
                   'threshold': 0.00},
          'MR-Z': {'min_distance': 10,
@@ -108,7 +108,7 @@ vph_thr_arc = {
          'MR-U': {'min_distance': 10,
                   'threshold': 0.00},
          'MR-UB': {'min_distance': 10,
-                  'threshold': 0.00},
+                   'threshold': 0.00},
          'MR-B': {'min_distance': 10,
                   'threshold': 0.00},
          'MR-G': {'min_distance': 10,
@@ -120,7 +120,7 @@ vph_thr_arc = {
          'MR-R': {'min_distance': 10,
                   'threshold': 0.00},
          'MR-RI': {'min_distance': 10,
-                  'threshold': 0.00},
+                   'threshold': 0.00},
          'MR-I': {'min_distance': 10,
                   'threshold': 0.00},
          'MR-Z': {'min_distance': 10,

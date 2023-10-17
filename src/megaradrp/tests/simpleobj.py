@@ -27,7 +27,8 @@ def generate_sky_wcs():
     wcsl.wcs.cdelt = [0.01, 0.01]
     wcsl.wcs.ctype = ['RA---TAN', 'DEC--TAN']
     ang = math.pi / 3.0
-    wcsl.wcs.pc = [[math.cos(ang), -math.sin(ang)], [math.sin(ang), math.cos(ang)]]
+    wcsl.wcs.pc = [[math.cos(ang), -math.sin(ang)],
+                   [math.sin(ang), math.cos(ang)]]
     return wcsl
 
 
@@ -63,6 +64,7 @@ def create_sky_header2():
     hdr['RADESYS'] = 'FK5'
     hdr['EQUINOX'] = 2000.
     return hdr
+
 
 def create_spec_header():
     hdr = fits.Header()

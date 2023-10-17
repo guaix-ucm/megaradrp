@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2021 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -11,16 +11,14 @@
 
 from __future__ import division, print_function
 
-import traceback
-from datetime import datetime
-
-import numpy
-from astropy.io import fits
 from copy import deepcopy
 import errno
 import os
 
-from numina.core import Requirement, Result, Parameter, DataFrameType
+from astropy.io import fits
+import numpy
+
+from numina.core import Result, Parameter, DataFrameType
 from numina.core.requirements import ObservationResultRequirement
 from numina.array.display.polfit_residuals import polfit_residuals
 from numina.array.display.polfit_residuals import \
@@ -149,7 +147,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         obresult_meta = obresult.metadata_with(self.datamodel)
 
         flow1 = self.init_filters(rinput, rinput.obresult.configuration)
-        img = basic_processing_with_combination(rinput, flow1, method=combine.median)
+        img = basic_processing_with_combination(
+            rinput, flow1, method=combine.median)
         hdr = img[0].header
         self.set_base_headers(hdr)
 
@@ -170,7 +169,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         reduced2d = splitter1.out
 
-        self.logger.info('extract fibers, %i', len(rinput.master_apertures.contents))
+        self.logger.info('extract fibers, %i', len(
+            rinput.master_apertures.contents))
 
         current_vph = rinput.obresult.tags['vph']
         current_insmode = rinput.obresult.tags['insmode']
@@ -178,12 +178,15 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         if current_insmode in vph_thr_arc and current_vph in vph_thr_arc[current_insmode]:
             threshold = vph_thr_arc[current_insmode][current_vph]['threshold']
             min_distance = vph_thr_arc[current_insmode][current_vph]['min_distance']
-            self.logger.info('rel threshold for %s is %4.2f', current_vph, threshold)
+            self.logger.info('rel threshold for %s is %4.2f',
+                             current_vph, threshold)
         else:
             threshold = 0.02
             min_distance = 10.0
-            self.logger.info('rel threshold not defined for %s, using %4.2f', current_vph, threshold)
-            self.logger.info('min dist not defined for %s, using %4.2f', current_vph, min_distance)
+            self.logger.info(
+                'rel threshold not defined for %s, using %4.2f', current_vph, threshold)
+            self.logger.info(
+                'min dist not defined for %s, using %4.2f', current_vph, min_distance)
 
         # WL calibration goes here
         initial_data_wlcalib, data_wlcalib, fwhm_image = self.calibrate_wl(
@@ -338,7 +341,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         crpix1=crpix1,
                         wv_ini_search=wv_ini_search,
                         wv_end_search=wv_end_search,
-                        error_xpos_arc=3.0, # initially: 2.0
+                        error_xpos_arc=3.0,  # initially: 2.0
                         times_sigma_r=3.0,
                         frac_triplets_for_sum=0.50,
                         times_sigma_theil_sen=10.0,
@@ -352,14 +355,14 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     self.logger.info('Solution for row %d completed', idx)
                     self.logger.info('Fitting solution for row %d', idx)
                     solution_wv = fit_list_of_wvfeatures(
-                            list_of_wvfeatures,
-                            naxis1_arc=naxis1,
-                            crpix1=crpix1,
-                            poly_degree_wfit=poldeg_initial,
-                            weighted=False,
-                            debugplot=0,
-                            plot_title=None
-                        )
+                        list_of_wvfeatures,
+                        naxis1_arc=naxis1,
+                        crpix1=crpix1,
+                        poly_degree_wfit=poldeg_initial,
+                        weighted=False,
+                        debugplot=0,
+                        plot_title=None
+                    )
 
                     self.logger.info('linear crval1, cdelt1: %f %f',
                                      solution_wv.cr_linear.crval,
@@ -402,7 +405,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
                 except (ValueError, TypeError, IndexError) as error:
                     self.logger.warning("%s", error)
-                    self.logger.warning('problem in row %d, fibid %d', idx, fibid)
+                    self.logger.warning(
+                        'problem in row %d, fibid %d', idx, fibid)
                     initial_data_wlcalib.error_fitting.append(fibid)
                     error_contador += 1
 
@@ -505,7 +509,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     else:
                         plottitle = None
                         pdf = None
-                    poly_refined, yres_summary  = \
+                    poly_refined, yres_summary = \
                         refine_arccalibration(sp=row,
                                               poly_initial=wlpol,
                                               wv_master=wv_master_all,
@@ -587,7 +591,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     plt.close()
                 for ideg in range(poldeg_refined + 1):
                     dumplot = [coef[ideg] for coef in plot_coeff]
-                    ax = ximplotxy(plot_tracenumber, dumplot,
+                    ax = ximplotxy(plot_tracenumber, dumplot,  # noqa: F841
                                    xlabel='fiber number',
                                    ylabel='coef[' + str(ideg) + ']',
                                    linestyle='', marker='.', color='C0',
@@ -632,7 +636,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         test_point_dist, test_point_regions = voronoi_kdtree.query(test_points,
                                                                    k=1)
-        final_image = test_point_regions.reshape((4112, 4096)).astype('float32')
+        final_image = test_point_regions.reshape(
+            (4112, 4096)).astype('float32')
         final_image[:, :] = final[final_image[:, :].astype('int16'), 2]
         return (final_image)
 

@@ -96,7 +96,8 @@ class ModelMap(BaseStructuredCalibration):
             m.__setstate__(trace)
             self.contents.append(m)
         self.boxes_positions = state.get('boxes_positions', [])
-        self.global_offset = nppol.Polynomial(state.get('global_offset', [0.0]))
+        self.global_offset = nppol.Polynomial(
+            state.get('global_offset', [0.0]))
         self.ref_column = state.get('ref_column', 2000)
         self._wcols = None
 

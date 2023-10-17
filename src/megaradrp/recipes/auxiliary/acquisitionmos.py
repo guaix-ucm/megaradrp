@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2021 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -98,8 +98,8 @@ class AcquireMOSRecipe(ImageRecipe):
             self.logger.info('end sky subtraction')
         else:
             final = reduced1d
-            origin = final
-            sky = final
+            # origin = final
+            # sky = final
 
         fp_conf = FocalPlaneConf.from_img(final)
 
@@ -116,10 +116,14 @@ class AcquireMOSRecipe(ImageRecipe):
         temp = []
         for key, bundle in fp_conf.bundles.items():
             if bundle.target_type == TargetType.REFERENCE:
-                self.logger.debug("%s %s %s", key, bundle.target_name, bundle.target_type)
-                sorted_fibers = [bundle.fibers[key] for key in sorted(bundle.fibers)]
-                central_fiber = sorted_fibers[3]  # Central fiber is number 4 in the list
-                central_coords = [central_fiber.x * scale, central_fiber.y * scale]
+                self.logger.debug(
+                    "%s %s %s", key, bundle.target_name, bundle.target_type)
+                sorted_fibers = [bundle.fibers[key]
+                                 for key in sorted(bundle.fibers)]
+                # Central fiber is number 4 in the list
+                central_fiber = sorted_fibers[3]
+                central_coords = [central_fiber.x *
+                                  scale, central_fiber.y * scale]
                 # central_fiber_pair_id
                 # Central fiber is
                 self.logger.debug('Center fiber is %d', central_fiber.fibid)
@@ -141,12 +145,14 @@ class AcquireMOSRecipe(ImageRecipe):
                 scf = coords.T * flux_per_cell_norm
                 centroid = scf.sum(axis=1)
                 self.logger.info('centroid: %s arcsec', list(centroid))
-                self.logger.info('centroid: %s mm', list(centroid / platescale))
+                self.logger.info('centroid: %s mm',
+                                 list(centroid / platescale))
                 # central coords
                 c_coords = coords - centroid
                 scf0 = scf - centroid[:, np.newaxis] * flux_per_cell_norm
                 mc2 = np.dot(scf0, c_coords)
-                self.logger.info('2nd order moments, x2=%f, y2=%f, xy=%f arcsec^2', mc2[0, 0], mc2[1, 1], mc2[0, 1])
+                self.logger.info(
+                    '2nd order moments, x2=%f, y2=%f, xy=%f arcsec^2', mc2[0, 0], mc2[1, 1], mc2[0, 1])
 
                 p1.append(central_coords)
                 q1.append(centroid)
@@ -174,7 +180,7 @@ class AcquireMOSRecipe(ImageRecipe):
             self.logger.info('rot angle %5.2f deg', angle)
 
         final = add_collapsed_mos_extension(final)
-        origin = add_collapsed_mos_extension(origin)
+        # origin = add_collapsed_mos_extension(origin)
 
         return self.create_result(
             reduced_image=reduced2d,

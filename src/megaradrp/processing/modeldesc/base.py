@@ -39,7 +39,8 @@ class ModelDescription(metaclass=abc.ABCMeta):
             self.deg_save = deg_save
 
         if len(self.deg_save) != len(self.params_save):
-            raise ValueError('deg_save and params_save must have the same length')
+            raise ValueError(
+                'deg_save and params_save must have the same length')
 
     def _check_params(self, param_collection):
         """Check that names in param_c are valid param names"""

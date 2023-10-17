@@ -39,9 +39,9 @@ def generate_bias_file():
 def test_trim_and_o(direction):
     temporary_path = mkdtemp()
     detconf = {
-        'trim1': [[0,2056],[50,4146]],
-        'trim2': [[2156,4212],[50,4146]],
-        'bng': [1,1]
+        'trim1': [[0, 2056], [50, 4146]],
+        'trim2': [[2156, 4212], [50, 4146]],
+        'bng': [1, 1]
     }
     fs = generate_bias_file()
     fits.writeto(f'{temporary_path}/flat.fits', fs, overwrite=True)
@@ -65,9 +65,9 @@ def test_trim_and_o_fail():
 
     direction = 'fails'
     detconf = {
-        'trim1': [[0,2056],[50,4146]],
-        'trim2': [[2156,4212],[50,4146]],
-        'bng': [1,1]
+        'trim1': [[0, 2056], [50, 4146]],
+        'trim2': [[2156, 4212], [50, 4146]],
+        'bng': [1, 1]
     }
     with pytest.raises(ValueError) as excinfo:
         trimOut(
@@ -87,8 +87,8 @@ def test_trim_and_o_fail2():
 
     bins = 'fail'
     detconf = {
-        'trim1': [[0,2056],[50,4146]],
-        'trim2': [[2156,4212],[50,4146]],
+        'trim1': [[0, 2056], [50, 4146]],
+        'trim2': [[2156, 4212], [50, 4146]],
         'bng': bins
     }
     with pytest.raises(ValueError) as excinfo:

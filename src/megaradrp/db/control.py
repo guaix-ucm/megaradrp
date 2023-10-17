@@ -25,7 +25,8 @@ def function(session, some, meta):
     newframe.start_time = meta['observation_date']
     newframe.ob_id = meta['blckuuid']
     # No way of knowing when the readout ends...
-    newframe.completion_time = newframe.start_time + datetime.timedelta(seconds=meta['darktime'])
+    newframe.completion_time = newframe.start_time + \
+        datetime.timedelta(seconds=meta['darktime'])
     newframe.exposure_time = meta['exptime']
     newframe.object = meta['object']
     newframe.insmode = meta.get('insmode', 'unknown')

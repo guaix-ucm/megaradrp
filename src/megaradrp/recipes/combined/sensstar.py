@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -48,6 +48,6 @@ class Recipe(MegaraBaseRecipe):
 
         self.logger.info('starting SensivityStarRecipe reduction')
 
-        result = super(Recipe,self).run(rinput)
+        result = super(Recipe, self).run(rinput)
 
         return self.create_result(final=result[0], target=result[1], sky=result[2])

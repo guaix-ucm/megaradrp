@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2019 Universidad Complutense de Madrid
+# Copyright 2014-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -63,7 +63,7 @@ class BiasRecipe(MegaraBaseRecipe):
         """
         self.logger.info('start bias recipe')
         flow = self.init_filters(rinput, rinput.obresult.configuration)
-        errors  = False
+        errors = False
         if not errors:
             self.logger.info('not computing errors')
 

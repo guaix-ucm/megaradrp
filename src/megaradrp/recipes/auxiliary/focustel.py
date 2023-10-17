@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2021 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -61,9 +61,11 @@ class FocusTelescopeRecipe(ImageRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
     master_apertures = reqs.MasterAperturesRequirement(alias='master_traces')
-    extraction_offset = Parameter([0.0], 'Offset traces for extraction', accept_scalar=True)
+    extraction_offset = Parameter(
+        [0.0], 'Offset traces for extraction', accept_scalar=True)
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
-    position = Requirement(list, "Position of the reference object", default=(0, 0))
+    position = Requirement(
+        list, "Position of the reference object", default=(0, 0))
     # Products
     focus_table = Result(float)
 
@@ -92,14 +94,16 @@ class FocusTelescopeRecipe(ImageRecipe):
                 image_groups[focus_val].append(frame)
 
         if len(image_groups) < 2:
-            raise RecipeError(f'We have only {len(image_groups)} different focus')
+            raise RecipeError(
+                f'We have only {len(image_groups)} different focus')
 
         all_images = {}
         for focus, frames in image_groups.items():
             self.logger.info('processing focus %s', focus)
 
             try:
-                img = basic_processing_with_combination_frames(frames, flow, method=combine.median, errors=False)
+                img = basic_processing_with_combination_frames(
+                    frames, flow, method=combine.median, errors=False)
 
                 self.save_intermediate_img(img, f'focus2d-{focus}.fits')
 
@@ -120,8 +124,8 @@ class FocusTelescopeRecipe(ImageRecipe):
                     self.logger.info('end sky subtraction')
                 else:
                     final = img1d
-                    origin = final
-                    sky = final
+                    # origin = final
+                    # sky = final
 
                 self.save_intermediate_img(final, f'focus1d-{focus}.fits')
 
@@ -149,7 +153,7 @@ class FocusTelescopeRecipe(ImageRecipe):
         rssdata = img[0].data
         cut1 = 1000
         cut2 = 3000
-        points = [(0, 0)] # Center of fiber 313
+        points = [(0, 0)]  # Center of fiber 313
         fibers = fp_conf.connected_fibers(valid_only=True)
         grid_coords = []
         for fiber in fibers:
@@ -191,10 +195,11 @@ class FocusTelescopeRecipe(ImageRecipe):
             c_coords = coords - centroid
             scf0 = scf - centroid[:, numpy.newaxis] * flux_per_cell_norm
             mc2 = numpy.dot(scf0, c_coords)
-            self.logger.info('2nd order moments, x2=%f, y2=%f, xy=%f', mc2[0,0], mc2[1,1], mc2[0,1])
+            self.logger.info(
+                '2nd order moments, x2=%f, y2=%f, xy=%f', mc2[0, 0], mc2[1, 1], mc2[0, 1])
 
         # FIXME: returning only 1 value for 1 star
-        return mc2[0,0]
+        return mc2[0, 0]
 
     def reorder_and_fit(self, all_images):
         """Fit all the values of FWHM to a 2nd degree polynomial and return minimum."""

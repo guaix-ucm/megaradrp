@@ -1,5 +1,5 @@
 #
-# Copyright 2019-2020 Universidad Complutense de Madrid
+# Copyright 2019-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -27,7 +27,7 @@ def subtract_sky(img, ignored_sky_bundles=None, logger=None):
     fp_conf = fp.FocalPlaneConf.from_img(sky_img)
     # Sky fibers
     skyfibs = fp_conf.sky_fibers(valid_only=True,
-                                   ignored_bundles=ignored_sky_bundles)
+                                 ignored_bundles=ignored_sky_bundles)
     logger.debug('sky fibers are: %s', skyfibs)
     # Create empty sky_data
     target_data = img[0].data
@@ -54,7 +54,8 @@ def subtract_sky(img, ignored_sky_bundles=None, logger=None):
     logger.info('ignoring invalid fibers: %s', fp_conf.invalid_fibers())
     for fibid in fp_conf.valid_fibers():
         rowid = fibid - 1
-        final_img[0].data[rowid, mask] = img[0].data[rowid, mask] - avg_sky[mask]
+        final_img[0].data[rowid, mask] = img[0].data[rowid, mask] - \
+            avg_sky[mask]
     # Update headers
     #
     return final_img, img, sky_img
@@ -67,7 +68,7 @@ def subtract_sky_rss(img, sky_img, ignored_sky_bundles=None, logger=None):
     if logger is None:
         logger = logging.getLogger(__name__)
 
-    #logger.info('obtain fiber information')
+    # logger.info('obtain fiber information')
     final_img = copy_img(img)
     # fiberconf_sky = dm.get_fiberconf(sky_img)
     # fiberconf_target = dm.get_fiberconf(img)
@@ -80,7 +81,7 @@ def subtract_sky_rss(img, sky_img, ignored_sky_bundles=None, logger=None):
     sky_map[:] = v_map[:]
 
     # This should be done only on valid fibers
-    #logger.info('ignoring invalid fibers: %s', fiberconf_target.invalid_fibers())
+    # logger.info('ignoring invalid fibers: %s', fiberconf_target.invalid_fibers())
     final_img[0].data[v_map] = img[0].data[v_map] - sky_data[v_map]
     final_img[0].data[~v_map] = 0.0
     # Update headers

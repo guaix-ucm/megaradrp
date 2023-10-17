@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -39,12 +39,12 @@ class Recipe(MegaraBaseRecipe):
 
     master_sensitivity = Result(typs.MasterSensitivity)
     master_extinction = Result(typs.ReferenceExtinctionTable,
-                                "Atmospheric extinction")
+                               "Atmospheric extinction")
 
     def run(self, rinput):
 
         self.logger.info('starting ExtinctionStarRecipe reduction')
 
-        result = super(Recipe,self).run(rinput)
+        result = super(Recipe, self).run(rinput)
 
         return self.create_result(final=result[0], target=result[1], sky=result[2])

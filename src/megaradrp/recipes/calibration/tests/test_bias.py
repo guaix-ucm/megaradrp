@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2019 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -48,7 +48,8 @@ def test_bias():
     com_store = asbl.load_panoply_store(sys_drps)
 
     key, date_obs, keyname = insdrp.select_profile(ob)
-    ob.configuration = assembly_instrument(com_store, key, date_obs, by_key=keyname)
+    ob.configuration = assembly_instrument(
+        com_store, key, date_obs, by_key=keyname)
 
     ri = recipe.create_input(obresult=ob)
 

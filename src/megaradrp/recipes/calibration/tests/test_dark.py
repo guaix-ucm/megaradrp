@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2021 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -33,7 +33,7 @@ def test_dark():
     ron = 0.001
     gain = 1.0
     bias = 1000.0
-    dark = 3.0 # In 1 hour
+    dark = 3.0  # In 1 hour
     exptime = 3600.0
     dark_s = dark / exptime
     qe = 0.8 * numpy.ones(DSHAPE)
@@ -67,7 +67,7 @@ def test_dark():
     master_bias_hdul = fits.HDUList(fits.PrimaryHDU(
         master_bias_data, header=header)
     )
-    #master_bias_data = master_bias.master_bias.frame[0].data
+    # master_bias_data = master_bias.master_bias.frame[0].data
 
     ob = ObservationResult()
     ob.instrument = 'MEGARA'
@@ -75,7 +75,8 @@ def test_dark():
 
     pkg_paths = ['megaradrp.instrument.configs']
     store = asb.load_paths_store(pkg_paths)
-    insmodel = asb.assembly_instrument(store, config_uuid, date_obs, by_key='uuid')
+    insmodel = asb.assembly_instrument(
+        store, config_uuid, date_obs, by_key='uuid')
     insmodel.configure_with_header(header)
     ob.configuration = insmodel
 

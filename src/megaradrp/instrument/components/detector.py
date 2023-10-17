@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2019 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -35,6 +35,7 @@ def binning(arr, br, bc):
 
 class ReadParams(object):
     """Readout parameters of each channel."""
+
     def __init__(self, gain=1.0, ron=2.0, bias=1000.0):
         self.gain = gain
         self.ron = ron
@@ -84,10 +85,11 @@ class MegaraDetector(DetectorBase):
     def _set_direction(self, direction):
 
         if direction not in self._direc:
-            raise ValueError(f"{direction} must be either 'normal' or 'mirror'")
+            raise ValueError(
+                f"{direction} must be either 'normal' or 'mirror'")
 
         if direction == 'normal':
-            directfun = lambda x: x
+            def directfun(x): return x
         else:
             directfun = numpy.fliplr
 
@@ -103,8 +105,10 @@ class MegaraDetector(DetectorBase):
                                                                       self.oscan, self.pscan,
                                                                       self.blocks)
 
-        self.virt1 = VirtualDetector(base1, geom1, self.directfun, self.readpars1)
-        self.virt2 = VirtualDetector(base2, geom2, self.directfun, self.readpars2)
+        self.virt1 = VirtualDetector(
+            base1, geom1, self.directfun, self.readpars1)
+        self.virt2 = VirtualDetector(
+            base2, geom2, self.directfun, self.readpars2)
 
     def pre_readout(self, elec_pre):
         # FIXME: there is a bug in numpy here
@@ -130,12 +134,12 @@ class MegaraDetector(DetectorBase):
         # det = math.sqrt(b**2-4*a*c)
         # u1 = (-b+det) / (2*a)
 
-        f1 = lambda x:x
+        def f1(x): return x
 
         def f2(xx):
-            return xx + a* (xx - 45000)**2
+            return xx + a * (xx - 45000)**2
 
-        f3 = lambda x: 52000
+        def f3(x): return 52000
 
         p1 = x < 45000
         p3 = x >= 54312  # 45000 + u1
@@ -226,4 +230,3 @@ class MegaraDetectorSat(MegaraDetector):
     def esp_nonlinearity(self, x):
         sat = 12000.0
         return sat * (1-sat / (sat + x))
-

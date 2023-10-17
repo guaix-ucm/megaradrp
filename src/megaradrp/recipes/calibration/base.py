@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2017 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -11,9 +11,9 @@
 
 import logging
 
-from numina.core import Product, Requirement
-from numina.core.products import ArrayType
+from numina.core import Product
 from numina.core.requirements import ObservationResultRequirement
+from numina.types.array import ArrayType
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement

@@ -51,6 +51,10 @@ def test_extinction_none(obsid):
 
 def _test_extinction_filename():
 
+    import tempfile
+    import os
+    import numpy
+
     name = "reference_extinction"
     reference_extinction = reqs.ReferenceExtinction()
     reference_extinction.dest = name
@@ -59,12 +63,10 @@ def _test_extinction_filename():
 
     obs = numina.core.ObservationResult()
 
-    import tempfile, os, numpy
-
-    arr = numpy.array([1.0,2.0,3.0,4.0])
+    arr = numpy.array([1.0, 2.0, 3.0, 4.0])
     fd, path = tempfile.mkstemp()
     try:
-        #obs.requirements = {name: path}
+        # obs.requirements = {name: path}
         numpy.savetxt(path, arr)
 
         value = reference_extinction.query(dal, obs)
@@ -85,17 +87,17 @@ def test_tag1():
 
     tipo = MasterFiberFlat()
     keys = ['instrument', 'uuid', 'observation_date']
-    mu = tipo.extract_db_info(fr, keys)
+    _ = tipo.extract_db_info(fr, keys)
 
     assert True
 
 
 def test_tag2():
-    import megaradrp.tests.simpleobj as simple
+    # import megaradrp.tests.simpleobj as simple
 
     tipo = TraceMap()
     fr = tipo
     keys = ['instrument', 'uuid', 'observation_date']
-    mu = tipo.extract_db_info(fr, keys)
+    _ = tipo.extract_db_info(fr, keys)
 
     assert True

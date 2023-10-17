@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2018 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -57,8 +57,8 @@ def hex_c(x, y, rad, ang=0.0):
     # Rotate coordinates
     cs = math.cos(ang)
     ss = math.sin(ang)
-    xr = cs * x + ss *y
-    yr = -ss * x + cs *y
+    xr = cs * x + ss * y
+    yr = -ss * x + cs * y
     d = rad * 2
     dx = np.abs(xr) / d
     dy = np.abs(yr) / d
@@ -72,8 +72,8 @@ def rect_c(x, y, lx, ly):
     return (dy <= 0.5) & (dx <= 0.5)
 
 
-def square_c(x, y, l):
-    return rect_c(x, y, l, l)
+def square_c(x, y, ll):
+    return rect_c(x, y, ll, ll)
 
 
 def setup_grid(xsize, ysize, Dx, Dy):

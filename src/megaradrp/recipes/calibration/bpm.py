@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2021 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -20,7 +20,7 @@ from numina.array import combine
 
 from megaradrp.processing.combine import basic_processing_with_combination_frames
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.ntypes import  MasterBPM
+from megaradrp.ntypes import MasterBPM
 import megaradrp.requirements as reqs
 
 
@@ -78,7 +78,8 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
 
         self.save_intermediate_img(reduced2, 'reduced_image_2.fits')
 
-        ratio, mask, sigma = ccdmask(reduced1[0].data, reduced2[0].data, mode='full')
+        ratio, mask, sigma = ccdmask(
+            reduced1[0].data, reduced2[0].data, mode='full')
 
         hdu = fits.PrimaryHDU(mask, header=reduced1[0].header)
         hdu.header['UUID'] = str(uuid.uuid1())

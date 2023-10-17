@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2017 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
     wl = numpy.linspace(0.3, 1.0, num=15) * u.micron
 
-    #wl = 0.6 * u.micron
+    # wl = 0.6 * u.micron
 
     print(wl)
     zdis = 60*u.deg

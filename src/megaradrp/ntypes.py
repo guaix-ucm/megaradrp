@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -16,7 +16,6 @@ from numina.types.product import DataProductMixin
 from numina.types.datatype import DataType
 from numina.types.array import ArrayType, ArrayNType
 from numina.types.linescatalog import LinesCatalog
-from numina.exceptions import ValidationError
 
 import megaradrp.validators as valid
 from megaradrp.datatype import MegaraDataType
@@ -32,6 +31,7 @@ def validate_fiber_ext(header_f):
 
 class Point2D(ArrayNType):
     """A type of 2D cartesian coordinates"""
+
     def __init__(self, *args, **kwds):
         super(ArrayNType, self).__init__(2)
 
@@ -105,7 +105,8 @@ class ProcessedSpectrumProduct(DataProductMixin, ProcessedSpectrum):
 
 
 class MegaraLinesCatalog(LinesCatalog):
-    __tags__ = {'speclamp': QueryAttribute('speclamp', str), 'vph': QueryAttribute('vph', str)}
+    __tags__ = {'speclamp': QueryAttribute(
+        'speclamp', str), 'vph': QueryAttribute('vph', str)}
     # We are not passing the table of query_attrs in datamodel
 
     def name(self):

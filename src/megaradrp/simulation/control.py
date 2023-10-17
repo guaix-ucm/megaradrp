@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2019 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -42,6 +42,7 @@ def profile_builder(profile_entry):
 
 class ControlSystem(object):
     """Top level"""
+
     def __init__(self, factory):
         self._elements = {}
 

@@ -2,6 +2,7 @@ import pytest
 
 from ..shutter import MegaraShutter
 
+
 @pytest.fixture
 def shutter_dev():
     wheel = MegaraShutter()

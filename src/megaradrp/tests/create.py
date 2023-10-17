@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2021 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -24,7 +24,7 @@ def create(image, direction='normal', bins='11'):
         raise ValueError(f"{direction} must be either 'normal' or 'mirror'")
 
     if direction == 'normal':
-        direcfun = lambda x: x
+        def direcfun(x): return x
     else:
         direcfun = np.fliplr
 

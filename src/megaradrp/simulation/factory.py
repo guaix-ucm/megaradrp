@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2018 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -58,7 +58,7 @@ class MegaraImageFactory(object):
 
         fibers_info = extractm(meta, ['MEGARA.LCB', 'fibers'])
         # FIXME: inactive
-        inactive_fibs_id = []
+        # inactive_fibs_id = []
         written_bunds = []
         for fiber_info in fibers_info:
             fibid, bunid, x, y, inactive = fiber_info
@@ -111,33 +111,37 @@ class MegaraImageFactory(object):
 
         for i in range(1, nbundles + 1):
             rbpath = 'MEGARA.MOS.RoboticPositioner_%d' % i
-            extract(hdr, meta, [rbpath, 'target_priority'], "BUN%03d_P" % i, default=0)
-            extract(hdr, meta, [rbpath, 'target_name'], "BUN%03d_I" % i, default="unknown")
-            extract(hdr, meta, [rbpath, 'target_type'], "BUN%03d_T" % i, default="UNASSIGNED")
+            extract(hdr, meta, [rbpath, 'target_priority'],
+                    "BUN%03d_P" % i, default=0)
+            extract(hdr, meta, [rbpath, 'target_name'],
+                    "BUN%03d_I" % i, default="unknown")
+            extract(hdr, meta, [rbpath, 'target_type'],
+                    "BUN%03d_T" % i, default="UNASSIGNED")
 
             fibs_id = extractm(meta, [rbpath, 'bundle', 'fibs_id'])
-            inactive_fibs_id = extractm(meta, [rbpath, 'bundle', 'inactive_fibs_id'])
+            inactive_fibs_id = extractm(
+                meta, [rbpath, 'bundle', 'inactive_fibs_id'])
             pos_fibs = extractm(meta, [rbpath, 'fibers_pos'])
             for fibid, pos in zip(fibs_id, pos_fibs):
                 extract(hdr, meta, [rbpath, 'id'], "FIB%03d_B" % fibid)
                 # Coordinates
-                key = "FIB%03d_D" % fibid # DEC
+                key = "FIB%03d_D" % fibid  # DEC
                 hdr[key] = 0.0000
-                key = "FIB%03d_R" % fibid # RA
+                key = "FIB%03d_R" % fibid  # RA
                 hdr[key] = 0.0000
-                key = "FIB%03d_O" % fibid # PA
+                key = "FIB%03d_O" % fibid  # PA
                 hdr[key] = 0.0000
 
-                key = "FIB%03d_A" % fibid # Active
+                key = "FIB%03d_A" % fibid  # Active
                 if fibid in inactive_fibs_id:
                     hdr[key] = False
                 else:
                     hdr[key] = True
 
                 # Coordinates
-                key = "FIB%03d_X" % fibid # X
+                key = "FIB%03d_X" % fibid  # X
                 hdr[key] = pos[0]
-                key = "FIB%03d_Y" % fibid # Y
+                key = "FIB%03d_Y" % fibid  # Y
                 hdr[key] = pos[1]
 
         return hdr
@@ -171,9 +175,12 @@ class MegaraImageFactory(object):
 
         # Seqs
         metacontrol = control.config_info()
-        extract(pheader, metacontrol, ['ob_data', 'obsid'], 'OBSID', default=0.0)
-        extract(pheader, metacontrol, ['ob_data', 'repeat'], 'NNREP', default=0.0)
-        extract(pheader, metacontrol, ['ob_data', 'count'], 'NNSEC', default=0.0)
+        extract(pheader, metacontrol, [
+                'ob_data', 'obsid'], 'OBSID', default=0.0)
+        extract(pheader, metacontrol, [
+                'ob_data', 'repeat'], 'NNREP', default=0.0)
+        extract(pheader, metacontrol, [
+                'ob_data', 'count'], 'NNSEC', default=0.0)
 
         instrument = control.get('MEGARA')
         telescope = control.get('GTC')
@@ -194,22 +201,27 @@ class MegaraImageFactory(object):
         extract(pheader, meta, ['MEGARA.Detector', 'vbin'], 'VBIN')
         extract(pheader, meta, ['MEGARA.Detector', 'hbin'], 'HBIN')
 
-        extract(pheader, meta, ['MEGARA.Wheel', 'selected', 'setup'], 'VPH', default='unknown')
+        extract(pheader, meta, ['MEGARA.Wheel',
+                'selected', 'setup'], 'VPH', default='unknown')
         pheader['VPHFWHM1'] = 0.0
         pheader['VPHFWHMC'] = 0.0
         pheader['VPHFWHM2'] = 0.0
-        extract(pheader, meta, ['MEGARA.Wheel', 'selected', 'wl_range'], 'VPHWL1', selector=lambda x: x[0])
-        extract(pheader, meta, ['MEGARA.Wheel', 'selected', 'wl_range'], 'VPHWLC', selector=lambda x: x[1])
-        extract(pheader, meta, ['MEGARA.Wheel', 'selected', 'wl_range'], 'VPHWL2', selector=lambda x: x[2])
+        extract(pheader, meta, ['MEGARA.Wheel', 'selected',
+                'wl_range'], 'VPHWL1', selector=lambda x: x[0])
+        extract(pheader, meta, ['MEGARA.Wheel', 'selected',
+                'wl_range'], 'VPHWLC', selector=lambda x: x[1])
+        extract(pheader, meta, ['MEGARA.Wheel', 'selected',
+                'wl_range'], 'VPHWL2', selector=lambda x: x[2])
 
         extract(pheader, meta, ['MEGARA.Focus', 'focus'], 'FOCUS', default=0)
         extract(pheader, meta, ['GTC.Focus', 'focus'], 'FOCUST', default=3)
         extract(pheader, meta, ['MEGARA.Cover', 'label'], 'cover')
         extract(pheader, meta, ['MEGARA.Cover.Left', 'label'], 'cover1')
         extract(pheader, meta, ['MEGARA.Cover.Right', 'label'], 'cover2')
-        extract(pheader, meta, ['MEGARA', 'insmode'], 'insmode', default='unknown')
+        extract(pheader, meta, ['MEGARA', 'insmode'],
+                'insmode', default='unknown')
 
-        #self.bun_fib(mode, meta, data, pheader)
+        # self.bun_fib(mode, meta, data, pheader)
 
         calibration_unit = control.get('ICM-MEGARA')
         meta_megcalib = calibration_unit.config_info()

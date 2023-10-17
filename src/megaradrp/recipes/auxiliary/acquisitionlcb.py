@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2020 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -9,15 +9,8 @@
 
 """Acquisition with LCB"""
 
-
-import math
-
-import numpy as np
-from scipy.spatial import KDTree
-
 from numina.core import Result, Parameter
 from numina.core.validator import range_validator
-from numina.constants import FWHM_G
 
 from megaradrp.instrument.focalplane import FocalPlaneConf
 from megaradrp.ntypes import ProcessedRSS, ProcessedImage
@@ -102,14 +95,15 @@ class AcquireLCBRecipe(ImageRecipe):
             )
             self.logger.info('end sky subtraction')
         else:
-            final =  reduced1d
-            origin = final
-            sky = final
+            final = reduced1d
+            # origin = final
+            # sky = final
 
         fp_conf = FocalPlaneConf.from_img(final)
         self.logger.debug("LCB configuration is %s", fp_conf.conf_id)
 
-        centroid = calc_centroid_brightest(final, rinput.extraction_region, rinput.nrings)
+        centroid = calc_centroid_brightest(
+            final, rinput.extraction_region, rinput.nrings)
 
         if False:
             self.compute_dar(final)

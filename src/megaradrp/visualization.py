@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2021 Universidad Complutense de Madrid
+# Copyright 2017-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -347,7 +347,7 @@ def main(argv=None):
                 args.column, args.average_region, args.continuum_region
             )
             fig = plt.figure()
-            
+
             x = x0[plot_mask]
             y = y0[plot_mask]
             zval = zval0[plot_mask]
@@ -390,7 +390,8 @@ def main(argv=None):
             else:
                 zdisp = zval
             scale = args.hex_rel_size * args.hex_size
-            col = hexplot(ax, x, y, zdisp, scale=scale, cmap=args.colormap, norm=norm)
+            col = hexplot(ax, x, y, zdisp, scale=scale,
+                          cmap=args.colormap, norm=norm)
             if args.display_fibid:
                 # Plot spaxel labels
                 for xx, yy, fid in zip(x, y, num):
@@ -433,7 +434,8 @@ def main(argv=None):
                     zval_c = zval0
 
                 # Build synthetic rss... for reconstruction
-                primary = fits.PrimaryHDU(data=zval_c[:, np.newaxis], header=img[extname].header)
+                primary = fits.PrimaryHDU(
+                    data=zval_c[:, np.newaxis], header=img[extname].header)
                 synt = fits.HDUList([primary, img['FIBERS']])
 
                 if args.contour_image_save is not None:
@@ -441,11 +443,13 @@ def main(argv=None):
 
                 conserve_flux = not args.contour_is_density
                 order = 1
-                s_cube = create_cube_from_rss(synt, order, target_scale_arcsec, conserve_flux=conserve_flux)
+                s_cube = create_cube_from_rss(
+                    synt, order, target_scale_arcsec, conserve_flux=conserve_flux)
                 cube_wcs = WCS(s_cube[0].header).celestial
                 px, py = cube_wcs.wcs.crpix
                 interp = np.squeeze(s_cube[0].data)
-                td = mtransforms.Affine2D().translate(-px, -py).scale(target_scale_arcsec, target_scale_arcsec)
+                td = mtransforms.Affine2D().translate(-px, -py).scale(target_scale_arcsec,
+                                                                      target_scale_arcsec)
                 tt_d = td + ax.transData
                 # im = ax.imshow(interp, alpha=0.9, cmap='jet', transform=tt_d)
                 # im = ax.imshow(interp, alpha=0.9, cmap='jet', transform=ax.get_transform(cube_wcs))

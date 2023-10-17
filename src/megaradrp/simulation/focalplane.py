@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2017 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -16,7 +16,8 @@ class FocalPlane(object):
 
         self.focalbundle = {}
         self.cover = cover
-        self.ddtype = [('fibid', 'i4'),('x', 'f4'), ('y', 'f4'), ('cover', 'f4')]
+        self.ddtype = [('fibid', 'i4'), ('x', 'f4'),
+                       ('y', 'f4'), ('cover', 'f4')]
 
     def set_cover(self, mode):
         """Cover in the focal plane."""
@@ -48,8 +49,8 @@ class FocalPlane(object):
 
         p2 = numpy.empty((len(fibid,)), dtype=self.ddtype)
         p2['fibid'] = fibid
-        p2['x'] = all_pos[:,0]
-        p2['y'] = all_pos[:,1]
+        p2['x'] = all_pos[:, 0]
+        p2['y'] = all_pos[:, 1]
         p2['cover'] = 1.0
 
         return p2

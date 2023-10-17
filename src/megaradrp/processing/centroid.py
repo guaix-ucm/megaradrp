@@ -1,5 +1,5 @@
 #
-# Copyright 2020 Universidad Complutense de Madrid
+# Copyright 2020-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -105,12 +105,13 @@ def calc_centroid(final, extraction_region, point, nrings):
         c_coords = coords - centroid
         scf0 = scf - centroid[:, numpy.newaxis] * flux_per_cell_norm
         mc2 = numpy.dot(scf0, c_coords)
-        _logger.info('2nd order moments, x2=%f, y2=%f, xy=%f arcsec^2', mc2[0, 0], mc2[1, 1], mc2[0, 1])
+        _logger.info('2nd order moments, x2=%f, y2=%f, xy=%f arcsec^2',
+                     mc2[0, 0], mc2[1, 1], mc2[0, 1])
         if (mc2[0, 0] > 0) and (mc2[1, 1] > 0):
             _logger.info('FWHM , x=%f, y=%f arcsec',
-                             FWHM_G * math.sqrt(mc2[0, 0]),
-                             FWHM_G * math.sqrt(mc2[1, 1])
-                             )
+                         FWHM_G * math.sqrt(mc2[0, 0]),
+                         FWHM_G * math.sqrt(mc2[1, 1])
+                         )
         positions.append(centroid / platescale)
     return positions[0]
 

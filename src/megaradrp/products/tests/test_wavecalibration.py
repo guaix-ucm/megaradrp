@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -30,7 +30,8 @@ def create_solution(orig):
         )
 
     cr_linear = CrLinear(**orig['cr_linear'])
-    mm = SolutionArcCalibration(features, orig['coeff'], orig['residual_std'], cr_linear)
+    mm = SolutionArcCalibration(
+        features, orig['coeff'], orig['residual_std'], cr_linear)
     return mm
 
 
@@ -38,12 +39,12 @@ orig = {
     'cr_linear': {
         'cdelt': 3.0, 'crmax': 4600, 'crmin': 2300, 'crpix': 1200, 'crval': 12},
     'features': [
-        {'category': 'A', 'xpos': 100, 'reference': 3210, 'wavelength':1, 'line_ok': True, 'ypos': 0, 'peak': 0, 'funcost': 12.0, 'fwhm': 0,
-         'lineid': 1},
-        {'category': 'A', 'xpos': 150, 'reference': 3310, 'wavelength': 2, 'line_ok': True, 'ypos': 0, 'peak': 0, 'funcost': 12.0, 'fwhm': 0,
-         'lineid': 2},
-        {'category': 'C', 'xpos': 250, 'reference': 3410, 'wavelength': 3, 'line_ok': True, 'ypos': 0, 'peak': 0, 'funcost': 13.0, 'fwhm': 0,
-         'lineid': 3}],
+        {'category': 'A', 'xpos': 100, 'reference': 3210, 'wavelength': 1, 'line_ok': True, 'ypos': 0,
+         'peak': 0, 'funcost': 12.0, 'fwhm': 0, 'lineid': 1},
+        {'category': 'A', 'xpos': 150, 'reference': 3310, 'wavelength': 2, 'line_ok': True, 'ypos': 0,
+         'peak': 0, 'funcost': 12.0, 'fwhm': 0, 'lineid': 2},
+        {'category': 'C', 'xpos': 250, 'reference': 3410, 'wavelength': 3, 'line_ok': True, 'ypos': 0,
+         'peak': 0, 'funcost': 13.0, 'fwhm': 0, 'lineid': 3}],
     'coeff': [1.0, 0.1],
     'residual_std': 1.0,
 
@@ -57,7 +58,7 @@ def create_test_wavecalib():
     data = wcal.WavelengthCalibration(instrument=instrument)
     data.tags = tags
     data.uuid = uuid
-    data.error_fitting =  []
+    data.error_fitting = []
     data.missing_fibers = []
     data.total_fibers = 623
     meta_info = wcal.WavelengthCalibration.create_meta_info()
@@ -144,7 +145,8 @@ def test_dump_wavecalib():
     data, state = create_test_wavecalib()
 
     my_file = NamedTemporaryFile()
-    my_open_file = wcal.WavelengthCalibration._datatype_dump(data, my_file.name)
+    my_open_file = wcal.WavelengthCalibration._datatype_dump(
+        data, my_file.name)
 
     final = wcal.WavelengthCalibration._datatype_load(my_open_file)
     traces = final.__getstate__()

@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2021 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -41,7 +41,8 @@ def generate_bias(detector, number, temporary_path):
 
     pkg_paths = ['megaradrp.instrument.configs']
     store = asb.load_paths_store(pkg_paths)
-    insmodel = asb.assembly_instrument(store, config_uuid, date_obs, by_key='uuid')
+    insmodel = asb.assembly_instrument(
+        store, config_uuid, date_obs, by_key='uuid')
     insmodel.configure_with_header(header)
     ob.configuration = insmodel
     ob.frames = [DataFrame(filename=f) for f in fs]
@@ -103,7 +104,8 @@ def crear_archivos(temporary_path, number=5):
     ob.mode = 'bias_image'
     pkg_paths = ['megaradrp.instrument.configs']
     store = asb.load_paths_store(pkg_paths)
-    insmodel = asb.assembly_instrument(store, config_uuid, date_obs, by_key='uuid')
+    insmodel = asb.assembly_instrument(
+        store, config_uuid, date_obs, by_key='uuid')
     insmodel.configure_with_header(header)
     ob.configuration = insmodel
 
@@ -116,6 +118,7 @@ def crear_archivos(temporary_path, number=5):
     ri = recipe.create_input(obresult=ob, master_bias=DataFrame(
         filename=open(temporary_path + '/master_bias_data0.fits').name))
     aux = recipe.run(ri)
-    aux.master_bpm.frame.writeto(f'{temporary_path}/master_bpm.fits', overwrite=True)
+    aux.master_bpm.frame.writeto(
+        f'{temporary_path}/master_bpm.fits', overwrite=True)
 
     return names

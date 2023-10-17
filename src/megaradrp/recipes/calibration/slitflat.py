@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2020 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -15,14 +15,13 @@ import numpy
 from scipy.ndimage.filters import median_filter
 from astropy.io import fits
 from numina.array import combine
-from numina.core import Result, Parameter
+from numina.core import Result
 
 from megaradrp.ntypes import ProcessedFrame
 from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.ntypes import MasterSlitFlat
 import megaradrp.requirements as reqs
-import megaradrp.core.correctors as cor
 
 
 class SlitFlatRecipe(MegaraBaseRecipe):
@@ -33,22 +32,21 @@ class SlitFlatRecipe(MegaraBaseRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
 
-    #window_length_x = Parameter(301, 'Savitzky-Golay length of the filter window OX')
-    #window_length_y = Parameter(31, 'Savitzky-Golay length of the filter window OY')
-    #polyorder = Parameter(3, 'Savitzky-Golay order of the polynomial used to fit the samples')
-    #median_window_length = Parameter(31, 'Median window width')
+    # window_length_x = Parameter(301, 'Savitzky-Golay length of the filter window OX')
+    # window_length_y = Parameter(31, 'Savitzky-Golay length of the filter window OY')
+    # polyorder = Parameter(3, 'Savitzky-Golay order of the polynomial used to fit the samples')
+    # median_window_length = Parameter(31, 'Median window width')
 
     # Results
     reduced_image = Result(ProcessedFrame)
     master_slitflat = Result(MasterSlitFlat)
 
     def run(self, rinput):
-        from scipy.signal import savgol_filter
-
         self.logger.info('starting slit flat reduction')
 
         flow = self.init_filters(rinput, rinput.obresult.configuration)
-        reduced = basic_processing_with_combination(rinput, flow, method=combine.median)
+        reduced = basic_processing_with_combination(
+            rinput, flow, method=combine.median)
         hdr = reduced[0].header
         self.set_base_headers(hdr)
 
@@ -76,7 +74,7 @@ class SlitFlatRecipe(MegaraBaseRecipe):
         self.logger.debug('median filtering %s', m_window2)
 
         median2 = median_filter(qe1, m_window2)
-        self.save_intermediate_array(median2  , 'median_image2.fits')
+        self.save_intermediate_array(median2, 'median_image2.fits')
 
         qe2 = qe1 / median2
         self.save_intermediate_array(qe2, 'qe_filter2.fits')

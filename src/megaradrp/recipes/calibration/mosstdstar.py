@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2022 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -75,11 +75,15 @@ class MOSStandardRecipe(ImageRecipe):
     containing the star and returned as `star_spectrum`.
 
     """
-    position = Requirement(Point2D, "Position of the reference object", optional=True)
+    position = Requirement(
+        Point2D, "Position of the reference object", optional=True)
     # nrings = 1
-    reference_spectrum = Requirement(ReferenceSpectrumTable, "Spectrum of reference star")
-    reference_spectrum_velocity = Parameter(0.0, 'Radial velocity of reference spectrum')
-    reference_extinction = Requirement(ReferenceExtinctionTable, "Reference extinction")
+    reference_spectrum = Requirement(
+        ReferenceSpectrumTable, "Spectrum of reference star")
+    reference_spectrum_velocity = Parameter(
+        0.0, 'Radial velocity of reference spectrum')
+    reference_extinction = Requirement(
+        ReferenceExtinctionTable, "Reference extinction")
     degrade_resolution_target = Parameter('object', 'Spectrum with higher resolution',
                                           choices=['object']
                                           )
@@ -90,7 +94,8 @@ class MOSStandardRecipe(ImageRecipe):
     degrade_resolution_method = Parameter('fixed', 'Method to degrade the resolution',
                                           choices=['none', 'fixed', 'auto']
                                           )
-    sigma_resolution = Parameter(20.0, 'sigma Gaussian filter to degrade resolution ')
+    sigma_resolution = Parameter(
+        20.0, 'sigma Gaussian filter to degrade resolution ')
     smoothing_knots = Requirement(
         MultiType(
             PlainPythonType(ref=3, validator=range_validator(minval=3)),
@@ -146,7 +151,8 @@ class MOSStandardRecipe(ImageRecipe):
             self.logger.info('finding centroid of brightest spaxel')
             extraction_region = [1000, 3000]
             nrings = rinput.nrings
-            position = calc_centroid_brightest(final, extraction_region, nrings)
+            position = calc_centroid_brightest(
+                final, extraction_region, nrings)
         else:
             position = rinput.position
         self.logger.info('central position is %s', position)
@@ -167,7 +173,7 @@ class MOSStandardRecipe(ImageRecipe):
 
         star_interp = interp1d(rinput.reference_spectrum[:, 0] / factor,
                                rinput.reference_spectrum[:, 1])
-        
+
         extinc_interp = interp1d(rinput.reference_extinction[:, 0],
                                  rinput.reference_extinction[:, 1])
 
@@ -194,15 +200,18 @@ class MOSStandardRecipe(ImageRecipe):
             msg = f"'degrade_resolution_method' has value {rinput.degrade_resolution_method}"
             raise ValueError(msg)
 
-        sens_raw = generate_sensitivity(final, spectrum, star_interp, extinc_interp, wl_cover1, wl_cover2, sigma)
+        sens_raw = generate_sensitivity(
+            final, spectrum, star_interp, extinc_interp, wl_cover1, wl_cover2, sigma)
 
         # Compute smoothed version
         self.logger.info('compute smoothed sensitivity')
 
         sens = sens_raw.copy()
         i_knots = rinput.smoothing_knots
-        self.logger.debug(f'using adaptive spline with t={i_knots} interior knots')
-        spl = AdaptiveLSQUnivariateSpline(x=wl_aa.value, y=sens_raw.data, t=i_knots)
+        self.logger.debug(
+            f'using adaptive spline with t={i_knots} interior knots')
+        spl = AdaptiveLSQUnivariateSpline(
+            x=wl_aa.value, y=sens_raw.data, t=i_knots)
         sens.data = spl(wl_aa.value)
 
         if self.intermediate_results:

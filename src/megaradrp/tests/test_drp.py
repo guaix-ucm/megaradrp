@@ -29,6 +29,7 @@ def test_recipes_are_defined(current_drp):
             recipe = pipeval.get_recipe_object(key)
             assert isinstance(recipe, BaseRecipe)
 
+
 expected_tags = {
     "MegaraSuccess": set(), "MegaraFail": set(), "MegaraBadPixelMask": set(),
     "MegaraBiasImage": set(), "MegaraDarkImage": set(),
@@ -68,16 +69,25 @@ results1 = {
     'MegaraSlitFlat': {'master_bpm': 205, 'master_bias': 105},
     'MegaraTraceMap': {'master_bias': 105, 'master_bpm': 205},
     'MegaraModelMap': {'master_bpm': 205, 'master_bias': 105, 'master_slitflat': 1, 'master_traces': 11},
-    'MegaraFiberFlatImage': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 1, 'master_apertures': 11, 'master_wlcalib': 21},
-    'MegaraTwilightFlatImage': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 1, 'master_apertures': 11, 'master_wlcalib': 21, 'master_fiberflat': 49},
+    'MegaraFiberFlatImage': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 1,
+                             'master_apertures': 11, 'master_wlcalib': 21},
+    'MegaraTwilightFlatImage': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 1,
+                                'master_apertures': 11, 'master_wlcalib': 21, 'master_fiberflat': 49},
     'MegaraFocusSpectrograph': {'master_bias': 105, 'master_bpm': 205, 'master_apertures': 11, 'master_wlcalib': 21},
-    'MegaraFocusTelescope': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 1, 'master_wlcalib': 21, 'master_fiberflat': 49, 'master_twilight': 59, 'master_apertures': 11},
-    'MegaraLcbAcquisition': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 1, 'master_wlcalib': 21, 'master_fiberflat': 49, 'master_twilight': 59, 'master_apertures': 11},
-    'MegaraLcbImage': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 1, 'master_wlcalib': 21, 'master_fiberflat': 49, 'master_twilight': 59, 'master_apertures': 11},
-    'MegaraLcbStdStar': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 1, 'master_wlcalib': 21, 'master_fiberflat': 49, 'master_twilight': 59, 'master_apertures': 11},
-    'MegaraMosAcquisition': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 1, 'master_wlcalib': 21, 'master_fiberflat': 49, 'master_twilight': 59, 'master_apertures': 11},
-    'MegaraMosImage': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 1, 'master_wlcalib': 21, 'master_fiberflat': 49, 'master_twilight': 59, 'master_apertures': 11},
-    'MegaraMosStdStar': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 1, 'master_wlcalib': 21, 'master_fiberflat': 49, 'master_twilight': 59, 'master_apertures': 11},
+    'MegaraFocusTelescope': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 1, 'master_wlcalib': 21,
+                             'master_fiberflat': 49, 'master_twilight': 59, 'master_apertures': 11},
+    'MegaraLcbAcquisition': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 1, 'master_wlcalib': 21,
+                             'master_fiberflat': 49, 'master_twilight': 59, 'master_apertures': 11},
+    'MegaraLcbImage': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 1, 'master_wlcalib': 21,
+                       'master_fiberflat': 49, 'master_twilight': 59, 'master_apertures': 11},
+    'MegaraLcbStdStar': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 1, 'master_wlcalib': 21,
+                         'master_fiberflat': 49, 'master_twilight': 59, 'master_apertures': 11},
+    'MegaraMosAcquisition': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 1, 'master_wlcalib': 21,
+                             'master_fiberflat': 49, 'master_twilight': 59, 'master_apertures': 11},
+    'MegaraMosImage': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 1, 'master_wlcalib': 21,
+                       'master_fiberflat': 49, 'master_twilight': 59, 'master_apertures': 11},
+    'MegaraMosStdStar': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 1, 'master_wlcalib': 21,
+                         'master_fiberflat': 49, 'master_twilight': 59, 'master_apertures': 11},
     'MegaraExtinctionStar': {},
     'MegaraSensitivityStar': {},
 }
@@ -93,23 +103,34 @@ results2 = {
     'MegaraSlitFlat': {'master_bpm': 205, 'master_bias': 105},
     'MegaraTraceMap': {'master_bias': 105, 'master_bpm': 205},
     'MegaraModelMap': {'master_bpm': 205, 'master_bias': 105, 'master_slitflat': 2, 'master_traces': 12},
-    'MegaraFiberFlatImage': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 2, 'master_apertures': 12, 'master_wlcalib': 22},
-    'MegaraTwilightFlatImage': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 2, 'master_apertures': 12, 'master_wlcalib': 22, 'master_fiberflat': 42},
+    'MegaraFiberFlatImage': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 2, 'master_apertures': 12,
+                             'master_wlcalib': 22},
+    'MegaraTwilightFlatImage': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 2, 'master_apertures': 12,
+                                'master_wlcalib': 22, 'master_fiberflat': 42},
     'MegaraFocusSpectrograph': {'master_bias': 105, 'master_bpm': 205, 'master_apertures': 12, 'master_wlcalib': 22},
-    'MegaraFocusTelescope': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 2, 'master_wlcalib': 22, 'master_fiberflat': 42, 'master_twilight': 52, 'master_apertures': 12},
-    'MegaraLcbAcquisition': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 2, 'master_wlcalib': 22, 'master_fiberflat': 42, 'master_twilight': 52, 'master_apertures': 12},
-    'MegaraLcbImage': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 2, 'master_wlcalib': 22, 'master_fiberflat': 42, 'master_twilight': 52, 'master_apertures': 12},
-    'MegaraLcbStdStar': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 2, 'master_wlcalib': 22, 'master_fiberflat': 42, 'master_twilight': 52, 'master_apertures': 12},
-    'MegaraMosAcquisition': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 2, 'master_wlcalib': 22, 'master_fiberflat': 42, 'master_twilight': 52, 'master_apertures': 12},
-    'MegaraMosImage': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 2, 'master_wlcalib': 22, 'master_fiberflat': 42, 'master_twilight': 52, 'master_apertures': 12},
-    'MegaraMosStdStar': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 2, 'master_wlcalib': 22, 'master_fiberflat': 42, 'master_twilight': 52, 'master_apertures': 12},
+    'MegaraFocusTelescope': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 2, 'master_wlcalib': 22,
+                             'master_fiberflat': 42, 'master_twilight': 52, 'master_apertures': 12},
+    'MegaraLcbAcquisition': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 2, 'master_wlcalib': 22,
+                             'master_fiberflat': 42, 'master_twilight': 52, 'master_apertures': 12},
+    'MegaraLcbImage': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 2, 'master_wlcalib': 22,
+                       'master_fiberflat': 42, 'master_twilight': 52, 'master_apertures': 12},
+    'MegaraLcbStdStar': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 2, 'master_wlcalib': 22,
+                         'master_fiberflat': 42, 'master_twilight': 52, 'master_apertures': 12},
+    'MegaraMosAcquisition': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 2, 'master_wlcalib': 22,
+                             'master_fiberflat': 42, 'master_twilight': 52, 'master_apertures': 12},
+    'MegaraMosImage': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 2, 'master_wlcalib': 22,
+                       'master_fiberflat': 42, 'master_twilight': 52, 'master_apertures': 12},
+    'MegaraMosStdStar': {'master_bias': 105, 'master_bpm': 205, 'master_slitflat': 2, 'master_wlcalib': 22,
+                         'master_fiberflat': 42, 'master_twilight': 52, 'master_apertures': 12},
     'MegaraExtinctionStar': {},
     'MegaraSensitivityStar': {},
 }
 
 
-ob_repo1 = {'vph': 'HR-I', 'insmode': 'MOS', 'confid': '123', 'speclamp': 'ThNe'}
-ob_repo2 = {'vph': 'HR-I', 'insmode': 'LCB', 'confid': '000', 'speclamp': 'ThNe'}
+ob_repo1 = {'vph': 'HR-I', 'insmode': 'MOS',
+            'confid': '123', 'speclamp': 'ThNe'}
+ob_repo2 = {'vph': 'HR-I', 'insmode': 'LCB',
+            'confid': '000', 'speclamp': 'ThNe'}
 
 
 @pytest.mark.parametrize("ob_repo, results", [
@@ -165,10 +186,10 @@ def test_recipes_extract_tags(current_drp, ob_repo, results):
         ]
     }
 
-    calibs['master_apertures']  = calibs['master_traces']
+    calibs['master_apertures'] = calibs['master_traces']
 
     for pipeval in current_drp.pipelines.values():
-        for key, val in pipeval.recipes.items():
+        for key, value in pipeval.recipes.items():
             recipe = pipeval.get_recipe_object(key)
 
             qfields = recipe.tag_names()
@@ -194,7 +215,7 @@ def test_recipes_extract_tags(current_drp, ob_repo, results):
                                     msg = f'{rkey}  tags are not complete: {match}'
                                     raise ValueError(msg)
 
-                                if match == True:
+                                if match is True:
                                     match_per_recipe[rkey] = entry['id']
                                     break
                             else:

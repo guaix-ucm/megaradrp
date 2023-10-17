@@ -38,7 +38,7 @@ def assign_boxes_to_fibers(pseudo_slit_config, insmode):
         fibid_with_box += \
             [f"{val1}  [{val2}]"
              for val1, val2 in zip(range(n1, n2), [name] * nfibers)]
-        dumstr =f'Box {name:>2},  fibers {n1:3d} - {n2 - 1:3d}'
+        dumstr = f'Box {name:>2},  fibers {n1:3d} - {n2 - 1:3d}'
         list_to_print.append(dumstr)
         n1 = n2
     print(f'\n* Fiber description for INSMODE={insmode}')
@@ -50,7 +50,7 @@ def assign_boxes_to_fibers(pseudo_slit_config, insmode):
 
 
 def plot_aper(ax, center_model, xmin, xmax, ix_offset,
-               rawimage, fibids, fiblabel, colour, correction=0):
+              rawimage, fibids, fiblabel, colour, correction=0):
     if xmin == xmax == 0:
         num = 4096
         xp = np.linspace(start=1, stop=4096, num=num)
@@ -177,7 +177,8 @@ def main(args=None):
     pkg_paths = ['megaradrp.instrument.configs']
     store = asb.load_paths_store(pkg_paths)
 
-    insmodel = asb.assembly_instrument(store, insconf_uuid, date_obs, by_key='uuid')
+    insmodel = asb.assembly_instrument(
+        store, insconf_uuid, date_obs, by_key='uuid')
 
     pseudo_slit_config = insmodel.get_value('pseudoslit.boxes', **tags)
 
@@ -206,7 +207,7 @@ def main(args=None):
             y_at_ref_column = center_model(ref_column)
             correction = global_offset(y_at_ref_column)
             plot_aper(ax, center_model, start, stop, ix_offset, args.rawimage,
-                       args.fibids, fiblabel, colour='blue', correction=correction)
+                      args.fibids, fiblabel, colour='blue', correction=correction)
         else:
             print('Warning ---> Missing fiber:', fibid_with_box[fibid - 1])
 

@@ -5,6 +5,7 @@ import numpy as np
 from ..modeldesc.moffat import MoffatModelDescription
 from ..modeldesc.gaussbox import GaussBoxModelDescription
 
+
 def create_moffat_column(gamma, alpha):
     xval = np.arange(4112, dtype=float)
     box = np.zeros((4112,), dtype=float)
@@ -15,7 +16,8 @@ def create_moffat_column(gamma, alpha):
         k1 = int(math.ceil(k + 5))
         x_0.append(k)
         x = xval[k0:k1]
-        eval = Moffat1D.evaluate(x, x_0=k, amplitude=1, gamma=gamma, alpha=alpha)
+        eval = Moffat1D.evaluate(
+            x, x_0=k, amplitude=1, gamma=gamma, alpha=alpha)
         box[k0:k1] += eval
 
     return x_0, box
@@ -33,7 +35,7 @@ def test_0():
 
 
 def test_3():
-    centers = np.array([4,5,6])
+    centers = np.array([4, 5, 6])
 
     model_cls = GaussBoxModelDescription
 

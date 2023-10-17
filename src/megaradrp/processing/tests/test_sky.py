@@ -17,8 +17,8 @@ def create_rss(value, wlmap):
 def test_subtract_sky_rss():
 
     wlmap = numpy.zeros((623, 4300), dtype='float32')
-    wlmap[:,350:4105] = 1.0
-    wlmap[622,:] = 0
+    wlmap[:, 350:4105] = 1.0
+    wlmap[622, :] = 0
     img1 = create_rss(1000, wlmap)
     img2 = create_rss(400, wlmap)
 

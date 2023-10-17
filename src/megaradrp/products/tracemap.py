@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2020 Universidad Complutense de Madrid
+# Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -19,6 +19,7 @@ from .traces import to_ds9_reg as to_ds9_reg_function
 
 class GeometricTrace(GeometricAperture):
     """Representation of fiber trace on the image"""
+
     def __init__(self, fibid, boxid, start, stop, fitparms=None):
         super(GeometricTrace, self).__init__(fibid, boxid, start, stop)
         self.fitparms = fitparms if fitparms is not None else []
@@ -81,10 +82,12 @@ class TraceMap(BaseStructuredCalibration):
 
     def __setstate__(self, state):
         super(TraceMap, self).__setstate__(state)
-        self.contents = [GeometricTrace(**trace) for trace in state['contents']]
+        self.contents = [GeometricTrace(**trace)
+                         for trace in state['contents']]
         # fibers in missing fibers and error_fitting are invalid
         self.boxes_positions = state.get('boxes_positions', [])
-        self.global_offset = nppol.Polynomial(state.get('global_offset', [0.0]))
+        self.global_offset = nppol.Polynomial(
+            state.get('global_offset', [0.0]))
         self.ref_column = state.get('ref_column', 2000)
         self.expected_range = state.get('expected_range', [4, 4092])
         return self

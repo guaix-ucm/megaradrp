@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2019 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -29,7 +29,8 @@ class M2FocusActuator(FocusActuator):
         if x < -4000 or x > 4000:
             raise ValueError('telescope focus out of limits')
 
-        self.internal_focus_factor = 1+ 1.9 * (math.cosh((x - self._ref_focus) / 3000.0) - 1)
+        self.internal_focus_factor = 1 + 1.9 * \
+            (math.cosh((x - self._ref_focus) / 3000.0) - 1)
         self._internal_focus = x
 
 

@@ -5,6 +5,7 @@ import numpy
 
 from ..multirss import generate_multi_rss
 
+
 def generate_imgs(nimages, nfibers, nsamples):
     imgs = []
     for _ in range(nimages):

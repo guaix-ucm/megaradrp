@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2021 Universidad Complutense de Madrid
+# Copyright 2016-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -278,13 +278,13 @@ def megara_inferr_datetype_from_image(hdulist):
         datatype = MegaraDataType.IMAGE_RAW
     elif pshape == IMAGE_PROC_SHAPE:
         datatype = MegaraDataType.IMAGE_PROCESSED
-    elif pshape == RSS_IFU_PROC_SHAPE: # IFU
+    elif pshape == RSS_IFU_PROC_SHAPE:  # IFU
         datatype = MegaraDataType.RSS_PROCESSED
-    elif pshape == RSS_MOS_PROC_SHAPE: # MOS
+    elif pshape == RSS_MOS_PROC_SHAPE:  # MOS
         datatype = MegaraDataType.RSS_PROCESSED
-    elif pshape == RSS_IFU_PROC_WL_SHAPE: # IFU
+    elif pshape == RSS_IFU_PROC_WL_SHAPE:  # IFU
         datatype = MegaraDataType.RSS_WL_PROCESSED
-    elif pshape == RSS_MOS_PROC_WL_SHAPE: # MOS
+    elif pshape == RSS_MOS_PROC_WL_SHAPE:  # MOS
         datatype = MegaraDataType.RSS_WL_PROCESSED
     elif pshape == SPECTRUM_PROC_SHAPE:
         datatype = MegaraDataType.SPEC_PROCESSED

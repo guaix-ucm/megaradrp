@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2017 Universidad Complutense de Madrid
+# Copyright 2015-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -63,7 +63,8 @@ def create_test_tracemap2():
     data.total_fibers = 623
     data.expected_range = [2, 4092]
     data.ref_column = 2001
-    data.contents = [tm.GeometricTrace(fibid, 1, 4, 4090, fitparms=[200 + fibid * 3.5, 0.0]) for fibid in range(1, 624)]
+    data.contents = [tm.GeometricTrace(fibid, 1, 4, 4090, fitparms=[
+                                       200 + fibid * 3.5, 0.0]) for fibid in range(1, 624)]
 
     return data
 
@@ -112,7 +113,7 @@ def test_geotrace(state):
     assert numpy.all(mm.polynomial.coef == coeff)
 
 
-@pytest.mark.parametrize("state",[state1, state2])
+@pytest.mark.parametrize("state", [state1, state2])
 def test_getstate_geotrace(state):
 
     mm = tm.GeometricTrace(**state)
@@ -129,7 +130,7 @@ def test_getstate_geotrace(state):
     assert newstate == state
 
 
-@pytest.mark.parametrize("state",[state2, state3])
+@pytest.mark.parametrize("state", [state2, state3])
 def test_setstate_geotrace(state):
     new = tm.GeometricTrace.__new__(tm.GeometricTrace)
     new.__setstate__(state)

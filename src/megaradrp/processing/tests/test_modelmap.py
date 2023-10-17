@@ -18,8 +18,10 @@ def create_column(gamma, alpha):
         k1 = int(math.ceil(k + 5))
         x_0.append(k)
         x = xval[k0:k1]
-        eval = Moffat1D.evaluate(x, x_0=k, amplitude=1, gamma=gamma, alpha=alpha)
-        box[k0:k1] += eval
+        val = Moffat1D.evaluate(
+            x, x_0=k, amplitude=1, gamma=gamma, alpha=alpha
+        )
+        box[k0:k1] += val
 
     # import matplotlib.pyplot as plt
 
@@ -33,7 +35,7 @@ def test_0():
     gamma = 3.9
     alpha = 3
     x_0, column = create_column(gamma, alpha)
-    valid = range(1, 623 + 1)
+    # valid = range(1, 623 + 1)
     model_desc = MoffatModelDescription(fixed_center=True)
     values = model_desc.init_values(column, x_0)
     assert sorted(values.keys()) == sorted(model_desc.model_cls.param_names)

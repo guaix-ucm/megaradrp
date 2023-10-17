@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2020 Universidad Complutense de Madrid
+# Copyright 2017-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -10,7 +10,6 @@
 """
 Fix RSS imperfections
 """
-import math
 
 import numpy as np
 
@@ -56,7 +55,7 @@ def recompute_wcs(hdr, ipa):
     """Recompute the WCS rotations from IPA """
     pa = mwcs.compute_pa_from_ipa(ipa)
     # print('IPA angle is:', ipa, 'PA angle is', math.fmod(pa, 360))
-    x = hdr['PC1_1']
-    y = hdr['PC1_2']
+    # x = hdr['PC1_1']
+    # y = hdr['PC1_2']
     # print('PA from header is:', np.rad2deg(math.atan2(y, x)))
     return mwcs.update_wcs_from_ipa(hdr, pa)

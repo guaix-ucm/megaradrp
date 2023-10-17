@@ -1,5 +1,5 @@
 #
-# Copyright 2020 Universidad Complutense de Madrid
+# Copyright 2020-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -22,4 +22,4 @@ GTC_FC_A_PLATESCALE = 1.212 * u.arcsec / u.mm
 MEGARA_IAA = -163.854 * u.deg
 
 # mm from center to center, upwards
-SPAXEL_SCALE = 0.443  * u.mm
+SPAXEL_SCALE = 0.443 * u.mm

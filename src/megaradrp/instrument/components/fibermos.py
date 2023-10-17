@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2019 Universidad Complutense de Madrid
+# Copyright 2016-2013 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -18,7 +18,7 @@ from megaradrp.instrument.focalplane import TargetType
 class RoboticPositioner(HWDevice):
 
     def __init__(self, name, id, pos=None, parent=None):
-        super(RoboticPositioner,self). __init__(name, parent)
+        super(RoboticPositioner, self). __init__(name, parent)
         self._id = id
         if pos is None:
             pos = (0.0, 0.0, 0.0)
@@ -38,7 +38,7 @@ class RoboticPositioner(HWDevice):
         self.rpatrol = 10.0
 
     def move_to(self, x, y, pa):
-        dis  = math.hypot(x - self.x_fix, y - self.y_fix)
+        dis = math.hypot(x - self.x_fix, y - self.y_fix)
         if dis >= self.rpatrol:
             # impossible to move
             raise ValueError('movement out of patrol area')
@@ -58,14 +58,14 @@ class RoboticPositioner(HWDevice):
 
         base = math.pi / 3.0
         ini = base / 2.0
-        rad = 0.5365 # Geometry
+        rad = 0.5365  # Geometry
         PA = self.pa * (math.pi / 180)
 
         if self.fb is None:
             return ([], [])
         else:
             # To the left
-            #angs = PA + ini + base * np.arange(6)
+            # angs = PA + ini + base * np.arange(6)
             # To the right
             angs = -PA + ini + base * numpy.arange(6)
             m0 = rad * numpy.cos(angs)
@@ -75,8 +75,8 @@ class RoboticPositioner(HWDevice):
             xx = m0[[2, 3, 1, 0, 4, 5, 0]]
             yy = m1[[2, 3, 1, 0, 4, 5, 0]]
             # This is the central fiber
-            xx[3] = 0.0 # Center
-            yy[3] = 0.0 # Center
+            xx[3] = 0.0  # Center
+            yy[3] = 0.0  # Center
             xx += self.x
             yy += self.y
             return self.fb.fibs_id, list(zip(xx, yy))
@@ -107,7 +107,8 @@ class RoboticPositioner(HWDevice):
 
     @position_relative.setter
     def position_relative(self, value):
-        self.move_to(value[0] + self.x_, value[1] + self.y_, value[2] + self.pa_)
+        self.move_to(value[0] + self.x_, value[1] +
+                     self.y_, value[2] + self.pa_)
 
     @property
     def target_priority(self):
@@ -220,7 +221,8 @@ class LargeCompactBundle(BaseFibersPlane):
 
     def fibers_in_focal_plane(self):
         fibid = [fiber.fibid for fiber in self.fiberset.fibers.values()]
-        pos = [self.lcb_pos[fiber.fibid] for fiber in self.fiberset.fibers.values()]
+        pos = [self.lcb_pos[fiber.fibid]
+               for fiber in self.fiberset.fibers.values()]
 
         return fibid, pos
 
