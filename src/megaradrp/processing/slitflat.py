@@ -28,4 +28,5 @@ class SlitFlatCorrector(CommonFlatCorrector):
     def header_update(self, hdr, imgid):
         hdr['NUM-SLTF'] = self.calibid
         hdr['history'] = f'Slit flat correction {imgid}'
-        hdr['history'] = f'Slit flat correction time {datetime.datetime.utcnow().isoformat()}'
+        tnow = datetime.datetime.now(datetime.UTC)
+        hdr['history'] = f'Slit flat correction time {tnow.isoformat()}'

@@ -10,7 +10,7 @@
 """Corrector for wavelength calibration"""
 
 import logging
-import datetime
+from datetime import datetime, UTC
 import warnings
 import uuid
 
@@ -185,7 +185,7 @@ def calibrate_wl_rss(rss, solutionwl, npix, targetwcs, dtype='float32', span=0, 
     hdr['history'] = f'Wavelength calibration with {solutionwl.calibid}'
     hdr['history'] = 'Aperture extraction offsets are {}'.format(
         solutionwl.global_offset.coef.tolist())
-    hdr['history'] = f'Wavelength calibration time {datetime.datetime.utcnow().isoformat()}'
+    hdr['history'] = f'Wavelength calibration time {datetime.now(UTC).isoformat()}'
     hdr['history'] = f'Resample span={span}'
     # Update UUID
     hdr['UUID'] = str(uuid.uuid1())

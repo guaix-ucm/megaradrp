@@ -12,7 +12,7 @@ import math
 import numpy as np
 from scipy.stats import norm
 import scipy.interpolate as interpol
-from scipy.ndimage.filters import convolve1d
+from scipy.ndimage import convolve1d
 from numina.instrument.hwdevice import HWDevice
 from numina.instrument.simulation.efficiency import Efficiency
 

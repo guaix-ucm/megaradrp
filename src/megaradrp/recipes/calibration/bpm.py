@@ -56,12 +56,12 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
 
     def run(self, rinput):
         self.logger.info('start BPM recipe')
-        N = len(rinput.obresult.frames)
+        nframes = len(rinput.obresult.frames)
 
-        self.logger.debug('we have %d images', N)
-        half = N // 2
+        self.logger.debug('we have %d images', nframes)
+        half = nframes // 2
         flow = self.init_filters(rinput, rinput.obresult.configuration)
-        self.logger.debug('we have %d images', N)
+        self.logger.debug('we have %d images', nframes)
         reduced1 = basic_processing_with_combination_frames(
             rinput.obresult.frames[:half],
             flow,
@@ -86,9 +86,8 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
 
         self.set_base_headers(hdu.header)
 
-        hdu.header['history'] = 'BPM creation time {}'.format(
-            datetime.datetime.utcnow().isoformat()
-        )
+        tnow = datetime.datetime.now(datetime.UTC)
+        hdu.header['history'] = 'BPM creation time {}'.format(tnow.isoformat())
 
         for frame in rinput.obresult.frames:
             hdu.header['history'] = "With image {}".format(

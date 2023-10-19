@@ -55,7 +55,8 @@ class CommonFlatCorrector(Corrector):
     def header_update(self, hdr, imgid):
         hdr['NUM-FLT'] = self.calibid
         hdr['history'] = f'Flat correction {imgid}'
-        hdr['history'] = f'Flat correction time {datetime.datetime.utcnow().isoformat()}'
+        tnow = datetime.datetime.now(datetime.UTC)
+        hdr['history'] = f'Flat correction time {tnow.isoformat()}'
 
 
 class FiberFlatCorrector(CommonFlatCorrector):
@@ -74,7 +75,8 @@ class FiberFlatCorrector(CommonFlatCorrector):
     def header_update(self, hdr, imgid):
         hdr['NUM-FIBF'] = self.calibid
         hdr['history'] = f'Fiber flat correction {imgid}'
-        hdr['history'] = f'Fiber flat correction time {datetime.datetime.utcnow().isoformat()}'
+        tnow = datetime.datetime.now(datetime.UTC)
+        hdr['history'] = f'Fiber flat correction time {tnow.isoformat()}'
 
 
 class Splitter(Corrector):

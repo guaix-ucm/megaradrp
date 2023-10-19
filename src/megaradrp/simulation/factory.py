@@ -9,9 +9,9 @@
 
 """Simple monocromatic simulation"""
 
-import uuid
+import datetime
 import math
-from datetime import datetime
+import uuid
 
 import astropy.wcs as wcs
 import astropy.io.fits as fits
@@ -153,7 +153,8 @@ class MegaraImageFactory(object):
         # pheader['FILENAME'] = name
         # OBS mode
         pheader['OBSMODE'] = mode
-        pheader['DATE-OBS'] = datetime.utcnow().isoformat()
+        tnow = datetime.datetime.now(datetime.UTC)
+        pheader['DATE-OBS'] = tnow.isoformat()
         exptime = meta[instrument.name].get('exposed', 1.0)
         pheader['EXPTIME'] = exptime
         pheader['EXPOSED'] = exptime
@@ -169,9 +170,10 @@ class MegaraImageFactory(object):
         pheader['OBSMODE'] = control.mode
         pheader['UUID'] = str(uuid.uuid4())
         # Date of simulation
-        pheader['DATE'] = datetime.utcnow().isoformat()
+        tnow = datetime.datetime.now(datetime.UTC)
+        pheader['DATE'] = tnow.isoformat()
         # Date of simulated observation, not set yet
-        pheader['DATE-OBS'] = datetime.utcnow().isoformat()
+        pheader['DATE-OBS'] = tnow.isoformat()
 
         # Seqs
         metacontrol = control.config_info()

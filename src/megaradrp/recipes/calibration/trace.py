@@ -9,7 +9,7 @@
 
 """Fiber tracing Recipe."""
 
-from __future__ import division, print_function
+from __future__ import division
 
 import logging
 import warnings
@@ -27,7 +27,7 @@ from numina.array.wavecalib.crosscorrelation import cosinebell
 from numina.array.wavecalib.crosscorrelation import convolve_comb_lines
 from skimage.filters import threshold_otsu
 from skimage.feature import peak_local_max
-from scipy.ndimage.filters import minimum_filter
+from scipy.ndimage import minimum_filter
 from numina.frame.utils import copy_img
 
 from megaradrp.processing.aperture import ApertureExtractor

@@ -7,12 +7,12 @@
 # License-Filename: LICENSE.txt
 #
 
-from __future__ import division, print_function
+from __future__ import division
 
 import uuid
 
 import numpy
-from scipy.ndimage.filters import median_filter
+from scipy.ndimage import median_filter
 from astropy.io import fits
 from numina.array import combine
 from numina.core import Result

@@ -17,7 +17,7 @@ import astropy.wcs
 import astropy.io.fits as fits
 import astropy.units as u
 from scipy.spatial import KDTree
-from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage import gaussian_filter
 from numina.array.wavecalib.crosscorrelation import periodic_corr1d
 
 # import megaradrp.datamodel as dm

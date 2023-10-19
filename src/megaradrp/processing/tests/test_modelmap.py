@@ -76,7 +76,7 @@ def test_2():
 
 
 def test_calc1():
-    import scipy.sparse.csr
+    import scipy.sparse
     model = GaussBoxModelDescription().model_cls
     g_mean = 100 + 6 * np.arange(623)
     g_std = 1 + np.zeros_like(g_mean)
@@ -86,4 +86,4 @@ def test_calc1():
     params['mean'] = g_mean
     params['stddev'] = g_std
     wm = calc_matrix(wshape, model, params, valid)
-    assert isinstance(wm, scipy.sparse.csr.csr_matrix)
+    assert isinstance(wm, scipy.sparse.csr_matrix)

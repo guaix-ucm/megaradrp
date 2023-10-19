@@ -68,7 +68,8 @@ class FluxCalibration(Corrector):
         update_flux_limits(hdr, self.pixlims, ref=0)
 
         hdr['history'] = f'Flux calibration in {imgid}'
-        hdr['history'] = f'Flux calibration time {datetime.datetime.utcnow().isoformat()}'
+        tnow = datetime.datetime.now(datetime.UTC)
+        hdr['history'] = f'Flux calibration time {tnow.isoformat()}'
 
 
 def update_flux_limits(header, pixlims, wcs=None, ref=1):

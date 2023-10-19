@@ -200,7 +200,8 @@ class ApertureExtractor(numina.processing.Corrector):
         hdr['history'] = f'Aperture extraction method {method_name}'
         hdr['history'] = f'Aperture extraction with {self.calibid}'
         hdr['history'] = f'Aperture extraction offsets are {self.trace_repr.global_offset.coef.tolist()}'
-        hdr['history'] = f'Aperture extraction time {datetime.datetime.utcnow().isoformat()}'
+        tnow = datetime.datetime.now(datetime.UTC)
+        hdr['history'] = f'Aperture extraction time {tnow.isoformat()}'
 
         # Update Fibers
         fibers_ext = img['FIBERS']

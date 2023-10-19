@@ -7,7 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
-from __future__ import print_function, division
+from __future__ import division
 
 import logging
 import datetime
@@ -29,10 +29,9 @@ _direc = ['normal', 'mirror']
 
 def trimOut(img, detconf, direction='normal', out='trimmed.fits'):
     """
-    :param data: original data to be trimmed. Can be either a string <path>, an ImageHDU or a numpy array
+    :param img: original data to be trimmed. Can be either a string <path>, an ImageHDU or a numpy array
     :param direction: Can be either 'normal' or 'mirror'
     :param out: When the original data is a path, the returned value is a file too
-    :param bins: is the index of the _binning dictionary
     :return:
     """
 
@@ -92,8 +91,8 @@ def trim_and_o_array(array, detconf, direction='normal'):
     return finaldata
 
 
-def get_conf_value(confFile, key):
-    return confFile[key]
+def get_conf_value(conf_file, key):
+    return conf_file[key]
 
 
 def apextract_weights(data, weights, size=4096):
@@ -103,7 +102,7 @@ def apextract_weights(data, weights, size=4096):
 
     def decompress(tar_file):
         """
-        :param tar_name: <str> name of the tar file
+        :param tar_file: <str> name of the tar file
         :return: None
         """
 
@@ -198,10 +197,10 @@ class OverscanCorrector(Corrector):
                                                 dtype=dtype)
 
     def data_binning(self, data, binning):
-        '''
+        """
          Axis:x --> factorX
          Axis:y --> factorY
-        '''
+        """
         factorX = 1.0 / binning[1]
         factorY = 1.0 / binning[0]
         x = int(factorY * data[0][0])
@@ -212,8 +211,6 @@ class OverscanCorrector(Corrector):
         return x, y, z, t
 
     def test_image(self):
-        import astropy.io.fits as fits
-
         data = np.empty((4212, 4196), dtype='float32')
         data[self.pcol1] += 1
         data[self.orow1] += 10
@@ -253,7 +250,8 @@ class OverscanCorrector(Corrector):
         hdr = img['primary'].header
         hdr['NUM-OVPE'] = self.calibid
         hdr['history'] = f'Overscan correction with {self.calibid}'
-        hdr['history'] = f'Overscan correction time {datetime.datetime.utcnow().isoformat()}'
+        tnow = datetime.datetime.now(datetime.UTC)
+        hdr['history'] = f'Overscan correction time {tnow.isoformat()}'
         # hdr['history'] = 'Mean of prescan1 is %f' % p1
         hdr['history'] = f'Median of col overscan1 is {oc1}'
         hdr['history'] = "Overscan1 correction is spline3"
@@ -320,7 +318,8 @@ class TrimImage(Corrector):
         hdr = img['primary'].header
         hdr['NUM-TRIM'] = self.calibid
         hdr['history'] = f'Trimming correction with {self.calibid}'
-        hdr['history'] = f'Trimming correction time {datetime.datetime.utcnow().isoformat()}'
+        tnow = datetime.datetime.now(datetime.UTC)
+        hdr['history'] = f'Trimming correction time {tnow.isoformat()}'
 
         return img
 
@@ -353,7 +352,8 @@ class GainCorrector(Corrector):
         img[0].data[part:] *= self.gain2
 
         hdr['history'] = f'Gain correction with {self.calibid}'
-        hdr['history'] = f'Gain correction time {datetime.datetime.utcnow().isoformat()}'
+        tnow = datetime.datetime.now(datetime.UTC)
+        hdr['history'] = f'Gain correction time {tnow.isoformat()}'
         hdr['history'] = f'Gain1 correction value {self.gain1}'
         hdr['history'] = f'Gain2 correction value {self.gain2}'
         return img
