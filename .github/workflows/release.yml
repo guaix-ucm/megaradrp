@@ -25,7 +25,7 @@ jobs:
           python -m pip wheel . -w wheelhouse
       - uses: actions/upload-artifact@v3
         with:
-          path: ./wheelhouse/pyemir*.whl
+          path: ./wheelhouse/*.whl
 
   build_sdist:
     name: Build source distribution
