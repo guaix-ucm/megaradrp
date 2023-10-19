@@ -26,12 +26,11 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Astronomy",
 ]
 dependencies = [
-   "setuptools>=39.2",
    "numpy >= 1.20",
    "astropy",
    "scipy",
    "matplotlib",
-   "numina >= 0.22",
+   "numina >= 0.32",
    "jsonschema",
    "scikit-image",
    "packaging",
@@ -44,7 +43,8 @@ test = [
 ]
 docs = [
     "sphinx",
-    "numpydoc"
+    "numpydoc",
+    "sphinx_rtd_theme"
 ]
 DB = [
     "sqlalchemy",
