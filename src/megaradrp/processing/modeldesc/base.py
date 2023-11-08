@@ -8,7 +8,12 @@
 #
 
 import abc
-from collections.abc import Sequence  # for typing
+import sys
+
+if sys.version_info[:2] <= (3, 8):
+    from typing import Sequence  # for typing
+else:
+    from collections.abc import Sequence  # for typing
 
 import numpy as np
 

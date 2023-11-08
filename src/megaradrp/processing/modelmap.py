@@ -9,9 +9,14 @@
 
 import bisect
 import collections
-from collections.abc import Sequence  # for typing
 import logging
 import math
+import sys
+
+if sys.version_info[:2] <= (3, 8):
+    from typing import Sequence  # for typing
+else:
+    from collections.abc import Sequence  # for typing
 
 from astropy.modeling import fitting
 from astropy.modeling.functional_models import Const1D

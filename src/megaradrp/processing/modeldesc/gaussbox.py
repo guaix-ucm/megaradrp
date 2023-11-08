@@ -7,8 +7,11 @@
 # License-Filename: LICENSE.txt
 #
 
-
-from collections.abc import Sequence  # for typing
+import sys
+if sys.version_info[:2] <= (3, 8):
+    from typing import Sequence  # for typing
+else:
+    from collections.abc import Sequence  # for typing
 
 from numina.modeling.gaussbox import GaussBox
 import numpy as np
