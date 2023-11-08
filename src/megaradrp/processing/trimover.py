@@ -9,8 +9,12 @@
 
 from __future__ import division
 
-import logging
 import datetime
+import logging
+import sys
+
+if sys.version_info[:2] <= (3, 10):
+    datetime.UTC = datetime.timezone.utc
 
 import numpy as np
 import numpy

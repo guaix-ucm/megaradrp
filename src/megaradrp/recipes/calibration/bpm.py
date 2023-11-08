@@ -9,8 +9,12 @@
 
 """Bad Pixel Mask (BPM) recipe"""
 
-import uuid
 import datetime
+import sys
+import uuid
+
+if sys.version_info <= (3, 10):
+    datetime.UTC = datetime.timezone.utc
 
 import numina.exceptions
 import astropy.io.fits as fits

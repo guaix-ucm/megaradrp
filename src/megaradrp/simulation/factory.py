@@ -11,7 +11,11 @@
 
 import datetime
 import math
+import sys
 import uuid
+
+if sys.version_info <= (3, 10):
+    datetime.UTC = datetime.timezone.utc
 
 import astropy.wcs as wcs
 import astropy.io.fits as fits
