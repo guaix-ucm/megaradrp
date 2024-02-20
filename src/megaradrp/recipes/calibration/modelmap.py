@@ -161,7 +161,7 @@ class ModelMapRecipe(MegaraBaseRecipe):
 
         cols = range(100, 4100, 100)
         # cols = range(100, 200, 100)
-        valid_fibers = [(f.fibid, f.boixid)
+        valid_fibers = [(f.fibid, f.boxid)
                         for f in tracemap.contents if f.valid]
         # ncol = tracemap.total_fibers
 
