@@ -30,7 +30,7 @@ dependencies = [
    "astropy",
    "scipy",
    "matplotlib",
-   "numina >= 0.32",
+   "numina >= 0.33",
    "jsonschema",
    "scikit-image",
    "packaging",
