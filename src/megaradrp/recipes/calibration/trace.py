@@ -183,8 +183,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         self.save_intermediate_img(reduced, 'reduced_image.fits')
 
-        # insconf = obresult.configuration
-        insconf = obresult.profile
+        insconf = obresult.configuration
 
         boxes = insconf.get_property('pseudoslit.boxes')
         values = insconf.get_property('pseudoslit.boxes_positions')
