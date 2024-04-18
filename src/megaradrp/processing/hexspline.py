@@ -13,11 +13,14 @@ Interpolation method based on:
 van de Ville et al. IEEE Transactions on Image Processing 2004, 13, 6
 """
 
-from __future__ import division
-
 import math
+
+import scipy.interpolate as interp
+from scipy import signal
 import numpy as np
-from megaradrp.simulation.convolution import hex_c
+
+from megaradrp.simulation.convolution import hex_c, setup_grid
+
 
 # Hexagon constants
 M_SQRT3 = math.sqrt(3)
@@ -370,7 +373,7 @@ def hexspline_support(xx, yy, p):
 def hexspline_bbox(p):
     """Bounding box of hexspline of order p
 
-    The support is an hexagon of area Omega p^2
+    The support is a hexagon of area Omega p^2
     Omega = M_SQRT3 / 2
     """
     # (x1, x2), (y1, y2)
@@ -432,13 +435,17 @@ def sincH(x, y):
     return 4 * ts / xx
 
 
+def _bspline(x, n):
+    # wrapper for the bspline interface in scipy < 1.13
+    knots = np.arange(-(n + 1) / 2, (n + 3) / 2)
+    out = interp.BSpline.basis_element(knots)(x)
+    out[(x < knots[0]) | (x > knots[-1])] = 0.0
+    return out
+
+
 # Convolution, compute kernel
 def rescaling_kernel(p, scale=1):
     """Rescaling kernel from hexgrid to rectangular grid"""
-    from megaradrp.simulation.convolution import setup_grid
-    from scipy import signal
-    from scipy.interpolate import RectBivariateSpline
-
     Dx = 0.005
     Dy = 0.005
     DA = Dx * Dy
@@ -452,8 +459,7 @@ def rescaling_kernel(p, scale=1):
     # index of bspline
     n = p - 1
 
-    rect_kernel = signal.bspline(xx / scale, n) * \
-        signal.bspline(yy / scale, n) / detR1
+    rect_kernel = _bspline(xx / scale, n) * _bspline(yy / scale, n) / detR1
 
     hex1 = hexspline1(xx, yy)
 
@@ -470,5 +476,5 @@ def rescaling_kernel(p, scale=1):
         raise ValueError('p>3 not implemented')
 
     kernel = signal.fftconvolve(rect_kernel, hex_kernel, mode='same') * DA
-    rbs = RectBivariateSpline(xs, ys, kernel)
+    rbs = interp.RectBivariateSpline(xs, ys, kernel)
     return rbs
