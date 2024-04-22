@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2023 Universidad Complutense de Madrid
+# Copyright 2011-2024 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -9,26 +9,25 @@
 
 """Fiber tracing Recipe."""
 
-from __future__ import division
 
 import logging
 import warnings
 
+import matplotlib.pyplot as plt
 import numpy
 import numpy.polynomial.polynomial as nppol
+from numina.array import combine
 from numina.array.peaks.peakdet import refine_peaks
 from numina.array.trace.traces import trace as trace_func, tracing_limits
-from numina.core import Result, Parameter
-import matplotlib.pyplot as plt
-
-import numina.types.qc as qc
-from numina.array import combine
 from numina.array.wavecalib.crosscorrelation import cosinebell
 from numina.array.wavecalib.crosscorrelation import convolve_comb_lines
-from skimage.filters import threshold_otsu
-from skimage.feature import peak_local_max
-from scipy.ndimage import minimum_filter
+from numina.core import Result, Parameter
 from numina.frame.utils import copy_img
+import numina.types.qc as qc
+from scipy.ndimage import minimum_filter
+import scipy.signal
+from skimage.feature import peak_local_max
+from skimage.filters import threshold_otsu
 
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.combine import basic_processing_with_combination
@@ -189,9 +188,12 @@ class TraceMapRecipe(MegaraBaseRecipe):
         values = insconf.get_property('pseudoslit.boxes_positions')
         cstart0 = values['ref_column']
         box_borders0 = values['positions']
-
-        box_borders, cstart = self.refine_boxes_from_image(
-            reduced, box_borders0, cstart0)
+        self.logger.info("START refining boxes")
+        box_borders, cstart = refine_boxes_from_image(
+            reduced, box_borders0, cstart0,
+            intermediate_results=self.intermediate_results
+        )
+        self.logger.info("END refining boxes")
 
         self.logger.debug("original boxes: %s", box_borders0)
         self.logger.debug("refined boxes: %s", box_borders)
@@ -229,7 +231,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         # step of
         step = 2
         # number of the columns to add
-        hs = 3
+        hs = 5
         # Expected range of computed traces
         xx_start, xx_end = tracing_limits(
             reduced[0].shape[1], cstart, step, hs)
@@ -241,18 +243,16 @@ class TraceMapRecipe(MegaraBaseRecipe):
         final.tags['temp'] = round(
             obresult_meta['info'][0]['temp'] - 273.15, 2)
 
+        self.logger.info('START search traces')
         contents, error_fitting, missing_fibers = self.search_traces(
-            reduced,
-            boxes,
-            box_borders,
+            reduced, boxes, box_borders,
             inactive_fibers=inactive_fibers,
-            cstart=cstart,
-            step=step,
-            hs=hs,
+            cstart=cstart, step=step, hs=hs,
             threshold=threshold,
             poldeg=rinput.polynomial_degree,
             debug_plot=debug_plot
         )
+        self.logger.info('END search traces')
 
         final.contents = contents
         final.error_fitting = error_fitting
@@ -276,155 +276,6 @@ class TraceMapRecipe(MegaraBaseRecipe):
                                   reduced_rss=reduced_rss,
                                   master_traces=final)
 
-    def obtain_boxes_from_image(self, reduced, expected, npeaks, cstart=2000):
-        from numina.array.peaks.peakdet import find_peaks_indexes
-        col = cstart
-        data = reduced[0].data
-        rr = data[:, col-1:col+1].mean(axis=1)
-        # standarize
-        rr -= numpy.median(rr)
-        rr /= rr.max()
-        rr *= -1
-
-        cb = cosinebell(len(rr), 0.10)
-        cbr = cb * rr
-        plt.plot(cbr)
-        plt.show()
-        xv = numpy.fft.fftfreq(len(cbr))
-        yv = numpy.fft.fft(cbr)
-        plt.xlim([0.0, 0.5])
-        plt.semilogy(xv, numpy.abs(yv.real))
-        plt.show()
-
-        cut = abs(xv) > 0.1
-        yv[cut] = 0
-        res = numpy.fft.ifft(yv)
-        final = res.real
-        plt.plot(final)
-        # trend = detrend(final)
-        # plt.plot(final - trend)
-        plt.show()
-
-        idx = find_peaks_indexes(final, window_width=3, threshold=0.3, fpeak=1)
-
-        # We expect  differentnumber of pekas in LCB/MOS
-        # order by intensity
-        peak_flux = final[idx]
-        # Number of peaks must be >=18
-        npeaks = npeaks + 1
-        fidx = numpy.argsort(peak_flux)[:-(npeaks+1):-1]
-        nidx = idx[fidx]
-        nidxs = numpy.sort(nidx)
-
-        plt.plot(final)
-        # plt.scatter(idx, [0.9 for m in idx])
-        plt.scatter(nidx, [0.95 for m in nidx], c='r')
-        plt.scatter(expected, [1.0 for m in expected])
-        plt.show()
-
-        plt.scatter(expected, nidxs - expected)
-        plt.show()
-        return nidxs, col
-
-    def refine_boxes_from_image(self, reduced, expected, cstart=2000, nsearch=20):
-        """Refine boxes using a filtered Fourier image"""
-
-        hs = 3
-        # Cut freq in Fourier space
-        cut_frec = 0.10
-        # Cosine bell
-        cos_cut = 0.10
-
-        data = reduced[0].data
-        rr = data[:, cstart-hs:cstart+hs].mean(axis=1)
-
-        # standarize and Y flip
-        rr -= numpy.median(rr)
-        rr /= rr.max()
-        rr *= -1
-
-        cb = cosinebell(len(rr), cos_cut)
-        cbr = cb * rr
-
-        xv = numpy.fft.fftfreq(len(cbr))
-        yv = numpy.fft.fft(cbr)
-
-        # Filter freqs in Fourier space
-        yv[abs(xv) > cut_frec] = 0
-
-        res = numpy.fft.ifft(yv)
-        final = res.real
-
-        # initial determination of global offset (integer number) by
-        # cross-correlating an artificial spectrum (with lines placed at
-        # the expected locations of the frontiers)
-        expected_arr = numpy.array(expected)
-        comb_lines_flux = numpy.ones_like(expected_arr)
-        naxis1 = len(final)
-        ioffset_max = 100  # pixels
-        xcorr = []
-        ycorr = []
-        xwave = None   # avoid PyCharm warning
-        sp_comb_lines0 = None   # avoid PyCharm warning
-        for ioffset in range(-ioffset_max, ioffset_max + 1):
-            xwave, sp_comb_lines = convolve_comb_lines(
-                lines_wave=expected_arr + ioffset,
-                lines_flux=comb_lines_flux,
-                sigma=3,
-                crpix1=0, crval1=0, cdelt1=1, naxis1=naxis1
-            )
-            factor = max(final) / max(sp_comb_lines)
-            sp_comb_lines = sp_comb_lines * factor
-            fpeak = numpy.sum(sp_comb_lines * final)
-            xcorr.append(ioffset)
-            ycorr.append(fpeak)
-            if ioffset == 0:
-                sp_comb_lines0 = sp_comb_lines.copy()  # store for plot
-
-        # initial offset
-        ioffset = xcorr[ycorr.index(max(ycorr))]
-
-        # auxiliary plot showing the cross-correlation work
-        if self.intermediate_results:
-            fig, ax = plt.subplots(ncols=1, nrows=1)
-            ax.plot(xcorr, ycorr, 'o-')
-            ax.set_xlabel('ioffset')
-            ax.set_ylabel('peak of corrrelation function')
-            ax.axvline(ioffset, linestyle=':', color='C1')
-            ax.set_title(f'optimal initial offset: {ioffset}')
-            plt.savefig('offset_borders_cross.png')
-            plt.close()
-
-        # using the initial offset, refine the peak search around the new
-        # expected location, looking for a maximum in +/- nsearch pixels
-        refined = expected[:]    # initialize list with the same length
-        for ibox, box in enumerate(expected):
-            box_ini = box - nsearch + ioffset
-            box_end = box + nsearch + 1 + ioffset
-            iargmax = final[box_ini:box_end].argmax()
-            refined[ibox] = iargmax + box - nsearch + ioffset
-
-        # auxiliary plot showing the initial and final frontier locations
-        if self.intermediate_results:
-            fig, ax = plt.subplots(ncols=1, nrows=1)
-            ax.plot(final, label=f'cross section at x={cstart}')
-            ax.plot(xwave, sp_comb_lines0,
-                    label='expected location of frontiers')
-            for idum, item in enumerate(expected):
-                if idum == 0:
-                    label = 'refined frontier location'
-                else:
-                    label = None
-                ax.plot(refined, final[refined], 'ro', label=label)
-            ax.legend()
-            ax.set_title(f'optimal initial offset: {ioffset}')
-            ax.set_xlabel('pixel number - 1')
-            ax.set_ylabel('inverted normalized signal')
-            plt.savefig('frontiers_between_pseudoslits.png')
-            plt.close()
-
-        return refined, cstart
-
     def search_traces(self, reduced, boxes, box_borders, inactive_fibers=None, cstart=2000,
                       threshold=0.3, poldeg=5, step=2, hs=3, debug_plot=0):
 
@@ -442,6 +293,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         self.logger.info('find peaks in reference column %i', cstart)
 
+        print('START init_traces')
         central_peaks = init_traces(
             data,
             center=cstart,
@@ -452,7 +304,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
             threshold=threshold,
             debug_plot=debug_plot
         )
-
+        print('END init_traces')
+        # return 1 / 0
         # The byteswapping is required by the cython module
         if data.dtype.byteorder != '=':
             self.logger.debug('byteswapping image')
@@ -539,7 +392,7 @@ def estimate_background(image, center, hs, boxref):
     return threshold_otsu(colcut)
 
 
-class FiberTraceInfo(object):
+class FiberTraceInfo:
     def __init__(self, fibid, boxid):
         self.boxid = boxid
         self.fibid = fibid
@@ -550,7 +403,7 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
 
     _logger = logging.getLogger(__name__)
 
-    cut_region = slice(center-hs, center+hs)
+    cut_region = slice(center-hs, center+hs+1)
     cut = image[:, cut_region]
     colcut = cut.mean(axis=1)
     # trace local background with a min filter
@@ -561,7 +414,9 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
     fiber_traces = []
     total_peaks = 0
     lastid = 0
-    counted_fibers = 0
+    counted_space = 0
+    expected_fibers = 0
+    matched_fibers = 0
     boxes_with_missing_fibers = []
 
     ioffset = 0  # correction to be applied to each successive fiber block
@@ -572,9 +427,11 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         nfibers_max = nfibers - len(mfibers)
         sfibers = box.get('skipcount', [])
         _logger.debug('pseudoslit box: %s, id: %d', box['name'], boxid)
-        _logger.debug('nfibers: %d, missing: %s', nfibers, mfibers)
+        _logger.debug('nfibers: %d', nfibers)
+        _logger.debug('missing ids in box: %s', mfibers)
 
-        counted_fibers += nfibers
+        counted_space += nfibers
+        expected_fibers += nfibers_max
         b1 = int(box_borders[boxid])
         b2 = int(box_borders[boxid + 1])
         _logger.debug('initial box borders: %s %s', b1, b2)
@@ -595,11 +452,9 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
 
         # Find exactly the number of peaks expected
         _logger.debug('find %d peaks (max)', nfibers_max)
-        ipeaks_int = peak_local_max(region, min_distance=3,
-                                    threshold_abs=lowt,
-                                    threshold_rel=threshold,
-                                    num_peaks=nfibers_max,
-                                    )[:, 0]
+        ipeaks_int = peak_local_max(
+            region, min_distance=3, threshold_abs=lowt,
+            threshold_rel=threshold, num_peaks=nfibers_max).squeeze()
 
         npeaks = len(ipeaks_int)
         total_peaks += npeaks
@@ -629,46 +484,220 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         delta_ioffset = int((border1 - border2) / 2)
         ioffset += delta_ioffset  # new offset to recenter next fiber block
 
-        if debug_plot:
-            plt.plot(numpy.arange(len(region))+b1, region)
-            plt.plot(ipeaks_int+b1, region[ipeaks_int], 'r*')
-            plt.xlabel('pixel number - 1')
-            plt.ylabel('number of counts')
-            plt.title(f'pseudoslit box: {box["name"]}, id: {boxid}')
-            plt.savefig(f'central_cut_{boxid:02d}.png')
-            plt.close()
-
         startid = lastid + 1
-        fiber_model = fibermatch.generate_box_model(nfibers,
-                                                    start=startid,
-                                                    missing_relids=mfibers,
-                                                    skip_fibids=sfibers
-                                                    )
+        fiber_model = fibermatch.generate_box_model(
+             nfibers, start=startid, missing_relids=mfibers, skip_fibids=sfibers
+        )
+
         lastid = fiber_model[-1].fibid
         _logger.debug('fibids %s - %s', startid, lastid)
 
         matched_peaks = fibermatch.count_peaks(peaks_y[:, 1])
-        nmatched = len(matched_peaks)
+        # Count FOUND_PEAK elements
+        nmatched = sum([1 for el in matched_peaks if el.mode == fibermatch.PeakFound.FOUND_PEAK])
+        matched_fibers += nmatched
         missing = nfibers - nmatched
 
         if missing != 0:
             boxes_with_missing_fibers.append((box['name'], missing))
 
-        _logger.debug('matched %s, missing: %s', nmatched, missing)
-        pos_solutions = fibermatch.complete_solutions(fiber_model, matched_peaks,
-                                                      borders, scale=measured_scale)
+        if True or debug_plot:
 
-        for fibid, match in fibermatch.iter_best_solution(fiber_model,
-                                                          matched_peaks,
-                                                          pos_solutions):
+            plt.plot(numpy.arange(len(region))+b1, region)
+            plt.plot(peaks_y[:, 1], region[ipeaks_int], 'r.')
+
+            for el in matched_peaks:
+                if el.mode == fibermatch.PeakFound.FOUND_PEAK:
+                    plt.axvline(el.pos, c='k', ls='--', lw=0.5)
+                if el.mode == fibermatch.PeakFound.FOUND_VALLEY:
+                    plt.axvline(el.pos, c='r', ls='-.', lw=0.5)
+
+            plt.xlabel('pixel number - 1')
+            plt.ylabel('number of counts')
+            plt.title(f'pseudoslit box: {box["name"]}, id: {boxid}')
+            plt.savefig(f'cut_col{center}_{boxid:02d}_{box["name"]}.png')
+            plt.close()
+
+        pos_solutions = fibermatch.complete_solutions(
+            fiber_model, matched_peaks,
+            borders, scale=measured_scale
+        )
+
+        for fibid, match in fibermatch.iter_best_solution(
+                fiber_model, matched_peaks, pos_solutions
+        ):
             fti = FiberTraceInfo(fibid, boxid)
             if match is not None:
                 fti.start = (center, peaks_y[match, 1], peaks_y[match, 2])
             fiber_traces.append(fti)
 
+        _logger.debug('matched %s, missing: %s', nmatched, missing)
+        _logger.debug('=============================================')
+
+    _logger.debug('total expected fibers: %d', expected_fibers)
     _logger.debug('total found peaks: %d', total_peaks)
-    _logger.debug('total found + recovered peaks: %d', counted_fibers)
-    if boxes_with_missing_fibers:
-        for m1, n2 in boxes_with_missing_fibers:
-            _logger.debug('missing %d fibers in box %s', n2, m1)
+    _logger.debug('total matched peaks: %d', matched_fibers)
+    for m1, n2 in boxes_with_missing_fibers:
+        _logger.debug('missing %d fibers in box %s', n2, m1)
+
     return fiber_traces
+
+
+def refine_boxes_from_image(reduced, expected, col, hwidth=3, nsearch=20, intermediate_results=False):
+    """Refine the positions of the boxes using a filtered Fourier image
+
+    The function computes the position of the pseudo-slit boxes in the array by comparing
+    with a reference value
+
+    """
+    return refine_boxes_from_array(
+        reduced[0].data, expected, col,
+        hwidth=hwidth, nsearch=nsearch,
+        intermediate_results=intermediate_results
+    )
+
+
+def refine_boxes_from_array(arr, expected, col, hwidth=3, nsearch=20, intermediate_results=False):
+    """Refine the positions of the boxes using a filtered Fourier image
+
+    The function computes the position of the pseudo-slit boxes in the array by comparing
+    with a reference value
+
+    """
+    # Cut freq in Fourier space
+    cut_frec = 0.10
+    # Cosine bell
+    cos_cut = 0.10
+
+    # Collapse around a column
+    rr = arr[:, col - hwidth:col + hwidth + 1].mean(axis=1)
+
+    # standardize and Y flip
+    rr -= numpy.median(rr)
+    rr /= rr.max()
+    rr *= -1
+
+    cb = cosinebell(len(rr), cos_cut)
+    cbr = cb * rr
+
+    xv = numpy.fft.fftfreq(len(cbr))
+    yv = numpy.fft.fft(cbr)
+
+    # Filter frequencies in Fourier space
+    yv[abs(xv) > cut_frec] = 0
+
+    res = numpy.fft.ifft(yv)
+    smoothed = res.real
+
+    # initial determination of global offset (integer number) by
+    # cross-correlating an artificial spectrum (with lines placed at
+    # the expected locations of the frontiers)
+    expected_arr = numpy.array(expected)
+    comb_lines_flux = numpy.ones_like(expected_arr)
+    naxis1 = len(smoothed)
+
+    # maximum allowed offset
+    ioffset_max = 100  # pixels
+
+    xwave0, sp_comb_lines0 = convolve_comb_lines(
+        lines_wave=expected_arr,
+        lines_flux=comb_lines_flux,
+        sigma=3,
+        crpix1=0, crval1=0, cdelt1=1, naxis1=naxis1
+    )
+    ycorr0 = scipy.signal.correlate(smoothed, sp_comb_lines0, mode='same')
+    lags = scipy.signal.correlation_lags(len(sp_comb_lines0), naxis1, mode='same')
+
+    # initial offset
+    ioffset = lags[ycorr0.argmax()]
+
+    # auxiliary plot showing the cross-correlation work
+    if intermediate_results:
+        fig, ax = plt.subplots(ncols=1, nrows=1)
+        ax.plot(lags, ycorr0, 'o-')
+        ax.set_xlabel('ioffset')
+        ax.set_ylabel('peak of correlation function')
+        ax.axvline(ioffset, linestyle=':', color='C1')
+        ax.set_title(f'optimal initial offset: {ioffset}')
+        plt.savefig('offset_borders_cross.png')
+        plt.close()
+
+    # using the initial offset, refine the peak search around the new
+    # expected location, looking for a maximum in +/- nsearch pixels
+    refined = expected[:]    # initialize list with the same length
+    for ibox, box in enumerate(expected):
+        box_ini = box - nsearch + ioffset
+        box_end = box + nsearch + 1 + ioffset
+        iargmax = smoothed[box_ini:box_end].argmax()
+        refined[ibox] = iargmax + box - nsearch + ioffset
+
+    # auxiliary plot showing the initial and final frontier locations
+    if intermediate_results:
+        fig, ax = plt.subplots(ncols=1, nrows=1)
+        ax.plot(smoothed, label=f'cross section at x={col}')
+        ax.plot(xwave0, sp_comb_lines0,
+                label='expected location of frontiers')
+        for idum, item in enumerate(expected):
+            if idum == 0:
+                label = 'refined frontier location'
+            else:
+                label = None
+            ax.plot(refined, smoothed[refined], 'ro', label=label)
+        ax.legend()
+        ax.set_title(f'optimal initial offset: {ioffset}')
+        ax.set_xlabel('pixel number - 1')
+        ax.set_ylabel('inverted normalized signal')
+        plt.savefig('frontiers_between_pseudoslits.png')
+        plt.close()
+
+    return refined, col
+
+
+def obtain_boxes_from_image(reduced, expected, npeaks, col):
+    from numina.array.peaks.peakdet import find_peaks_indexes
+    data = reduced[0].data
+    rr = data[:, col-1:col+2].mean(axis=1)
+    # standardize
+    rr -= numpy.median(rr)
+    rr /= rr.max()
+    rr *= -1
+
+    cb = cosinebell(len(rr), 0.10)
+    cbr = cb * rr
+    plt.plot(cbr)
+    plt.show()
+    xv = numpy.fft.fftfreq(len(cbr))
+    yv = numpy.fft.fft(cbr)
+    plt.xlim([0.0, 0.5])
+    plt.semilogy(xv, numpy.abs(yv.real))
+    plt.show()
+
+    cut = abs(xv) > 0.1
+    yv[cut] = 0
+    res = numpy.fft.ifft(yv)
+    final = res.real
+    plt.plot(final)
+    # trend = detrend(final)
+    # plt.plot(final - trend)
+    plt.show()
+
+    idx = find_peaks_indexes(final, window_width=3, threshold=0.3, fpeak=1)
+
+    # We expect a different number of peaks in LCB/MOS
+    # order by intensity
+    peak_flux = final[idx]
+    # Number of peaks must be >=18
+    npeaks = npeaks + 1
+    fidx = numpy.argsort(peak_flux)[:-(npeaks+1):-1]
+    nidx = idx[fidx]
+    nidxs = numpy.sort(nidx)
+
+    plt.plot(final)
+    # plt.scatter(idx, [0.9 for m in idx])
+    plt.scatter(nidx, [0.95 for _ in nidx], c='r')
+    plt.scatter(expected, [1.0 for _ in expected])
+    plt.show()
+
+    plt.scatter(expected, nidxs - expected)
+    plt.show()
+    return nidxs, col

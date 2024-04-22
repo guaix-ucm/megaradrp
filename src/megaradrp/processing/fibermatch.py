@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2023 Universidad Complutense de Madrid
+# Copyright 2011-2024 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -9,17 +9,38 @@
 
 
 """Match and identify fibers"""
-
+import enum
 import itertools
-import collections
+import logging
+
+import attrs
 
 
-FIBER_PEAK, FIBER_DEAD = (0, 1)
-FOUND_PEAK, FOUND_VALLEY, EXPECT_VALLEY = (0, 1, 2)
+class PeakMode(enum.Enum):
+    FIBER_PEAK = 0
+    FIBER_DEAD = 1
 
 
-FiberModelElement = collections.namedtuple(
-    'FiberModelElement', ['fibid', 'mode'])
+class PeakFound(enum.Enum):
+    FOUND_PEAK = 0
+    FOUND_VALLEY = 1
+    EXPECT_VALLEY = 2
+    MAX_JUMP = 3
+
+
+@attrs.define
+class FiberModelElement:
+    fibid: int = attrs.field()
+    mode: PeakMode = attrs.field()
+
+
+@attrs.define
+class PeakMatch:
+    count: int = attrs.field()
+    pos: float = attrs.field()
+    mode: PeakFound = attrs.field()
+    idx: int  = attrs.field()
+
 
 
 def generate_box_model(nfibers, start=1,
@@ -40,9 +61,9 @@ def generate_box_model(nfibers, start=1,
 
     result = []
     for idx, fibid in enumerate(iter3, 1):
-        key = FIBER_PEAK
+        key = PeakMode.FIBER_PEAK
         if idx in missing_relids:
-            key = FIBER_DEAD
+            key = PeakMode.FIBER_DEAD
         tok = FiberModelElement(fibid=fibid, mode=key)
         result.append(tok)
     return result
@@ -50,6 +71,8 @@ def generate_box_model(nfibers, start=1,
 
 def count_peaks(peaks, tol=1.2, distance=6.0, start=1, max_scale_jump=3):
     """Count the peaks and valleys of an array"""
+
+    _logger = logging.getLogger('count_peaks')
 
     expected_distance = distance
 
@@ -62,38 +85,45 @@ def count_peaks(peaks, tol=1.2, distance=6.0, start=1, max_scale_jump=3):
 
     p1, rest = peaks[0], peaks[1:]
     # pref = p1
-    values = [(pid, p1, FOUND_PEAK, 0)]
+
+    values = [PeakMatch(pid, p1, PeakFound.FOUND_PEAK, 0)]
 
     while len(rest) > 0:
-        # print('im peak:', p1, ' next peak should be around:', p1 + scale * expected_distance)
+        # print(f'im peak: {p1:.2f}, next peak should be around: {p1 + scale * expected_distance:.2f}')
         p2 = rest[0]
         dist = abs(p1 - p2)
         last_info = values[-1]
         while True:
             sed = scale * expected_distance
-            # print('next peak is:', p2, 'distance from p1 is', dist)
+            # print(f'next peak is: {p2:.2f}, distance from p1 is {dist:.2f}')
             # print('expected distance is:', sed)
             pid += 1
 
             if abs(dist - sed) < scale * tol:
-                # print('p2 is within expected distance with tol:', tol)
-                # print('p2 is next peak, with scale', scale)
+                # print(f'p2 is within expected distance with tol {tol}')
+                # print(f'p2 is next peak, with scale', scale)
                 pidx += 1
-                values.append((pid, p2, FOUND_PEAK, pidx))
+                values.append(PeakMatch(pid, p2, PeakFound.FOUND_PEAK, pidx))
                 scale = 1
+
+                p1, rest = rest[0], rest[1:]
                 break
             else:
                 # print('p2 is not within expected distance with tol:', tol)
                 pex = p1 + sed
-                values.append((pid, pex, FOUND_VALLEY, None))
+                pidx += 1
+                values.append(PeakMatch(pid, pex, PeakFound.FOUND_VALLEY, None))
                 scale += 1
                 # print('increase scale to:', scale)
+                # Skip this peak
+                rest = rest[1:]
                 if scale > max_scale_jump:
-                    # print('moving to far')
-                    msg = f'peak {pid} not found within expected distance from {last_info[0]}'
-                    raise ValueError(msg)
-
-        p1, rest = rest[0], rest[1:]
+                    # print('moving too far away')
+                    msg = f'peak {pid} not found within expected distance from peak {last_info.count}'
+                    print(msg)
+                    # end process
+                    rest = rest[-1:]
+                break
     return values
 
 
@@ -102,8 +132,8 @@ def valid_match(model, values):
     """Match a model with found peaks"""
     for m, v in zip(model, values):
         field_m = m.mode
-        field_v = v[2]
-        if field_m == FIBER_DEAD and field_v == FOUND_PEAK:
+        field_v = v.mode
+        if field_m == PeakMode.FIBER_DEAD and field_v == PeakFound.FOUND_PEAK:
             # print(m, v, 'must be empty')
             return False
     return True
@@ -121,8 +151,8 @@ def complete_solutions(model, values, borders, scale=6.0):
     last_peak = values[-1]
     first_peak = values[0]
     # distance to borders
-    d1 = abs(first_peak[1] - border1)
-    d2 = abs(last_peak[1] - border2)
+    d1 = abs(first_peak.pos - border1)
+    d2 = abs(last_peak.pos - border2)
 
     solutions = []
 
@@ -131,7 +161,7 @@ def complete_solutions(model, values, borders, scale=6.0):
         pr = missing - pl
         # print('XXXX', pl, pr)
         # Complete peaks
-        # preapend pl peaks
+        # preappend pl peaks
 
         pre = []
         post = []
@@ -139,13 +169,13 @@ def complete_solutions(model, values, borders, scale=6.0):
         for peak in range(pl):
             idx = -peak - 1
             dist = scale * idx
-            tok = (idx, dist, EXPECT_VALLEY, None)
+            tok = PeakMatch(idx, dist, PeakFound.EXPECT_VALLEY, None)
             pre.append(tok)
 
         for peak in range(pr):
             idx = (len(values) + peak) + 1
-            dist = last_peak[1] + scale * (peak + 1)
-            tok = (idx, dist, EXPECT_VALLEY, None)
+            dist = last_peak.pos + scale * (peak + 1)
+            tok = PeakMatch(idx, dist, PeakFound.EXPECT_VALLEY, None)
             post.append(tok)
 
         if valid_match(model, itertools.chain(pre, values, post)):
@@ -172,6 +202,6 @@ def iter_best_solution(model, values, solutions):
     pre, post = added_peaks
     comp_sol = itertools.chain(pre, values, post)
     for xx, yy in zip(comp_sol, model):
-        fibid = yy[0]
-        match = xx[3]
+        fibid = yy.fibid
+        match = xx.idx
         yield fibid, match
