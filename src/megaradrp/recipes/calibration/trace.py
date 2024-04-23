@@ -277,12 +277,11 @@ class TraceMapRecipe(MegaraBaseRecipe):
                                   master_traces=final)
 
     def search_traces(self, reduced, boxes, box_borders, inactive_fibers=None, cstart=2000,
-                      threshold=0.3, poldeg=5, step=2, hs=3, debug_plot=0):
+                      threshold=0.3, poldeg=5, step=2, hs=3, tol=1.5, debug_plot=0):
 
         data = reduced[0].data
         if inactive_fibers is None:
             inactive_fibers = []
-        tol = 1.63
 
         self.logger.info('search for traces')
 
@@ -305,7 +304,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
             debug_plot=debug_plot
         )
         print('END init_traces')
-        # return 1 / 0
+
         # The byteswapping is required by the cython module
         if data.dtype.byteorder != '=':
             self.logger.debug('byteswapping image')
@@ -492,7 +491,7 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         lastid = fiber_model[-1].fibid
         _logger.debug('fibids %s - %s', startid, lastid)
 
-        matched_peaks = fibermatch.count_peaks(peaks_y[:, 1])
+        matched_peaks = fibermatch.count_peaks(peaks_y[:, 1], tol=tol, distance=measured_scale)
         # Count FOUND_PEAK elements
         nmatched = sum([1 for el in matched_peaks if el.mode == fibermatch.PeakFound.FOUND_PEAK])
         matched_fibers += nmatched
@@ -615,6 +614,7 @@ def refine_boxes_from_array(arr, expected, col, hwidth=3, nsearch=20, intermedia
     if intermediate_results:
         fig, ax = plt.subplots(ncols=1, nrows=1)
         ax.plot(lags, ycorr0, 'o-')
+        ax.set_xlim(-ioffset_max, ioffset_max)
         ax.set_xlabel('ioffset')
         ax.set_ylabel('peak of correlation function')
         ax.axvline(ioffset, linestyle=':', color='C1')
