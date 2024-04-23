@@ -96,6 +96,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
     master_bpm = reqs.MasterBPMRequirement()
     polynomial_degree = Parameter(5, 'Polynomial degree of trace fitting')
     relative_threshold = Parameter(0.3, 'Threshold for peak detection')
+    reference_column = Parameter(2000, 'Column used to search for peaks')
+    reference_column_hw = Parameter(5, 'Half-width (w = 2 * hw + 1) of the region used to search for peaks ')
     debug_plot = Parameter(0, 'Save intermediate tracing plots')
 
     reduced_image = Result(ProcessedImage)
@@ -184,19 +186,25 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         insconf = obresult.configuration
 
+        cstart = rinput.reference_column
         boxes = insconf.get_property('pseudoslit.boxes')
+
         values = insconf.get_property('pseudoslit.boxes_positions')
         cstart0 = values['ref_column']
         box_borders0 = values['positions']
+
         self.logger.info("START refining boxes")
-        box_borders, cstart = refine_boxes_from_image(
-            reduced, box_borders0, cstart0,
+        self.logger.debug(f"initial boxes measured in column {cstart0}")
+        self.logger.debug("original boxes: %s", box_borders0)
+
+        box_borders, _ = refine_boxes_from_image(
+            reduced, box_borders0, cstart,
             intermediate_results=self.intermediate_results
         )
-        self.logger.info("END refining boxes")
-
-        self.logger.debug("original boxes: %s", box_borders0)
+        self.logger.debug(f"refined boxes computed in column {cstart}")
         self.logger.debug("refined boxes: %s", box_borders)
+
+        self.logger.info("END refining boxes")
 
         current_vph = reduced[0].header['vph']
         current_insmode = reduced[0].header['insmode']
@@ -231,7 +239,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         # step of
         step = 2
         # number of the columns to add
-        hs = 5
+        hs = rinput.reference_column_hw
         # Expected range of computed traces
         xx_start, xx_end = tracing_limits(
             reduced[0].shape[1], cstart, step, hs)
@@ -291,8 +299,6 @@ class TraceMapRecipe(MegaraBaseRecipe):
         self.logger.info('background level is %f', background)
 
         self.logger.info('find peaks in reference column %i', cstart)
-
-        print('START init_traces')
         central_peaks = init_traces(
             data,
             center=cstart,
@@ -303,7 +309,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
             threshold=threshold,
             debug_plot=debug_plot
         )
-        print('END init_traces')
+        self.logger.info('finding peaks complete')
 
         # The byteswapping is required by the cython module
         if data.dtype.byteorder != '=':
@@ -337,11 +343,12 @@ class TraceMapRecipe(MegaraBaseRecipe):
                     self.logger.warning(
                         'found fibid %d, expected to be missing', dtrace.fibid)
                 else:
-
+                    self.logger.debug(f'start tracing from col={cstart} with {step=}')
                     mm = trace_func(image2, x=cstart, y=dtrace.start[1], step=step,
                                     hs=hs, background=local_trace_background, maxdis=maxdis)
 
                     if debug_plot:
+                        self.logger.debug(f'plotting x-y and x-z trace')
                         plt.plot(mm[:, 0], mm[:, 1], '.')
                         plt.savefig(f'trace-xy-{dtrace.fibid:03d}.png')
                         plt.close()
@@ -353,12 +360,14 @@ class TraceMapRecipe(MegaraBaseRecipe):
                                             dtrace.fibid, len(mm), poldeg)
                         pfit = numpy.array([])
                     else:
+                        self.logger.debug(f'fit polynomial with degree {poldeg=}')
                         pfit = nppol.polyfit(mm[:, 0], mm[:, 1], deg=poldeg)
+                        self.logger.debug(f'polynomial is {pfit=}')
 
                     start = mm[0, 0]
                     stop = mm[-1, 0]
                     self.logger.debug(
-                        'trace start %d  stop %d', int(start), int(stop))
+                        f'trace limits {start=} {stop=}')
             else:
                 if conf_ok:
                     self.logger.warning('error tracing fibid %d', dtrace.fibid)
@@ -367,6 +376,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
                     self.logger.debug(
                         'expected missing fibid %d', dtrace.fibid)
                     missing_fibers.append(dtrace.fibid)
+            self.logger.debug('=====================================')
 
             this_trace = GeometricTrace(
                 fibid=dtrace.fibid,
