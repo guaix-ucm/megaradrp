@@ -348,7 +348,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
                                     hs=hs, background=local_trace_background, maxdis=maxdis)
 
                     if debug_plot:
-                        self.logger.debug(f'plotting x-y and x-z trace')
+                        self.logger.debug('plotting x-y and x-z trace')
                         plt.plot(mm[:, 0], mm[:, 1], '.')
                         plt.savefig(f'trace-xy-{dtrace.fibid:03d}.png')
                         plt.close()

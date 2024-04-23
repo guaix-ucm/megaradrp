@@ -2,8 +2,8 @@
 
 import pytest
 
-from megaradrp.processing.fibermatch import generate_box_model
-from megaradrp.processing.fibermatch import count_peaks
+from megaradrp.processing.fibermatch import generate_box_model, FiberModelElement
+from megaradrp.processing.fibermatch import count_peaks, PeakMatch, PeakFound, PeakMode
 
 
 PEAKS = [
@@ -33,39 +33,39 @@ PEAKS = [
 def test_generate_model():
 
     expected = [
-        (1, 0),
-        (2, 0),
-        (3, 0),
-        (4, 0),
-        (5, 0)
+        (1, PeakMode.FIBER_PEAK),
+        (2, PeakMode.FIBER_PEAK),
+        (3, PeakMode.FIBER_PEAK),
+        (4, PeakMode.FIBER_PEAK),
+        (5, PeakMode.FIBER_PEAK)
     ]
     model = generate_box_model(5, start=1)
 
     assert len(model) == len(expected)
 
     for m, e in zip(model, expected):
-        assert m == e
+        assert m == FiberModelElement(fibid=e[0], mode=e[1])
 
     expected = [
-        (1, 0),
-        (2, 1),
-        (3, 0),
-        (4, 0),
-        (5, 0)
+        (1, PeakMode.FIBER_PEAK),
+        (2, PeakMode.FIBER_DEAD),
+        (3, PeakMode.FIBER_PEAK),
+        (4, PeakMode.FIBER_PEAK),
+        (5, PeakMode.FIBER_PEAK)
     ]
     model = generate_box_model(5, missing_relids=[2])
 
     assert len(model) == len(expected)
 
     for m, e in zip(model, expected):
-        assert m == e
+        assert m == FiberModelElement(fibid=e[0], mode=e[1])
 
     expected = [
-        (10, 0),
-        (12, 1),
-        (13, 0),
-        (14, 0),
-        (15, 0)
+        (10, PeakMode.FIBER_PEAK),
+        (12, PeakMode.FIBER_DEAD),
+        (13, PeakMode.FIBER_PEAK),
+        (14, PeakMode.FIBER_PEAK),
+        (15, PeakMode.FIBER_PEAK)
     ]
     model = generate_box_model(5, start=10, skip_fibids=[
                                11], missing_relids=[2])
@@ -73,7 +73,7 @@ def test_generate_model():
     assert len(model) == len(expected)
 
     for m, e in zip(model, expected):
-        assert m == e
+        assert m == FiberModelElement(fibid=e[0], mode=e[1])
 
 
 def test_count_peaks1():
@@ -86,7 +86,7 @@ def test_count_peaks():
     expected = []
     idx = 0
     for p in PEAKS:
-        t = (idx + 1, p, 0, idx)
+        t = PeakMatch(idx + 1, p, PeakFound.FOUND_PEAK, idx)
         expected.append(t)
         idx += 1
 

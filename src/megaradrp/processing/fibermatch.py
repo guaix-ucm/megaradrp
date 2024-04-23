@@ -11,7 +11,6 @@
 """Match and identify fibers"""
 import enum
 import itertools
-import logging
 
 import attrs
 
@@ -39,8 +38,7 @@ class PeakMatch:
     count: int = attrs.field()
     pos: float = attrs.field()
     mode: PeakFound = attrs.field()
-    idx: int  = attrs.field()
-
+    idx: int = attrs.field()
 
 
 def generate_box_model(nfibers, start=1,
@@ -71,8 +69,6 @@ def generate_box_model(nfibers, start=1,
 
 def count_peaks(peaks, tol=1.2, distance=6.0, start=1, max_scale_jump=3):
     """Count the peaks and valleys of an array"""
-
-    _logger = logging.getLogger('count_peaks')
 
     expected_distance = distance
 
