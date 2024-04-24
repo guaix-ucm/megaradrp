@@ -230,6 +230,7 @@ def main(args=None):
         with open(args.healing.name, 'rt') as fstream:
             fstream_iterator = yaml.safe_load_all(fstream)
             for operation in fstream_iterator:
+                # --------------------------------------------------------
                 if operation['description'] == 'vertical_shift_in_pixels':
                     if 'fibid_list' in operation.keys():
                         fibid_list = operation['fibid_list']
@@ -257,7 +258,7 @@ def main(args=None):
                                        colour='green')
                         else:
                             print(f'(vertical_shift_in_pixels SKIPPED) fibid: {fiblabel}')
-
+                # -------------------------------------------------
                 elif operation['description'] == 'duplicate_trace':
                     fibid_original = operation['fibid_original']
                     if fibid_original < 1 or fibid_original > total_fibers:
@@ -285,7 +286,7 @@ def main(args=None):
                                    colour='green')
                     else:
                         print(f'(duplicated_trace SKIPPED) fibids: {fiblabel_original} --> {fiblabel_duplicated}')
-
+                # -----------------------------------------------
                 elif operation['description'] == 'extrapolation':
                     if 'fibid_list' in operation.keys():
                         fibid_list = operation['fibid_list']
@@ -327,12 +328,12 @@ def main(args=None):
                                            colour='green')
                         else:
                             print(f'(extrapolation SKIPPED) fibid: {fiblabel}')
-
+                # ---------------------------------------------------------
                 elif operation['description'] == 'fit_through_user_points':
                     fibid = operation['fibid']
                     fiblabel = fibid_with_box[fibid - 1]
                     if args.verbose:
-                        print('(fit through user points) fibid:', fiblabel)
+                        print(f'(fit through user points) fibid: {fiblabel}')
                     poldeg = operation['poldeg']
                     start = operation['start']
                     stop = operation['stop']
@@ -350,8 +351,7 @@ def main(args=None):
                     yfit = np.array(yfit)
                     ax.plot(xfit+1, yfit+1, 'co')
                     if len(xfit) <= poldeg:
-                        raise ValueError('Insufficient number of points to fit'
-                                         ' polynomial')
+                        raise ValueError('Insufficient number of points to fit polynomial')
                     poly, residum = polfit_residuals(xfit, yfit, poldeg)
                     coeff = poly.coef
                     plot_trace(ax, coeff, start, stop, ix_offset,
@@ -360,9 +360,8 @@ def main(args=None):
                     bigdict['contents'][fibid - 1]['start'] = start
                     bigdict['contents'][fibid - 1]['stop'] = stop
                     bigdict['contents'][fibid - 1]['fitparms'] = coeff.tolist()
-
-                elif operation['description'] == \
-                        'extrapolation_through_user_points':
+                # -------------------------------------------------------------------
+                elif operation['description'] == 'extrapolation_through_user_points':
                     fibid = operation['fibid']
                     fiblabel = fibid_with_box[fibid - 1]
                     if args.verbose:
@@ -400,12 +399,12 @@ def main(args=None):
                     bigdict['contents'][fibid - 1]['start'] = start
                     bigdict['contents'][fibid - 1]['stop'] = stop
                     bigdict['contents'][fibid - 1]['fitparms'] = coeff.tolist()
-
+                # ------------------------------------------
                 elif operation['description'] == 'sandwich':
                     fibid = operation['fibid']
                     fiblabel = fibid_with_box[fibid - 1]
                     if args.verbose:
-                        print('(sandwich) fibid:', fiblabel)
+                        print(f'(sandwich) fibid: {fiblabel}')
                     fraction = operation['fraction']
                     nf1, nf2 = operation['neighbours']
                     start = operation['start']
@@ -413,9 +412,7 @@ def main(args=None):
                     tmpf1 = bigdict['contents'][nf1 - 1]
                     tmpf2 = bigdict['contents'][nf2 - 1]
                     if nf1 != tmpf1['fibid'] or nf2 != tmpf2['fibid']:
-                        raise ValueError(
-                            "Unexpected fiber numbers in neighbours"
-                        )
+                        raise ValueError("Unexpected fiber numbers in neighbours")
                     coefff1 = np.array(tmpf1['fitparms'])
                     coefff2 = np.array(tmpf2['fitparms'])
                     coeff = coefff1 + fraction * (coefff2 - coefff1)
@@ -425,11 +422,10 @@ def main(args=None):
                     # update values in bigdict (JSON structure)
                     bigdict['contents'][fibid - 1]['start'] = start
                     bigdict['contents'][fibid - 1]['stop'] = stop
-                    bigdict['contents'][fibid - 1][
-                        'fitparms'] = coeff.tolist()
+                    bigdict['contents'][fibid - 1]['fitparms'] = coeff.tolist()
                     if fibid in bigdict['error_fitting']:
                         bigdict['error_fitting'].remove(fibid)
-
+                # ------------------------------------------------------------
                 elif operation['description'] == 'renumber_fibids_within_box':
                     fibid_ini = operation['fibid_ini']
                     fibid_end = operation['fibid_end']
@@ -437,8 +433,7 @@ def main(args=None):
                     box_end = fibid_with_box[fibid_end - 1][4:]
                     if box_ini != box_end:
                         print(f'ERROR: box_ini={box_ini}, box_end={box_end}')
-                        raise ValueError('fibid_ini and fibid_end correspond to '
-                                         'different fiber boxes')
+                        raise ValueError('fibid_ini and fibid_end correspond to different fiber boxes')
                     fibid_shift = operation['fibid_shift']
                     if fibid_shift in [-1, 1]:
                         if fibid_shift == -1:
@@ -453,21 +448,13 @@ def main(args=None):
                             fiblabel_ori = fibid_with_box[fibid - 1]
                             fiblabel_new = fibid_with_box[fibid - 1 + fibid_shift]
                             if args.verbose:
-                                print('(renumber_fibids) fibid:',
-                                      fiblabel_ori, '-->', fiblabel_new)
-                            bigdict['contents'][fibid - 1 + fibid_shift] = \
-                                deepcopy(bigdict['contents'][fibid - 1])
-                            bigdict['contents'][fibid - 1 + fibid_shift]['fibid'] += \
-                                fibid_shift
+                                print(f'(renumber_fibids) fibid: {fiblabel_ori} --> {fiblabel_new}')
+                            bigdict['contents'][fibid - 1 + fibid_shift] = deepcopy(bigdict['contents'][fibid - 1])
+                            bigdict['contents'][fibid - 1 + fibid_shift]['fibid'] += fibid_shift
                             # display updated trace
-                            coeff = \
-                                bigdict['contents'][fibid -
-                                                    1 + fibid_shift]['fitparms']
-                            start = \
-                                bigdict['contents'][fibid -
-                                                    1 + fibid_shift]['start']
-                            stop = bigdict['contents'][fibid -
-                                                       1 + fibid_shift]['stop']
+                            coeff = bigdict['contents'][fibid - 1 + fibid_shift]['fitparms']
+                            start = bigdict['contents'][fibid - 1 + fibid_shift]['start']
+                            stop = bigdict['contents'][fibid - 1 + fibid_shift]['stop']
                             plot_trace(ax, coeff, start, stop, ix_offset,
                                        args.rawimage, args.fibids,
                                        fiblabel_ori + '-->' + fiblabel_new,
@@ -477,12 +464,10 @@ def main(args=None):
                         else:
                             bigdict['contents'][fibid_ini - 1]['fitparms'] = []
                     else:
-                        raise ValueError('fibid_shift in operation '
-                                         'renumber_fibids_within_box '
-                                         'must be -1 or 1')
+                        raise ValueError('fibid_shift in operation renumber_fibids_within_box must be -1 or 1')
+                # -------------------------------------------------
                 else:
-                    raise ValueError('Unexpected healing method:',
-                                     operation['description'])
+                    raise ValueError(f"Unexpected healing method: {operation['description']}")
 
 # update trace map
     if args.updated_traces is not None:
