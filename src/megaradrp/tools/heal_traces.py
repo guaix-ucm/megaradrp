@@ -160,9 +160,9 @@ def main(args=None):
 
     # trace offsets for RAW images
     if args.rawimage:
-        ix_offset = 51
+        ix_offset = 50
     else:
-        ix_offset = 1
+        ix_offset = 0
 
     # read and display traces from JSON file
     bigdict = json.loads(open(args.traces_file.name).read())
@@ -246,32 +246,25 @@ def main(args=None):
                         )
                         if len(coeff) > 0:
                             if args.verbose:
-                                print('(vertical_shift_in_pixels) fibid:',
-                                      fiblabel)
+                                print(f'(vertical_shift_in_pixels) fibid: {fiblabel}')
                             vshift = operation['vshift']
                             coeff[0] += vshift
-                            bigdict['contents'][fibid - 1]['fitparms'] = \
-                                coeff.tolist()
+                            bigdict['contents'][fibid - 1]['fitparms'] = coeff.tolist()
                             start = bigdict['contents'][fibid - 1]['start']
                             stop = bigdict['contents'][fibid - 1]['stop']
                             plot_trace(ax, coeff, start, stop, ix_offset,
                                        args.rawimage, True, fiblabel,
                                        colour='green')
                         else:
-                            print('(vertical_shift_in_pixels SKIPPED) fibid:',
-                                  fiblabel)
+                            print(f'(vertical_shift_in_pixels SKIPPED) fibid: {fiblabel}')
 
                 elif operation['description'] == 'duplicate_trace':
                     fibid_original = operation['fibid_original']
                     if fibid_original < 1 or fibid_original > total_fibers:
-                        raise ValueError(
-                            'fibid_original number outside valid range'
-                        )
+                        raise ValueError('fibid_original number outside valid range')
                     fibid_duplicated = operation['fibid_duplicated']
                     if fibid_duplicated < 1 or fibid_duplicated > total_fibers:
-                        raise ValueError(
-                            'fibid_duplicated number outside valid range'
-                        )
+                        raise ValueError('fibid_duplicated number outside valid range')
                     fiblabel_original = fibid_with_box[fibid_original - 1]
                     fiblabel_duplicated = fibid_with_box[fibid_duplicated - 1]
                     coeff = np.array(
@@ -279,12 +272,10 @@ def main(args=None):
                     )
                     if len(coeff) > 0:
                         if args.verbose:
-                            print('(duplicated_trace) fibids:',
-                                  fiblabel_original, '-->', fiblabel_duplicated)
+                            print(f'(duplicated_trace) fibids: {fiblabel_original} --> {fiblabel_duplicated}')
                         vshift = operation['vshift']
                         coeff[0] += vshift
-                        bigdict['contents'][fibid_duplicated - 1]['fitparms'] = \
-                            coeff.tolist()
+                        bigdict['contents'][fibid_duplicated - 1]['fitparms'] = coeff.tolist()
                         start = bigdict['contents'][fibid_original - 1]['start']
                         stop = bigdict['contents'][fibid_original - 1]['stop']
                         bigdict['contents'][fibid_duplicated - 1]['start'] = start
@@ -293,8 +284,7 @@ def main(args=None):
                                    args.rawimage, True, fiblabel_duplicated,
                                    colour='green')
                     else:
-                        print('(duplicated_trace SKIPPED) fibids:',
-                              fiblabel_original, '-->', fiblabel_duplicated)
+                        print(f'(duplicated_trace SKIPPED) fibids: {fiblabel_original} --> {fiblabel_duplicated}')
 
                 elif operation['description'] == 'extrapolation':
                     if 'fibid_list' in operation.keys():
@@ -312,7 +302,7 @@ def main(args=None):
                         )
                         if len(coeff) > 0:
                             if args.verbose:
-                                print('(extrapolation) fibid:', fiblabel)
+                                print(f'(extrapolation) fibid: {fiblabel}')
                             # update values in bigdict (JSON structure)
                             start = operation['start']
                             stop = operation['stop']
@@ -336,7 +326,7 @@ def main(args=None):
                                            args.rawimage, True, fiblabel,
                                            colour='green')
                         else:
-                            print('(extrapolation SKIPPED) fibid:', fiblabel)
+                            print(f'(extrapolation SKIPPED) fibid: {fiblabel}')
 
                 elif operation['description'] == 'fit_through_user_points':
                     fibid = operation['fibid']

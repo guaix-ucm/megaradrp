@@ -151,9 +151,9 @@ def main(args=None):
 
     # trace offsets for RAW images
     if args.rawimage:
-        ix_offset = 51
+        ix_offset = 50
     else:
-        ix_offset = 1
+        ix_offset = 0
 
     # read and display traces from JSON file
     # TODO: some checks, this should be done by validating the struct
