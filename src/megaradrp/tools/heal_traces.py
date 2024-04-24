@@ -73,10 +73,12 @@ def plot_trace(ax, coeff, xmin, xmax, ix_offset,
             xmidpoint = 2048
         else:
             xmidpoint = (xmin+xmax)/2
-        ax.text(xmidpoint, yp[int(num / 2)], fiblabel, fontsize=6,
-                bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="grey", ),
-                color=colour, fontweight='bold', backgroundcolor='white',
-                ha='center')
+        ymin, ymax = ax.get_ylim()
+        if ymin < yp[int(num / 2)] < ymax:
+            ax.text(xmidpoint, yp[int(num / 2)], fiblabel, fontsize=6,
+                    bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="grey", ),
+                    color=colour, fontweight='bold', backgroundcolor='white',
+                    ha='center')
 
 
 def main(args=None):
