@@ -49,8 +49,8 @@ def assign_boxes_to_fibers(pseudo_slit_config, insmode):
     return fibid_with_box
 
 
-def plot_aper(ax, center_model, xmin, xmax, ix_offset,
-              rawimage, fibids, fiblabel, colour, correction=0):
+def plot_trace(ax, center_model, xmin, xmax, ix_offset,
+               rawimage, fibids, fiblabel, colour, correction=0):
     if xmin == xmax == 0:
         num = 4096
         xp = np.linspace(start=1, stop=4096, num=num)
@@ -67,10 +67,12 @@ def plot_aper(ax, center_model, xmin, xmax, ix_offset,
             xmidpoint = 2048
         else:
             xmidpoint = (xmin+xmax)/2
-        ax.text(xmidpoint, yp[int(num / 2)], fiblabel, fontsize=6,
-                bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="grey", ),
-                color=colour, fontweight='bold', backgroundcolor='white',
-                ha='center')
+        ymin, ymax = ax.get_ylim()
+        if ymin < yp[int(num / 2)] < ymax:
+            ax.text(xmidpoint, yp[int(num / 2)], fiblabel, fontsize=6,
+                    bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="grey", ),
+                    color=colour, fontweight='bold', backgroundcolor='white',
+                    ha='center')
 
 
 def main(args=None):
@@ -206,10 +208,10 @@ def main(args=None):
             center_model = geot.aper_center()
             y_at_ref_column = center_model(ref_column)
             correction = global_offset(y_at_ref_column)
-            plot_aper(ax, center_model, start, stop, ix_offset, args.rawimage,
-                      args.fibids, fiblabel, colour='blue', correction=correction)
+            plot_trace(ax, center_model, start, stop, ix_offset, args.rawimage,
+                       args.fibids, fiblabel, colour='blue', correction=correction)
         else:
-            print('Warning ---> Missing fiber:', fibid_with_box[fibid - 1])
+            print(f'Warning ---> Missing fiber: {fibid_with_box[fibid - 1]}')
 
     if pdf is not None:
         pdf.savefig()
