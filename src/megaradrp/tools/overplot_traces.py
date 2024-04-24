@@ -1,5 +1,11 @@
-from __future__ import division
-from __future__ import print_function
+#
+# Copyright 2014-2024 Universidad Complutense de Madrid
+#
+# This file is part of Megara DRP
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+# License-Filename: LICENSE.txt
+#
 
 import argparse
 import numpy as np

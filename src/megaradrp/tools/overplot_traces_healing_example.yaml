@@ -1,35 +1,35 @@
 description: extrapolation_through_user_points
 fibid: 603
-start_reuse: 4
-stop_reuse: 2000
+xstart_reuse: 4
+xstop_reuse: 2000
 resampling: 20
 poldeg: 5
-start: 4
-stop: 4092
+xstart: 6
+xstop: 4090
 user_points: 
   - [3500, 3817.0]
   - [4000, 3818.0]
 ---
 description: extrapolation_through_user_points
 fibid: 604
-start_reuse: 4
-stop_reuse: 2000
+xstart_reuse: 4
+xstop_reuse: 2000
 resampling: 20
 poldeg: 5
-start: 4
-stop: 4092
+xstart: 6
+xstop: 4090
 user_points: 
   - [3500, 3823.2]
   - [4000, 3824.2]
 ---
 description: extrapolation_through_user_points
 fibid: 606
-start_reuse: 4
-stop_reuse: 2000
+xstart_reuse: 4
+xstop_reuse: 2000
 resampling: 20
 poldeg: 5
-start: 4
-stop: 4092
+xstart: 6
+xstop: 4090
 user_points: 
   - [3500, 3835.0]
   - [4000, 3836.2]
@@ -38,24 +38,24 @@ description: sandwich
 fibid: 607
 fraction: 0.5
 neighbours: [606, 608]
-start: 4
-stop: 4092
+xstart: 6
+xstop: 4090
 ---
 description: sandwich
 fibid: 610
 fraction: 0.5
 neighbours: [609, 611]
-start: 4
-stop: 4092
+xstart: 6
+xstop: 4090
 ---
 description: extrapolation_through_user_points
 fibid: 613
-start_reuse: 4
-stop_reuse: 2000
+xstart_reuse: 4
+xstop_reuse: 2000
 resampling: 20
 poldeg: 5
-start: 4
-stop: 4092
+xstart: 6
+xstop: 4090
 user_points: 
   - [3500, 3878.1]
   - [4000, 3878.6]
@@ -64,8 +64,8 @@ description: sandwich
 fibid: 614
 fraction: 0.5
 neighbours: [613, 615]
-start: 4
-stop: 4092
+xstart: 6
+xstop: 4090
 ---
 description: vertical_shift_in_pixels
 fibid_ini: 621
@@ -80,14 +80,14 @@ vshift: 6
 description: extrapolation
 fibid_ini: 1
 fibid_end: 622
-start: 1
-stop: 4096
+xstart: 1
+xstop: 4096
 ---
 description: fit_through_user_points
 fibid: 620
 poldeg: 1
-start: 100
-stop: 3900
+xstart: 100
+xstop: 3900
 user_points:
   - [500, 3940]
   - [1500, 3941]

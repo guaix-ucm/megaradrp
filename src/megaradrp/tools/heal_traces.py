@@ -1,5 +1,11 @@
-from __future__ import division
-from __future__ import print_function
+#
+# Copyright 2014-2024 Universidad Complutense de Madrid
+#
+# This file is part of Megara DRP
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+# License-Filename: LICENSE.txt
+#
 
 import argparse
 from copy import deepcopy
@@ -237,6 +243,8 @@ def main(args=None):
                     else:
                         fibid_ini = operation['fibid_ini']
                         fibid_end = operation['fibid_end']
+                        if fibid_ini > fibid_end:
+                            raise ValueError(f'{fibid_ini=} > {fibid_end=}')
                         fibid_list = range(fibid_ini, fibid_end + 1)
                     for fibid in fibid_list:
                         if fibid < 1 or fibid > total_fibers:
@@ -293,6 +301,8 @@ def main(args=None):
                     else:
                         fibid_ini = operation['fibid_ini']
                         fibid_end = operation['fibid_end']
+                        if fibid_ini > fibid_end:
+                            raise ValueError(f'{fibid_ini=} > {fibid_end=}')
                         fibid_list = range(fibid_ini, fibid_end + 1)
                     for fibid in fibid_list:
                         if fibid < 1 or fibid > total_fibers:
@@ -305,8 +315,10 @@ def main(args=None):
                             if args.verbose:
                                 print(f'(extrapolation) fibid: {fiblabel}')
                             # update values in bigdict (JSON structure)
-                            start = operation['start']
-                            stop = operation['stop']
+                            start = operation['xstart']
+                            stop = operation['xstop']
+                            if start > stop:
+                                raise ValueError(f'xstart={start} > xstop={stop}')
                             start_orig = bigdict['contents'][fibid - 1]['start']
                             stop_orig = bigdict['contents'][fibid - 1]['stop']
                             bigdict['contents'][fibid - 1]['start'] = start
@@ -335,8 +347,10 @@ def main(args=None):
                     if args.verbose:
                         print(f'(fit through user points) fibid: {fiblabel}')
                     poldeg = operation['poldeg']
-                    start = operation['start']
-                    stop = operation['stop']
+                    start = operation['xstart']
+                    stop = operation['xstop']
+                    if start > stop:
+                        raise ValueError(f'xstart={start} > xstop={stop}')
                     xfit = []
                     yfit = []
                     for userpoint in operation['user_points']:
@@ -366,12 +380,16 @@ def main(args=None):
                     fiblabel = fibid_with_box[fibid - 1]
                     if args.verbose:
                         print('(extrapolation_through_user_points):', fiblabel)
-                    start_reuse = operation['start_reuse']
-                    stop_reuse = operation['stop_reuse']
+                    start_reuse = operation['xstart_reuse']
+                    stop_reuse = operation['xstop_reuse']
+                    if start_reuse > stop_reuse:
+                        raise ValueError(f'xstart_reuse={start_reuse} > xstop_reuse={stop_reuse}')
                     resampling = operation['resampling']
                     poldeg = operation['poldeg']
-                    start = operation['start']
-                    stop = operation['stop']
+                    start = operation['xstart']
+                    stop = operation['xstop']
+                    if start > stop:
+                        raise ValueError(f'xstart={start} > xstop={stop}')
                     coeff = bigdict['contents'][fibid - 1]['fitparms']
                     xfit = np.linspace(start_reuse, stop_reuse, num=resampling)
                     poly = np.polynomial.Polynomial(coeff)
@@ -407,8 +425,10 @@ def main(args=None):
                         print(f'(sandwich) fibid: {fiblabel}')
                     fraction = operation['fraction']
                     nf1, nf2 = operation['neighbours']
-                    start = operation['start']
-                    stop = operation['stop']
+                    start = operation['xstart']
+                    stop = operation['xstop']
+                    if start > stop:
+                        raise ValueError(f'xstart={start} > xstop={stop}')
                     tmpf1 = bigdict['contents'][nf1 - 1]
                     tmpf2 = bigdict['contents'][nf2 - 1]
                     if nf1 != tmpf1['fibid'] or nf2 != tmpf2['fibid']:
@@ -429,6 +449,8 @@ def main(args=None):
                 elif operation['description'] == 'renumber_fibids_within_box':
                     fibid_ini = operation['fibid_ini']
                     fibid_end = operation['fibid_end']
+                    if fibid_ini > fibid_end:
+                        raise ValueError(f'{fibid_ini=} > {fibid_end=}')
                     box_ini = fibid_with_box[fibid_ini - 1][4:]
                     box_end = fibid_with_box[fibid_end - 1][4:]
                     if box_ini != box_end:
