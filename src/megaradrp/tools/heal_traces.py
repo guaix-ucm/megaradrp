@@ -8,6 +8,7 @@
 #
 
 import argparse
+from astropy.io import fits
 from copy import deepcopy
 import json
 import numpy as np
@@ -17,7 +18,7 @@ from uuid import uuid4
 import yaml
 
 import numina.instrument.assembly as asb
-from numina.array.display.polfit_residuals import polfit_residuals
+from numina.array.display.polfit_residuals import polfit_residuals, polfit_residuals_with_sigma_rejection
 from numina.array.display.ximshow import ximshow_file
 from numina.array.display.pause_debugplot import pause_debugplot
 
@@ -82,9 +83,37 @@ def plot_trace(ax, coeff, xmin, xmax, fibids, fiblabel, colour):
                     color=colour, fontweight='bold', backgroundcolor='white',
                     ha='center')
 
-def refit_trace(ax, coeff, xmin, xmax):
-    # ToDo: recompute fit
-    return coeff
+
+def refit_trace(filename, coeff, xmin, xmax, poldeg, ysemiwindow=4):
+    with fits.open(filename) as hdul:
+        data = hdul[0].data
+    naxis2, naxis1 = data.shape
+    ypol = Polynomial(coeff)
+    xfit = []
+    yfit = []
+    xdum = np.arange(2*ysemiwindow + 1)
+    # fit peak at each column
+    for j in range(int(xmin)-1, int(xmax)):
+        ypredicted = int(ypol(j) + 0.5)
+        imin = ypredicted - ysemiwindow - 1
+        imax = ypredicted + ysemiwindow - 1
+        if imin >= 0 and imax < naxis2:
+            poly2 = Polynomial.fit(xdum, data[imin:(imax+1), j], 2)
+            poly2 = Polynomial.cast(poly2)
+            coeff2 = poly2.coef
+            if len(coeff2) == 3:
+                if coeff2[2] != 0:
+                    refined_peak = -coeff2[1] / (2 * coeff2[2]) + imin
+                else:
+                    refined_peak = ypredicted
+            else:
+                refined_peak = ypredicted
+            xfit.append(j + 1)
+            yfit.append(refined_peak)
+    xfit = np.array(xfit)
+    yfit = np.array(yfit)
+    newpoly, residum,rejectdum = polfit_residuals_with_sigma_rejection(xfit, yfit, poldeg, times_sigma_reject=3.0)
+    return newpoly.coef
 
 
 def main(args=None):
@@ -325,10 +354,6 @@ def main(args=None):
                     poldeg = operation['poldeg']
                     start = operation['xstart']
                     stop = operation['xstop']
-                    if 'refit' in operation:
-                        refit = operation['refit']
-                    else:
-                        refit = False
                     if start > stop:
                         raise ValueError(f'xstart={start} > xstop={stop}')
                     xfit = []
@@ -348,8 +373,11 @@ def main(args=None):
                         raise ValueError('Insufficient number of points to fit polynomial')
                     poly, residum = polfit_residuals(xfit, yfit, poldeg)
                     coeff = poly.coef
+                    refit = operation['refit']
                     if refit:
-                        coeff = refit_trace(ax, coeff, start, stop)
+                        print('refitting...', end="")
+                        coeff = refit_trace(args.fits_file.name, coeff, start, stop, poldeg)
+                        print('OK!')
                     plot_trace(ax, coeff, start, stop, args.fibids, fiblabel, colour='green')
                     bigdict['contents'][fibid - 1]['start'] = start
                     bigdict['contents'][fibid - 1]['stop'] = stop
@@ -386,6 +414,11 @@ def main(args=None):
                         yfit = np.concatenate((yfit, np.array([ydum])))
                     poly, residum = polfit_residuals(xfit, yfit, poldeg)
                     coeff = poly.coef
+                    refit = operation['refit']
+                    if refit:
+                        print('refitting...', end="")
+                        coeff = refit_trace(args.fits_file.name, coeff, start, stop, poldeg)
+                        print('OK!')
                     if start < start_reuse:
                         plot_trace(ax, coeff, start, start_reuse, args.fibids, fiblabel, colour='green')
                     if stop_reuse < stop:

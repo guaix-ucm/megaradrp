@@ -59,6 +59,7 @@ xstop: 4090
 user_points: 
   - [3500, 3878.1]
   - [4000, 3878.6]
+refit: False
 ---
 description: sandwich
 fibid: 614
@@ -93,6 +94,7 @@ user_points:
   - [1500, 3941]
   - [2500, 3942]
   - [3500, 3943]
+refit: False
 ---
 description: renumber_fibids_within_box
 fibid_ini: 575
