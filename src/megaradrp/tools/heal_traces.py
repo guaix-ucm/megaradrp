@@ -60,8 +60,7 @@ def assign_boxes_to_fibers(pseudo_slit_config, insmode):
     return fibid_with_box
 
 
-def plot_trace(ax, coeff, xmin, xmax, ix_offset,
-               rawimage, fibids, fiblabel, colour):
+def plot_trace(ax, coeff, xmin, xmax, fibids, fiblabel, colour):
     if xmin == xmax == 0:
         num = 4096
         xp = np.linspace(start=1, stop=4096, num=num)
@@ -70,10 +69,7 @@ def plot_trace(ax, coeff, xmin, xmax, ix_offset,
         xp = np.linspace(start=xmin, stop=xmax, num=num)
     ypol = Polynomial(coeff)
     yp = ypol(xp)
-    if rawimage:
-        lcut = (yp > 2056.5)
-        yp[lcut] += 100
-    ax.plot(xp + ix_offset, yp + 1, color=colour, linestyle='dotted')
+    ax.plot(xp, yp + 1, color=colour, linestyle='dotted')
     if fibids:
         if xmin == xmax == 0:
             xmidpoint = 2048
@@ -85,6 +81,10 @@ def plot_trace(ax, coeff, xmin, xmax, ix_offset,
                     bbox=dict(boxstyle="round,pad=0.1", fc="white", ec="grey", ),
                     color=colour, fontweight='bold', backgroundcolor='white',
                     ha='center')
+
+def refit_trace(ax, coeff, xmin, xmax):
+    # ToDo: recompute fit
+    return coeff
 
 
 def main(args=None):
@@ -100,10 +100,6 @@ def main(args=None):
                         help="JSON file with fiber traces",
                         type=argparse.FileType('r'))
     # optional parameters
-    parser.add_argument("--rawimage",
-                        help="FITS file is a RAW image (otherwise trimmed "
-                             "image is assumed)",
-                        action="store_true")
     parser.add_argument("--global_offset",
                         help="Global offset polynomial coefficients "
                              "(+upwards, -downwards)")
@@ -164,12 +160,6 @@ def main(args=None):
                       pdf=pdf,
                       show=False)
 
-    # trace offsets for RAW images
-    if args.rawimage:
-        ix_offset = 50
-    else:
-        ix_offset = 0
-
     # read and display traces from JSON file
     bigdict = json.loads(open(args.traces_file.name).read())
 
@@ -226,8 +216,7 @@ def main(args=None):
             coeff[0] += correction
             # update values in bigdict (JSON structure)
             bigdict['contents'][fibid-1]['fitparms'] = coeff.tolist()
-            plot_trace(ax, coeff, start, stop, ix_offset, args.rawimage,
-                       args.fibids, fiblabel, colour='blue')
+            plot_trace(ax, coeff, start, stop, args.fibids, fiblabel, colour='blue')
         else:
             print('Warning ---> Missing fiber:', fibid_with_box[fibid - 1])
 
@@ -261,9 +250,7 @@ def main(args=None):
                             bigdict['contents'][fibid - 1]['fitparms'] = coeff.tolist()
                             start = bigdict['contents'][fibid - 1]['start']
                             stop = bigdict['contents'][fibid - 1]['stop']
-                            plot_trace(ax, coeff, start, stop, ix_offset,
-                                       args.rawimage, True, fiblabel,
-                                       colour='green')
+                            plot_trace(ax, coeff, start, stop, True, fiblabel, colour='green')
                         else:
                             print(f'(vertical_shift_in_pixels SKIPPED) fibid: {fiblabel}')
                 # -------------------------------------------------
@@ -289,9 +276,7 @@ def main(args=None):
                         stop = bigdict['contents'][fibid_original - 1]['stop']
                         bigdict['contents'][fibid_duplicated - 1]['start'] = start
                         bigdict['contents'][fibid_duplicated - 1]['stop'] = stop
-                        plot_trace(ax, coeff, start, stop, ix_offset,
-                                   args.rawimage, True, fiblabel_duplicated,
-                                   colour='green')
+                        plot_trace(ax, coeff, start, stop, True, fiblabel_duplicated, colour='green')
                     else:
                         print(f'(duplicated_trace SKIPPED) fibids: {fiblabel_original} --> {fiblabel_duplicated}')
                 # -----------------------------------------------
@@ -324,20 +309,11 @@ def main(args=None):
                             bigdict['contents'][fibid - 1]['start'] = start
                             bigdict['contents'][fibid - 1]['stop'] = stop
                             if start < start_orig:
-                                plot_trace(ax, coeff, start, start_orig,
-                                           ix_offset,
-                                           args.rawimage, True, fiblabel,
-                                           colour='green')
+                                plot_trace(ax, coeff, start, start_orig, True, fiblabel, colour='green')
                             if stop_orig < stop:
-                                plot_trace(ax, coeff, stop_orig, stop,
-                                           ix_offset,
-                                           args.rawimage, True, fiblabel,
-                                           colour='green')
+                                plot_trace(ax, coeff, stop_orig, stop, True, fiblabel, colour='green')
                             if start_orig <= start <= stop <= stop_orig:
-                                plot_trace(ax, coeff, start, stop,
-                                           ix_offset,
-                                           args.rawimage, True, fiblabel,
-                                           colour='green')
+                                plot_trace(ax, coeff, start, stop, True, fiblabel, colour='green')
                         else:
                             print(f'(extrapolation SKIPPED) fibid: {fiblabel}')
                 # ---------------------------------------------------------
@@ -349,6 +325,10 @@ def main(args=None):
                     poldeg = operation['poldeg']
                     start = operation['xstart']
                     stop = operation['xstop']
+                    if 'refit' in operation:
+                        refit = operation['refit']
+                    else:
+                        refit = False
                     if start > stop:
                         raise ValueError(f'xstart={start} > xstop={stop}')
                     xfit = []
@@ -368,9 +348,9 @@ def main(args=None):
                         raise ValueError('Insufficient number of points to fit polynomial')
                     poly, residum = polfit_residuals(xfit, yfit, poldeg)
                     coeff = poly.coef
-                    plot_trace(ax, coeff, start, stop, ix_offset,
-                               args.rawimage, args.fibids, fiblabel,
-                               colour='green')
+                    if refit:
+                        coeff = refit_trace(ax, coeff, start, stop)
+                    plot_trace(ax, coeff, start, stop, args.fibids, fiblabel, colour='green')
                     bigdict['contents'][fibid - 1]['start'] = start
                     bigdict['contents'][fibid - 1]['stop'] = stop
                     bigdict['contents'][fibid - 1]['fitparms'] = coeff.tolist()
@@ -407,13 +387,9 @@ def main(args=None):
                     poly, residum = polfit_residuals(xfit, yfit, poldeg)
                     coeff = poly.coef
                     if start < start_reuse:
-                        plot_trace(ax, coeff, start, start_reuse, ix_offset,
-                                   args.rawimage, args.fibids, fiblabel,
-                                   colour='green')
+                        plot_trace(ax, coeff, start, start_reuse, args.fibids, fiblabel, colour='green')
                     if stop_reuse < stop:
-                        plot_trace(ax, coeff, stop_reuse, stop, ix_offset,
-                                   args.rawimage, args.fibids, fiblabel,
-                                   colour='green')
+                        plot_trace(ax, coeff, stop_reuse, stop, args.fibids, fiblabel, colour='green')
                     bigdict['contents'][fibid - 1]['start'] = start
                     bigdict['contents'][fibid - 1]['stop'] = stop
                     bigdict['contents'][fibid - 1]['fitparms'] = coeff.tolist()
@@ -436,9 +412,7 @@ def main(args=None):
                     coefff1 = np.array(tmpf1['fitparms'])
                     coefff2 = np.array(tmpf2['fitparms'])
                     coeff = coefff1 + fraction * (coefff2 - coefff1)
-                    plot_trace(ax, coeff, start, stop, ix_offset,
-                               args.rawimage, args.fibids,
-                               fiblabel, colour='green')
+                    plot_trace(ax, coeff, start, stop, args.fibids, fiblabel, colour='green')
                     # update values in bigdict (JSON structure)
                     bigdict['contents'][fibid - 1]['start'] = start
                     bigdict['contents'][fibid - 1]['stop'] = stop
@@ -477,9 +451,7 @@ def main(args=None):
                             coeff = bigdict['contents'][fibid - 1 + fibid_shift]['fitparms']
                             start = bigdict['contents'][fibid - 1 + fibid_shift]['start']
                             stop = bigdict['contents'][fibid - 1 + fibid_shift]['stop']
-                            plot_trace(ax, coeff, start, stop, ix_offset,
-                                       args.rawimage, args.fibids,
-                                       fiblabel_ori + '-->' + fiblabel_new,
+                            plot_trace(ax, coeff, start, stop, args.fibids, fiblabel_ori + '-->' + fiblabel_new,
                                        colour='green')
                         if fibid_shift == -1:
                             bigdict['contents'][fibid_end - 1]['fitparms'] = []
