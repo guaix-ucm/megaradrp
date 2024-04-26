@@ -116,6 +116,37 @@ def refit_trace(filename, coeff, xmin, xmax, poldeg, ysemiwindow=4):
     return newpoly.coef
 
 
+def check_tags(operation_name, valid_tags, operation_tags):
+    list_valid_tags = list(valid_tags)
+    list_valid_tags.sort()
+    list_operation_tags = list(operation_tags)
+    list_operation_tags.sort()
+    list_unexpected_tags = list(operation_tags.difference(valid_tags))
+    list_unexpected_tags.sort()
+    list_missing_tags = list(valid_tags.difference(operation_tags))
+    list_missing_tags.sort()
+    unexpected = False
+    missing = False
+    if operation_tags != valid_tags:
+        print(f'')
+        print(f'Valid tags.....: {list_valid_tags}')
+        print(f'Read tags......: {list_operation_tags}')
+        if len(list_unexpected_tags) > 0:
+            unexpected = True
+            print(f'Unexpected tags: {list_unexpected_tags}')
+        if len(list_missing_tags) > 0:
+            missing = True
+            print(f'Missing tags...: {list_missing_tags}')
+        if unexpected and missing:
+            msg = 'Unexpected and missing'
+        elif unexpected:
+            msg = 'Unexpected'
+        else:
+            msg = 'Missing'
+        #raise ValueError(f'{msg} tags found')
+        raise SystemExit(f"ERROR: {msg} tags found in '{operation_name}' operation")
+
+
 def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser(
@@ -254,8 +285,16 @@ def main(args=None):
         with open(args.healing.name, 'rt') as fstream:
             fstream_iterator = yaml.safe_load_all(fstream)
             for operation in fstream_iterator:
+                if 'description' not in operation:
+                    raise ValueError("Tag 'description' not found in YAML file")
+                operation_tags = set(operation.keys())
                 # --------------------------------------------------------
                 if operation['description'] == 'vertical_shift_in_pixels':
+                    valid_tags = {'description', 'fibid_ini', 'fibid_end', 'fibid_list', 'vshift'}
+                    if not operation_tags.issubset(valid_tags):
+                        print(f'Valid tags: {valid_tags}')
+                        print(f'Read tags: {operation_tags}')
+                        raise ValueError('Invalid tags found')
                     if 'fibid_list' in operation.keys():
                         fibid_list = operation['fibid_list']
                     else:
@@ -264,17 +303,15 @@ def main(args=None):
                         if fibid_ini > fibid_end:
                             raise ValueError(f'{fibid_ini=} > {fibid_end=}')
                         fibid_list = range(fibid_ini, fibid_end + 1)
+                    vshift = operation['vshift']
                     for fibid in fibid_list:
                         if fibid < 1 or fibid > total_fibers:
                             raise ValueError('fibid number outside valid range')
                         fiblabel = fibid_with_box[fibid - 1]
-                        coeff = np.array(
-                            bigdict['contents'][fibid - 1]['fitparms']
-                        )
+                        coeff = np.array(bigdict['contents'][fibid - 1]['fitparms'])
                         if len(coeff) > 0:
                             if args.verbose:
                                 print(f'(vertical_shift_in_pixels) fibid: {fiblabel}')
-                            vshift = operation['vshift']
                             coeff[0] += vshift
                             bigdict['contents'][fibid - 1]['fitparms'] = coeff.tolist()
                             start = bigdict['contents'][fibid - 1]['start']
@@ -284,6 +321,8 @@ def main(args=None):
                             print(f'(vertical_shift_in_pixels SKIPPED) fibid: {fiblabel}')
                 # -------------------------------------------------
                 elif operation['description'] == 'duplicate_trace':
+                    valid_tags = {'description', 'fibid_original', 'fibid_duplicated', 'vshift'}
+                    check_tags(operation['description'], valid_tags, operation_tags)
                     fibid_original = operation['fibid_original']
                     if fibid_original < 1 or fibid_original > total_fibers:
                         raise ValueError('fibid_original number outside valid range')
@@ -310,6 +349,11 @@ def main(args=None):
                         print(f'(duplicated_trace SKIPPED) fibids: {fiblabel_original} --> {fiblabel_duplicated}')
                 # -----------------------------------------------
                 elif operation['description'] == 'extrapolation':
+                    valid_tags = {'description', 'fibid_ini', 'fibid_end', 'fibid_list', 'xstart', 'xstop'}
+                    if not operation_tags.issubset(valid_tags):
+                        print(f'Valid tags: {valid_tags}')
+                        print(f'Read tags: {operation_tags}')
+                        raise ValueError('Invalid tags found')
                     if 'fibid_list' in operation.keys():
                         fibid_list = operation['fibid_list']
                     else:
@@ -318,6 +362,10 @@ def main(args=None):
                         if fibid_ini > fibid_end:
                             raise ValueError(f'{fibid_ini=} > {fibid_end=}')
                         fibid_list = range(fibid_ini, fibid_end + 1)
+                    start = operation['xstart']
+                    stop = operation['xstop']
+                    if start > stop:
+                        raise ValueError(f'xstart={start} > xstop={stop}')
                     for fibid in fibid_list:
                         if fibid < 1 or fibid > total_fibers:
                             raise ValueError('fibid number outside valid range')
@@ -329,10 +377,6 @@ def main(args=None):
                             if args.verbose:
                                 print(f'(extrapolation) fibid: {fiblabel}')
                             # update values in bigdict (JSON structure)
-                            start = operation['xstart']
-                            stop = operation['xstop']
-                            if start > stop:
-                                raise ValueError(f'xstart={start} > xstop={stop}')
                             start_orig = bigdict['contents'][fibid - 1]['start']
                             stop_orig = bigdict['contents'][fibid - 1]['stop']
                             bigdict['contents'][fibid - 1]['start'] = start
@@ -347,6 +391,8 @@ def main(args=None):
                             print(f'(extrapolation SKIPPED) fibid: {fiblabel}')
                 # ---------------------------------------------------------
                 elif operation['description'] == 'fit_through_user_points':
+                    valid_tags = {'description', 'fibid', 'poldeg', 'xstart', 'xstop', 'user_points', 'refit'}
+                    check_tags(operation['description'], valid_tags, operation_tags)
                     fibid = operation['fibid']
                     fiblabel = fibid_with_box[fibid - 1]
                     if args.verbose:
@@ -384,6 +430,9 @@ def main(args=None):
                     bigdict['contents'][fibid - 1]['fitparms'] = coeff.tolist()
                 # -------------------------------------------------------------------
                 elif operation['description'] == 'extrapolation_through_user_points':
+                    valid_tags = {'description', 'fibid', 'xstart_reuse', 'xstop_reuse', 'resampling',
+                                  'poldeg', 'xstart', 'xstop', 'user_points', 'refit'}
+                    check_tags(operation['description'], valid_tags, operation_tags)
                     fibid = operation['fibid']
                     fiblabel = fibid_with_box[fibid - 1]
                     if args.verbose:
@@ -428,6 +477,8 @@ def main(args=None):
                     bigdict['contents'][fibid - 1]['fitparms'] = coeff.tolist()
                 # ------------------------------------------
                 elif operation['description'] == 'sandwich':
+                    valid_tags = {'description', 'fibid', 'fraction', 'neighbours', 'xstart', 'xstop'}
+                    check_tags(operation['description'], valid_tags, operation_tags)
                     fibid = operation['fibid']
                     fiblabel = fibid_with_box[fibid - 1]
                     if args.verbose:
@@ -454,6 +505,8 @@ def main(args=None):
                         bigdict['error_fitting'].remove(fibid)
                 # ------------------------------------------------------------
                 elif operation['description'] == 'renumber_fibids_within_box':
+                    valid_tags = {'description', 'fibid_ini', 'fibid_end', 'fibid_shift'}
+                    check_tags(operation['description'], valid_tags, operation_tags)
                     fibid_ini = operation['fibid_ini']
                     fibid_end = operation['fibid_end']
                     if fibid_ini > fibid_end:
