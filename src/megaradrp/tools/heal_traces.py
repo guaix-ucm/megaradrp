@@ -112,7 +112,7 @@ def refit_trace(filename, coeff, xmin, xmax, poldeg, ysemiwindow=4):
             yfit.append(refined_peak)
     xfit = np.array(xfit)
     yfit = np.array(yfit)
-    newpoly, residum,rejectdum = polfit_residuals_with_sigma_rejection(xfit, yfit, poldeg, times_sigma_reject=3.0)
+    newpoly, residum, rejectdum = polfit_residuals_with_sigma_rejection(xfit, yfit, poldeg, times_sigma_reject=3.0)
     return newpoly.coef
 
 
@@ -128,7 +128,7 @@ def check_tags(operation_name, valid_tags, operation_tags):
     unexpected = False
     missing = False
     if operation_tags != valid_tags:
-        print(f'')
+        print('')
         print(f'Valid tags.....: {list_valid_tags}')
         print(f'Read tags......: {list_operation_tags}')
         if len(list_unexpected_tags) > 0:
@@ -143,7 +143,7 @@ def check_tags(operation_name, valid_tags, operation_tags):
             msg = 'Unexpected'
         else:
             msg = 'Missing'
-        #raise ValueError(f'{msg} tags found')
+        # raise ValueError(f'{msg} tags found')
         raise SystemExit(f"ERROR: {msg} tags found in '{operation_name}' operation")
 
 
