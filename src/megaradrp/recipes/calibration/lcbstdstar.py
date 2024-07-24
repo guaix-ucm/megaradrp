@@ -138,13 +138,8 @@ class LCBStandardRecipe(ImageRecipe):
             raise RecipeError("the maximum flux of 'reference_spectrum' is > 100, "
                               "check the flux unit (it has to be magAB)")
 
-        # Create InstrumentModel
-        # ins1 = rinput.obresult.configuration
-        #
         reduced2d, rss_data = super(LCBStandardRecipe, self).base_run(rinput)
-        # tags = rinput.obresult.tags
-        ins2 = rinput.obresult.profile
-        ins2.configure_with_image(rss_data)
+
         self.logger.info('start sky subtraction')
         final, origin, sky = self.run_sky_subtraction(
             rss_data,
