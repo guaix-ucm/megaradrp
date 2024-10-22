@@ -376,8 +376,8 @@ def main(argv=None):
                 ax.coords.grid(color='black', alpha=1.0, linestyle='solid')
 
             norm = simple_norm(zval, args.stretch,
-                               min_cut=args.min_cut,
-                               max_cut=args.max_cut,
+                               vmin=args.min_cut,
+                               vmax=args.max_cut,
                                percent=args.percent
                                )
 
