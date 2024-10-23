@@ -202,8 +202,7 @@ def main(args=None):
     if args.global_offset is None:
         args_global_offset = [0.0]
     else:
-        args_global_offset = [float(dum) for dum in
-                              str(args.global_offset).split(",")]
+        args_global_offset = [float(dum) for dum in args.global_offset]
 
     # read pdffile
     if args.pdffile is not None:
