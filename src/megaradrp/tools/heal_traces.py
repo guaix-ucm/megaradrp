@@ -161,6 +161,7 @@ def main(args=None):
                         type=argparse.FileType('r'))
     # optional parameters
     parser.add_argument("--global_offset",
+                        nargs='+',
                         help="Global offset polynomial coefficients "
                              "(+upwards, -downwards)")
     parser.add_argument("--fibids",
