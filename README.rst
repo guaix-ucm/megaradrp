@@ -19,6 +19,8 @@ The installation instructions are available in the
 `online documentation <https://megaradrp.readthedocs.io/en/latest/installation.html>`_
 or `doc/installation.rst <doc/installation.rst>`_ in the source distribution.
 
+Examples of how to reduce MEGARA data (with sample data) can be found in the
+`MEGARA cookbook <https://guaix-ucm.github.io/megaradrp-cookbook/>`_.
 
 Licensing
 ---------
