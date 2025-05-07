@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2023 Universidad Complutense de Madrid
+# Copyright 2011-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -10,12 +10,8 @@
 import logging
 
 from numina.core import BaseRecipe
-from numina.core import DataFrame
-import numina.ext.gtc
 from numina.types.qc import QC
 from numina.core.requirements import ObservationResultRequirement
-import numina.util.flow as flowmod
-
 
 import megaradrp.core.correctors as cor
 from megaradrp.datamodel import MegaraDataModel
@@ -40,7 +36,7 @@ class MegaraBaseRecipe(BaseRecipe):
     datamodel = MegaraDataModel()
 
     def validate_input(self, recipe_input):
-        """"Validate the input of the recipe"""
+        """Validate the input of the recipe"""
 
         import numina.types.multitype
         # print('ATTRS', recipe_input.attrs())
@@ -104,73 +100,11 @@ class MegaraBaseRecipe(BaseRecipe):
                    ]
         return imgtypes, getters
 
-    def get_filters(self, imgtypes, getters):
-        import collections.abc
-        used_getters = []
-        for rtype, getter in zip(imgtypes, getters):
-            self.logger.debug('get_filters, %s  %s', rtype, getter)
-            if rtype is None:
-                # Unconditional
-                if isinstance(getter, collections.abc.Iterable):
-                    used_getters.extend(getter)
-                else:
-                    used_getters.append(getter)
-            else:
-                # Search
-                for key, val in self.RecipeInput.stored().items():
-                    if isinstance(val.type, rtype):
-                        if isinstance(getter, collections.abc.Iterable):
-                            used_getters.extend(getter)
-                        else:
-                            used_getters.append(getter)
-                        break
-                else:
-                    pass
-        return used_getters
-
-    def init_filters_generic(self, rinput, getters_seq, ins):
-        # with BPM, bias, dark, flat and sky
-        if numina.ext.gtc.check_gtc():
-            self.logger.debug('running in GTC environment')
-        else:
-            self.logger.debug('running outside of GTC environment')
-
-        meta = self.gather_info(rinput)
-        self.logger.debug('obresult info')
-        for entry in meta['obresult']:
-            self.logger.debug('frame info is %s', entry)
-
-        reduction_flows = []
-        for getters in getters_seq:
-            correctors = [getter(rinput, meta, ins, self.datamodel)
-                          for getter in getters]
-            reduction_flow = flowmod.SerialFlow(correctors)
-            reduction_flows.append(reduction_flow)
-
-        return reduction_flows
-
-    def init_filters(self, rinput, ins=None):
-        if ins is None:
-            ins = rinput.obresult.configuration
+    def create_getters(self):
         imgtypes1 = [None]
         getters1 = [[cor.get_corrector_overscan, cor.get_corrector_trimming]]
         getters_f1 = self.get_filters(imgtypes1, getters1)
         imgtypes2, getters2 = self.types_getter()
         getters_f2 = self.get_filters(imgtypes2, getters2)
-
         getters_seq = [getters_f1, getters_f2]
-        return self.init_filters_generic(rinput, getters_seq, ins)
-
-    def gather_info(self, recipeinput):
-        klass = recipeinput.__class__
-        metadata = {}
-        for key in klass.stored():
-            val = getattr(recipeinput, key)
-            if isinstance(val, DataFrame):
-                metadata[key] = self.datamodel.gather_info_dframe(val)
-            # elif isinstance(val, ObservationResult):
-            elif hasattr(val, 'frames'):
-                metadata[key] = self.datamodel.gather_info_oresult(val)
-            else:
-                pass
-        return metadata
+        return getters_seq
