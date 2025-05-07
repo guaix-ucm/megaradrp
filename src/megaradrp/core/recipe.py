@@ -11,6 +11,7 @@ import logging
 
 from numina.core import BaseRecipe
 from numina.core import DataFrame
+import numina.ext.gtc
 from numina.types.qc import QC
 from numina.core.requirements import ObservationResultRequirement
 import numina.util.flow as flowmod
@@ -128,6 +129,11 @@ class MegaraBaseRecipe(BaseRecipe):
         return used_getters
 
     def init_filters_generic(self, rinput, getters_seq, ins):
+        # with BPM, bias, dark, flat and sky
+        if numina.ext.gtc.check_gtc():
+            self.logger.debug('running in GTC environment')
+        else:
+            self.logger.debug('running outside of GTC environment')
 
         meta = self.gather_info(rinput)
         self.logger.debug('obresult info')
@@ -143,7 +149,9 @@ class MegaraBaseRecipe(BaseRecipe):
 
         return reduction_flows
 
-    def init_filters(self, rinput, ins):
+    def init_filters(self, rinput, ins=None):
+        if ins is None:
+            ins = rinput.obresult.configuration
         imgtypes1 = [None]
         getters1 = [[cor.get_corrector_overscan, cor.get_corrector_trimming]]
         getters_f1 = self.get_filters(imgtypes1, getters1)
