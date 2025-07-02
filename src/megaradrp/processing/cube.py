@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2023 Universidad Complutense de Madrid
+# Copyright 2017-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -15,8 +15,10 @@ van de Ville et al. IEEE Transactions on Image Processing 2004, 13, 6
 
 from __future__ import print_function
 
+import argparse
 import numpy as np
 from scipy import signal
+from astropy.io import fits
 import astropy.units as u
 import astropy.wcs
 from numina.frame.utils import copy_img
@@ -196,8 +198,7 @@ def create_cube_from_array(rss_data, fiberconf, p=1, target_scale_arcsec=1.0, co
     # Move axis to put WL first
     # so that is last in FITS
     result = np.moveaxis(cube_data, 2, 0)
-    result.astype('float32')
-    return result
+    return result.astype('float32')
 
 
 def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
@@ -363,8 +364,7 @@ def merge_wcs_alt(hdr_sky, hdr_spec, out, spec_suffix=' '):
 
 
 def main(args=None):
-    import argparse
-    import astropy.io.fits as fits
+    """Main function to convert RSS to cube"""
 
     # parse command-line options
     parser = argparse.ArgumentParser(prog='convert_rss_cube')
