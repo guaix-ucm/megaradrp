@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2023 Universidad Complutense de Madrid
+# Copyright 2011-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -36,7 +36,7 @@ class ImageRecipe(MegaraBaseRecipe):
     method = Parameter(
         'median',
         description='Combination method',
-        choices=['mean', 'median', 'sigmaclip']
+        choices=['mean', 'median', 'mediancr', 'sigmaclip']
     )
     method_kwargs = Parameter(
         dict(),
