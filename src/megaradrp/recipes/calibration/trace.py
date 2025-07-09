@@ -91,6 +91,17 @@ class TraceMapRecipe(MegaraBaseRecipe):
     stored in the final `master_traces` object.
 
     """
+    method = Parameter(
+        'median',
+        description='Combination method',
+        choices=['mean', 'median', 'mediancr', 'sigmaclip']
+    )
+    method_kwargs = Parameter(
+        dict(),
+        description='Arguments for combination method',
+        optional=True
+    )
+
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
@@ -178,8 +189,9 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         self.logger.info('start basic reduction')
         flow = self.init_filters(rinput, obresult.configuration)
+        fmethod = getattr(combine, rinput.method)
         reduced = basic_processing_with_combination(
-            rinput, flow, method=combine.median)
+            rinput, flow, method=fmethod, method_kwargs=rinput.method_kwargs)
         self.logger.info('end basic reduction')
 
         self.save_intermediate_img(reduced, 'reduced_image.fits')

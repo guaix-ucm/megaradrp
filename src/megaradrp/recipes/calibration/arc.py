@@ -99,6 +99,17 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     """
 
     # Requirements
+    method = Parameter(
+        'median',
+        description='Combination method',
+        choices=['mean', 'median', 'mediancr', 'sigmaclip']
+    )
+    method_kwargs = Parameter(
+        dict(),
+        description='Arguments for combination method',
+        optional=True
+    )
+
     obresult = ObservationResultRequirement()
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
@@ -147,8 +158,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         obresult_meta = obresult.metadata_with(self.datamodel)
 
         flow1 = self.init_filters(rinput, rinput.obresult.configuration)
+        fmethod = getattr(combine, rinput.method)
         img = basic_processing_with_combination(
-            rinput, flow1, method=combine.median)
+            rinput, flow1, method=fmethod, method_kwargs=rinput.method_kwargs)
         hdr = img[0].header
         self.set_base_headers(hdr)
 

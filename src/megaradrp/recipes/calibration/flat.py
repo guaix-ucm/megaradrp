@@ -86,7 +86,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     method = Parameter(
         'median',
         description='Combination method',
-        choices=['mean', 'median', 'sigmaclip']
+        choices=['mean', 'median', 'mediancr', 'sigmaclip']
     )
     method_kwargs = Parameter(
         dict(),
