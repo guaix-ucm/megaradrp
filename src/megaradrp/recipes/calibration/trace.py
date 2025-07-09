@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2024 Universidad Complutense de Madrid
+# Copyright 2011-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
