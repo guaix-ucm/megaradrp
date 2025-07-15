@@ -143,6 +143,11 @@ class MasterBPM(ProcessedImageProduct):
     DATATYPE = MegaraDataType.MASTER_BPM
 
 
+class CRMask(ProcessedImageProduct):
+    """Cosmic Ray Mask product"""
+    DATATYPE = MegaraDataType.CR_MASK
+
+
 class DiffuseLightCorrection(ProcessedImageProduct):
     """Image to correct from diffuse light"""
     pass

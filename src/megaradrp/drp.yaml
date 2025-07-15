@@ -161,6 +161,7 @@ pipelines:
       MasterFiberFlat: megaradrp.types.MasterFiberFlat
       MasterTwilightFlat: megaradrp.types.MasterTwilightFlat
       LinesCatalog: numina.core.products.LinesCatalog
+      MegaraCrDetection: megaradrp.types.CRMask
     provides:
       - name: MasterBias
         mode: MegaraBiasImage
@@ -189,6 +190,9 @@ pipelines:
       - name: ModelMap
         mode: MegaraModelMap
         field: master_model
+      - name: CRMask
+        mode: MegaraCrDetection
+        field: crmask
     recipes:
       MegaraSuccess: numina.core.utils.AlwaysSuccessRecipe
       MegaraFail: 

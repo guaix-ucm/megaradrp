@@ -8,12 +8,9 @@
 #
 
 from numina.core import Result, Parameter
-from numina.array import combine
 
-from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.ntypes import MasterBias
-from megaradrp.requirements import MasterBPMRequirement
+from megaradrp.ntypes import CRMask
 
 
 class Recipe(MegaraBaseRecipe):
@@ -23,11 +20,12 @@ class Recipe(MegaraBaseRecipe):
         description='Arguments for combination method',
         optional=True
     )
+    crmask = Result(CRMask)
 
     def run(self, rinput):
         """Execute the recipe."""
         self.logger.info('start cr recipe')
 
-        result = self.create_result()
+        result = self.create_result(crmask=None)
         self.logger.info('end ce recipe')
         return result
