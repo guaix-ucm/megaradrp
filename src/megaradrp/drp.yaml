@@ -141,6 +141,12 @@ modes:
   key: MegaraMosAcquisition
   tagger: null
   rawimage: IMAGE_TEST
+- name: CR detection
+  summary: Detects cosmic rays
+  description: Lines and mode lines
+  key: MegaraCrDetection
+  tagger: null
+  rawimage: IMAGE_TARGET
 pipelines:
   default:
     version: 1
@@ -209,5 +215,4 @@ pipelines:
       MegaraMosStdStar: megaradrp.recipes.calibration.mosstdstar.MOSStandardRecipe
       MegaraExtinctionStar: megaradrp.recipes.combined.extinctionstar.Recipe
       MegaraSensitivityStar: megaradrp.recipes.combined.sensstar.Recipe
-
-
+      MegaraCrDetection: megaradrp.recipes.calibration.crdetect.Recipe
