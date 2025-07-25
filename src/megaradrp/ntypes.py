@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2023 Universidad Complutense de Madrid
+# Copyright 2011-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -143,9 +143,9 @@ class MasterBPM(ProcessedImageProduct):
     DATATYPE = MegaraDataType.MASTER_BPM
 
 
-class CRMask(ProcessedImageProduct):
-    """Cosmic Ray Mask product"""
-    DATATYPE = MegaraDataType.CR_MASK
+class CRMasks(ProcessedImageProduct):
+    """Cosmic Ray Masks product"""
+    DATATYPE = MegaraDataType.CR_MASKS
 
 
 class DiffuseLightCorrection(ProcessedImageProduct):

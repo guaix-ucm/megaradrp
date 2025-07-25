@@ -36,7 +36,7 @@ class ImageRecipe(MegaraBaseRecipe):
     method = Parameter(
         'median',
         description='Combination method',
-        choices=['mean', 'median', 'sigmaclip']
+        choices=['mean', 'median', 'sigmaclip', 'mediancr']
     )
     method_kwargs = Parameter(
         dict(),
@@ -59,6 +59,7 @@ class ImageRecipe(MegaraBaseRecipe):
     reference_extinction = reqs.ReferenceExtinction()
     relative_threshold = Parameter(0.3, 'Threshold for peak detection')
     diffuse_light_image = reqs.DiffuseLightRequirement()
+    crmasks = reqs.CRMasksRequirement()
 
     def base_run(self, rinput):
 

@@ -145,3 +145,13 @@ class DiffuseLightRequirement(Requirement):
                              'Diffuse light correction image',
                              optional=optional
                              )
+
+
+class CRMasksRequirement(Requirement):
+    def __init__(self, optional=True):
+        super(CRMasksRequirement, self).__init__(
+            megaradrp.ntypes.CRMasks,
+            'CR Pixel Masks',
+            optional=optional,
+            validation=False
+        )

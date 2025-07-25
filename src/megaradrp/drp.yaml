@@ -142,8 +142,8 @@ modes:
   tagger: null
   rawimage: IMAGE_TEST
 - name: CR detection
-  summary: Detects cosmic rays
-  description: Lines and mode lines
+  summary: Detect cosmic rays
+  description: Detect cosmic rays
   key: MegaraCrDetection
   tagger: null
   rawimage: IMAGE_TARGET
@@ -161,7 +161,7 @@ pipelines:
       MasterFiberFlat: megaradrp.types.MasterFiberFlat
       MasterTwilightFlat: megaradrp.types.MasterTwilightFlat
       LinesCatalog: numina.core.products.LinesCatalog
-      MegaraCrDetection: megaradrp.types.CRMask
+      MegaraCrDetection: megaradrp.types.CRMasks
     provides:
       - name: MasterBias
         mode: MegaraBiasImage
@@ -190,9 +190,9 @@ pipelines:
       - name: ModelMap
         mode: MegaraModelMap
         field: master_model
-      - name: CRMask
+      - name: CRMasks
         mode: MegaraCrDetection
-        field: crmask
+        field: crmasks
     recipes:
       MegaraSuccess: numina.core.utils.AlwaysSuccessRecipe
       MegaraFail: 

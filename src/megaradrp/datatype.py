@@ -28,7 +28,7 @@ class MegaraDataType(enum.Enum):
     MasterBias = 202  # Alias
     MASTER_DARK = 203
     MASTER_SLITFLAT = 204
-    CR_MASK = 205
+    CR_MASKS = 205
     DIFFUSE_LIGHT = 211
     #
     RSS_PROCESSED = 300
