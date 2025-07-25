@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2023 Universidad Complutense de Madrid
+# Copyright 2011-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -141,6 +141,11 @@ class MasterSlitFlat(ProcessedImageProduct):
 class MasterBPM(ProcessedImageProduct):
     """Bad Pixel Mask product"""
     DATATYPE = MegaraDataType.MASTER_BPM
+
+
+class CRMasks(ProcessedImageProduct):
+    """Cosmic Ray Masks product"""
+    DATATYPE = MegaraDataType.CR_MASKS
 
 
 class DiffuseLightCorrection(ProcessedImageProduct):
