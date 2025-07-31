@@ -25,7 +25,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
 
-    flux_factor = Parameter('auto', description='Flux factor for cosmic ray detection')
+    flux_factor = Parameter('none', description='Flux factor for cosmic ray detection')
     knots_splfit = Parameter(3, description='Number of knots for spline fit')
     nsimulations = Parameter(10, description='Number of simulations for cosmic ray detection')
     niter_boundary_extension = Parameter(3, description='Iterations for boundary extension')
