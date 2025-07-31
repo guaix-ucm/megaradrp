@@ -219,4 +219,4 @@ pipelines:
       MegaraMosStdStar: megaradrp.recipes.calibration.mosstdstar.MOSStandardRecipe
       MegaraExtinctionStar: megaradrp.recipes.combined.extinctionstar.Recipe
       MegaraSensitivityStar: megaradrp.recipes.combined.sensstar.Recipe
-      MegaraCrDetection: megaradrp.recipes.calibration.crdetect.Recipe
+      MegaraCrDetection: megaradrp.recipes.calibration.crdetect.CRMasksRecipe

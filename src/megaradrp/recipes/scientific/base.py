@@ -36,7 +36,8 @@ class ImageRecipe(MegaraBaseRecipe):
     method = Parameter(
         'median',
         description='Combination method',
-        choices=['mean', 'median', 'sigmaclip', 'mediancr']
+        choices=['mean', 'median', 'sigmaclip',
+                 'mediancr', 'meancrt', 'meancr']
     )
     method_kwargs = Parameter(
         dict(),
