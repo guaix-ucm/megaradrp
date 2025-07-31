@@ -40,6 +40,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     semiwindow = Parameter(15, description='Semi-window size to display suspected cosmic rays')
     color_scale = Parameter('minmax', description='Color scale for plots')
     maxplots = Parameter(10, description='Maximum number of plots with suspected cosmic rays to generate')
+    save_preprocessed = Parameter(False, description='Save preprocessed images for cosmic ray detection')
 
     # Results
     crmasks = Result(CRMasks)
@@ -69,8 +70,10 @@ class CRMasksRecipe(MegaraBaseRecipe):
             # Apply the second part of the reduction flow
             hdul_1im = [reduction_flow_1im(hdul) for hdul in hdul_ot]
 
-            for i, hdul in enumerate(hdul_1im):
-                hdul.writeto(f'xxx_{i}.fits', overwrite=True)
+            # Save individual preprocessed images if requested
+            if rinput.save_preprocessed:
+                for i, hdul in enumerate(hdul_1im):
+                    self.save_intermediate_img(hdul, f'preprocessed_{i+1}.fits')
 
             arrays = [hdul[0].data for hdul in hdul_1im]
             self.logger.info(f'{len(arrays)} images to generate CR masks')
@@ -98,9 +101,11 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 maxplots=rinput.maxplots
             )
 
-            # Update header
+            # Update header (basic information)
             hdr = hdul_masks[0].header
             self.set_base_headers(hdr)
+
+            # Update header (history of the individual images))
             for hdul in hdul_1im:
                 hdr.add_history('---')
                 hdr.add_history(f'Image {hdul[0].header["UUID"]}')
@@ -108,6 +113,8 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 for entry in history_entries:
                     hdr.add_history(entry)
             hdr.add_history('---')
+
+            # Update header with cosmic ray mask information
             for extname in ['MEDIANCR', 'MEANCRT'] + [f'CRMASK{i+1}' for i in range(len(arrays))]:
                 hdr.add_history(f'Extension {extname}: {np.sum(hdul_masks[extname].data)} masked pixels')
 
