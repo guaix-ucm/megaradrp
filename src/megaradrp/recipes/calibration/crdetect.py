@@ -26,7 +26,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     master_bpm = reqs.MasterBPMRequirement()
 
     flux_factor = Parameter('none', description='Flux factor for cosmic ray detection')
-    knots_splfit = Parameter(3, description='Number of knots for spline fit')
+    knots_splfit = Parameter(3, description='Number of knots for spline fit to CR detection boundary')
     nsimulations = Parameter(10, description='Number of simulations for cosmic ray detection')
     niter_boundary_extension = Parameter(3, description='Iterations for boundary extension')
     weight_boundary_extension = Parameter(10, description='Weight for boundary extension')
@@ -36,7 +36,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     dilation = Parameter(1, description='Dilation factor for cosmic ray masks')
     dtype = Parameter('float32', description='Data type for cosmic ray masks')
     seed = Parameter(1234, description='Random seed for cosmic ray detection')
-    plots = Parameter(False, description='Generate diagnostic plots')
+    plots = Parameter(True, description='Generate diagnostic plots')
     semiwindow = Parameter(15, description='Semi-window size to display suspected cosmic rays')
     color_scale = Parameter('minmax', description='Color scale for plots')
     maxplots = Parameter(10, description='Maximum number of plots with suspected cosmic rays to generate')
