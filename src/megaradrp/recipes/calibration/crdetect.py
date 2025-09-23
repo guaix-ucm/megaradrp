@@ -70,10 +70,12 @@ class CRMasksRecipe(MegaraBaseRecipe):
             # Apply the second part of the reduction flow
             hdul_1im = [reduction_flow_1im(hdul) for hdul in hdul_ot]
 
-            # Save individual preprocessed images if requested
+            # Save individual preprocessed images (and median) if requested
             if rinput.save_preprocessed:
                 for i, hdul in enumerate(hdul_1im):
                     self.save_intermediate_img(hdul, f'preprocessed_{i+1}.fits')
+                median_data = np.median([hdul[0].data for hdul in hdul_1im], axis=0)
+                self.save_intermediate_array(median_data, 'preprocessed_median.fits')
 
             arrays = [hdul[0].data for hdul in hdul_1im]
             self.logger.info(f'{len(arrays)} images to generate CR masks')
