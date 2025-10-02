@@ -25,8 +25,20 @@ class CRMasksRecipe(MegaraBaseRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
 
+    crmethod = Parameter('lacosmic', description='Cosmic ray detection method')
+    rnoise = Parameter(3.4, description='Readout noise in electrons')
+
+    la_sigclip = Parameter(7.0, description='Sigma clipping for L.A. Cosmic method')
+    la_psffwhm_x = Parameter(2.5, description='PSF FWHM in X direction (pixels) for L.A. Cosmic method')
+    la_psffwhm_y = Parameter(2.5, description='PSF FWHM in Y direction (pixels) for L.A. Cosmic method')
+    la_fsmode = Parameter('convolve', description='Filter mode for L.A. Cosmic method')
+    la_psfmodel = Parameter('gaussxy', description='PSF model for L.A. Cosmic method')
+    la_psfsize = Parameter(11, description='PSF size (pixels) for L.A. Cosmic method')
+
     flux_factor = Parameter('none', description='Flux factor for cosmic ray detection')
+    crosscorr_region = Parameter('none', description='Region for cross-correlation alignment (FITS format)')
     knots_splfit = Parameter(3, description='Number of knots for spline fit to CR detection boundary')
+    fixed_points_in_boundary = Parameter('none', description='List of fixed points in boundary for CR detection')
     nsimulations = Parameter(10, description='Number of simulations for cosmic ray detection')
     niter_boundary_extension = Parameter(3, description='Iterations for boundary extension')
     weight_boundary_extension = Parameter(10, description='Weight for boundary extension')
@@ -37,6 +49,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     dtype = Parameter('float32', description='Data type for cosmic ray masks')
     seed = Parameter(1234, description='Random seed for cosmic ray detection')
     plots = Parameter(True, description='Generate diagnostic plots')
+    verify_cr = Parameter(False, description='Verify cosmic ray detection')
     semiwindow = Parameter(15, description='Semi-window size to display suspected cosmic rays')
     color_scale = Parameter('minmax', description='Color scale for plots')
     maxplots = Parameter(10, description='Maximum number of plots with suspected cosmic rays to generate')
@@ -83,11 +96,20 @@ class CRMasksRecipe(MegaraBaseRecipe):
             # Generate the cosmic ray masks
             hdul_masks = compute_crmasks(
                 arrays,
-                gain=1.0,    # arrays are already in electrons
-                rnoise=3.4,  # readout noise in electrons
-                bias=0.0,    # bias level was already removed
+                gain=1.0,  # arrays are already in electrons
+                rnoise=rinput.rnoise,  # readout noise in electrons
+                bias=0.0,  # bias level was already removed
+                crmethod=rinput.crmethod,
+                la_sigclip=rinput.la_sigclip,
+                la_psffwhm_x=rinput.la_psffwhm_x,
+                la_psffwhm_y=rinput.la_psffwhm_y,
+                la_fsmode=rinput.la_fsmode,
+                la_psfmodel=rinput.la_psfmodel,
+                la_psfsize=rinput.la_psfsize,
                 flux_factor=rinput.flux_factor,
+                crosscorr_region=rinput.crosscorr_region,
                 knots_splfit=rinput.knots_splfit,
+                fixed_points_in_boundary=rinput.fixed_points_in_boundary,
                 nsimulations=rinput.nsimulations,
                 niter_boundary_extension=rinput.niter_boundary_extension,
                 weight_boundary_extension=rinput.weight_boundary_extension,
@@ -98,6 +120,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 dtype=rinput.dtype,
                 seed=rinput.seed,
                 plots=rinput.plots,
+                verify_cr=rinput.verify_cr,
                 semiwindow=rinput.semiwindow,
                 color_scale=rinput.color_scale,
                 maxplots=rinput.maxplots
