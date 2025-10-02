@@ -26,11 +26,11 @@ class CRMasksRecipe(MegaraBaseRecipe):
     master_bpm = reqs.MasterBPMRequirement()
 
     crmethod = Parameter('lacosmic', description='Cosmic ray detection method')
+    flux_factor = Parameter('none', description='Flux factor for cosmic ray detection')
     rnoise = Parameter(3.4, description='Readout noise in electrons')
     interactive = Parameter(True, description='Interactive mode for cosmic ray detection')
     dilation = Parameter(1, description='Dilation factor for cosmic ray masks')
     dtype = Parameter('float32', description='Data type for cosmic ray masks')
-    plots = Parameter(True, description='Generate diagnostic plots')
     verify_cr = Parameter(False, description='Verify cosmic ray detection')
     semiwindow = Parameter(15, description='Semi-window size to display suspected cosmic rays')
     color_scale = Parameter('minmax', description='Color scale for plots')
@@ -46,7 +46,6 @@ class CRMasksRecipe(MegaraBaseRecipe):
     la_psfsize = Parameter(11, description='PSF size (pixels) for L.A. Cosmic method')
 
     # Simulated boundary parameters
-    sb_flux_factor = Parameter('none', description='Flux factor for cosmic ray detection')
     sb_crosscorr_region = Parameter('none', description='Region for cross-correlation alignment (FITS format)')
     sb_knots_splfit = Parameter(3, description='Number of knots for spline fit to CR detection boundary')
     sb_fixed_points_in_boundary = Parameter('none', description='List of fixed points in boundary for CR detection')
@@ -102,10 +101,10 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 rnoise=rinput.rnoise,  # readout noise in electrons
                 bias=0.0,  # bias level was already removed
                 crmethod=rinput.crmethod,
+                flux_factor=rinput.flux_factor,
                 interactive=rinput.interactive,
                 dilation=rinput.dilation,
                 dtype=rinput.dtype,
-                plots=rinput.plots,
                 verify_cr=rinput.verify_cr,
                 semiwindow=rinput.semiwindow,
                 color_scale=rinput.color_scale,
@@ -116,7 +115,6 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 la_fsmode=rinput.la_fsmode,
                 la_psfmodel=rinput.la_psfmodel,
                 la_psfsize=rinput.la_psfsize,
-                sb_flux_factor=rinput.sb_flux_factor,
                 sb_crosscorr_region=rinput.sb_crosscorr_region,
                 sb_knots_splfit=rinput.sb_knots_splfit,
                 sb_fixed_points_in_boundary=rinput.sb_fixed_points_in_boundary,
