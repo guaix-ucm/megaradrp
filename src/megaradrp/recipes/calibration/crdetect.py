@@ -14,7 +14,7 @@ import numpy as np
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.ntypes import CRMasks
 import megaradrp.requirements as reqs
-from numina.array.crmasks import compute_crmasks
+from numina.array.crmasks import compute_crmasks, apply_crmasks
 
 
 class CRMasksRecipe(MegaraBaseRecipe):
@@ -38,7 +38,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     save_preprocessed = Parameter(False, description='Save preprocessed images for cosmic ray detection')
 
     # L.A. Cosmic parameters
-    la_sigclip = Parameter(7.0, description='Sigma clipping for L.A. Cosmic method')
+    la_sigclip = Parameter(5.0, description='Sigma clipping for L.A. Cosmic method')
     la_psffwhm_x = Parameter(2.5, description='PSF FWHM in X direction (pixels) for L.A. Cosmic method')
     la_psffwhm_y = Parameter(2.5, description='PSF FWHM in Y direction (pixels) for L.A. Cosmic method')
     la_fsmode = Parameter('convolve', description='Filter mode for L.A. Cosmic method')
@@ -89,14 +89,14 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 for i, hdul in enumerate(hdul_1im):
                     self.save_intermediate_img(hdul, f'preprocessed_{i+1}.fits')
                 median_data = np.median([hdul[0].data for hdul in hdul_1im], axis=0)
-                self.save_intermediate_array(median_data, 'preprocessed_median.fits')
+                self.save_intermediate_array(median_data.astype(rinput.dtype), 'preprocessed_median.fits')
 
             arrays = [hdul[0].data for hdul in hdul_1im]
             self.logger.info(f'{len(arrays)} images to generate CR masks')
 
             # Generate the cosmic ray masks
             hdul_masks = compute_crmasks(
-                arrays,
+                list_arrays=arrays,
                 gain=1.0,  # arrays are already in electrons
                 rnoise=rinput.rnoise,  # readout noise in electrons
                 bias=0.0,  # bias level was already removed
@@ -130,7 +130,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
             hdr = hdul_masks[0].header
             self.set_base_headers(hdr)
 
-            # Update header (history of the individual images))
+            # Update header (UUID of the individual images))
             for hdul in hdul_1im:
                 hdr.add_history('---')
                 hdr.add_history(f'Image {hdul[0].header["UUID"]}')
@@ -142,6 +142,20 @@ class CRMasksRecipe(MegaraBaseRecipe):
             # Update header with cosmic ray mask information
             for extname in ['MEDIANCR', 'MEANCRT'] + [f'CRMASK{i+1}' for i in range(len(arrays))]:
                 hdr.add_history(f'Extension {extname}: {np.sum(hdul_masks[extname].data)} masked pixels')
+
+            # Save the corrected preprocessed images if requested
+            if rinput.save_preprocessed:
+                for combination in ['mediancr', 'meancrt', 'meancr']:
+                    self.logger.info(f'Apply {combination} to preprocessed images')
+                    combined2d, _, _ = apply_crmasks(
+                        list_arrays=arrays,
+                        hdul_masks=hdul_masks,
+                        combination=combination,
+                        dtype=rinput.dtype,
+                        apply_flux_factor=True,
+                        bias=None
+                    )
+                    self.save_intermediate_array(combined2d, f'preprocessed_{combination}.fits')
 
         result = self.create_result(crmasks=hdul_masks)
         self.logger.info('end MegaraCrDetection recipe')
