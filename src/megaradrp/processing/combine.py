@@ -103,4 +103,6 @@ def basic_processing_with_combination_frames_crmasks(
         result = combine_imgs(hdul_otbg, method=method, method_kwargs=method_kwargs,
                               errors=errors, prolog=prolog, crmasks=crmasks)
 
+        result[0].header.add_history(f'Masks uuid:{crmasks[0].header["UUID"]}')
+
     return result
