@@ -34,7 +34,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     verify_cr = Parameter(False, description='Verify cosmic ray detection')
     semiwindow = Parameter(15, description='Semi-window size to display suspected cosmic rays')
     color_scale = Parameter('minmax', description='Color scale for plots')
-    maxplots = Parameter(10, description='Maximum number of plots with suspected cosmic rays to generate')
+    maxplots = Parameter(-1, description='Maximum number of plots with suspected cosmic rays to generate')
     save_preprocessed = Parameter(False, description='Save preprocessed images for cosmic ray detection')
 
     # L.A. Cosmic parameters
