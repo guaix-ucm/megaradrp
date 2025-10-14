@@ -55,6 +55,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
 
     # Simulated boundary parameters
     sb_crosscorr_region = Parameter('none', description='Region for cross-correlation alignment (FITS format)')
+    sb_boundary_fit = Parameter('spline', description='Type of fit to CR detection boundary')
     sb_knots_splfit = Parameter(3, description='Number of knots for spline fit to CR detection boundary')
     sb_fixed_points_in_boundary = Parameter('none', description='List of fixed points in boundary for CR detection')
     sb_nsimulations = Parameter(10, description='Number of simulations for cosmic ray detection')
@@ -126,6 +127,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 la_psfmodel=rinput.la_psfmodel,
                 la_psfsize=rinput.la_psfsize,
                 sb_crosscorr_region=rinput.sb_crosscorr_region,
+                sb_boundary_fit=rinput.sb_boundary_fit,
                 sb_knots_splfit=rinput.sb_knots_splfit,
                 sb_fixed_points_in_boundary=rinput.sb_fixed_points_in_boundary,
                 sb_nsimulations=rinput.sb_nsimulations,
