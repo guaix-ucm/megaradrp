@@ -44,6 +44,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     color_scale = Parameter('minmax', description='Color scale for plots')
     maxplots = Parameter(-1, description='Maximum number of plots with suspected cosmic rays to generate')
     save_preprocessed = Parameter(False, description='Save preprocessed images for cosmic ray detection')
+    debug = Parameter(False, description='Debug mode')
 
     # L.A. Cosmic parameters
     la_sigclip = Parameter(5.0, description='Sigma clipping for L.A. Cosmic method')
@@ -120,6 +121,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 semiwindow=rinput.semiwindow,
                 color_scale=rinput.color_scale,
                 maxplots=rinput.maxplots,
+                debug=rinput.debug,
                 la_sigclip=rinput.la_sigclip,
                 la_psffwhm_x=rinput.la_psffwhm_x,
                 la_psffwhm_y=rinput.la_psffwhm_y,
