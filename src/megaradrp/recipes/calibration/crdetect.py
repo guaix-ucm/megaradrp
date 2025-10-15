@@ -30,11 +30,11 @@ class CRMasksRecipe(MegaraBaseRecipe):
     rnoise = Parameter(3.4, description='Readout noise in electrons')
     interactive = Parameter(True, description='Interactive mode for cosmic ray detection')
     dilation = Parameter(1, description='Dilation factor for cosmic ray masks')
-    pixels_to_be_masked = Parameter(
+    pixels_to_be_flagged_as_cr = Parameter(
         'none',
         description='List of (X,Y) coordinates of pixels to be masked (FITS criterium)'
     )
-    pixels_to_be_excluded = Parameter(
+    pixels_to_be_ignored_as_cr = Parameter(
         'none',
         description='List of (X,Y) coordinates of pixels to be excluded from masking (FITS criterium)'
     )
@@ -114,8 +114,8 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 flux_factor=rinput.flux_factor,
                 interactive=rinput.interactive,
                 dilation=rinput.dilation,
-                pixels_to_be_masked=rinput.pixels_to_be_masked,
-                pixels_to_be_excluded=rinput.pixels_to_be_excluded,
+                pixels_to_be_flagged_as_cr=rinput.pixels_to_be_flagged_as_cr,
+                pixels_to_be_ignored_as_cr=rinput.pixels_to_be_ignored_as_cr,
                 dtype=rinput.dtype,
                 verify_cr=rinput.verify_cr,
                 semiwindow=rinput.semiwindow,
