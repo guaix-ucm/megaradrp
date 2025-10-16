@@ -48,11 +48,20 @@ class CRMasksRecipe(MegaraBaseRecipe):
 
     # L.A. Cosmic parameters
     la_sigclip = Parameter(5.0, description='Sigma clipping for L.A. Cosmic method')
-    la_psffwhm_x = Parameter(2.5, description='PSF FWHM in X direction (pixels) for L.A. Cosmic method')
-    la_psffwhm_y = Parameter(2.5, description='PSF FWHM in Y direction (pixels) for L.A. Cosmic method')
+    la_sigfrac = Parameter(0.3, description='Fractional detection limit for L.A. Cosmic method')
+    la_objlim = Parameter(5.0, description='Minimum contrast between Laplacian image and the fine structure image '
+                          'for L.A. Cosmic method')
+    la_satlevel = Parameter(65535.0, description='Saturation level for L.A. Cosmic method')
+    la_niter = Parameter(4, description='Number of iterations for L.A. Cosmic method')
+    la_sepmed = Parameter(True, description='Use the separable median filter instead of the full median filter '
+                          'for L.A. Cosmic method')
     la_fsmode = Parameter('convolve', description='Filter mode for L.A. Cosmic method')
     la_psfmodel = Parameter('gaussxy', description='PSF model for L.A. Cosmic method')
+    la_psffwhm_x = Parameter(2.5, description='PSF FWHM in X direction (pixels) for L.A. Cosmic method')
+    la_psffwhm_y = Parameter(2.5, description='PSF FWHM in Y direction (pixels) for L.A. Cosmic method')
     la_psfsize = Parameter(11, description='PSF size (pixels) for L.A. Cosmic method')
+    la_psfbeta = Parameter(4.765, description='Beta parameter for Moffat PSF model in L.A. Cosmic method')
+    la_verbose = Parameter(False, description='Verbose mode for L.A. Cosmic method')
 
     # Simulated boundary parameters
     sb_crosscorr_region = Parameter('none', description='Region for cross-correlation alignment (FITS format)')
@@ -123,11 +132,18 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 maxplots=rinput.maxplots,
                 debug=rinput.debug,
                 la_sigclip=rinput.la_sigclip,
-                la_psffwhm_x=rinput.la_psffwhm_x,
-                la_psffwhm_y=rinput.la_psffwhm_y,
+                la_sigfrac=rinput.la_sigfrac,
+                la_objlim=rinput.la_objlim,
+                la_satlevel=rinput.la_satlevel,
+                la_niter=rinput.la_niter,
+                la_sepmed=rinput.la_sepmed,
                 la_fsmode=rinput.la_fsmode,
                 la_psfmodel=rinput.la_psfmodel,
+                la_psffwhm_x=rinput.la_psffwhm_x,
+                la_psffwhm_y=rinput.la_psffwhm_y,
                 la_psfsize=rinput.la_psfsize,
+                la_psfbeta=rinput.la_psfbeta,
+                la_verbose=rinput.la_verbose,
                 sb_crosscorr_region=rinput.sb_crosscorr_region,
                 sb_boundary_fit=rinput.sb_boundary_fit,
                 sb_knots_splfit=rinput.sb_knots_splfit,
