@@ -26,6 +26,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     master_bpm = reqs.MasterBPMRequirement()
 
     crmethod = Parameter('lacosmic', description='Cosmic ray detection method')
+    use_lamedian = Parameter(False, description='Use the corrected values from the L.A. Median method')
     flux_factor = Parameter('none', description='Flux factor for cosmic ray detection')
     rnoise = Parameter(3.4, description='Readout noise in electrons')
     interactive = Parameter(True, description='Interactive mode for cosmic ray detection')
@@ -38,6 +39,10 @@ class CRMasksRecipe(MegaraBaseRecipe):
         'none',
         description='List of (X,Y) coordinates of pixels to be excluded from masking (FITS criterium)'
     )
+    pixels_to_be_replaced_by_local_median = Parameter(
+        'none',
+        description='List of (X,Y,Xwidth,Ywidth) values with coordinates and median window shape'
+    )
     dtype = Parameter('float32', description='Data type for cosmic ray masks')
     verify_cr = Parameter(False, description='Verify cosmic ray detection')
     semiwindow = Parameter(15, description='Semi-window size to display suspected cosmic rays')
@@ -47,6 +52,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     debug = Parameter(False, description='Debug mode')
 
     # L.A. Cosmic parameters
+    la_gain_apply = Parameter(False, description='Apply gain in L.A. Cosmic method')
     la_sigclip = Parameter(5.0, description='Sigma clipping for L.A. Cosmic method')
     la_sigfrac = Parameter(0.3, description='Fractional detection limit for L.A. Cosmic method')
     la_objlim = Parameter(5.0, description='Minimum contrast between Laplacian image and the fine structure image '
@@ -55,6 +61,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     la_niter = Parameter(4, description='Number of iterations for L.A. Cosmic method')
     la_sepmed = Parameter(True, description='Use the separable median filter instead of the full median filter '
                           'for L.A. Cosmic method')
+    la_cleantype = Parameter('meanmask', description='Cleaning type for L.A. Cosmic method') 
     la_fsmode = Parameter('convolve', description='Filter mode for L.A. Cosmic method')
     la_psfmodel = Parameter('gaussxy', description='PSF model for L.A. Cosmic method')
     la_psffwhm_x = Parameter(2.5, description='PSF FWHM in X direction (pixels) for L.A. Cosmic method')
@@ -63,17 +70,17 @@ class CRMasksRecipe(MegaraBaseRecipe):
     la_psfbeta = Parameter(4.765, description='Beta parameter for Moffat PSF model in L.A. Cosmic method')
     la_verbose = Parameter(False, description='Verbose mode for L.A. Cosmic method')
 
-    # Simulated boundary parameters
-    sb_crosscorr_region = Parameter('none', description='Region for cross-correlation alignment (FITS format)')
-    sb_boundary_fit = Parameter('spline', description='Type of fit to CR detection boundary')
-    sb_knots_splfit = Parameter(3, description='Number of knots for spline fit to CR detection boundary')
-    sb_fixed_points_in_boundary = Parameter('none', description='List of fixed points in boundary for CR detection')
-    sb_nsimulations = Parameter(10, description='Number of simulations for cosmic ray detection')
-    sb_niter_boundary_extension = Parameter(3, description='Iterations for boundary extension')
-    sb_weight_boundary_extension = Parameter(10, description='Weight for boundary extension')
-    sb_threshold = Parameter(0.0, description='Threshold for cosmic ray detection')
-    sb_minimum_max2d_rnoise = Parameter(5.0, description='Minimum max2d readout noise')
-    sb_seed = Parameter(1234, description='Random seed for cosmic ray detection')
+    # Median-Minimum parameters
+    mm_crosscorr_region = Parameter('none', description='Region for cross-correlation alignment (FITS format)')
+    mm_boundary_fit = Parameter('spline', description='Type of fit to CR detection boundary')
+    mm_knots_splfit = Parameter(3, description='Number of knots for spline fit to CR detection boundary')
+    mm_fixed_points_in_boundary = Parameter('none', description='List of fixed points in boundary for CR detection')
+    mm_nsimulations = Parameter(10, description='Number of simulations for cosmic ray detection')
+    mm_niter_boundary_extension = Parameter(3, description='Iterations for boundary extension')
+    mm_weight_boundary_extension = Parameter(10, description='Weight for boundary extension')
+    mm_threshold = Parameter(0.0, description='Threshold for cosmic ray detection')
+    mm_minimum_max2d_rnoise = Parameter(5.0, description='Minimum max2d readout noise')
+    mm_seed = Parameter(1234, description='Random seed for cosmic ray detection')
 
     # Results
     crmasks = Result(CRMasks)
@@ -120,23 +127,27 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 rnoise=rinput.rnoise,  # readout noise in electrons
                 bias=0.0,  # bias level was already removed
                 crmethod=rinput.crmethod,
+                use_lamedian=rinput.use_lamedian,
                 flux_factor=rinput.flux_factor,
                 interactive=rinput.interactive,
                 dilation=rinput.dilation,
                 pixels_to_be_flagged_as_cr=rinput.pixels_to_be_flagged_as_cr,
                 pixels_to_be_ignored_as_cr=rinput.pixels_to_be_ignored_as_cr,
+                pixels_to_be_replaced_by_local_median=rinput.pixels_to_be_replaced_by_local_median,
                 dtype=rinput.dtype,
                 verify_cr=rinput.verify_cr,
                 semiwindow=rinput.semiwindow,
                 color_scale=rinput.color_scale,
                 maxplots=rinput.maxplots,
                 debug=rinput.debug,
+                la_gain_apply=rinput.la_gain_apply,
                 la_sigclip=rinput.la_sigclip,
                 la_sigfrac=rinput.la_sigfrac,
                 la_objlim=rinput.la_objlim,
                 la_satlevel=rinput.la_satlevel,
                 la_niter=rinput.la_niter,
                 la_sepmed=rinput.la_sepmed,
+                la_cleantype=rinput.la_cleantype,
                 la_fsmode=rinput.la_fsmode,
                 la_psfmodel=rinput.la_psfmodel,
                 la_psffwhm_x=rinput.la_psffwhm_x,
@@ -144,16 +155,16 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 la_psfsize=rinput.la_psfsize,
                 la_psfbeta=rinput.la_psfbeta,
                 la_verbose=rinput.la_verbose,
-                sb_crosscorr_region=rinput.sb_crosscorr_region,
-                sb_boundary_fit=rinput.sb_boundary_fit,
-                sb_knots_splfit=rinput.sb_knots_splfit,
-                sb_fixed_points_in_boundary=rinput.sb_fixed_points_in_boundary,
-                sb_nsimulations=rinput.sb_nsimulations,
-                sb_niter_boundary_extension=rinput.sb_niter_boundary_extension,
-                sb_weight_boundary_extension=rinput.sb_weight_boundary_extension,
-                sb_threshold=rinput.sb_threshold,
-                sb_minimum_max2d_rnoise=rinput.sb_minimum_max2d_rnoise,
-                sb_seed=rinput.sb_seed
+                mm_crosscorr_region=rinput.mm_crosscorr_region,
+                mm_boundary_fit=rinput.mm_boundary_fit,
+                mm_knots_splfit=rinput.mm_knots_splfit,
+                mm_fixed_points_in_boundary=rinput.mm_fixed_points_in_boundary,
+                mm_nsimulations=rinput.mm_nsimulations,
+                mm_niter_boundary_extension=rinput.mm_niter_boundary_extension,
+                mm_weight_boundary_extension=rinput.mm_weight_boundary_extension,
+                mm_threshold=rinput.mm_threshold,
+                mm_minimum_max2d_rnoise=rinput.mm_minimum_max2d_rnoise,
+                mm_seed=rinput.mm_seed
             )
 
             # Update header (basic information)
