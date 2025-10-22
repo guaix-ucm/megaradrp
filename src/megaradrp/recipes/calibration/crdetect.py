@@ -28,6 +28,9 @@ class CRMasksRecipe(MegaraBaseRecipe):
     crmethod = Parameter('lacosmic', description='Cosmic ray detection method')
     use_lamedian = Parameter(False, description='Use the corrected values from the L.A. Median method')
     flux_factor = Parameter('none', description='Flux factor for cosmic ray detection')
+    flux_factor_region = Parameter('none', description='Region to compute flux factor (FITS format)')
+    apply_flux_factor_to = Parameter('simulated',
+                                     description='Apply flux factor to simulated images or to the original data')
     rnoise = Parameter(3.4, description='Readout noise in electrons')
     interactive = Parameter(True, description='Interactive mode for cosmic ray detection')
     dilation = Parameter(1, description='Dilation factor for cosmic ray masks')
@@ -129,6 +132,8 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 crmethod=rinput.crmethod,
                 use_lamedian=rinput.use_lamedian,
                 flux_factor=rinput.flux_factor,
+                flux_factor_region=rinput.flux_factor_region,
+                apply_flux_factor_to=rinput.apply_flux_factor_to,
                 interactive=rinput.interactive,
                 dilation=rinput.dilation,
                 pixels_to_be_flagged_as_cr=rinput.pixels_to_be_flagged_as_cr,
