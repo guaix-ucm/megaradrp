@@ -14,7 +14,8 @@ import numpy as np
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.ntypes import CRMasks
 import megaradrp.requirements as reqs
-from numina.array.crmasks import compute_crmasks, apply_crmasks
+from numina.array.crmasks.apply_crmasks import apply_crmasks
+from numina.array.crmasks.compute_crmasks import compute_crmasks
 
 
 class CRMasksRecipe(MegaraBaseRecipe):
@@ -64,7 +65,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     la_niter = Parameter(4, description='Number of iterations for L.A. Cosmic method')
     la_sepmed = Parameter(True, description='Use the separable median filter instead of the full median filter '
                           'for L.A. Cosmic method')
-    la_cleantype = Parameter('meanmask', description='Cleaning type for L.A. Cosmic method') 
+    la_cleantype = Parameter('meanmask', description='Cleaning type for L.A. Cosmic method')
     la_fsmode = Parameter('convolve', description='Filter mode for L.A. Cosmic method')
     la_psfmodel = Parameter('gaussxy', description='PSF model for L.A. Cosmic method')
     la_psffwhm_x = Parameter(2.5, description='PSF FWHM in X direction (pixels) for L.A. Cosmic method')
