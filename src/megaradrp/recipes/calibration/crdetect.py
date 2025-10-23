@@ -29,12 +29,14 @@ class CRMasksRecipe(MegaraBaseRecipe):
     crmethod = Parameter('lacosmic', description='Cosmic ray detection method')
     use_lamedian = Parameter(False, description='Use the corrected values from the L.A. Median method')
     flux_factor = Parameter('none', description='Flux factor for cosmic ray detection')
-    flux_factor_region = Parameter('none', description='Region to compute flux factor (FITS format)')
+    flux_factor_regions = Parameter('none', description='Regions to compute flux factor (FITS format)')
     apply_flux_factor_to = Parameter('simulated',
                                      description='Apply flux factor to simulated images or to the original data')
     rnoise = Parameter(3.4, description='Readout noise in electrons')
     interactive = Parameter(True, description='Interactive mode for cosmic ray detection')
     dilation = Parameter(1, description='Dilation factor for cosmic ray masks')
+    regions_to_be_skipped = Parameter('none', 
+                                      description='Regions to be skipped for cosmic ray detection (FITS format)')
     pixels_to_be_flagged_as_cr = Parameter(
         'none',
         description='List of (X,Y) coordinates of pixels to be masked (FITS criterium)'
@@ -133,10 +135,11 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 crmethod=rinput.crmethod,
                 use_lamedian=rinput.use_lamedian,
                 flux_factor=rinput.flux_factor,
-                flux_factor_region=rinput.flux_factor_region,
+                flux_factor_regions=rinput.flux_factor_regions,
                 apply_flux_factor_to=rinput.apply_flux_factor_to,
                 interactive=rinput.interactive,
                 dilation=rinput.dilation,
+                regions_to_be_skipped=rinput.regions_to_be_skipped,
                 pixels_to_be_flagged_as_cr=rinput.pixels_to_be_flagged_as_cr,
                 pixels_to_be_ignored_as_cr=rinput.pixels_to_be_ignored_as_cr,
                 pixels_to_be_replaced_by_local_median=rinput.pixels_to_be_replaced_by_local_median,
