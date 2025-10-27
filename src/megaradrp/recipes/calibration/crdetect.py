@@ -27,7 +27,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     master_bpm = reqs.MasterBPMRequirement()
 
     crmethod = Parameter('lacosmic', description='Cosmic ray detection method')
-    use_lamedian = Parameter(False, description='Use the corrected values from the L.A. Median method')
+    use_lamedian = Parameter(False, description='Use L.A. Median in cosmic ray removal')
     flux_factor = Parameter('none', description='Flux factor for cosmic ray detection')
     flux_factor_regions = Parameter('none', description='Regions to compute flux factor (FITS format)')
     apply_flux_factor_to = Parameter('simulated',
@@ -35,7 +35,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     rnoise = Parameter(3.4, description='Readout noise in electrons')
     interactive = Parameter(True, description='Interactive mode for cosmic ray detection')
     dilation = Parameter(1, description='Dilation factor for cosmic ray masks')
-    regions_to_be_skipped = Parameter('none', 
+    regions_to_be_skipped = Parameter('none',
                                       description='Regions to be skipped for cosmic ray detection (FITS format)')
     pixels_to_be_flagged_as_cr = Parameter(
         'none',
@@ -201,6 +201,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
                         list_arrays=arrays,
                         hdul_masks=hdul_masks,
                         combination=combination,
+                        use_lamedian=rinput.use_lamedian,
                         dtype=rinput.dtype,
                         apply_flux_factor=True,
                         bias=None
