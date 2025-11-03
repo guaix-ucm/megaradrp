@@ -13,11 +13,11 @@ authors = [
   {name = "Sergio Pascual", email = "sergiopr@fis.ucm.es"},
 ]
 classifiers = [
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: Science/Research",
@@ -26,15 +26,15 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Astronomy",
 ]
 dependencies = [
-    "numpy >= 1.20",
     "astropy",
-    "scipy >= 1.12",
-    "matplotlib",
-    "numina >= 0.35",
+    "attrs",
     "jsonschema",
-    "scikit-image",
+    "matplotlib",
+    "numpy",
+    "numina >= 0.35",
     "packaging",
-    "attrs"
+    "scikit-image",
+    "scipy >= 1.12",
 ]
 
 [project.optional-dependencies]
