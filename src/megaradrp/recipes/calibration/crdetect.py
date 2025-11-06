@@ -77,6 +77,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     la_verbose = Parameter(False, description='Verbose mode for L.A. Cosmic method')
 
     # Median-Minimum parameters
+    mm_xy_offsets = Parameter('none', description='List of (X,Y) offsets for image alignment')
     mm_crosscorr_region = Parameter('none', description='Region for cross-correlation alignment (FITS format)')
     mm_boundary_fit = Parameter('spline', description='Type of fit to CR detection boundary')
     mm_knots_splfit = Parameter(3, description='Number of knots for spline fit to CR detection boundary')
@@ -164,6 +165,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 la_psfsize=rinput.la_psfsize,
                 la_psfbeta=rinput.la_psfbeta,
                 la_verbose=rinput.la_verbose,
+                mm_xy_offsets=rinput.mm_xy_offsets,
                 mm_crosscorr_region=rinput.mm_crosscorr_region,
                 mm_boundary_fit=rinput.mm_boundary_fit,
                 mm_knots_splfit=rinput.mm_knots_splfit,
