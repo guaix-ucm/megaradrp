@@ -1,13 +1,11 @@
 #
-# Copyright 2017-2023 Universidad Complutense de Madrid
+# Copyright 2017-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 # License-Filename: LICENSE.txt
 #
-
-from __future__ import print_function
 
 import math
 from packaging.version import parse, Version
@@ -220,7 +218,7 @@ def main(argv=None):
     import matplotlib.pyplot as plt
     import astropy.io.fits as fits
     from astropy.wcs import WCS
-    from astropy.visualization import simple_norm
+    from astropy.visualization.mpl_normalize import simple_norm
     import astropy.units as u
 
     import megaradrp.datamodel as dm
@@ -375,7 +373,7 @@ def main(argv=None):
             if args.wcs_grid:
                 ax.coords.grid(color='black', alpha=1.0, linestyle='solid')
 
-            norm = simple_norm(zval, args.stretch,
+            norm = simple_norm(zval, stretch=args.stretch,
                                vmin=args.min_cut,
                                vmax=args.max_cut,
                                percent=args.percent
