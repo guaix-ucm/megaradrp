@@ -7,7 +7,7 @@ name = "megaradrp"
 dynamic = ["version"]
 description = "MEGARA Data Reduction Pipeline"
 readme = "README.rst"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = {text = "GPL-3.0-or-later"}
 authors = [
   {name = "Sergio Pascual", email = "sergiopr@fis.ucm.es"},
@@ -31,10 +31,11 @@ dependencies = [
     "jsonschema",
     "matplotlib",
     "numpy",
-    "numina >= 0.35",
+    "numina >= 0.36",
     "packaging",
     "scikit-image",
     "scipy >= 1.12",
+    "requests"
 ]
 
 [project.optional-dependencies]
