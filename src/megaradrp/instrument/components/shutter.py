@@ -13,9 +13,9 @@ from numina.instrument.simulation.optics import Open, Stop, Filter
 
 
 class MegaraShutter(Wheel):
-    def __init__(self, parent=None):
-        super(MegaraShutter, self).__init__(
-            capacity=3, name='Shutter', parent=parent)
+    def __init__(self, origin=None, parent=None):
+        super().__init__(
+            'Shutter', 3, origin=origin, parent=parent)
         self.put_in_pos(Stop(name='STOP'), 0)  # FIXME
         self.put_in_pos(Open(name='OPEN'), 1)  # FIXME
         # sorting order filter

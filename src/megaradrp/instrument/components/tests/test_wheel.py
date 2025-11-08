@@ -3,14 +3,14 @@ import pytest
 from ..wheel import VPHWheel
 
 
-class Vph(object):
+class Vph:
     def __init__(self, name):
         self.name = name
 
 
 @pytest.fixture
 def wheel_dev():
-    wheel = VPHWheel(3)
+    wheel = VPHWheel('TestWheel', 3)
     for idx in range(3):
         wheel.put_in_pos(Vph(idx), idx)
     return wheel

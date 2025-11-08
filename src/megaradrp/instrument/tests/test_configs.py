@@ -5,8 +5,8 @@ import numina.core
 from megaradrp.loader import load_drp
 
 
-def create_simple_frame():
-    hdr = {'INSTRUME': 'MEGARA', 'INSCONF': 'ca3558e3-e50d-4bbc-86bd-da50a0998a48'}
+def create_simple_frame(insconf='ca3558e3-e50d-4bbc-86bd-da50a0998a48'):
+    hdr = {'INSTRUME': 'MEGARA', 'INSCONF': insconf}
     hdu = fits.PrimaryHDU(data=[[1]])
     for k, v in hdr.items():
         hdu.header[k] = v
@@ -31,7 +31,7 @@ def test_loader1(conf, uuix):
     from numina.instrument.assembly import assembly_instrument
 
     obs = numina.core.ObservationResult(instrument='MEGARA')
-    obs.frames.append(create_simple_frame())
+    obs.frames.append(create_simple_frame(insconf=uuix))
     drpm = load_drp()
     obs.configuration = conf
 
