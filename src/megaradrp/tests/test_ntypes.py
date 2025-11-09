@@ -9,11 +9,11 @@ from ..ntypes import MasterFiberFlat
 from ..products.tracemap import TraceMap
 
 
-class IoInstance(object):
+class IoInstance:
     _numina_desc_val = {}
 
 
-class LocalDal(object):
+class LocalDal:
     def __init__(self):
         self.filename = "some_file.txt"
 

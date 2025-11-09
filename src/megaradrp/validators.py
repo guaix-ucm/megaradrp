@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
+# Copyright 2016-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -145,7 +145,7 @@ def check_invalid(obj, level=None):
     raise ValidationError
 
 
-class Checker(object):
+class Checker:
     def __init__(self, validator):
         super(Checker, self).__init__()
         self.validator = validator
@@ -462,7 +462,7 @@ def check_header_additional(values_primary, values_fibers):
                 # raise ValueError(msg)
 
 
-class CheckAsDatatype(object):
+class CheckAsDatatype:
     """Collection of schemas for validation"""
 
     def __init__(self):

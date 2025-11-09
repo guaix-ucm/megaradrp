@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
+# Copyright 2016-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -11,7 +11,7 @@
 from numina.instrument.components.wheel import Carrousel
 
 
-class PseudoSlit(object):
+class PseudoSlit:
     def __init__(self, name, insmode):
 
         super(PseudoSlit, self).__init__()

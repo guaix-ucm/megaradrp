@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2017 Universidad Complutense de Madrid
+# Copyright 2014-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -13,7 +13,7 @@ from numina.core import drp_load
 import numina.core.config as cfg
 
 
-class MegaraDrpLoader(object):
+class MegaraDrpLoader:
     """Custom loader class
 
     This class modifies the rawimage field of the observing modes

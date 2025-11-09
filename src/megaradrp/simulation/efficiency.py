@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
+# Copyright 2016-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -14,7 +14,7 @@ import astropy.wcs
 from numina.instrument.simulation.efficiency import Efficiency
 
 
-class InterpolFile(object):
+class InterpolFile:
 
     def __init__(self, fname, fill_value=0.0, factor=1.0):
         rawdata = numpy.loadtxt(fname)
@@ -26,7 +26,7 @@ class InterpolFile(object):
         return self.factor * self._interp(wl)
 
 
-class InterpolFitsUVES(object):
+class InterpolFitsUVES:
     """Interpolate spectrum in UVES format.
 
     This is the format of the sky spectrum file

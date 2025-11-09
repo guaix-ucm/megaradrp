@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
+# Copyright 2016-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -10,7 +10,7 @@
 import numpy
 
 
-class FocalPlane(object):
+class FocalPlane:
 
     def __init__(self, cover):
 

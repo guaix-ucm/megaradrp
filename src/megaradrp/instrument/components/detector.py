@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -33,7 +33,7 @@ def binning(arr, br, bc):
     return binned
 
 
-class ReadParams(object):
+class ReadParams:
     """Readout parameters of each channel."""
 
     def __init__(self, gain=1.0, ron=2.0, bias=1000.0):

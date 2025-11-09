@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
+# Copyright 2016-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -18,12 +18,12 @@ from megaradrp.simulation.efficiency import InterpolFile
 _logger = logging.getLogger("simulation")
 
 
-class PointLike(object):
+class PointLike:
     def __init__(self, factor=1.0, **kwds):
         self.factor = factor
 
 
-class Target(object):
+class Target:
     def __init__(self, name, relposition, profile, spectrum):
         self.name = name
         self.relposition = relposition
@@ -40,7 +40,7 @@ def profile_builder(profile_entry):
         raise ValueError("'{0}' not registered", profile_type)
 
 
-class ControlSystem(object):
+class ControlSystem:
     """Top level"""
 
     def __init__(self, factory):

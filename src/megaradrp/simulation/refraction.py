@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
+# Copyright 2016-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -69,7 +69,7 @@ def differential_p(
     return delt_r * u.rad
 
 
-class DifferentialRefractionModel(object):
+class DifferentialRefractionModel:
     def __init__(self, temperature, pressure, relative_humidity):
         self.temperature = temperature
         self.pressure = pressure

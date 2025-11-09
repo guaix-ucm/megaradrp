@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2023 Universidad Complutense de Madrid
+# Copyright 2011-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -16,7 +16,7 @@ import numpy.polynomial.polynomial as nppol
 from .structured import BaseStructuredCalibration
 
 
-class FiberSolutionArcCalibration(object):
+class FiberSolutionArcCalibration:
     def __init__(self, fibid, solution):
         self.fibid = fibid
         self.solution = solution

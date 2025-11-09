@@ -1,9 +1,9 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
+# Copyright 2016-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
-# SPDX-License-Identifier: GPL-3.0-or-later
+# SPDX-License-Ide5tifier: GPL-3.0-or-later
 # License-Filename: LICENSE.txt
 #
 
@@ -14,7 +14,7 @@ from astropy import units as u
 from .efficiency import Efficiency
 
 
-class LightFiber(object):
+class LightFiber:
     def __init__(self, name, fibid, transmission=None, inactive=False):
         self.name = name
         self.fibid = fibid
@@ -40,7 +40,7 @@ class LightFiber(object):
                 }
 
 
-class FiberSet(object):
+class FiberSet:
     def __init__(self, name, size, fwhm):
         self.fibers = {}
         self.bundles = {}

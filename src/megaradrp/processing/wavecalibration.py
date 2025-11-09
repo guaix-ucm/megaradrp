@@ -34,7 +34,7 @@ from megaradrp.instrument import WLCALIB_PARAMS
 _logger = logging.getLogger(__name__)
 
 
-class SimpleWcs1D(object):
+class SimpleWcs1D:
     """Store parameters of a simple 1D WCS"""
 
     def __init__(self, crval=0, crpix=0, cdelt=1, ctype='', cunit='', **kwargs):

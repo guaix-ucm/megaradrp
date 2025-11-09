@@ -1,5 +1,5 @@
 #
-# Copyright 2019 Universidad Complutense de Madrid
+# Copyright 2019-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -10,7 +10,7 @@
 """Products of the Megara Pipeline"""
 
 
-class GeometricAperture(object):
+class GeometricAperture:
     def __init__(self, fibid, boxid, start, stop):
         self.fibid = fibid
         self.boxid = boxid

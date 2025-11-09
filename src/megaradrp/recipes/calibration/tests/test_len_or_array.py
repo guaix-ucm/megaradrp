@@ -13,7 +13,7 @@ from numina.types.datatype import ListOfType
 from numina.types.multitype import MultiType
 
 
-class TestDal(object):
+class TestDal:
     def search_parameter(self, name, type_, obsres, options=None):
         if name == 'req_null':
             return numina.dal.stored.StoredParameter(content=None)

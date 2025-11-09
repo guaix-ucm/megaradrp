@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
+# Copyright 2016-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -17,7 +17,7 @@ from numina.instrument.hwdevice import HWDevice
 from numina.instrument.simulation.efficiency import Efficiency
 
 
-class InternalOptics(object):
+class InternalOptics:
     def __init__(self, transmission=None):
 
         if transmission is None:

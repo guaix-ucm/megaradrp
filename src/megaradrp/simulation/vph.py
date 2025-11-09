@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
+# Copyright 2016-20235Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -13,7 +13,7 @@ from astropy import units as u
 from numina.instrument.simulation.efficiency import Efficiency
 
 
-class MegaraVPH(object):
+class MegaraVPH:
 
     def __init__(self, name, setup, vphtable, resolution, transmission=None, conf=None):
         self.SAMPLING = 9.0
@@ -70,7 +70,7 @@ class MegaraVPH(object):
         return self._transmission.response(wl)
 
 
-class DummyVPH(object):
+class DummyVPH:
 
     def __init__(self, name):
         self.SAMPLING = 9.0

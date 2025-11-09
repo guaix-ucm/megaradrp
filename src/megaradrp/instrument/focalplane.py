@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
+# Copyright 2016-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -22,7 +22,7 @@ from .ienums import TargetType, BundleType
 from megaradrp.processing.hexgrid import connected6
 
 
-class FocalPlaneConf(object):
+class FocalPlaneConf:
     """Configuration of focal plane"""
 
     def __init__(self, name='LCB'):
@@ -281,7 +281,7 @@ class FiberConfs(FocalPlaneConf):
                       DeprecationWarning, stacklevel=2)
 
 
-class BundleConf(object):
+class BundleConf:
     """Description of a bundle"""
 
     def __init__(self, bundle_id, bundle_type, target_type=TargetType.UNASSIGNED,
@@ -358,7 +358,7 @@ class SkyBundleConf(BundleConf):
         )
 
 
-class FiberConf(object):
+class FiberConf:
     """Description of the fiber"""
 
     def __init__(self, fibid=0, bundle_id=None, inactive=False):

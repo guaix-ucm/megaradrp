@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -22,7 +22,7 @@ import astropy.io.fits as fits
 from numina.instrument.simulation.factory import extract, extractm
 
 
-class MegaraImageFactory(object):
+class MegaraImageFactory:
     CARDS_P = [
         ('OBSERVAT', 'ORM', 'Name of observatory'),
         ('TELESCOP', 'GTC', 'Telescope id.'),

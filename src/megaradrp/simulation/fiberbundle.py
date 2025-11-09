@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
+# Copyright 2016-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -8,7 +8,7 @@
 #
 
 
-class FiberBundle(object):
+class FiberBundle:
     def __init__(self, name, bid, static=True):
         super(FiberBundle, self).__init__()
         # Geometry of the fibers
