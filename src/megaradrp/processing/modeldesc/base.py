@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -8,12 +8,7 @@
 #
 
 import abc
-import sys
-
-if sys.version_info[:2] <= (3, 8):
-    from typing import Sequence  # for typing
-else:
-    from collections.abc import Sequence  # for typing
+from collections.abc import Sequence  # for typing
 
 import numpy as np
 
