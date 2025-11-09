@@ -9,8 +9,6 @@
 
 """Computing differential atmospheric refraction"""
 
-from __future__ import print_function
-
 import astropy.units as u
 
 import math

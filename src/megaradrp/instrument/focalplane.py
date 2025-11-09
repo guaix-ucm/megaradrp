@@ -9,8 +9,6 @@
 
 """Focal plane description for MEGARA"""
 
-from __future__ import division
-
 
 import math
 import re

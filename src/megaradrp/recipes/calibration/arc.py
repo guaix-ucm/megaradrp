@@ -9,8 +9,6 @@
 
 """Arc Calibration Recipe for Megara"""
 
-from __future__ import division, print_function
-
 from copy import deepcopy
 import errno
 import os

@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
+# Copyright 2016-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -9,7 +9,6 @@
 
 """Focus Spectrograph Recipe for Megara"""
 
-from __future__ import division, print_function
 
 import numpy
 import numpy.polynomial.polynomial as polynomial

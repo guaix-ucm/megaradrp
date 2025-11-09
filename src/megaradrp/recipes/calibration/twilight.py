@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -8,9 +8,6 @@
 #
 
 """ Twilight fiber flat Calibration Recipes for Megara"""
-
-from __future__ import division, print_function
-
 
 import numpy
 from astropy.io import fits

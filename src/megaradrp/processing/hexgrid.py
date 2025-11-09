@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2020 Universidad Complutense de Madrid
+# Copyright 2017-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -12,8 +12,6 @@ Interpolation method based on:
 'Hex-Splines: A Novel Spline Family for Hexagonal Lattices'
 van de Ville et al. IEEE Transactions on Image Processing 2004, 13, 6
 """
-
-from __future__ import print_function
 
 import math
 

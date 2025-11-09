@@ -9,8 +9,6 @@
 
 """Fiber flat calibration Recipe for Megara"""
 
-from __future__ import division, print_function
-
 import numpy
 from astropy.io import fits
 import matplotlib.pyplot as plt

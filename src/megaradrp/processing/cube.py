@@ -13,7 +13,6 @@ Interpolation method based on:
 van de Ville et al. IEEE Transactions on Image Processing 2004, 13, 6
 """
 
-from __future__ import print_function
 
 import argparse
 import numpy as np

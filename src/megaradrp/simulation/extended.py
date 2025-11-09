@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2023 Universidad Complutense de Madrid
+# Copyright 2016-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -8,10 +8,6 @@
 #
 
 """Extended multiwavelength simulation"""
-
-
-from __future__ import print_function
-
 
 import numpy as np
 

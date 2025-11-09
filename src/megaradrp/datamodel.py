@@ -9,9 +9,6 @@
 
 """Data model for MEGARA"""
 
-from __future__ import division
-
-
 import pkgutil
 import logging
 

@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2025 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -7,7 +7,6 @@
 # License-Filename: LICENSE.txt
 #
 
-from __future__ import print_function
 
 from astropy.io import fits
 import numpy as np
