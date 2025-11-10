@@ -1,7 +1,7 @@
 import pytest
 import astropy.io.fits as fits
 
-from megaradrp.testing.simpleobj import create_spec_header
+from megaradrp.testing.create_header import create_spec_header
 from megaradrp.processing.wavecalibration import header_add_barycentric_correction
 
 

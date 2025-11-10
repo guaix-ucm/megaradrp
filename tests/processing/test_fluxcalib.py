@@ -1,22 +1,9 @@
 import pytest
 
 import numpy
-import astropy.wcs
 
 from megaradrp.processing.fluxcalib import update_flux_limits, WAVLIM_KEYS, PIXLIM_KEYS
-
-
-def generate_wcs():
-    wcsl = astropy.wcs.WCS(naxis=2)
-
-    crpix = 3.0
-    crval = 5300.0
-    cdelt = 0.1
-
-    wcsl.wcs.crpix = [crpix, 0.0]
-    wcsl.wcs.crval = [crval, 0.0]
-    wcsl.wcs.cdelt = [cdelt, 1.0]
-    return wcsl
+from megaradrp.testing.create_wcs import generate_wcs
 
 
 @pytest.mark.parametrize("wcsl", [None, generate_wcs()])

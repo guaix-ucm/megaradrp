@@ -1,18 +1,7 @@
 import pytest
-import astropy.io.fits as fits
 import numina.instrument.generic
-import numina.core
 from megaradrp.loader import load_drp
-
-
-def create_simple_frame(insconf="ca3558e3-e50d-4bbc-86bd-da50a0998a48"):
-    hdr = {"INSTRUME": "MEGARA", "INSCONF": insconf}
-    hdu = fits.PrimaryHDU(data=[[1]])
-    for k, v in hdr.items():
-        hdu.header[k] = v
-    hdulist = fits.HDUList([hdu])
-    frame = numina.core.DataFrame(frame=hdulist)
-    return frame
+from megaradrp.testing.create_image import create_simple_frame
 
 
 @pytest.mark.parametrize(

@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import astropy.wcs
 
-from megaradrp.testing.simpleobj import create_spec_header2, create_sky_header2
+from megaradrp.testing.create_header import create_spec_header2, create_sky_header2
 from megaradrp.processing.wavecalibration import header_add_barycentric_correction
 
 from megaradrp.processing.cube import create_cube, merge_wcs

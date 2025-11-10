@@ -18,7 +18,7 @@ from numina.core import DataFrame, ObservationResult
 import numina.instrument.assembly as asb
 
 from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
-from megaradrp.testing.create_bpm_common import generate_bias
+from megaradrp.testing.create_ob import generate_bias
 from megaradrp.instrument.components.detector import ReadParams, MegaraDetectorSat
 from megaradrp.simulation.actions import simulate_flat
 

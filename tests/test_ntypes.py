@@ -4,6 +4,8 @@ import megaradrp.requirements as reqs
 import numina.core
 import numina.dal
 from numina.exceptions import NoResultFound
+
+import megaradrp.testing.create_image
 from megaradrp.ntypes import MasterFiberFlat
 from megaradrp.products.tracemap import TraceMap
 
@@ -80,9 +82,9 @@ def _test_extinction_filename():
 
 
 def test_tag1():
-    import megaradrp.testing.simpleobj as simple
+    import megaradrp.testing.create_header as simple
 
-    fr = simple.create_simple_hdul()
+    fr = megaradrp.testing.create_image.create_simple_hdul()
 
     tipo = MasterFiberFlat()
     keys = ["instrument", "uuid", "observation_date"]

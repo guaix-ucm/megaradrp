@@ -9,19 +9,16 @@
 
 """Tests for the bpm mode recipe module."""
 
-from numina.core import DataFrame, ObservationResult
 import astropy.io.fits as fits
+from numina.array import combine
+from numina.core import DataFrame, ObservationResult
 from numina.core.requirements import ObservationResultRequirement
 import numina.instrument.assembly as asb
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
-
-from numina.array import combine
-
 from megaradrp.processing.combine import basic_processing_with_combination
-
-from megaradrp.testing.create_bpm_common import create_sample_files
+from megaradrp.testing.create_image import create_sample_files
 
 
 class DerivedRecipe(MegaraBaseRecipe):
@@ -94,7 +91,3 @@ def test_bpm_corrector():
 
     recipe.run(ri)
     shutil.rmtree(directorio)
-
-
-if __name__ == "__main__":
-    test_bpm_corrector()

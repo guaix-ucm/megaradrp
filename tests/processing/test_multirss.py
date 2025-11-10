@@ -1,19 +1,7 @@
 import pytest
-import astropy.io.fits as fits
-import numpy
 
 from megaradrp.processing.multirss import generate_multi_rss
-
-
-def generate_imgs(nimages, nfibers, nsamples):
-    imgs = []
-    for _ in range(nimages):
-        data = numpy.empty((nfibers, nsamples))
-        hdu1 = fits.PrimaryHDU(data)
-        hdu2 = fits.ImageHDU(name="FIBERS")
-        img = fits.HDUList([hdu1, hdu2])
-        imgs.append(img)
-    return imgs
+from megaradrp.testing.create_image import generate_imgs
 
 
 def test_multirss():

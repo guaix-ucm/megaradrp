@@ -1,33 +1,6 @@
-import math
-
-import astropy.wcs
 import astropy.io.fits as fits
 
-
-def create_simple_hdul():
-    """Create a simple image for testing"""
-    prim = fits.PrimaryHDU()
-    prim.header["instrume"] = "MEGARA"
-    prim.header["VPH"] = "LR-B"
-    prim.header["DATE-OBS"] = "2019-02-21T01:02:02.2"
-    prim.header["insmode"] = "LCB"
-    prim.header["UUID"] = "410f6ea0-c3df-481c-9820-5cf9e0ed3d91"
-    fibers = fits.ImageHDU(name="FIBERS")
-    fibers.header["CONFID"] = "a908e9d2-7599-41f3-9e9d-91042df01da5"
-    simple_img = fits.HDUList([prim, fibers])
-    return simple_img
-
-
-def generate_sky_wcs():
-    wcsl = astropy.wcs.WCS(naxis=2)
-
-    wcsl.wcs.crpix = [512, 512]
-    wcsl.wcs.crval = [9.0000, 32.0000]
-    wcsl.wcs.cdelt = [0.01, 0.01]
-    wcsl.wcs.ctype = ["RA---TAN", "DEC--TAN"]
-    ang = math.pi / 3.0
-    wcsl.wcs.pc = [[math.cos(ang), -math.sin(ang)], [math.sin(ang), math.cos(ang)]]
-    return wcsl
+from megaradrp.testing.create_wcs import generate_sky_wcs
 
 
 def create_sky_header():

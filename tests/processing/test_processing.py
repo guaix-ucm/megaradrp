@@ -3,43 +3,11 @@ from tempfile import mkdtemp
 import os
 
 import astropy.io.fits as fits
-import numpy as np
 import pytest
 
 from megaradrp.processing.trimover import trimOut
 from megaradrp.processing.trimover import apextract_weights
-from megaradrp.instrument.components.detector import ReadParams, MegaraDetectorSat
-from megaradrp.simulation.actions import simulate_flat
-
-
-def generate_bias_file():
-    PSCAN = 50
-    DSHAPE = (2056 * 2, 2048 * 2)
-    OSCAN = 50
-
-    ron = 2.0
-    gain = 1.0
-    bias = 1000.0
-
-    qe = 0.8 * np.ones(DSHAPE)
-    qe[0:15, 0:170] = 0.0
-
-    readpars1 = ReadParams(gain=gain, ron=ron, bias=bias)
-    readpars2 = ReadParams(gain=gain, ron=ron, bias=bias)
-
-    detector = MegaraDetectorSat(
-        "megara_test_detector",
-        DSHAPE,
-        OSCAN,
-        PSCAN,
-        qe=qe,
-        dark=(3.0 / 3600.0),
-        readpars1=readpars1,
-        readpars2=readpars2,
-        bins="11",
-    )
-
-    return simulate_flat(detector, exposure=1.0, source=5000.0)
+from megaradrp.testing.create_image import generate_bias_file
 
 
 @pytest.mark.parametrize("direction", ["normal", "mirror"])

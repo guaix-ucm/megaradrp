@@ -8,19 +8,12 @@
 #
 
 
-import astropy.io.fits as fits
 import astropy.table
 import pytest
 
 from megaradrp.datamodel import MegaraDataModel
 from megaradrp.instrument.focalplane import FocalPlaneConf
-
-
-def create_empty_img(insmode):
-    img = fits.HDUList([fits.PrimaryHDU()])
-    img[0].header["insmode"] = insmode
-    return img
-
+from megaradrp.testing.create_image import create_empty_img
 
 BASE_LCB = ("LCB", "b7dcd9d1-0b60-4b43-b26e-d2c9868d5e20", 9, 623)
 BASE_MOS = ("MOS", "00000000-0000-0000-0000-000000000000", 92, 644)
@@ -121,9 +114,8 @@ def test_fiberconf_other():
 
     datamodel = MegaraDataModel()
 
-    img = create_empty_img("OTHER")
-
     with pytest.raises(ValueError):
+        img = create_empty_img("OTHER")
         datamodel.get_fiberconf(img)
 
 
