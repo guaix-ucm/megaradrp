@@ -7,7 +7,11 @@ from megaradrp.testing.create_image import create_simple_frame
 @pytest.mark.parametrize(
     "conf, uuix",
     [
-        ["default", "ca3558e3-e50d-4bbc-86bd-da50a0998a48"],
+        ["default", "9f3fecbf-376c-47ae-a188-313b7d829104"],
+        [
+            "9f3fecbf-376c-47ae-a188-313b7d829104",
+            "9f3fecbf-376c-47ae-a188-313b7d829104",
+        ],
         [
             "ca3558e3-e50d-4bbc-86bd-da50a0998a48",
             "ca3558e3-e50d-4bbc-86bd-da50a0998a48",
