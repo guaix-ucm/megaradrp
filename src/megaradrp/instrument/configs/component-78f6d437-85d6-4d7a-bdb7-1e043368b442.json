@@ -6,6 +6,7 @@
   "date_end": null,
   "uuid": "78f6d437-85d6-4d7a-bdb7-1e043368b442",
   "properties": [
+    {"id": "insmode", "one_of":  ["LCB", "MOS"], "key": "INSMODE", "ext": 0},
     {"id": "boxes", "uuid": "86a6e968-8d3d-456f-89f8-09ff0c7f7c57"},
     {"id": "boxes_positions", "uuid": "86a6e968-8d3d-456f-89f8-09ff0c7f7c57"}
   ]

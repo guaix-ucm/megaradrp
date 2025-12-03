@@ -5,9 +5,14 @@
   "date_end": null,
   "type": "instrument",
   "name": "MEGARA",
+  "properties":[
+    {"id": "insmode", "references": "pseudoslit.insmode"},
+    {"id": "vph", "references": "vph_wheel.current"}
+  ],
   "components":
   [
     {"id": "detector", "uuid": "2e02e135-2325-47c9-9975-466b445b0b8b"},
+    {"id": "vph_wheel", "uuid": "3d24fe52-f28d-4162-9124-f447daded7d5"},
     {"id": "pseudoslit", "uuid": "78f6d437-85d6-4d7a-bdb7-1e043368b442"}
   ]
 }
