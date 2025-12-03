@@ -1,0 +1,11 @@
+{
+  "name": "vph_wheel",
+  "description": "Properties of the VPHs",
+  "type": "component",
+  "date_start": null,
+  "date_end": null,
+  "uuid": "3d24fe52-f28d-4162-9124-f447daded7d5",
+  "properties": [
+    {"id": "current", "limits": [], "key": "VPH", "ext": 0}
+  ]
+}
