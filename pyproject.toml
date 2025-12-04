@@ -69,6 +69,21 @@ MEGARA = "megaradrp.loader:load_drp"
 [project.entry-points."numinadb.extra.1"]
 MEGARA = "megaradrp.db"
 
-# pyproject.toml
 [tool.setuptools_scm]
 write_to = "src/megaradrp/_version.py"
+
+[tool.black]
+line-length = 120
+target-version = ['py310', 'py311', 'py312', 'py313', 'py314']
+skip-string-normalization = false
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.mypy_cache
+  | \.pytest_cache
+  | build
+  | dist
+)/
+'''
+
