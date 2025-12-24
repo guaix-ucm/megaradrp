@@ -59,9 +59,9 @@ class CRMasksRecipe(MegaraBaseRecipe):
 
     # L.A. Cosmic parameters
     la_gain_apply = Parameter(False, description='Apply gain in L.A. Cosmic method')
-    la_sigclip = Parameter(5.0, description='Sigma clipping for L.A. Cosmic method')
-    la_sigfrac = Parameter(0.3, description='Fractional detection limit for L.A. Cosmic method')
-    la_objlim = Parameter(5.0, description='Minimum contrast between Laplacian image and the fine structure image '
+    la_sigclip = Parameter([5.0,3.0], description='Sigma clipping for L.A. Cosmic method')
+    la_sigfrac = Parameter([0.3,0.3], description='Fractional detection limit for L.A. Cosmic method')
+    la_objlim = Parameter([5.0,5.0], description='Minimum contrast between Laplacian image and the fine structure image '
                           'for L.A. Cosmic method')
     la_satlevel = Parameter(65535.0, description='Saturation level for L.A. Cosmic method')
     la_niter = Parameter(4, description='Number of iterations for L.A. Cosmic method')
@@ -75,6 +75,19 @@ class CRMasksRecipe(MegaraBaseRecipe):
     la_psfsize = Parameter(11, description='PSF size (pixels) for L.A. Cosmic method')
     la_psfbeta = Parameter(4.765, description='Beta parameter for Moffat PSF model in L.A. Cosmic method')
     la_verbose = Parameter(False, description='Verbose mode for L.A. Cosmic method')
+    la_padwidth = Parameter(10, description='Padding width for L.A. Cosmic method')
+
+    # PyCosmic parameters
+    pc_sigma_det = Parameter([5.0,3.0], description='Detection limit above the noise for PyCosmic method')
+    pc_rlim = Parameter([1.2, 1.2], description="Detection threshold for PyCosmic method")
+    pc_iterations = Parameter (4, description='Number of iterations for PyCosmic method')
+    pc_fwhm_gauss_x = Parameter(2.5, description='FWHM of Gaussian smoothing kernel in X direction (pixels) for PyCosmic method')
+    pc_fwhm_gauss_y = Parameter(2.5, description='FWHM of Gaussian smoothing kernel in Y direction (pixels) for PyCosmic method')
+    pc_replace_box_x = Parameter(5, description='Median Box size in X direction for replacing masked pixels in PyCosmic method')
+    pc_replace_box_y = Parameter(5, description='Median Box size in Y direction for replacing masked pixels in PyCosmic method')
+    pc_replace_error = Parameter(1e6, description='Error value for bad pixels in PyCosmic method')
+    pc_increase_radius = Parameter(0, description='Radius to increase the cosmic ray masks in PyCosmic method')
+    pc_verbose = Parameter(False, description='Verbose mode for PyCosmic method')
 
     # Median-Minimum parameters
     mm_xy_offsets = Parameter('none', description='List of (X,Y) offsets for image alignment')
@@ -165,6 +178,17 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 la_psfsize=rinput.la_psfsize,
                 la_psfbeta=rinput.la_psfbeta,
                 la_verbose=rinput.la_verbose,
+                la_padwidth=rinput.la_padwidth,
+                pc_sigma_det=rinput.pc_sigma_det,
+                pc_rlim=rinput.pc_rlim,
+                pc_iterations=rinput.pc_iterations,
+                pc_fwhm_gauss_x=rinput.pc_fwhm_gauss_x,
+                pc_fwhm_gauss_y=rinput.pc_fwhm_gauss_y,
+                pc_replace_box_x=rinput.pc_replace_box_x,
+                pc_replace_box_y=rinput.pc_replace_box_y,
+                pc_replace_error=rinput.pc_replace_error,
+                pc_increase_radius=rinput.pc_increase_radius,
+                pc_verbose=rinput.pc_verbose,
                 mm_xy_offsets=rinput.mm_xy_offsets,
                 mm_crosscorr_region=rinput.mm_crosscorr_region,
                 mm_boundary_fit=rinput.mm_boundary_fit,
