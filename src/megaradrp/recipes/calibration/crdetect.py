@@ -89,6 +89,16 @@ class CRMasksRecipe(MegaraBaseRecipe):
     pc_increase_radius = Parameter(0, description='Radius to increase the cosmic ray masks in PyCosmic method')
     pc_verbose = Parameter(False, description='Verbose mode for PyCosmic method')
 
+    # deepCR parameters
+    dc_mask = Parameter("ACS_WFC", description='Predefined mask for deepCR method')
+    dc_threshold = Parameter(0.5, description='Threshold for deepCR method')
+    dc_verbose = Parameter(False, description='Verbose mode for deepCR method')
+
+    # Cosmic-CoNN parameters
+    nn_model = Parameter("ground_imaging", description='Model for Cosmic-CoNN method')
+    nn_threshold = Parameter(0.5, description='Threshold for Cosmic-CoNN method')
+    nn_verbose = Parameter(False, description='Verbose mode for Cosmic-CoNN method')
+
     # Median-Minimum parameters
     mm_xy_offsets = Parameter('none', description='List of (X,Y) offsets for image alignment')
     mm_crosscorr_region = Parameter('none', description='Region for cross-correlation alignment (FITS format)')
@@ -189,6 +199,12 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 pc_replace_error=rinput.pc_replace_error,
                 pc_increase_radius=rinput.pc_increase_radius,
                 pc_verbose=rinput.pc_verbose,
+                dc_mask=rinput.dc_mask,
+                dc_threshold=rinput.dc_threshold,
+                dc_verbose=rinput.dc_verbose,
+                nn_model=rinput.nn_model,
+                nn_threshold=rinput.nn_threshold,
+                nn_verbose=rinput.nn_verbose,
                 mm_xy_offsets=rinput.mm_xy_offsets,
                 mm_crosscorr_region=rinput.mm_crosscorr_region,
                 mm_boundary_fit=rinput.mm_boundary_fit,
