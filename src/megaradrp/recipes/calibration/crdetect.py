@@ -100,6 +100,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     nn_verbose = Parameter(False, description='Verbose mode for Cosmic-CoNN method')
 
     # Median-Minimum parameters
+    mm_dilation = Parameter(0, description='Dilation for median-minimum method')
     mm_xy_offsets = Parameter('none', description='List of (X,Y) offsets for image alignment')
     mm_crosscorr_region = Parameter('none', description='Region for cross-correlation alignment (FITS format)')
     mm_boundary_fit = Parameter('spline', description='Type of fit to CR detection boundary')
@@ -205,6 +206,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 nn_model=rinput.nn_model,
                 nn_threshold=rinput.nn_threshold,
                 nn_verbose=rinput.nn_verbose,
+                mm_dilation=rinput.mm_dilation,
                 mm_xy_offsets=rinput.mm_xy_offsets,
                 mm_crosscorr_region=rinput.mm_crosscorr_region,
                 mm_boundary_fit=rinput.mm_boundary_fit,
