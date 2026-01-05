@@ -101,6 +101,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
 
     # Median-Minimum parameters
     mm_preclean_single = Parameter(False, description='Pre-clean single images before median-minimum method')
+    mm_hist2d_min_neighbors = Parameter(0, description='Minimum neighbors in 2D histogram for median-minimum method')
     mm_dilation = Parameter(0, description='Dilation for median-minimum method')
     mm_xy_offsets = Parameter('none', description='List of (X,Y) offsets for image alignment')
     mm_crosscorr_region = Parameter('none', description='Region for cross-correlation alignment (FITS format)')
@@ -208,6 +209,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 nn_threshold=rinput.nn_threshold,
                 nn_verbose=rinput.nn_verbose,
                 mm_preclean_single=rinput.mm_preclean_single,
+                mm_hist2d_min_neighbors=rinput.mm_hist2d_min_neighbors,
                 mm_dilation=rinput.mm_dilation,
                 mm_xy_offsets=rinput.mm_xy_offsets,
                 mm_crosscorr_region=rinput.mm_crosscorr_region,
