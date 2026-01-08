@@ -100,7 +100,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     nn_verbose = Parameter(False, description='Verbose mode for Cosmic-CoNN method')
 
     # Median-Minimum parameters
-    mm_preclean_single = Parameter(False, description='Pre-clean single images before median-minimum method')
+    mm_synthetic = Parameter('median', description='Type of synthetic image for median-minimum method')
     mm_hist2d_min_neighbors = Parameter(0, description='Minimum neighbors in 2D histogram for median-minimum method')
     mm_ydiag_max = Parameter(0, description='Maximum Y value for 2D histogram in median-minimum method (0=auto)')
     mm_dilation = Parameter(0, description='Dilation for median-minimum method')
@@ -209,7 +209,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 nn_model=rinput.nn_model,
                 nn_threshold=rinput.nn_threshold,
                 nn_verbose=rinput.nn_verbose,
-                mm_preclean_single=rinput.mm_preclean_single,
+                mm_synthetic=rinput.mm_synthetic,
                 mm_hist2d_min_neighbors=rinput.mm_hist2d_min_neighbors,
                 mm_ydiag_max=rinput.mm_ydiag_max,
                 mm_dilation=rinput.mm_dilation,
