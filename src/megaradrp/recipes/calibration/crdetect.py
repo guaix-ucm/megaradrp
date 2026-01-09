@@ -249,6 +249,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
             # Save the corrected preprocessed images if requested
             if rinput.save_postprocessed:
                 for combination in VALID_COMBINATIONS:
+                    self.logger.info("-" * 73)
                     self.logger.info(f'Apply {combination} to preprocessed images')
                     combined2d, _, _ = apply_crmasks(
                         list_arrays=arrays,
