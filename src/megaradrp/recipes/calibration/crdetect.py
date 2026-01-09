@@ -16,6 +16,7 @@ from megaradrp.ntypes import CRMasks
 import megaradrp.requirements as reqs
 from numina.array.crmasks.apply_crmasks import apply_crmasks
 from numina.array.crmasks.compute_crmasks import compute_crmasks
+from numina.array.crmasks.valid_parameters import VALID_COMBINATIONS
 
 
 class CRMasksRecipe(MegaraBaseRecipe):
@@ -26,7 +27,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
 
-    crmethod = Parameter('lacosmic', description='Cosmic ray detection method')
+    crmethod = Parameter('mm_pycosmic', description='Cosmic ray detection method')
     use_auxmedian = Parameter(False, description='Use auxiliary median in cosmic ray removal')
     flux_factor = Parameter('none', description='Flux factor for cosmic ray detection')
     flux_factor_regions = Parameter('none', description='Regions to compute flux factor (FITS format)')
@@ -55,6 +56,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     color_scale = Parameter('minmax', description='Color scale for plots')
     maxplots = Parameter(-1, description='Maximum number of plots with suspected cosmic rays to generate')
     save_preprocessed = Parameter(False, description='Save preprocessed images for cosmic ray detection')
+    save_postprocessed = Parameter(False, description='Save post-processed images after applying cosmic ray masks')
     debug = Parameter(False, description='Debug mode')
 
     # L.A. Cosmic parameters
@@ -146,8 +148,9 @@ class CRMasksRecipe(MegaraBaseRecipe):
 
             # Save individual preprocessed images (and median) if requested
             if rinput.save_preprocessed:
+                ldum = len(str(len(hdul_1im)))
                 for i, hdul in enumerate(hdul_1im):
-                    self.save_intermediate_img(hdul, f'preprocessed_{i+1}.fits')
+                    self.save_intermediate_img(hdul, f'preprocessed_{i+1:0{ldum}d}.fits')
                 median_data = np.median([hdul[0].data for hdul in hdul_1im], axis=0)
                 self.save_intermediate_array(median_data.astype(rinput.dtype), 'preprocessed_median.fits')
 
@@ -244,8 +247,8 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 hdr.add_history(f'Extension {extname}: {np.sum(hdul_masks[extname].data)} masked pixels')
 
             # Save the corrected preprocessed images if requested
-            if rinput.save_preprocessed:
-                for combination in ['mediancr', 'meancrt', 'meancr']:
+            if rinput.save_postprocessed:
+                for combination in VALID_COMBINATIONS:
                     self.logger.info(f'Apply {combination} to preprocessed images')
                     combined2d, _, _ = apply_crmasks(
                         list_arrays=arrays,
