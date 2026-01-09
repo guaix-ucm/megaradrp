@@ -260,7 +260,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
                         apply_flux_factor=True,
                         bias=None
                     )
-                    self.save_intermediate_array(combined2d, f'preprocessed_{combination}.fits')
+                    self.save_intermediate_array(combined2d, f'postprocessed_{combination}.fits')
 
         result = self.create_result(crmasks=hdul_masks)
         self.logger.info('end MegaraCrDetection recipe')
