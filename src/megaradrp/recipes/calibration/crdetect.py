@@ -112,7 +112,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     mm_nsimulations = Parameter(10, description='Number of simulations for cosmic ray detection')
     mm_niter_boundary_extension = Parameter(3, description='Iterations for boundary extension')
     mm_weight_boundary_extension = Parameter(10, description='Weight for boundary extension')
-    mm_threshold = Parameter(0.0, description='Threshold for cosmic ray detection')
+    mm_threshold_rnoise = Parameter(0.0, description='Threshold for cosmic ray detection (in units of readout noise)')
     mm_minimum_max2d_rnoise = Parameter(5.0, description='Minimum max2d readout noise')
     mm_seed = Parameter(1234, description='Random seed for cosmic ray detection')
 
@@ -221,7 +221,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 mm_nsimulations=rinput.mm_nsimulations,
                 mm_niter_boundary_extension=rinput.mm_niter_boundary_extension,
                 mm_weight_boundary_extension=rinput.mm_weight_boundary_extension,
-                mm_threshold=rinput.mm_threshold,
+                mm_threshold_rnoise=rinput.mm_threshold_rnoise,
                 mm_minimum_max2d_rnoise=rinput.mm_minimum_max2d_rnoise,
                 mm_seed=rinput.mm_seed
             )
