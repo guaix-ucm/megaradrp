@@ -59,6 +59,7 @@ Repository = "https://github.com/guaix-ucm/megaradrp.git"
 Documentation = "https://megaradrp.readthedocs.io/en/stable/"
 
 [project.scripts]
+megaradrp-inittree = "megaradrp.tools.init_tree:main"
 megaradrp-overplot_traces = "megaradrp.tools.overplot_traces:main"
 megaradrp-heal_traces = "megaradrp.tools.heal_traces:main"
 megaradrp-cube = "megaradrp.processing.cube:main"
