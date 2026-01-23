@@ -109,13 +109,13 @@ def main(args=None):
     parser = argparse.ArgumentParser(description="Create the calibration data tree structure.")
     # positional parameters
     parser.add_argument(
-        "--base_path",
+        "--base-path",
         help="Base path where the calibration data tree will be created.",
         type=str,
         default="./calibration_data",
     )
     parser.add_argument(
-        "--dry_run", action="store_true", help="If set, do not create directories, only print what would be done."
+        "--dry-run", action="store_true", help="If set, do not create directories, only print what would be done."
     )
     args = parser.parse_args(args)
     init_tree(base_path=args.base_path, dry_run=args.dry_run)
