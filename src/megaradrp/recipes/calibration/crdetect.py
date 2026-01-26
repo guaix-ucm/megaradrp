@@ -102,6 +102,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
     nn_verbose = Parameter(False, description='Verbose mode for Cosmic-CoNN method')
 
     # Median-Minimum parameters
+    mm_cr_coincidences = Parameter(2, description='Number of CR coincidences to be sought')
     mm_synthetic = Parameter('median', description='Type of synthetic image for median-minimum method')
     mm_hist2d_min_neighbors = Parameter(0, description='Minimum neighbors in 2D histogram for median-minimum method')
     mm_ydiag_max = Parameter(0, description='Maximum Y value for 2D histogram in median-minimum method (0=auto)')
@@ -212,6 +213,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 nn_model=rinput.nn_model,
                 nn_threshold=rinput.nn_threshold,
                 nn_verbose=rinput.nn_verbose,
+                mm_cr_coincidences=rinput.mm_cr_coincidences,
                 mm_synthetic=rinput.mm_synthetic,
                 mm_hist2d_min_neighbors=rinput.mm_hist2d_min_neighbors,
                 mm_ydiag_max=rinput.mm_ydiag_max,
