@@ -27,104 +27,116 @@ class CRMasksRecipe(MegaraBaseRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
 
-    crmethod = Parameter('mm_pycosmic', description='Cosmic ray detection method')
-    use_auxmedian = Parameter(False, description='Use auxiliary median in cosmic ray removal')
-    flux_factor = Parameter('none', description='Flux factor for cosmic ray detection')
-    flux_factor_regions = Parameter('none', description='Regions to compute flux factor (FITS format)')
-    apply_flux_factor_to = Parameter('simulated',
-                                     description='Apply flux factor to simulated images or to the original data')
-    rnoise = Parameter(3.4, description='Readout noise in electrons')
-    interactive = Parameter(True, description='Interactive mode for cosmic ray detection')
-    dilation = Parameter(1, description='Dilation factor for cosmic ray masks')
-    regions_to_be_skipped = Parameter('none',
-                                      description='Regions to be skipped for cosmic ray detection (FITS format)')
+    crmethod = Parameter("mm_pycosmic", description="Cosmic ray detection method")
+    use_auxmedian = Parameter(False, description="Use auxiliary median in cosmic ray removal")
+    flux_factor = Parameter("none", description="Flux factor for cosmic ray detection")
+    flux_factor_regions = Parameter("none", description="Regions to compute flux factor (FITS format)")
+    apply_flux_factor_to = Parameter(
+        "simulated", description="Apply flux factor to simulated images or to the original data"
+    )
+    rnoise = Parameter(3.4, description="Readout noise in electrons")
+    interactive = Parameter(True, description="Interactive mode for cosmic ray detection")
+    dilation = Parameter(1, description="Dilation factor for cosmic ray masks")
+    regions_to_be_skipped = Parameter(
+        "none", description="Regions to be skipped for cosmic ray detection (FITS format)"
+    )
     pixels_to_be_flagged_as_cr = Parameter(
-        'none',
-        description='List of (X,Y) coordinates of pixels to be masked (FITS criterium)'
+        "none", description="List of (X,Y) coordinates of pixels to be masked (FITS criterium)"
     )
     pixels_to_be_ignored_as_cr = Parameter(
-        'none',
-        description='List of (X,Y) coordinates of pixels to be excluded from masking (FITS criterium)'
+        "none", description="List of (X,Y) coordinates of pixels to be excluded from masking (FITS criterium)"
     )
     pixels_to_be_replaced_by_local_median = Parameter(
-        'none',
-        description='List of (X,Y,Xwidth,Ywidth) values with coordinates and median window shape'
+        "none", description="List of (X,Y,Xwidth,Ywidth) values with coordinates and median window shape"
     )
-    dtype = Parameter('float32', description='Data type for cosmic ray masks')
-    verify_cr = Parameter(False, description='Verify cosmic ray detection')
-    semiwindow = Parameter(15, description='Semi-window size to display suspected cosmic rays')
-    color_scale = Parameter('minmax', description='Color scale for plots')
-    maxplots = Parameter(-1, description='Maximum number of plots with suspected cosmic rays to generate')
-    save_preprocessed = Parameter(False, description='Save preprocessed images for cosmic ray detection')
-    save_postprocessed = Parameter(False, description='Save post-processed images after applying cosmic ray masks')
-    debug = Parameter(False, description='Debug mode')
+    dtype = Parameter("float32", description="Data type for cosmic ray masks")
+    verify_cr = Parameter(False, description="Verify cosmic ray detection")
+    semiwindow = Parameter(15, description="Semi-window size to display suspected cosmic rays")
+    color_scale = Parameter("minmax", description="Color scale for plots")
+    maxplots = Parameter(-1, description="Maximum number of plots with suspected cosmic rays to generate")
+    save_preprocessed = Parameter(False, description="Save preprocessed images for cosmic ray detection")
+    save_postprocessed = Parameter(False, description="Save post-processed images after applying cosmic ray masks")
+    debug = Parameter(False, description="Debug mode")
 
     # L.A. Cosmic parameters
-    la_gain_apply = Parameter(False, description='Apply gain in L.A. Cosmic method')
-    la_sigclip = Parameter([5.0,3.0], description='Sigma clipping for L.A. Cosmic method')
-    la_sigfrac = Parameter([0.3,0.3], description='Fractional detection limit for L.A. Cosmic method')
-    la_objlim = Parameter([5.0,5.0], description='Minimum contrast between Laplacian image and the fine structure image '
-                          'for L.A. Cosmic method')
-    la_satlevel = Parameter(65535.0, description='Saturation level for L.A. Cosmic method')
-    la_niter = Parameter(4, description='Number of iterations for L.A. Cosmic method')
-    la_sepmed = Parameter(True, description='Use the separable median filter instead of the full median filter '
-                          'for L.A. Cosmic method')
-    la_cleantype = Parameter('meanmask', description='Cleaning type for L.A. Cosmic method')
-    la_fsmode = Parameter('convolve', description='Filter mode for L.A. Cosmic method')
-    la_psfmodel = Parameter('gaussxy', description='PSF model for L.A. Cosmic method')
-    la_psffwhm_x = Parameter(2.5, description='PSF FWHM in X direction (pixels) for L.A. Cosmic method')
-    la_psffwhm_y = Parameter(2.5, description='PSF FWHM in Y direction (pixels) for L.A. Cosmic method')
-    la_psfsize = Parameter(11, description='PSF size (pixels) for L.A. Cosmic method')
-    la_psfbeta = Parameter(4.765, description='Beta parameter for Moffat PSF model in L.A. Cosmic method')
-    la_verbose = Parameter(False, description='Verbose mode for L.A. Cosmic method')
-    la_padwidth = Parameter(10, description='Padding width for L.A. Cosmic method')
+    la_gain_apply = Parameter(False, description="Apply gain in L.A. Cosmic method")
+    la_sigclip = Parameter([5.0, 3.0], description="Sigma clipping for L.A. Cosmic method")
+    la_sigfrac = Parameter([0.3, 0.3], description="Fractional detection limit for L.A. Cosmic method")
+    la_objlim = Parameter(
+        [5.0, 5.0],
+        description="Minimum contrast between Laplacian image and the fine structure image " "for L.A. Cosmic method",
+    )
+    la_satlevel = Parameter(65535.0, description="Saturation level for L.A. Cosmic method")
+    la_niter = Parameter(4, description="Number of iterations for L.A. Cosmic method")
+    la_sepmed = Parameter(
+        True, description="Use the separable median filter instead of the full median filter " "for L.A. Cosmic method"
+    )
+    la_cleantype = Parameter("meanmask", description="Cleaning type for L.A. Cosmic method")
+    la_fsmode = Parameter("convolve", description="Filter mode for L.A. Cosmic method")
+    la_psfmodel = Parameter("gaussxy", description="PSF model for L.A. Cosmic method")
+    la_psffwhm_x = Parameter(2.5, description="PSF FWHM in X direction (pixels) for L.A. Cosmic method")
+    la_psffwhm_y = Parameter(2.5, description="PSF FWHM in Y direction (pixels) for L.A. Cosmic method")
+    la_psfsize = Parameter(11, description="PSF size (pixels) for L.A. Cosmic method")
+    la_psfbeta = Parameter(4.765, description="Beta parameter for Moffat PSF model in L.A. Cosmic method")
+    la_verbose = Parameter(False, description="Verbose mode for L.A. Cosmic method")
+    la_padwidth = Parameter(10, description="Padding width for L.A. Cosmic method")
 
     # PyCosmic parameters
-    pc_sigma_det = Parameter([5.0,3.0], description='Detection limit above the noise for PyCosmic method')
+    pc_sigma_det = Parameter([5.0, 3.0], description="Detection limit above the noise for PyCosmic method")
     pc_rlim = Parameter([1.2, 1.2], description="Detection threshold for PyCosmic method")
-    pc_iterations = Parameter (4, description='Number of iterations for PyCosmic method')
-    pc_fwhm_gauss_x = Parameter(2.5, description='FWHM of Gaussian smoothing kernel in X direction (pixels) for PyCosmic method')
-    pc_fwhm_gauss_y = Parameter(2.5, description='FWHM of Gaussian smoothing kernel in Y direction (pixels) for PyCosmic method')
-    pc_replace_box_x = Parameter(5, description='Median Box size in X direction for replacing masked pixels in PyCosmic method')
-    pc_replace_box_y = Parameter(5, description='Median Box size in Y direction for replacing masked pixels in PyCosmic method')
-    pc_replace_error = Parameter(1e6, description='Error value for bad pixels in PyCosmic method')
-    pc_increase_radius = Parameter(0, description='Radius to increase the cosmic ray masks in PyCosmic method')
-    pc_verbose = Parameter(False, description='Verbose mode for PyCosmic method')
+    pc_iterations = Parameter(4, description="Number of iterations for PyCosmic method")
+    pc_fwhm_gauss_x = Parameter(
+        2.5, description="FWHM of Gaussian smoothing kernel in X direction (pixels) for PyCosmic method"
+    )
+    pc_fwhm_gauss_y = Parameter(
+        2.5, description="FWHM of Gaussian smoothing kernel in Y direction (pixels) for PyCosmic method"
+    )
+    pc_replace_box_x = Parameter(
+        5, description="Median Box size in X direction for replacing masked pixels in PyCosmic method"
+    )
+    pc_replace_box_y = Parameter(
+        5, description="Median Box size in Y direction for replacing masked pixels in PyCosmic method"
+    )
+    pc_replace_error = Parameter(1e6, description="Error value for bad pixels in PyCosmic method")
+    pc_increase_radius = Parameter(0, description="Radius to increase the cosmic ray masks in PyCosmic method")
+    pc_verbose = Parameter(False, description="Verbose mode for PyCosmic method")
 
     # deepCR parameters
-    dc_mask = Parameter("ACS_WFC", description='Predefined mask for deepCR method')
-    dc_threshold = Parameter(0.5, description='Threshold for deepCR method')
-    dc_verbose = Parameter(False, description='Verbose mode for deepCR method')
+    dc_mask = Parameter("ACS_WFC", description="Predefined mask for deepCR method")
+    dc_threshold = Parameter(0.5, description="Threshold for deepCR method")
+    dc_verbose = Parameter(False, description="Verbose mode for deepCR method")
 
     # Cosmic-CoNN parameters
-    nn_model = Parameter("ground_imaging", description='Model for Cosmic-CoNN method')
-    nn_threshold = Parameter(0.5, description='Threshold for Cosmic-CoNN method')
-    nn_verbose = Parameter(False, description='Verbose mode for Cosmic-CoNN method')
+    nn_model = Parameter("ground_imaging", description="Model for Cosmic-CoNN method")
+    nn_threshold = Parameter(0.5, description="Threshold for Cosmic-CoNN method")
+    nn_verbose = Parameter(False, description="Verbose mode for Cosmic-CoNN method")
 
     # Median-Minimum parameters
-    mm_cr_coincidences = Parameter(2, description='Number of CR coincidences to be sought')
-    mm_synthetic = Parameter('median', description='Type of synthetic image for median-minimum method')
-    mm_hist2d_min_neighbors = Parameter(0, description='Minimum neighbors in 2D histogram for median-minimum method')
-    mm_ydiag_max = Parameter(0, description='Maximum Y value for 2D histogram in median-minimum method (0=auto)')
-    mm_dilation = Parameter(0, description='Dilation for median-minimum method')
-    mm_xy_offsets = Parameter('none', description='List of (X,Y) offsets for image alignment')
-    mm_crosscorr_region = Parameter('none', description='Region for cross-correlation alignment (FITS format)')
-    mm_boundary_fit = Parameter('spline', description='Type of fit to CR detection boundary')
-    mm_knots_splfit = Parameter(3, description='Number of knots for spline fit to CR detection boundary')
-    mm_fixed_points_in_boundary = Parameter('none', description='List of fixed points in boundary for CR detection')
-    mm_nsimulations = Parameter(10, description='Number of simulations for cosmic ray detection')
-    mm_niter_boundary_extension = Parameter(3, description='Iterations for boundary extension')
-    mm_weight_boundary_extension = Parameter(10, description='Weight for boundary extension')
-    mm_threshold_rnoise = Parameter(0.0, description='Threshold for cosmic ray detection (in units of readout noise)')
-    mm_minimum_max2d_rnoise = Parameter(5.0, description='Minimum max2d readout noise')
-    mm_seed = Parameter(1234, description='Random seed for cosmic ray detection')
+    mm_cr_coincidences = Parameter(2, description="Number of CR coincidences to be sought")
+    mm_photon_distribution = Parameter("poisson", description="Photon distribution for synthetic images")
+    mm_nbinom_shape = Parameter(1000, description="Negative binomial shape parameter for synthetic images")
+    mm_synthetic = Parameter("median", description="Type of synthetic image for median-minimum method")
+    mm_hist2d_min_neighbors = Parameter(0, description="Minimum neighbors in 2D histogram for median-minimum method")
+    mm_ydiag_max = Parameter(0, description="Maximum Y value for 2D histogram in median-minimum method (0=auto)")
+    mm_dilation = Parameter(0, description="Dilation for median-minimum method")
+    mm_xy_offsets = Parameter("none", description="List of (X,Y) offsets for image alignment")
+    mm_crosscorr_region = Parameter("none", description="Region for cross-correlation alignment (FITS format)")
+    mm_boundary_fit = Parameter("spline", description="Type of fit to CR detection boundary")
+    mm_knots_splfit = Parameter(3, description="Number of knots for spline fit to CR detection boundary")
+    mm_fixed_points_in_boundary = Parameter("none", description="List of fixed points in boundary for CR detection")
+    mm_nsimulations = Parameter(10, description="Number of simulations for cosmic ray detection")
+    mm_niter_boundary_extension = Parameter(3, description="Iterations for boundary extension")
+    mm_weight_boundary_extension = Parameter(10, description="Weight for boundary extension")
+    mm_threshold_rnoise = Parameter(0.0, description="Threshold for cosmic ray detection (in units of readout noise)")
+    mm_minimum_max2d_rnoise = Parameter(5.0, description="Minimum max2d readout noise")
+    mm_seed = Parameter(1234, description="Random seed for cosmic ray detection")
 
     # Results
     crmasks = Result(CRMasks)
 
     def run(self, rinput):
         """Execute the recipe."""
-        self.logger.info('start MegaraCrDetection recipe')
+        self.logger.info("start MegaraCrDetection recipe")
 
         flow1 = self.init_filters(rinput, rinput.obresult.configuration)
 
@@ -134,7 +146,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
         #    included the flatfield as a requirement of this recipe,
         #    the second part will not apply flat-fielding.
         if len(flow1) != 2:
-            raise ValueError('Invalid reduction flow for cosmic ray detection')
+            raise ValueError("Invalid reduction flow for cosmic ray detection")
         reduction_flow_ot, reduction_flow_1im = flow1
         frames = rinput.obresult.frames
 
@@ -151,12 +163,12 @@ class CRMasksRecipe(MegaraBaseRecipe):
             if rinput.save_preprocessed:
                 ldum = len(str(len(hdul_1im)))
                 for i, hdul in enumerate(hdul_1im):
-                    self.save_intermediate_img(hdul, f'preprocessed_{i+1:0{ldum}d}.fits')
+                    self.save_intermediate_img(hdul, f"preprocessed_{i+1:0{ldum}d}.fits")
                 median_data = np.median([hdul[0].data for hdul in hdul_1im], axis=0)
-                self.save_intermediate_array(median_data.astype(rinput.dtype), 'preprocessed_median.fits')
+                self.save_intermediate_array(median_data.astype(rinput.dtype), "preprocessed_median.fits")
 
             arrays = [hdul[0].data for hdul in hdul_1im]
-            self.logger.info(f'{len(arrays)} images to generate CR masks')
+            self.logger.info(f"{len(arrays)} images to generate CR masks")
 
             # Generate the cosmic ray masks
             hdul_masks = compute_crmasks(
@@ -214,6 +226,8 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 nn_threshold=rinput.nn_threshold,
                 nn_verbose=rinput.nn_verbose,
                 mm_cr_coincidences=rinput.mm_cr_coincidences,
+                mm_photon_distribution=rinput.mm_photon_distribution,
+                mm_nbinom_shape=rinput.mm_nbinom_shape,
                 mm_synthetic=rinput.mm_synthetic,
                 mm_hist2d_min_neighbors=rinput.mm_hist2d_min_neighbors,
                 mm_ydiag_max=rinput.mm_ydiag_max,
@@ -228,7 +242,7 @@ class CRMasksRecipe(MegaraBaseRecipe):
                 mm_weight_boundary_extension=rinput.mm_weight_boundary_extension,
                 mm_threshold_rnoise=rinput.mm_threshold_rnoise,
                 mm_minimum_max2d_rnoise=rinput.mm_minimum_max2d_rnoise,
-                mm_seed=rinput.mm_seed
+                mm_seed=rinput.mm_seed,
             )
 
             # Update header (basic information)
@@ -237,22 +251,22 @@ class CRMasksRecipe(MegaraBaseRecipe):
 
             # Update header (UUID of the individual images))
             for hdul in hdul_1im:
-                hdr.add_history('---')
+                hdr.add_history("---")
                 hdr.add_history(f'Image {hdul[0].header["UUID"]}')
-                history_entries = hdul[0].header.get('history', None)
+                history_entries = hdul[0].header.get("history", None)
                 for entry in history_entries:
                     hdr.add_history(entry)
-            hdr.add_history('---')
+            hdr.add_history("---")
 
             # Update header with cosmic ray mask information
-            for extname in ['MEDIANCR', 'MEANCRT'] + [f'CRMASK{i+1}' for i in range(len(arrays))]:
-                hdr.add_history(f'Extension {extname}: {np.sum(hdul_masks[extname].data)} masked pixels')
+            for extname in ["MEDIANCR", "MEANCRT"] + [f"CRMASK{i+1}" for i in range(len(arrays))]:
+                hdr.add_history(f"Extension {extname}: {np.sum(hdul_masks[extname].data)} masked pixels")
 
             # Save the corrected preprocessed images if requested
             if rinput.save_postprocessed:
                 for combination in VALID_COMBINATIONS:
                     self.logger.info("-" * 73)
-                    self.logger.info(f'Apply {combination} to preprocessed images')
+                    self.logger.info(f"Apply {combination} to preprocessed images")
                     combined2d, _, _ = apply_crmasks(
                         list_arrays=arrays,
                         hdul_masks=hdul_masks,
@@ -260,10 +274,10 @@ class CRMasksRecipe(MegaraBaseRecipe):
                         use_auxmedian=rinput.use_auxmedian,
                         dtype=rinput.dtype,
                         apply_flux_factor=True,
-                        bias=None
+                        bias=None,
                     )
-                    self.save_intermediate_array(combined2d, f'postprocessed_{combination}.fits')
+                    self.save_intermediate_array(combined2d, f"postprocessed_{combination}.fits")
 
         result = self.create_result(crmasks=hdul_masks)
-        self.logger.info('end MegaraCrDetection recipe')
+        self.logger.info("end MegaraCrDetection recipe")
         return result
