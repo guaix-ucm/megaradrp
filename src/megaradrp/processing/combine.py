@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2025 Universidad Complutense de Madrid
+# Copyright 2016-2026 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -20,7 +20,7 @@ def basic_processing_with_combination(
         method=combine.mean, method_kwargs=None,
         errors=True, prolog=None):
 
-    if method.__name__ in ['mediancr', 'meancrt', 'meancr']:
+    if method.__name__ in ['mediancr', 'meancrt', 'meancr', 'meancr2']:
         # Special case for combination using a cosmic ray mask
         return basic_processing_with_combination_frames_crmasks(
             rinput.obresult.frames, rinput.crmasks, reduction_flows,
