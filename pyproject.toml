@@ -33,6 +33,7 @@ dependencies = [
     "numpy",
     "numina >= 0.36",
     "packaging",
+    "pooch",
     "scikit-image",
     "scipy >= 1.12",
     "requests"
