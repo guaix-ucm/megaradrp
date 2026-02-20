@@ -6,15 +6,34 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # License-Filename: LICENSE.txt
 #
-"""Generate the calibration data tree structure."""
+"""Generate the calibration data tree structure.
+
+The calibration data is stored in ZIP file available at Zenodo, which is
+downloaded and extracted to the base path. The ZIP file contains a directory
+named "guaix-ucm-megaradrp-calibrations-40fb7c (or something similar, depending
+on the version), which is stripped from the paths of the extracted files when
+moving them to the base calibration path. The ZIP file is then removed,
+and the now empty extracted directory is also removed.
+
+The code detects the name of the extracted directory by looking
+for the first file in the extracted directory and extracting the
+directory name from it.
+"""
 
 import argparse
+import logging
 from pathlib import Path
 import pooch
 import shutil
+import sys
+
+from rich.logging import RichHandler
+from rich_argparse import RichHelpFormatter
+
+from numina.user.console import NuminaConsole
 
 
-def init_tree(base_path=None, dry_run=False):
+def init_tree(base_path=None, dry_run=False, logger=None):
     """Create the calibration data tree structure.
 
     Parameters
@@ -23,10 +42,15 @@ def init_tree(base_path=None, dry_run=False):
         Base path where the calibration data tree will be created.
     dry_run : bool, optional
         If True, do not create directories, only print what would be done.
+    logger : logging.Logger, optional
+        Logger to use for logging messages. If None, a default logger will be used.
     """
 
     if base_path is None:
         raise ValueError("Base path must be provided.")
+
+    if logger is None:
+        logger = logging.getLogger(__name__)
 
     if not isinstance(base_path, (str, Path)):
         raise TypeError("Base path must be a string or a Path object.")
@@ -84,11 +108,12 @@ def init_tree(base_path=None, dry_run=False):
         "MR-Z": {"ThAr": False, "ThNe": True},
     }
 
+    logger.info(f"Creating calibration data tree structure under base path: {base_path}")
     for calibration_id in calibration_id_list:
         for calibration_directory in calibration_directory_list:
             if calibration_directory in ["MasterBPM", "MasterBias", "MasterSlitFlat", "ReferenceExtinctionTable"]:
                 path = base_path / calibration_id / calibration_directory
-                print(f"Creating directory: {path}")
+                logger.debug(f"Creating directory: {path}")
                 if not dry_run:
                     path.mkdir(parents=True, exist_ok=True)
             elif calibration_directory == "LinesCatalog":
@@ -96,36 +121,51 @@ def init_tree(base_path=None, dry_run=False):
                     for vph_grating in vph_grating_dict.keys():
                         if vph_grating_dict[vph_grating][arc_lamp]:
                             path = base_path / calibration_id / calibration_directory / arc_lamp / vph_grating
-                            print(f"Creating directory: {path}")
+                            logger.debug(f"Creating directory: {path}")
                             if not dry_run:
                                 path.mkdir(parents=True, exist_ok=True)
             else:
                 for ifu_mode in ifu_mode_list:
                     for vph_grating in vph_grating_dict.keys():
                         path = base_path / calibration_id / calibration_directory / ifu_mode / vph_grating
-                        print(f"Creating directory: {path}")
+                        logger.debug(f"Creating directory: {path}")
                         if not dry_run:
                             path.mkdir(parents=True, exist_ok=True)
 
 
-
-def move_files_strip_fixed(files, to_strip=None):
+def move_files_strip_fixed(files, to_strip=None, overwrite=False, logger=None):
     """Move files to the base path, stripping a fixed part of the path.
-    
+
     Parameters
     ----------
     files : list of str or Path
         List of file paths to move.
     to_strip : str, optional
-        Fixed part of the path to strip from the file paths. 
+        Fixed part of the path to strip from the file paths.
         If None, no stripping is done.
+    overwrite : bool, optional
+        If True, overwrite existing files when moving.
+        If False, abort if any existing files are found.
+    logger : logging.Logger, optional
+        Logger to use for logging messages. If None, a default logger will be used.
     """
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
     if to_strip is None:
         raise ValueError("to_strip must be provided.")
-    
+
+    logger.info(f"Moving files to base path, stripping fixed part of the path: '{to_strip}'")
     for f in files:
         f = Path(f)
+        # ignore directories, we only want to move files
         if f.is_dir():
+            continue
+        # ignore the ZIP file itself
+        if f.name == "calibration_data.zip":
+            continue
+        # ignore .gitattributes file, which is not part of the calibration data
+        if f.name == ".gitattributes":
             continue
         # use as_posix to ensure we have a consistent string representation of the path
         rel_text = f.as_posix()
@@ -133,23 +173,30 @@ def move_files_strip_fixed(files, to_strip=None):
         # search for the marker in the path
         pos = rel_text.find(marker)
         if pos == -1:
-            print(f"Marker '{marker}' not found in path: {rel_text}")
+            # the file is not under the uncompressed directory, we can ignore it
             continue
         # replace only the first occurrence of the marker in the path
         dest = rel_text.replace(marker, "", 1)
         dest = Path(dest)
         # ensure the destination directory exists
         dest.parent.mkdir(parents=True, exist_ok=True)
-        print(f"Moving: {f}  ->  {dest}")
+        logger.debug(f"Moving: {f}  ->  {dest}")
+        # if destination file already exists, do not overwrite it
+        if dest.exists():
+            if not overwrite:
+                logger.warning(f"Destination file already exists, aborting: {dest}")
+                logger.warning("Use the --overwrite option to overwrite existing files.")
+                raise SystemExit(1)
+            else:
+                logger.warning(f"Destination file already exists, overwriting: {dest}")
         try:
             f.replace(dest)
         except OSError:
             shutil.copy2(f, dest)
             f.unlink()
-        print(f"Moved: {f}  ->  {dest}")
 
 
-def install_calibration_data(url, base_path):
+def install_calibration_data(url, base_path, overwrite, logger=None):
     """Install the calibration data from the given URL.
 
     Parameters
@@ -158,26 +205,34 @@ def install_calibration_data(url, base_path):
         URL of the calibration data archive to download and extract.
     base_path : str or Path
         Base path where the calibration data will be installed.
+    overwrite : bool
+        If True, overwrite existing files when moving extracted files.
+        If False, abort if any existing files are found.
+    logger : logging.Logger, optional
+        Logger to use for logging messages. If None, a default logger will be used.
     """
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
     if not isinstance(base_path, (str, Path)):
         raise TypeError("Base path must be a string or a Path object.")
     if isinstance(base_path, str):
         base_path = Path(base_path)
 
     local_zip_filename = "calibration_data.zip"
-    print(f"Downloading and installing calibration data from: {url}")
+    logger.info(f"Downloading and installing calibration data from: {url}")
     files = pooch.retrieve(
         url=url,
         known_hash="md5:3d98803089d4822ee00ed03a4dbba229",
         fname=local_zip_filename,
         path=base_path,
         progressbar=True,
-        processor=pooch.Unzip(extract_dir='.'),
+        processor=pooch.Unzip(extract_dir="."),
     )
 
-    # the extracted files appear under a directory named 
+    # the extracted files appear under a directory named
     # "guaix-ucm-megaradrp-calibrations-40fb7c2"
-    # (or something similar, depending on the version), 
+    # (or something similar, depending on the version),
     # so we need to strip that part of the path when moving the files
     # to the base path. First, we need to find the actual name of the
     # extracted directory, which we can do by looking for the first file in the list
@@ -192,33 +247,36 @@ def install_calibration_data(url, base_path):
     if dir_to_strip is None:
         raise ValueError("Could not find the expected marker in the extracted files.")
     else:
-        print(f"Found directory to strip: {dir_to_strip}")
-    
-    # now we can move the files to the base path, 
+        logger.info(f"Found directory to strip: {dir_to_strip}")
+
+    # now we can move the files to the base path,
     # stripping the fixed part of the path
-    move_files_strip_fixed(files, to_strip=dir_to_strip)
+    move_files_strip_fixed(files, to_strip=dir_to_strip, overwrite=overwrite, logger=logger)
 
     # remove the now empty extracted directory
     extracted_dir = base_path / dir_to_strip
     if extracted_dir.is_dir():
-        print(f"Removing extracted directory: {extracted_dir}")
+        logger.info(f"Removing extracted directory: {extracted_dir}")
         shutil.rmtree(extracted_dir)
     else:
-        print(f"Expected extracted directory not found: {extracted_dir}")
+        logger.warning(f"Expected extracted directory not found: {extracted_dir}")
 
     # remove the downloaded zip file
     zip_path = base_path / local_zip_filename
     if zip_path.is_file():
-        print(f"Removing downloaded zip file: {zip_path}")
+        logger.info(f"Removing downloaded zip file: {zip_path}")
         zip_path.unlink()
     else:
-        print(f"Expected zip file not found: {zip_path}")
+        logger.warning(f"Expected zip file not found: {zip_path}")
 
 
 def main(args=None):
     """Main function to create the calibration data tree structure."""
     # parse command-line options
-    parser = argparse.ArgumentParser(description="Create the calibration data tree structure.")
+    parser = argparse.ArgumentParser(
+        description="Create the calibration data tree structure.",
+        formatter_class=RichHelpFormatter,
+    )
     # positional parameters
     parser.add_argument(
         "--base-path",
@@ -227,19 +285,56 @@ def main(args=None):
         default="./calibrations",
     )
     parser.add_argument(
+        "--zip-version", help="Version of the calibration data ZIP file to download.", type=str, default="2026.2"
+    )
+    parser.add_argument(
+        "--overwrite", action="store_true", help="If set, overwrite existing files when moving extracted files."
+    )
+    parser.add_argument(
         "--dry-run", action="store_true", help="If set, do not create directories, only print what would be done."
     )
+    parser.add_argument(
+        "--log-level", help="Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL).", type=str, default="INFO"
+    )
+    parser.add_argument("--record", action="store_true", help="Record terminal output.")
+    parser.add_argument("--echo", help="Display full command line", action="store_true")
     args = parser.parse_args(args)
 
+    # initialize the console and logger
+    console = NuminaConsole(record=args.record)
+    logger = logging.getLogger(__name__)
+
+    if args.echo:
+        console.print(f"[bright red]Executing: {' '.join(sys.argv)}[/bright red]\n", end="")
+
+    # configure logging
+    if args.log_level in ["DEBUG", "WARNING", "ERROR", "CRITICAL"]:
+        format_log = "%(name)s %(levelname)s: %(message)s"
+        handlers = [RichHandler(console=console, show_time=False, markup=True)]
+    else:
+        format_log = "%(message)s"
+        handlers = [RichHandler(console=console, show_time=False, markup=True, show_path=False, show_level=False)]
+    logging.basicConfig(level=args.log_level, format=format_log, handlers=handlers)
+    logging.getLogger("matplotlib").setLevel(logging.ERROR)  # supress matplotlib debug logs
+
+    # welcome message
+    console.rule("[bold magenta]Megara DRP - Calibration Data Tree Initialization[/bold magenta]")
+
     # create the directory tree structure
-    init_tree(base_path=args.base_path, dry_run=args.dry_run)
+    init_tree(base_path=args.base_path, dry_run=args.dry_run, logger=logger)
 
     # download and install the calibration data
     if not args.dry_run:
         install_calibration_data(
-            url="https://zenodo.org/records/18623771/files/guaix-ucm/megaradrp-calibrations-2026.2.zip",
+            url=f"https://zenodo.org/records/18623771/files/guaix-ucm/megaradrp-calibrations-{args.zip_version}.zip",
             base_path=args.base_path,
+            overwrite=args.overwrite,
+            logger=logger,
         )
+
+    # goodbye message
+    logger.info(f"Calibration data tree structure created under base path: {args.base_path}")
+    console.rule("[bold magenta]Calibration Data Tree Initialization Completed[/bold magenta]")
 
 
 if __name__ == "__main__":
