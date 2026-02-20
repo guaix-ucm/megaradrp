@@ -365,13 +365,13 @@ def ensure_numina_cfg(dry_run=False, logger=None):
         else:
             logger.info(f"Creating new configuration file: {cfg_path.resolve()}")
 
-        # insert metainfo section if it does not exist
-        if "metainfo" not in config:
-            config["metainfo"] = {}
-        config["metainfo"]["description"] = "Auto-generated configuration file for Megara DRP calibration data."
-        config["metainfo"]["megaradrp-version"] = __version__
-        config["metainfo"]["username"] = getpass.getuser()
-        config["metainfo"]["creation-date"] = datetime.now().isoformat(timespec="seconds")
+        # insert section with information
+        if "tool.megara.inittree" not in config:
+            config["tool.megara.inittree"] = {}
+        config["tool.megara.inittree"]["description"] = "Auto-generated configuration file for calibration data."
+        config["tool.megara.inittree"]["megaradrp-version"] = __version__
+        config["tool.megara.inittree"]["username"] = getpass.getuser()
+        config["tool.megara.inittree"]["creation-date"] = datetime.now().isoformat(timespec="seconds")
 
         # ensure the [tool.run] section exists
         if "tool.run" not in config:
