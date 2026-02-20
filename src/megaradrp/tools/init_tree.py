@@ -285,7 +285,8 @@ def main(args=None):
         default="./calibrations",
     )
     parser.add_argument(
-        "--zip-version", help="Version of the calibration data ZIP file to download.", type=str, default="2026.2"
+        "--zip-url", help="URL of the calibration data ZIP file to download.", type=str, 
+        default="https://zenodo.org/records/18623771/files/guaix-ucm/megaradrp-calibrations-2026.2.zip"
     )
     parser.add_argument(
         "--overwrite", action="store_true", help="If set, overwrite existing files when moving extracted files."
@@ -326,7 +327,7 @@ def main(args=None):
     # download and install the calibration data
     if not args.dry_run:
         install_calibration_data(
-            url=f"https://zenodo.org/records/18623771/files/guaix-ucm/megaradrp-calibrations-{args.zip_version}.zip",
+            url=args.zip_url,
             base_path=args.base_path,
             overwrite=args.overwrite,
             logger=logger,
