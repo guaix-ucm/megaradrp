@@ -22,6 +22,8 @@ directory name from it.
 
 import argparse
 import configparser
+from datetime import datetime
+import getpass
 import logging
 from pathlib import Path
 import pooch
@@ -33,6 +35,7 @@ import zipfile
 from rich.logging import RichHandler
 from rich_argparse import RichHelpFormatter
 
+from megaradrp import __version__
 from numina.user.console import NuminaConsole
 
 
@@ -362,12 +365,21 @@ def ensure_numina_cfg(dry_run=False, logger=None):
         else:
             logger.info(f"Creating new configuration file: {cfg_path.resolve()}")
 
+        # insert metainfo section if it does not exist
+        if "metainfo" not in config:
+            config["metainfo"] = {}
+        config["metainfo"]["description"] = "Auto-generated configuration file for Megara DRP calibration data."
+        config["metainfo"]["megaradrp-version"] = __version__
+        config["metainfo"]["username"] = getpass.getuser()
+        config["metainfo"]["creation-date"] = datetime.now().isoformat(timespec="seconds")
+
         # ensure the [tool.run] section exists
         if "tool.run" not in config:
             config["tool.run"] = {}
 
-        # ensure the calibrations directory is set to "calibrations"
-        config["tool.run"]["calibsdir"] = "calibrations"
+        # ensure the calibrations directory is set to "calibrations" 
+        # under the absolute parent directory of the .numina.cfg file
+        config["tool.run"]["calibsdir"] = f"{cfg_path.absolute().parent}/calibrations"
 
         # write the updated configuration back to the .numina.cfg file
         with cfg_path.open("w") as f:
