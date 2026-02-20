@@ -21,6 +21,7 @@ directory name from it.
 """
 
 import argparse
+import configparser
 import logging
 from pathlib import Path
 import pooch
@@ -259,10 +260,10 @@ def install_calibration_data(url, base_path, overwrite, dry_run=False, logger=No
     logger.info(f"Downloading and installing calibration data from: {url}")
     if dry_run:
         logger.debug("Dry run mode: downloading ZIP file to temporary location.")
-        # download the ZIP file but do not extract it, since we only want to get 
-        # the list of files that would be extracted, without actually creating 
+        # download the ZIP file but do not extract it, since we only want to get
+        # the list of files that would be extracted, without actually creating
         # directories or moving files. Note that the ZIP file is downloaded to
-        # a temporary location, and it is removed after leaving the with block, 
+        # a temporary location, and it is removed after leaving the with block,
         # so it does not affect the file system.
         with tempfile.TemporaryDirectory() as tmpdir:
             zip_path = pooch.retrieve(
@@ -297,7 +298,7 @@ def install_calibration_data(url, base_path, overwrite, dry_run=False, logger=No
         p = Path(f).resolve()
         for part in p.parts:
             if part.startswith("guaix-ucm-megaradrp-calibrations-"):
-                dir_to_strip = part + '/'  # add the trailing slash to ensure we match only the directory name
+                dir_to_strip = part + "/"  # add the trailing slash to ensure we match only the directory name
                 break
     if dir_to_strip is None:
         raise ValueError("Could not find the expected marker in the extracted files.")
@@ -306,7 +307,9 @@ def install_calibration_data(url, base_path, overwrite, dry_run=False, logger=No
 
     # now we can move the files to the base path,
     # stripping the fixed part of the path
-    move_files_strip_fixed(files, base_path=base_path, to_strip=dir_to_strip, overwrite=overwrite, dry_run=dry_run, logger=logger)
+    move_files_strip_fixed(
+        files, base_path=base_path, to_strip=dir_to_strip, overwrite=overwrite, dry_run=dry_run, logger=logger
+    )
 
     # remove the now empty extracted directory
     extracted_dir = base_path / dir_to_strip
@@ -319,7 +322,7 @@ def install_calibration_data(url, base_path, overwrite, dry_run=False, logger=No
         else:
             logger.warning(f"Expected extracted directory not found: {extracted_dir}")
 
-    # remove the downloaded zip file 
+    # remove the downloaded zip file
     # (this is also valid for the dry run, since in that case
     #  the ZIP file is downloaded to a temporary location)
     zip_path = base_path / local_zip_filename
@@ -331,6 +334,46 @@ def install_calibration_data(url, base_path, overwrite, dry_run=False, logger=No
             logger.info(f"Removing downloaded zip file: {zip_path} (dry run, not actually removing)")
         else:
             logger.warning(f"Expected zip file not found: {zip_path}")
+
+
+def ensure_numina_cfg(dry_run=False, logger=None):
+    """Ensure that the .numina.cfg file exists and contains the necessary configuration.
+
+    Parameters
+    ----------
+    dry_run : bool, optional
+        If True, do not actually write to the file. Only print what would be done.
+    logger : logging.Logger, optional
+        Logger to use for logging messages. If None, a default logger will be used.
+    """
+    if logger is None:
+        logger = logging.getLogger(__name__)
+
+    # read the .numina.cfg file if it exists, or create a new one if it does not exist
+    cfg_path = Path(".numina.cfg")
+    config = configparser.ConfigParser()
+
+    if dry_run:
+        if not cfg_path.exists():
+            logger.info(f"Creating new configuration file: {cfg_path.resolve()}")
+    else:
+        if cfg_path.exists():
+            config.read(cfg_path)
+        else:
+            logger.info(f"Creating new configuration file: {cfg_path.resolve()}")
+
+        # ensure the [tool.run] section exists
+        if "tool.run" not in config:
+            config["tool.run"] = {}
+
+        # ensure the calibrations directory is set to "calibrations"
+        config["tool.run"]["calibsdir"] = "calibrations"
+
+        # write the updated configuration back to the .numina.cfg file
+        with cfg_path.open("w") as f:
+            config.write(f)
+
+    logger.info(f"Configuration file updated: {cfg_path.resolve()}")
 
 
 def main(args=None):
@@ -397,6 +440,9 @@ def main(args=None):
         dry_run=args.dry_run,
         logger=logger,
     )
+
+    # ensure the .numina.cfg file exists and contains the necessary configuration
+    ensure_numina_cfg(dry_run=args.dry_run, logger=logger)
 
     # goodbye message
     logger.info(f"Calibration data tree structure created under base path: {args.base_path}")
