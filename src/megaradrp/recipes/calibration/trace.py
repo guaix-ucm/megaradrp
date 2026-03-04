@@ -106,6 +106,9 @@ class TraceMapRecipe(MegaraBaseRecipe):
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
     polynomial_degree = Parameter(5, 'Polynomial degree of trace fitting')
+    xmin_fit = Parameter(1, 'Minimum column to fit traces (from 1 to NAXIS1)')
+    xmax_fit = Parameter(4096, 'Maximum column to fit traces (from 1 to NAXIS1)')
+    extrapolate_traces = Parameter(False, 'Extrapolate traces to the borders of the image')
     relative_threshold = Parameter(0.3, 'Threshold for peak detection')
     reference_column = Parameter(2000, 'Column used to search for peaks')
     reference_column_hw = Parameter(5, 'Half-width (w = 2 * hw + 1) of the region used to search for peaks ')
@@ -270,6 +273,9 @@ class TraceMapRecipe(MegaraBaseRecipe):
             cstart=cstart, step=step, hs=hs,
             threshold=threshold,
             poldeg=rinput.polynomial_degree,
+            xmin_fit=rinput.xmin_fit, 
+            xmax_fit=rinput.xmax_fit,
+            extrapolate_traces=rinput.extrapolate_traces,
             debug_plot=debug_plot
         )
         self.logger.info('END search traces')
@@ -297,9 +303,14 @@ class TraceMapRecipe(MegaraBaseRecipe):
                                   master_traces=final)
 
     def search_traces(self, reduced, boxes, box_borders, inactive_fibers=None, cstart=2000,
-                      threshold=0.3, poldeg=5, step=2, hs=3, tol=1.5, debug_plot=0):
+                      threshold=0.3, poldeg=5, 
+                      xmin_fit=1, xmax_fit=4096, extrapolate_traces=False,
+                      step=2, hs=3, tol=1.5, debug_plot=0):
 
         data = reduced[0].data
+        if xmin_fit < 1 or xmax_fit > data.shape[1] or xmin_fit >= xmax_fit:
+            raise ValueError(f'Invalid values for xmin_fit and xmax_fit: {xmin_fit}, {xmax_fit}')
+        
         if inactive_fibers is None:
             inactive_fibers = []
 
@@ -358,26 +369,51 @@ class TraceMapRecipe(MegaraBaseRecipe):
                     self.logger.debug(f'start tracing from col={cstart} with {step=}')
                     mm = trace_func(image2, x=cstart, y=dtrace.start[1], step=step,
                                     hs=hs, background=local_trace_background, maxdis=maxdis)
-
-                    if debug_plot:
-                        self.logger.debug('plotting x-y and x-z trace')
-                        plt.plot(mm[:, 0], mm[:, 1], '.')
-                        plt.savefig(f'trace-xy-{dtrace.fibid:03d}.png')
-                        plt.close()
-                        plt.plot(mm[:, 0], mm[:, 2], '.')
-                        plt.savefig(f'trace-xz-{dtrace.fibid:03d}.png')
-                        plt.close()
-                    if len(mm) < poldeg + 1:
+                    xfit_all = mm[:, 0]
+                    yfit_all = mm[:, 1]
+                    zfit_all = mm[:, 2]
+                    iok = numpy.argwhere((xfit_all >= (xmin_fit - 1)) & (xfit_all <= (xmax_fit - 1)))
+                    iok = iok.flatten()
+                    xfit = xfit_all[iok]
+                    yfit = yfit_all[iok]
+                    zfit = zfit_all[iok]
+                    if len(xfit) < poldeg + 1:
                         self.logger.warning('in fibid %d, only %d points to fit pol of degree %d',
-                                            dtrace.fibid, len(mm), poldeg)
+                                            dtrace.fibid, len(xfit), poldeg)
                         pfit = numpy.array([])
                     else:
                         self.logger.debug(f'fit polynomial with degree {poldeg=}')
-                        pfit = nppol.polyfit(mm[:, 0], mm[:, 1], deg=poldeg)
+                        pfit = nppol.polyfit(xfit, yfit, deg=poldeg)
                         self.logger.debug(f'polynomial is {pfit=}')
 
-                    start = mm[0, 0]
-                    stop = mm[-1, 0]
+                    if debug_plot:
+                        self.logger.debug('plotting x-y and x-z trace')
+                        plt.plot(xfit_all, yfit_all, '.', color='lightgray', label='all trace points')
+                        plt.plot(xfit, yfit, 'C1.', label='fitted trace points')
+                        plt.plot(xfit, nppol.polyval(xfit, pfit), 'C2-', label='fitted polynomial')
+                        plt.xlabel('detector column (from 0 to NAXIS1-1)')
+                        plt.ylabel('detector row (from 0 to NAXIS2-1)')
+                        plt.xlim(0, data.shape[1] - 1)
+                        plt.legend()
+                        plt.savefig(f'trace-xy-{dtrace.fibid:03d}.png')
+                        plt.close()
+                        plt.plot(xfit_all, zfit_all, '.', color='lightgray', label='all trace points')
+                        plt.plot(xfit, zfit, '.', color='C1', label='fitted trace points')
+                        plt.xlim(0, data.shape[1] - 1)
+                        plt.xlabel('detector column (from 0 to NAXIS1-1)')
+                        plt.ylabel('signal')
+                        plt.legend()
+                        plt.savefig(f'trace-xz-{dtrace.fibid:03d}.png')
+                        plt.close()
+
+                    if extrapolate_traces:
+                        start = 6
+                        stop = 4090
+                    else:
+                        ## start = mm[0, 0]
+                        start = xfit[0]
+                        ## stop = mm[-1, 0]
+                        stop = xfit[-1]
                     self.logger.debug(
                         f'trace limits {start=} {stop=}')
             else:
