@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2025 Universidad Complutense de Madrid
+# Copyright 2011-2026 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -8,7 +8,6 @@
 #
 
 """Fiber tracing Recipe."""
-
 
 import logging
 import warnings
@@ -91,28 +90,21 @@ class TraceMapRecipe(MegaraBaseRecipe):
     stored in the final `master_traces` object.
 
     """
-    method = Parameter(
-        'median',
-        description='Combination method',
-        choices=['mean', 'median', 'mediancr', 'sigmaclip']
-    )
-    method_kwargs = Parameter(
-        dict(),
-        description='Arguments for combination method',
-        optional=True
-    )
+
+    method = Parameter("median", description="Combination method", choices=["mean", "median", "mediancr", "sigmaclip"])
+    method_kwargs = Parameter(dict(), description="Arguments for combination method", optional=True)
 
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
-    polynomial_degree = Parameter(5, 'Polynomial degree of trace fitting')
-    xmin_fit = Parameter(1, 'Minimum column to fit traces (from 1 to NAXIS1)')
-    xmax_fit = Parameter(4096, 'Maximum column to fit traces (from 1 to NAXIS1)')
-    extrapolate_traces = Parameter(False, 'Extrapolate traces to the borders of the image')
-    relative_threshold = Parameter(0.3, 'Threshold for peak detection')
-    reference_column = Parameter(2000, 'Column used to search for peaks')
-    reference_column_hw = Parameter(5, 'Half-width (w = 2 * hw + 1) of the region used to search for peaks ')
-    debug_plot = Parameter(0, 'Save intermediate tracing plots')
+    polynomial_degree = Parameter(5, "Polynomial degree of trace fitting")
+    xmin_fit = Parameter(1, "Minimum column to fit traces (from 1 to NAXIS1)")
+    xmax_fit = Parameter(4096, "Maximum column to fit traces (from 1 to NAXIS1)")
+    extrapolate_traces = Parameter(False, "Extrapolate traces to the borders of the image")
+    relative_threshold = Parameter(0.3, "Threshold for peak detection")
+    reference_column = Parameter(2000, "Column used to search for peaks")
+    reference_column_hw = Parameter(5, "Half-width (w = 2 * hw + 1) of the region used to search for peaks ")
+    debug_plot = Parameter(0, "Save intermediate tracing plots")
 
     reduced_image = Result(ProcessedImage)
     reduced_rss = Result(ProcessedRSS)
@@ -120,18 +112,18 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
     def run_qc(self, recipe_input, recipe_result):
         """Run quality control checks"""
-        self.logger.info('start trace recipe QC')
+        self.logger.info("start trace recipe QC")
 
         self.check_qc_tracemap(recipe_result.master_traces)
 
         recipe_result.qc = recipe_result.master_traces.quality_control
-        self.logger.info('Result QC is %s', recipe_result.qc)
-        self.logger.info('end trace recipe QC')
+        self.logger.info("Result QC is %s", recipe_result.qc)
+        self.logger.info("end trace recipe QC")
         return recipe_result
 
     def check_qc_tracemap(self, tracemap):
         # check full range in all fibers
-        if tracemap.tags['insmode'] == 'LCB':
+        if tracemap.tags["insmode"] == "LCB":
             nfibers = 623
             ignored_ids = [623]
         else:
@@ -148,11 +140,11 @@ class TraceMapRecipe(MegaraBaseRecipe):
                 continue
             if trace.start > start_min:
                 cost_ids[idx] += 1
-                msg = f'In fiber {trace.fibid}, trace start > {start_min}'
+                msg = f"In fiber {trace.fibid}, trace start > {start_min}"
                 warnings.warn(msg)
             if trace.stop < end_max:
                 cost_ids[idx] += 1
-                msg = f'In fiber {trace.fibid}, trace end < {end_max}'
+                msg = f"In fiber {trace.fibid}, trace end < {end_max}"
                 warnings.warn(msg)
 
         total = sum(cost_ids)
@@ -182,7 +174,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
               if the recipe input is invalid
 
         """
-        self.logger.info('start trace spectra recipe')
+        self.logger.info("start trace spectra recipe")
 
         obresult = rinput.obresult
 
@@ -190,48 +182,44 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
         debug_plot = rinput.debug_plot if self.intermediate_results else 0
 
-        self.logger.info('start basic reduction')
+        self.logger.info("start basic reduction")
         flow = self.init_filters(rinput, obresult.configuration)
         fmethod = getattr(combine, rinput.method)
-        reduced = basic_processing_with_combination(
-            rinput, flow, method=fmethod, method_kwargs=rinput.method_kwargs)
-        self.logger.info('end basic reduction')
+        reduced = basic_processing_with_combination(rinput, flow, method=fmethod, method_kwargs=rinput.method_kwargs)
+        self.logger.info("end basic reduction")
 
-        self.save_intermediate_img(reduced, 'reduced_image.fits')
+        self.save_intermediate_img(reduced, "reduced_image.fits")
 
         insconf = obresult.configuration
 
         cstart = rinput.reference_column
-        boxes = insconf.get_property('pseudoslit.boxes')
+        boxes = insconf.get_property("pseudoslit.boxes")
 
-        values = insconf.get_property('pseudoslit.boxes_positions')
-        cstart0 = values['ref_column']
-        box_borders0 = values['positions']
+        values = insconf.get_property("pseudoslit.boxes_positions")
+        cstart0 = values["ref_column"]
+        box_borders0 = values["positions"]
 
         self.logger.info("START refining boxes")
         self.logger.debug(f"initial boxes measured in column {cstart0}")
         self.logger.debug("original boxes: %s", box_borders0)
 
         box_borders, _ = refine_boxes_from_image(
-            reduced, box_borders0, cstart,
-            intermediate_results=self.intermediate_results
+            reduced, box_borders0, cstart, intermediate_results=self.intermediate_results
         )
         self.logger.debug(f"refined boxes computed in column {cstart}")
         self.logger.debug("refined boxes: %s", box_borders)
 
         self.logger.info("END refining boxes")
 
-        current_vph = reduced[0].header['vph']
-        current_insmode = reduced[0].header['insmode']
+        current_vph = reduced[0].header["vph"]
+        current_insmode = reduced[0].header["insmode"]
 
         if current_insmode in vph_thr and current_vph in vph_thr[current_insmode]:
             threshold = vph_thr[current_insmode][current_vph]
-            self.logger.info('rel threshold for %s is %4.2f',
-                             current_vph, threshold)
+            self.logger.info("rel threshold for %s is %4.2f", current_vph, threshold)
         else:
             threshold = rinput.relative_threshold
-            self.logger.info(
-                'rel threshold not defined for %s, using %4.2f', current_vph, threshold)
+            self.logger.info("rel threshold not defined for %s, using %4.2f", current_vph, threshold)
 
         final = megaradrp.products.TraceMap(instrument=obresult.instrument)
         fp_conf = FocalPlaneConf.from_img(reduced)
@@ -239,14 +227,13 @@ class TraceMapRecipe(MegaraBaseRecipe):
         # about inactive fibers, i.e. all have active=True
         # inactive_fibers = fp_conf.inactive_fibers()
         # We do it manually
-        if fp_conf.name == 'LCB':
+        if fp_conf.name == "LCB":
             inactive_fibers = [623]
         else:
             inactive_fibers = [635]
 
         final.total_fibers = fp_conf.nfibers
-        final.tags = self.extract_tags_from_ref(
-            reduced, final.tag_names(), base=obresult.labels)
+        final.tags = self.extract_tags_from_ref(reduced, final.tag_names(), base=obresult.labels)
         final.boxes_positions = box_borders
         final.ref_column = cstart
 
@@ -256,29 +243,31 @@ class TraceMapRecipe(MegaraBaseRecipe):
         # number of the columns to add
         hs = rinput.reference_column_hw
         # Expected range of computed traces
-        xx_start, xx_end = tracing_limits(
-            reduced[0].shape[1], cstart, step, hs)
+        xx_start, xx_end = tracing_limits(reduced[0].shape[1], cstart, step, hs)
         final.expected_range = [xx_start, xx_end]
 
         final.update_metadata(self)
         final.update_metadata_origin(obresult_meta)
         # Temperature in Celsius with 2 decimals
-        final.tags['temp'] = round(
-            obresult_meta['info'][0]['temp'] - 273.15, 2)
+        final.tags["temp"] = round(obresult_meta["info"][0]["temp"] - 273.15, 2)
 
-        self.logger.info('START search traces')
+        self.logger.info("START search traces")
         contents, error_fitting, missing_fibers = self.search_traces(
-            reduced, boxes, box_borders,
+            reduced,
+            boxes,
+            box_borders,
             inactive_fibers=inactive_fibers,
-            cstart=cstart, step=step, hs=hs,
+            cstart=cstart,
+            step=step,
+            hs=hs,
             threshold=threshold,
             poldeg=rinput.polynomial_degree,
-            xmin_fit=rinput.xmin_fit, 
+            xmin_fit=rinput.xmin_fit,
             xmax_fit=rinput.xmax_fit,
             extrapolate_traces=rinput.extrapolate_traces,
-            debug_plot=debug_plot
+            debug_plot=debug_plot,
         )
-        self.logger.info('END search traces')
+        self.logger.info("END search traces")
 
         final.contents = contents
         final.error_fitting = error_fitting
@@ -289,39 +278,47 @@ class TraceMapRecipe(MegaraBaseRecipe):
         reduced_rss = calibrator_aper(reduced_copy)
 
         if self.intermediate_results:
-            with open('ds9.reg', 'w') as ds9reg:
-                final.to_ds9_reg(ds9reg, rawimage=False,
-                                 numpix=100, fibid_at=2048)
+            with open("ds9.reg", "w") as ds9reg:
+                final.to_ds9_reg(ds9reg, rawimage=False, numpix=100, fibid_at=2048)
 
-            with open('ds9_raw.reg', 'w') as ds9reg:
-                final.to_ds9_reg(ds9reg, rawimage=True,
-                                 numpix=100, fibid_at=2048)
+            with open("ds9_raw.reg", "w") as ds9reg:
+                final.to_ds9_reg(ds9reg, rawimage=True, numpix=100, fibid_at=2048)
 
-        self.logger.info('end trace spectra recipe')
-        return self.create_result(reduced_image=reduced,
-                                  reduced_rss=reduced_rss,
-                                  master_traces=final)
+        self.logger.info("end trace spectra recipe")
+        return self.create_result(reduced_image=reduced, reduced_rss=reduced_rss, master_traces=final)
 
-    def search_traces(self, reduced, boxes, box_borders, inactive_fibers=None, cstart=2000,
-                      threshold=0.3, poldeg=5, 
-                      xmin_fit=1, xmax_fit=4096, extrapolate_traces=False,
-                      step=2, hs=3, tol=1.5, debug_plot=0):
+    def search_traces(
+        self,
+        reduced,
+        boxes,
+        box_borders,
+        inactive_fibers=None,
+        cstart=2000,
+        threshold=0.3,
+        poldeg=5,
+        xmin_fit=1,
+        xmax_fit=4096,
+        extrapolate_traces=False,
+        step=2,
+        hs=3,
+        tol=1.5,
+        debug_plot=0,
+    ):
 
         data = reduced[0].data
         if xmin_fit < 1 or xmax_fit > data.shape[1] or xmin_fit >= xmax_fit:
-            raise ValueError(f'Invalid values for xmin_fit and xmax_fit: {xmin_fit}, {xmax_fit}')
-        
+            raise ValueError(f"Invalid values for xmin_fit and xmax_fit: {xmin_fit}, {xmax_fit}")
+
         if inactive_fibers is None:
             inactive_fibers = []
 
-        self.logger.info('search for traces')
+        self.logger.info("search for traces")
 
-        self.logger.info('estimate background in ref column %i', cstart)
-        background = estimate_background(
-            data, center=cstart, hs=hs, boxref=box_borders)
-        self.logger.info('background level is %f', background)
+        self.logger.info("estimate background in ref column %i", cstart)
+        background = estimate_background(data, center=cstart, hs=hs, boxref=box_borders)
+        self.logger.info("background level is %f", background)
 
-        self.logger.info('find peaks in reference column %i', cstart)
+        self.logger.info("find peaks in reference column %i", cstart)
         central_peaks = init_traces(
             data,
             center=cstart,
@@ -330,13 +327,13 @@ class TraceMapRecipe(MegaraBaseRecipe):
             box_borders=box_borders,
             tol=tol,
             threshold=threshold,
-            debug_plot=debug_plot
+            debug_plot=debug_plot,
         )
-        self.logger.info('finding peaks complete')
+        self.logger.info("finding peaks complete")
 
         # The byteswapping is required by the cython module
-        if data.dtype.byteorder != '=':
-            self.logger.debug('byteswapping image')
+        if data.dtype.byteorder != "=":
+            self.logger.debug("byteswapping image")
             image2 = data.byteswap().newbyteorder()
         else:
             image2 = data
@@ -346,13 +343,13 @@ class TraceMapRecipe(MegaraBaseRecipe):
         contents = []
         error_fitting = []
         missing_fibers = []
-        self.logger.info('trace peaks from references')
+        self.logger.info("trace peaks from references")
         for dtrace in central_peaks:
             # FIXME, for traces, the background must be local
             # the background in the center is not always good
             local_trace_background = 300  # background
 
-            self.logger.debug('trace fiber %d', dtrace.fibid)
+            self.logger.debug("trace fiber %d", dtrace.fibid)
             conf_ok = dtrace.fibid not in inactive_fibers
             peak_ok = dtrace.start is not None
 
@@ -363,12 +360,18 @@ class TraceMapRecipe(MegaraBaseRecipe):
             if peak_ok:
                 if not conf_ok:
                     error_fitting.append(dtrace.fibid)
-                    self.logger.warning(
-                        'found fibid %d, expected to be missing', dtrace.fibid)
+                    self.logger.warning("found fibid %d, expected to be missing", dtrace.fibid)
                 else:
-                    self.logger.debug(f'start tracing from col={cstart} with {step=}')
-                    mm = trace_func(image2, x=cstart, y=dtrace.start[1], step=step,
-                                    hs=hs, background=local_trace_background, maxdis=maxdis)
+                    self.logger.debug(f"start tracing from col={cstart} with {step=}")
+                    mm = trace_func(
+                        image2,
+                        x=cstart,
+                        y=dtrace.start[1],
+                        step=step,
+                        hs=hs,
+                        background=local_trace_background,
+                        maxdis=maxdis,
+                    )
                     xfit_all = mm[:, 0]
                     yfit_all = mm[:, 1]
                     zfit_all = mm[:, 2]
@@ -378,32 +381,33 @@ class TraceMapRecipe(MegaraBaseRecipe):
                     yfit = yfit_all[iok]
                     zfit = zfit_all[iok]
                     if len(xfit) < poldeg + 1:
-                        self.logger.warning('in fibid %d, only %d points to fit pol of degree %d',
-                                            dtrace.fibid, len(xfit), poldeg)
+                        self.logger.warning(
+                            "in fibid %d, only %d points to fit pol of degree %d", dtrace.fibid, len(xfit), poldeg
+                        )
                         pfit = numpy.array([])
                     else:
-                        self.logger.debug(f'fit polynomial with degree {poldeg=}')
+                        self.logger.debug(f"fit polynomial with degree {poldeg=}")
                         pfit = nppol.polyfit(xfit, yfit, deg=poldeg)
-                        self.logger.debug(f'polynomial is {pfit=}')
+                        self.logger.debug(f"polynomial is {pfit=}")
 
                     if debug_plot:
-                        self.logger.debug('plotting x-y and x-z trace')
-                        plt.plot(xfit_all, yfit_all, '.', color='lightgray', label='all trace points')
-                        plt.plot(xfit, yfit, 'C1.', label='fitted trace points')
-                        plt.plot(xfit, nppol.polyval(xfit, pfit), 'C2-', label='fitted polynomial')
-                        plt.xlabel('detector column (from 0 to NAXIS1-1)')
-                        plt.ylabel('detector row (from 0 to NAXIS2-1)')
+                        self.logger.debug("plotting x-y and x-z trace")
+                        plt.plot(xfit_all, yfit_all, ".", color="lightgray", label="all trace points")
+                        plt.plot(xfit, yfit, "C1.", label="fitted trace points")
+                        plt.plot(xfit, nppol.polyval(xfit, pfit), "C2-", label="fitted polynomial")
+                        plt.xlabel("detector column (from 0 to NAXIS1-1)")
+                        plt.ylabel("detector row (from 0 to NAXIS2-1)")
                         plt.xlim(0, data.shape[1] - 1)
                         plt.legend()
-                        plt.savefig(f'trace-xy-{dtrace.fibid:03d}.png')
+                        plt.savefig(f"trace-xy-{dtrace.fibid:03d}.png")
                         plt.close()
-                        plt.plot(xfit_all, zfit_all, '.', color='lightgray', label='all trace points')
-                        plt.plot(xfit, zfit, '.', color='C1', label='fitted trace points')
+                        plt.plot(xfit_all, zfit_all, ".", color="lightgray", label="all trace points")
+                        plt.plot(xfit, zfit, ".", color="C1", label="fitted trace points")
                         plt.xlim(0, data.shape[1] - 1)
-                        plt.xlabel('detector column (from 0 to NAXIS1-1)')
-                        plt.ylabel('signal')
+                        plt.xlabel("detector column (from 0 to NAXIS1-1)")
+                        plt.ylabel("signal")
                         plt.legend()
-                        plt.savefig(f'trace-xz-{dtrace.fibid:03d}.png')
+                        plt.savefig(f"trace-xz-{dtrace.fibid:03d}.png")
                         plt.close()
 
                     if extrapolate_traces:
@@ -414,24 +418,18 @@ class TraceMapRecipe(MegaraBaseRecipe):
                         start = xfit[0]
                         ## stop = mm[-1, 0]
                         stop = xfit[-1]
-                    self.logger.debug(
-                        f'trace limits {start=} {stop=}')
+                    self.logger.debug(f"trace limits {start=} {stop=}")
             else:
                 if conf_ok:
-                    self.logger.warning('error tracing fibid %d', dtrace.fibid)
+                    self.logger.warning("error tracing fibid %d", dtrace.fibid)
                     error_fitting.append(dtrace.fibid)
                 else:
-                    self.logger.debug(
-                        'expected missing fibid %d', dtrace.fibid)
+                    self.logger.debug("expected missing fibid %d", dtrace.fibid)
                     missing_fibers.append(dtrace.fibid)
-            self.logger.debug('=====================================')
+            self.logger.debug("=====================================")
 
             this_trace = GeometricTrace(
-                fibid=dtrace.fibid,
-                boxid=dtrace.boxid,
-                start=int(start),
-                stop=int(stop),
-                fitparms=pfit.tolist()
+                fibid=dtrace.fibid, boxid=dtrace.boxid, start=int(start), stop=int(stop), fitparms=pfit.tolist()
             )
             contents.append(this_trace)
 
@@ -441,7 +439,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
 def estimate_background(image, center, hs, boxref):
     """Estimate background from values in boxes between fibers"""
 
-    cut_region = slice(center-hs, center+hs)
+    cut_region = slice(center - hs, center + hs)
     cut = image[boxref, cut_region]
 
     colcut = cut.mean(axis=1)
@@ -460,13 +458,13 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
 
     _logger = logging.getLogger(__name__)
 
-    cut_region = slice(center-hs, center+hs+1)
+    cut_region = slice(center - hs, center + hs + 1)
     cut = image[:, cut_region]
     colcut = cut.mean(axis=1)
     # trace local background with a min filter
     mincol = minimum_filter(colcut, size=7)
 
-    _logger.debug('initial pairing fibers in column %d', center)
+    _logger.debug("initial pairing fibers in column %d", center)
 
     fiber_traces = []
     total_peaks = 0
@@ -479,47 +477,47 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
     ioffset = 0  # correction to be applied to each successive fiber block
 
     for boxid, box in enumerate(boxes):
-        nfibers = box['nfibers']
-        mfibers = box.get('missing', [])
+        nfibers = box["nfibers"]
+        mfibers = box.get("missing", [])
         nfibers_max = nfibers - len(mfibers)
-        sfibers = box.get('skipcount', [])
-        _logger.debug('pseudoslit box: %s, id: %d', box['name'], boxid)
-        _logger.debug('nfibers: %d', nfibers)
-        _logger.debug('missing ids in box: %s', mfibers)
+        sfibers = box.get("skipcount", [])
+        _logger.debug("pseudoslit box: %s, id: %d", box["name"], boxid)
+        _logger.debug("nfibers: %d", nfibers)
+        _logger.debug("missing ids in box: %s", mfibers)
 
         counted_space += nfibers
         expected_fibers += nfibers_max
         b1 = int(box_borders[boxid])
         b2 = int(box_borders[boxid + 1])
-        _logger.debug('initial box borders: %s %s', b1, b2)
-        _logger.debug('offset for borders: %s', ioffset)
+        _logger.debug("initial box borders: %s %s", b1, b2)
+        _logger.debug("offset for borders: %s", ioffset)
         b1 += ioffset
         b2 += ioffset
-        _logger.debug('updated box borders: %s %s', b1, b2)
+        _logger.debug("updated box borders: %s %s", b1, b2)
         borders = [b1, b2]
 
-        region = colcut[borders[0]:borders[1]+1]
+        region = colcut[borders[0] : borders[1] + 1]
         # Region for background computation
         # Remove the space of 1.5 fibers
         bb1 = b1 + 9
         bb2 = b2 - 9
         # a conservative background
-        lowt = numpy.min(mincol[bb1:bb2+1])
-        _logger.debug('conservative background in box is %f', lowt)
+        lowt = numpy.min(mincol[bb1 : bb2 + 1])
+        _logger.debug("conservative background in box is %f", lowt)
 
         # Find exactly the number of peaks expected
-        _logger.debug('find %d peaks (max)', nfibers_max)
+        _logger.debug("find %d peaks (max)", nfibers_max)
         ipeaks_int = peak_local_max(
-            region, min_distance=3, threshold_abs=lowt,
-            threshold_rel=threshold, num_peaks=nfibers_max).squeeze()
+            region, min_distance=3, threshold_abs=lowt, threshold_rel=threshold, num_peaks=nfibers_max
+        ).squeeze()
 
         npeaks = len(ipeaks_int)
         total_peaks += npeaks
 
         if npeaks == 0:
             # skip everything, go to next box
-            boxes_with_missing_fibers.append((box['name'], nfibers))
-            _logger.debug('no peaks detected, go to next box')
+            boxes_with_missing_fibers.append((box["name"], nfibers))
+            _logger.debug("no peaks detected, go to next box")
             continue
 
         # We always want the result sorted. The order changes in different versions
@@ -528,7 +526,7 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         ipeaks_float = refine_peaks(region, ipeaks_int, 3)[0]
         peaks_dist = numpy.diff(ipeaks_float)
         measured_scale = numpy.median(peaks_dist)
-        _logger.debug('median distance between peaks is %s', measured_scale)
+        _logger.debug("median distance between peaks is %s", measured_scale)
 
         peaks_y = numpy.ones((ipeaks_int.shape[0], 3))
         peaks_y[:, 0] = ipeaks_int + b1
@@ -542,12 +540,10 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         ioffset += delta_ioffset  # new offset to recenter next fiber block
 
         startid = lastid + 1
-        fiber_model = fibermatch.generate_box_model(
-             nfibers, start=startid, missing_relids=mfibers, skip_fibids=sfibers
-        )
+        fiber_model = fibermatch.generate_box_model(nfibers, start=startid, missing_relids=mfibers, skip_fibids=sfibers)
 
         lastid = fiber_model[-1].fibid
-        _logger.debug('fibids %s - %s', startid, lastid)
+        _logger.debug("fibids %s - %s", startid, lastid)
 
         matched_peaks = fibermatch.count_peaks(peaks_y[:, 1], tol=tol, distance=measured_scale)
         # Count FOUND_PEAK elements
@@ -556,46 +552,41 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         missing = nfibers - nmatched
 
         if missing != 0:
-            boxes_with_missing_fibers.append((box['name'], missing))
+            boxes_with_missing_fibers.append((box["name"], missing))
 
         if True or debug_plot:
 
-            plt.plot(numpy.arange(len(region))+b1, region)
-            plt.plot(peaks_y[:, 1], region[ipeaks_int], 'r.')
+            plt.plot(numpy.arange(len(region)) + b1, region)
+            plt.plot(peaks_y[:, 1], region[ipeaks_int], "r.")
 
             for el in matched_peaks:
                 if el.mode == fibermatch.PeakFound.FOUND_PEAK:
-                    plt.axvline(el.pos, c='k', ls='--', lw=0.5)
+                    plt.axvline(el.pos, c="k", ls="--", lw=0.5)
                 if el.mode == fibermatch.PeakFound.FOUND_VALLEY:
-                    plt.axvline(el.pos, c='r', ls='-.', lw=0.5)
+                    plt.axvline(el.pos, c="r", ls="-.", lw=0.5)
 
-            plt.xlabel('pixel number - 1')
-            plt.ylabel('number of counts')
+            plt.xlabel("pixel number - 1")
+            plt.ylabel("number of counts")
             plt.title(f'pseudoslit box: {box["name"]}, id: {boxid}')
             plt.savefig(f'cut_col{center}_{boxid:02d}_{box["name"]}.png')
             plt.close()
 
-        pos_solutions = fibermatch.complete_solutions(
-            fiber_model, matched_peaks,
-            borders, scale=measured_scale
-        )
+        pos_solutions = fibermatch.complete_solutions(fiber_model, matched_peaks, borders, scale=measured_scale)
 
-        for fibid, match in fibermatch.iter_best_solution(
-                fiber_model, matched_peaks, pos_solutions
-        ):
+        for fibid, match in fibermatch.iter_best_solution(fiber_model, matched_peaks, pos_solutions):
             fti = FiberTraceInfo(fibid, boxid)
             if match is not None:
                 fti.start = (center, peaks_y[match, 1], peaks_y[match, 2])
             fiber_traces.append(fti)
 
-        _logger.debug('matched %s, missing: %s', nmatched, missing)
-        _logger.debug('=============================================')
+        _logger.debug("matched %s, missing: %s", nmatched, missing)
+        _logger.debug("=============================================")
 
-    _logger.debug('total expected fibers: %d', expected_fibers)
-    _logger.debug('total found peaks: %d', total_peaks)
-    _logger.debug('total matched peaks: %d', matched_fibers)
+    _logger.debug("total expected fibers: %d", expected_fibers)
+    _logger.debug("total found peaks: %d", total_peaks)
+    _logger.debug("total matched peaks: %d", matched_fibers)
     for m1, n2 in boxes_with_missing_fibers:
-        _logger.debug('missing %d fibers in box %s', n2, m1)
+        _logger.debug("missing %d fibers in box %s", n2, m1)
 
     return fiber_traces
 
@@ -608,9 +599,7 @@ def refine_boxes_from_image(reduced, expected, col, hwidth=3, nsearch=20, interm
 
     """
     return refine_boxes_from_array(
-        reduced[0].data, expected, col,
-        hwidth=hwidth, nsearch=nsearch,
-        intermediate_results=intermediate_results
+        reduced[0].data, expected, col, hwidth=hwidth, nsearch=nsearch, intermediate_results=intermediate_results
     )
 
 
@@ -627,7 +616,7 @@ def refine_boxes_from_array(arr, expected, col, hwidth=3, nsearch=20, intermedia
     cos_cut = 0.10
 
     # Collapse around a column
-    rr = arr[:, col - hwidth:col + hwidth + 1].mean(axis=1)
+    rr = arr[:, col - hwidth : col + hwidth + 1].mean(axis=1)
 
     # standardize and Y flip
     rr -= numpy.median(rr)
@@ -657,13 +646,10 @@ def refine_boxes_from_array(arr, expected, col, hwidth=3, nsearch=20, intermedia
     ioffset_max = 100  # pixels
 
     xwave0, sp_comb_lines0 = convolve_comb_lines(
-        lines_wave=expected_arr,
-        lines_flux=comb_lines_flux,
-        sigma=3,
-        crpix1=0, crval1=0, cdelt1=1, naxis1=naxis1
+        lines_wave=expected_arr, lines_flux=comb_lines_flux, sigma=3, crpix1=0, crval1=0, cdelt1=1, naxis1=naxis1
     )
-    ycorr0 = scipy.signal.correlate(smoothed, sp_comb_lines0, mode='same')
-    lags = scipy.signal.correlation_lags(len(sp_comb_lines0), naxis1, mode='same')
+    ycorr0 = scipy.signal.correlate(smoothed, sp_comb_lines0, mode="same")
+    lags = scipy.signal.correlation_lags(len(sp_comb_lines0), naxis1, mode="same")
 
     # initial offset
     ioffset = lags[ycorr0.argmax()]
@@ -671,18 +657,18 @@ def refine_boxes_from_array(arr, expected, col, hwidth=3, nsearch=20, intermedia
     # auxiliary plot showing the cross-correlation work
     if intermediate_results:
         fig, ax = plt.subplots(ncols=1, nrows=1)
-        ax.plot(lags, ycorr0, 'o-')
+        ax.plot(lags, ycorr0, "o-")
         ax.set_xlim(-ioffset_max, ioffset_max)
-        ax.set_xlabel('ioffset')
-        ax.set_ylabel('peak of correlation function')
-        ax.axvline(ioffset, linestyle=':', color='C1')
-        ax.set_title(f'optimal initial offset: {ioffset}')
-        plt.savefig('offset_borders_cross.png')
+        ax.set_xlabel("ioffset")
+        ax.set_ylabel("peak of correlation function")
+        ax.axvline(ioffset, linestyle=":", color="C1")
+        ax.set_title(f"optimal initial offset: {ioffset}")
+        plt.savefig("offset_borders_cross.png")
         plt.close()
 
     # using the initial offset, refine the peak search around the new
     # expected location, looking for a maximum in +/- nsearch pixels
-    refined = expected[:]    # initialize list with the same length
+    refined = expected[:]  # initialize list with the same length
     for ibox, box in enumerate(expected):
         box_ini = box - nsearch + ioffset
         box_end = box + nsearch + 1 + ioffset
@@ -692,20 +678,19 @@ def refine_boxes_from_array(arr, expected, col, hwidth=3, nsearch=20, intermedia
     # auxiliary plot showing the initial and final frontier locations
     if intermediate_results:
         fig, ax = plt.subplots(ncols=1, nrows=1)
-        ax.plot(smoothed, label=f'cross section at x={col}')
-        ax.plot(xwave0, sp_comb_lines0,
-                label='expected location of frontiers')
+        ax.plot(smoothed, label=f"cross section at x={col}")
+        ax.plot(xwave0, sp_comb_lines0, label="expected location of frontiers")
         for idum, item in enumerate(expected):
             if idum == 0:
-                label = 'refined frontier location'
+                label = "refined frontier location"
             else:
                 label = None
-            ax.plot(refined, smoothed[refined], 'ro', label=label)
+            ax.plot(refined, smoothed[refined], "ro", label=label)
         ax.legend()
-        ax.set_title(f'optimal initial offset: {ioffset}')
-        ax.set_xlabel('pixel number - 1')
-        ax.set_ylabel('inverted normalized signal')
-        plt.savefig('frontiers_between_pseudoslits.png')
+        ax.set_title(f"optimal initial offset: {ioffset}")
+        ax.set_xlabel("pixel number - 1")
+        ax.set_ylabel("inverted normalized signal")
+        plt.savefig("frontiers_between_pseudoslits.png")
         plt.close()
 
     return refined, col
@@ -713,8 +698,9 @@ def refine_boxes_from_array(arr, expected, col, hwidth=3, nsearch=20, intermedia
 
 def obtain_boxes_from_image(reduced, expected, npeaks, col):
     from numina.array.peaks.peakdet import find_peaks_indexes
+
     data = reduced[0].data
-    rr = data[:, col-1:col+2].mean(axis=1)
+    rr = data[:, col - 1 : col + 2].mean(axis=1)
     # standardize
     rr -= numpy.median(rr)
     rr /= rr.max()
@@ -746,13 +732,13 @@ def obtain_boxes_from_image(reduced, expected, npeaks, col):
     peak_flux = final[idx]
     # Number of peaks must be >=18
     npeaks = npeaks + 1
-    fidx = numpy.argsort(peak_flux)[:-(npeaks+1):-1]
+    fidx = numpy.argsort(peak_flux)[: -(npeaks + 1) : -1]
     nidx = idx[fidx]
     nidxs = numpy.sort(nidx)
 
     plt.plot(final)
     # plt.scatter(idx, [0.9 for m in idx])
-    plt.scatter(nidx, [0.95 for _ in nidx], c='r')
+    plt.scatter(nidx, [0.95 for _ in nidx], c="r")
     plt.scatter(expected, [1.0 for _ in expected])
     plt.show()
 
