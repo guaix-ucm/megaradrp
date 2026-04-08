@@ -334,7 +334,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         # The byteswapping is required by the cython module
         if data.dtype.byteorder != "=":
             self.logger.debug("byteswapping image")
-            image2 = data.byteswap().newbyteorder()
+            image2 = data.byteswap().view(data.dtype.newbyteorder())
         else:
             image2 = data
 

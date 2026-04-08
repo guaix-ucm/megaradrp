@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2023 Universidad Complutense de Madrid
+# Copyright 2011-2026 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -26,11 +26,11 @@ _logger = logging.getLogger(__name__)
 
 def apextract(data, trace):
     """Extract apertures."""
-    rss = numpy.empty((trace.shape[0], data.shape[1]), dtype='float32')
+    rss = numpy.empty((trace.shape[0], data.shape[1]), dtype="float32")
     for idx, r in enumerate(trace):
         ll = r[0]
         r = r[2] + 1
-        sl = (slice(ll, r), )
+        sl = (slice(ll, r),)
         m = data[sl].sum(axis=0)
         rss[idx] = m
     return rss
@@ -111,18 +111,19 @@ def apextract_tracemap(data, tracemap):
         borders.append((t2.fibid, pix_21, pix_32))
 
     nfibers = tracemap.total_fibers
-    out = numpy.zeros((nfibers, data.shape[1]), dtype='float')
+    out = numpy.zeros((nfibers, data.shape[1]), dtype="float")
     rss = extract_simple_rss2(data, borders, out=out)
 
     return rss
 
 
-def extract_simple_rss(arr, borders2, axis=0, out=None):
+def _extract_simple_rss(arr, borders, axis=0, out=None):
 
-    # FIXME, this should be changed in numina
+    # FIXME, this function is duplicated with extract.extract_simple_rss
+    # FIXME: remove this function
     # If arr is not in native byte order, the C-extension won't work
-    if arr.dtype.byteorder != '=':
-        arr2 = arr.byteswap().newbyteorder()
+    if arr.dtype.byteorder != "=":
+        arr2 = arr.byteswap().view(arr.dtype.newbyteorder())
     else:
         arr2 = arr
 
@@ -134,81 +135,74 @@ def extract_simple_rss(arr, borders2, axis=0, out=None):
         raise ValueError("'axis' must be 0 or 1")
 
     if out is None:
-        out = numpy.zeros((borders2[-1][0], arr3.shape[1]), dtype='float')
+        out = numpy.zeros((borders[-1][0], arr3.shape[1]), dtype="float")
 
     xx = numpy.arange(arr3.shape[1])
 
     # Borders contains a list of function objects
-    for idx, b1, b2 in borders2:
+    for idx, b1, b2 in borders:
         bb1 = b1(xx)
         bb1[bb1 < -0.5] = -0.5
         bb2 = b2(xx)
         bb2[bb2 > arr3.shape[0] - 0.5] = arr3.shape[0] - 0.5
-        extract.extract_simple_intl(arr3, xx, bb1, bb2, out[idx-1])
+        extract.extract_simple_intl(arr3, xx, bb1, bb2, out[idx - 1])
     return out
 
 
-apextract_tracemap_2 = apextract_tracemap
-extract_simple_rss2 = extract_simple_rss
+# apextract_tracemap_2 = apextract_tracemap
+extract_simple_rss2 = extract.extract_simple_rss
 
 
 class ApertureExtractor(numina.processing.Corrector):
     """A Node that extracts apertures."""
 
-    def __init__(self, trace_repr, datamodel=None, dtype='float32',
-                 processes=0, offset=None):
+    def __init__(self, trace_repr, datamodel=None, dtype="float32", processes=0, offset=None):
 
         if offset:
-            trace_repr.global_offset = trace_repr.global_offset + \
-                nppol.Polynomial(offset)
+            trace_repr.global_offset = trace_repr.global_offset + nppol.Polynomial(offset)
 
         self.trace_repr = trace_repr
         self.processes = processes
-        super(ApertureExtractor, self).__init__(
-            datamodel=datamodel,
-            calibid=trace_repr.uuid,
-            dtype=dtype
-        )
+        super(ApertureExtractor, self).__init__(datamodel=datamodel, calibid=trace_repr.uuid, dtype=dtype)
 
     def run(self, img):
         # workaround
         imgid = self.get_imgid(img)
 
-        method_name = 'simple'
+        method_name = "simple"
         simple = True
-        if hasattr(self.trace_repr, 'aper_extract'):
+        if hasattr(self.trace_repr, "aper_extract"):
             simple = False
-            method_name = 'advanced'
+            method_name = "advanced"
 
         if simple:
-            _logger.debug('simple aperture extraction')
-            _logger.debug('extracting (apextract_tracemap) in image %s', imgid)
-            _logger.debug('with trace map %s', self.calibid)
+            _logger.debug("simple aperture extraction")
+            _logger.debug("extracting (apextract_tracemap) in image %s", imgid)
+            _logger.debug("with trace map %s", self.calibid)
         else:
-            _logger.debug('advanced aperture extraction')
-            _logger.debug('extracting (apextract_model) in image %s', imgid)
-            _logger.debug('with model map %s', self.calibid)
+            _logger.debug("advanced aperture extraction")
+            _logger.debug("extracting (apextract_model) in image %s", imgid)
+            _logger.debug("with model map %s", self.calibid)
 
-        _logger.debug('offsets are %s', self.trace_repr.global_offset.coef)
+        _logger.debug("offsets are %s", self.trace_repr.global_offset.coef)
         if simple:
             rssdata = apextract_tracemap(img[0].data, self.trace_repr)
         else:
-            rssdata = self.trace_repr.aper_extract(
-                img[0].data, processes=self.processes)
+            rssdata = self.trace_repr.aper_extract(img[0].data, processes=self.processes)
 
         img[0].data = rssdata
 
         hdr = img[0].header
 
-        hdr['NUM-APE'] = self.calibid
-        hdr['history'] = f'Aperture extraction method {method_name}'
-        hdr['history'] = f'Aperture extraction with {self.calibid}'
-        hdr['history'] = f'Aperture extraction offsets are {self.trace_repr.global_offset.coef.tolist()}'
+        hdr["NUM-APE"] = self.calibid
+        hdr["history"] = f"Aperture extraction method {method_name}"
+        hdr["history"] = f"Aperture extraction with {self.calibid}"
+        hdr["history"] = f"Aperture extraction offsets are {self.trace_repr.global_offset.coef.tolist()}"
         tnow = datetime.datetime.now(datetime.UTC)
-        hdr['history'] = f'Aperture extraction time {tnow.isoformat()}'
+        hdr["history"] = f"Aperture extraction time {tnow.isoformat()}"
 
         # Update Fibers
-        fibers_ext = img['FIBERS']
+        fibers_ext = img["FIBERS"]
         fibers_ext_headers = fibers_ext.header
         for aper in self.trace_repr.contents:
             # set the value only if invalid
