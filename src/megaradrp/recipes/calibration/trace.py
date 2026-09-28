@@ -414,9 +414,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
                         start = 6
                         stop = 4090
                     else:
-                        ## start = mm[0, 0]
                         start = xfit[0]
-                        ## stop = mm[-1, 0]
                         stop = xfit[-1]
                     self.logger.debug(f"trace limits {start=} {stop=}")
             else:
