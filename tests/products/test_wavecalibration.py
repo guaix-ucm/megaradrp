@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2025 Universidad Complutense de Madrid
+# Copyright 2015-2026 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -8,6 +8,7 @@
 #
 
 import json
+import pathlib
 from tempfile import NamedTemporaryFile
 
 import pytest
@@ -46,12 +47,11 @@ def test_fail_wcal():
 def test_load_wavecalib(wavecalib_data_state):
 
     _data, state = wavecalib_data_state
-    my_file = NamedTemporaryFile()
 
-    with open(my_file.name, "w") as fd:
+    with NamedTemporaryFile(mode="w") as fd:
         json.dump(state, fd, cls=structured.ExtEncoder)
-
-    my_open_file = wcal.WavelengthCalibration._datatype_load(my_file.name)
+        fd.flush()  # To be sure the contents are in the file after dump
+        my_open_file = wcal.WavelengthCalibration._datatype_load(fd.name)
 
     assert my_open_file.instrument == state["instrument"]
     assert my_open_file.tags == state["tags"]
@@ -65,11 +65,14 @@ def test_dump_wavecalib(wavecalib_data_state):
 
     data, state = wavecalib_data_state
 
-    my_file = NamedTemporaryFile()
-    my_open_file = wcal.WavelengthCalibration._datatype_dump(data, my_file.name)
-
-    final = wcal.WavelengthCalibration._datatype_load(my_open_file)
-    traces = final.__getstate__()
+    with NamedTemporaryFile() as my_file:
+        # Using NamedTemporaryFile to generate a file name
+        try:
+            my_open_file = wcal.WavelengthCalibration._datatype_dump(data, my_file.name)
+            final = wcal.WavelengthCalibration._datatype_load(my_open_file)
+            traces = final.__getstate__()
+        finally:
+            pathlib.Path(my_open_file).unlink(missing_ok=True)
 
     assert traces == state
 
