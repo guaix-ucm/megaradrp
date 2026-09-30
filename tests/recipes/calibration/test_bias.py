@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2026 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -23,7 +23,7 @@ from megaradrp.loader import load_drp
 @pytest.mark.remote_data
 def test_bias():
 
-    BASE_URL = "http://guaix.fis.ucm.es/~spr/megara_test/BIAS/%s"
+    BASE_URL = "https://guaix.fis.ucm.es/~spr/megara_test/BIAS/%s"
     images = [
         "e99d2937d2c29a27c0ba4eebfcf7918e",
         "e99d2937d2c29a27c0ba4eebfcf7918e",

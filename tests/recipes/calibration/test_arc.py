@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2026 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -16,7 +16,7 @@ from numina.user.cli import main
 from megaradrp.loader import load_drp
 
 
-BASE_URL = "http://guaix.fis.ucm.es/~spr/megara_test/"
+BASE_URL = "https://guaix.fis.ucm.es/~spr/megara_test/"
 
 
 def run_recipe():

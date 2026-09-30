@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2019 Universidad Complutense de Madrid
+# Copyright 2011-2026 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -16,7 +16,7 @@ import numina.drps
 from megaradrp.recipes.calibration.bias import BiasRecipe
 from megaradrp.loader import load_drp
 
-BASE_URL = "http://guaix.fis.ucm.es/~spr/megara_test/"
+BASE_URL = "https://guaix.fis.ucm.es/~spr/megara_test/"
 
 
 def run_recipe():
