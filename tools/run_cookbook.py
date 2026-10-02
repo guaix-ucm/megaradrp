@@ -1,11 +1,9 @@
-
 import os
 import pathlib
 import logging
 import tarfile
-import yaml
 
-import numina.util.context as ctx
+from numina.user.cli import base_config
 from numina.user.helpers import create_datamanager, load_observations
 from numina.user.baserun import run_reduce
 from numina.tests.testcache import download_cache
@@ -17,8 +15,8 @@ def main():
 
     basedir = pathlib.Path().resolve()
 
-    tarball = 'MEGARA-cookbook-M15_LCB_HR-R-v1.tar.gz'
-    url = 'https://guaix.fis.ucm.es/~spr/megara_test/{}'.format(tarball)
+    tarball = "MEGARA-cookbook-M15_LCB_HR-R-v2.tar.gz"
+    url = "https://guaix.fis.ucm.es/~spr/megara_test/{}".format(tarball)
 
     downloaded = download_cache(url)
 
@@ -28,61 +26,32 @@ def main():
 
     os.remove(downloaded.name)
 
-    persist = False
+    config = base_config()
+    config["tool.run"]["basedir"] = str(basedir)
+    # Registry of the reductions, the products are found there in later reductions
+    config["tool.db"]["file"] = "numina-db.json"
 
-    if persist:
-        reqfile = basedir / 'control_dump.yaml'
-    else:
-        reqfile = basedir / 'control_v2.yaml'
+    dm = create_datamanager(config, str(basedir / "control.yaml"))
 
-    datadir = basedir / 'data'
+    obsresults = [
+        "0_bias.yaml",
+        "2_M15_modelmap.yaml",
+        "4_M15_fiberflat.yaml",
+        "6_M15_Lcbadquisition.yaml",
+        "8_M15_reduce_LCB.yaml",
+        "1_M15_tracemap.yaml",
+        "3_M15_wavecalib.yaml",
+        "5_M15_twilight.yaml",
+        "7_M15_Standardstar.yaml",
+    ]
 
-    dm = create_datamanager(reqfile, basedir, datadir)
+    sessions, loaded_obs = load_observations([str(basedir / name) for name in obsresults])
+    dm.backend.add_obs(loaded_obs)
 
-    if not persist:
-        with ctx.working_directory(basedir):
-            obsresults = ["0_bias.yaml", "2_M15_modelmap.yaml",
-         "4_M15_fiberflat.yaml", "6_M15_Lcbadquisition.yaml",
-         "8_M15_reduce_LCB.yaml", "1_M15_tracemap.yaml",
-         "3_M15_wavecalib.yaml", "5_M15_twilight.yaml",
-         "7_M15_Standardstar.yaml"]
-
-            sessions, loaded_obs = load_observations(obsresults, is_session=False)
-            dm.backend.add_obs(loaded_obs)
-
-    try:
-        if not persist:
-            obsid = "0_bias"
-            task0 = run_reduce(dm, obsid)
-
-            obsid = "1_HR-R"
-            task1 = run_reduce(dm, obsid)
-
-            obsid = "3_HR-R"
-            task3 = run_reduce(dm, obsid)
-
-            obsid = "4_HR-R"
-            task4 = run_reduce(dm, obsid)
-
-            obsid = "5_HR-R"
-            task5 = run_reduce(dm, obsid)
-
-            obsid = "6_HR-R"
-            task6 = run_reduce(dm, obsid)
-
-            obsid = "7_HR-R"
-            task7 = run_reduce(dm, obsid)
-
-            obsid = "8_HR-R"
-            task8 = run_reduce(dm, obsid)
-
-    finally:
-        with ctx.working_directory(basedir):
-            with open('control_dump.yaml', 'w') as fd:
-                datam = dm.backend.dump_data()
-                yaml.dump(datam, fd)
+    for obsid in ["0_bias", "1_HR-R", "3_HR-R", "4_HR-R", "5_HR-R", "6_HR-R", "7_HR-R", "8_HR-R"]:
+        run_reduce(dm, obsid)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     main()
