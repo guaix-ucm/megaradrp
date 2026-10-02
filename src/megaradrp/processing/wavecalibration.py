@@ -265,23 +265,27 @@ def header_add_barycentric_correction(hdr, key="B", out=None):
         if kreq not in hdr:
             raise KeyError(f"Keyword '{kreq}' not found.")
 
-    if "OBSGEO-B" not in hdr:
+    if "OBSGEO-X" not in hdr and "OBSGEO-B" not in hdr:
         warnings.warn("OBSGEO- keywords not defined, using default values for GTC", RuntimeWarning)
-        # Geocentric coordinates of GTC
-        # Former values
-        # hdr['OBSGEO-X'] = 5327285.0921
-        # hdr['OBSGEO-Y'] = -1718777.1125
-        # hdr['OBSGEO-Z'] = 3051786.7327
-        hdr["OBSGEO-B"] = (+28.76060, "[deg] Geodetic latitude")
-        hdr["OBSGEO-L"] = (-17.88160, "[deg] Geodetic longitude")
-        hdr["OBSGEO-H"] = (2326, "[m] Geodetic altitude")
+        # Geocentric coordinates of GTC, see issue #333
+        # Only one set of coordinates is written, wcslib finds the
+        # geodetic coordinates computed by astropy inconsistent by 3 m
+        hdr["OBSGEO-X"] = (5327285.0921, "[m] Observation X-position")
+        hdr["OBSGEO-Y"] = (-1718777.1125, "[m] Observation Y-position")
+        hdr["OBSGEO-Z"] = (3051786.7327, "[m] Observation Z-position")
 
     # Get main WCS
     wcs0 = astropy.wcs.WCS(hdr, fix=False)
     if wcs0.wcs.spec == -1:
         # We don't have a spec axis
         raise TypeError("Header does not contain spectral axis")
-    gtc = EarthLocation.from_geocentric(wcs0.wcs.obsgeo[0], wcs0.wcs.obsgeo[1], wcs0.wcs.obsgeo[2], unit="m")
+    obsgeo_xyz = wcs0.wcs.obsgeo[:3]
+    if numpy.all(numpy.isfinite(obsgeo_xyz)):
+        gtc = EarthLocation.from_geocentric(*obsgeo_xyz, unit="m")
+    else:
+        # Only OBSGEO-B/L/H, with fix=False the geocentric
+        # coordinates are not computed from them
+        gtc = EarthLocation.from_geodetic(lon=hdr["OBSGEO-L"], lat=hdr["OBSGEO-B"], height=hdr["OBSGEO-H"])
     date_obs = astropy.time.Time(wcs0.wcs.dateobs, format="fits")
     # if frame='fk5', we need to pass the epoch and equinox
     sc = SkyCoord(ra=hdr["RADEG"], dec=hdr["DECDEG"], unit="deg")
