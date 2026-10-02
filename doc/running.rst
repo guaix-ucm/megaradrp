@@ -6,15 +6,15 @@ The MEGARA DRP is run through a command line interface
 provided by :program:`numina`.
 
 The run mode of numina requires:
- 
+
   * A observation result file in YAML_ format
-  * A requirements file in YAML format 
+  * A requirements file in YAML format
   * The raw images obtained in the observing block
   * The calibrations required by the recipe
- 
+
 The observation result file and the requirements file are created by the user,
 the format is described in the following sections.
- 
+
 ********************************
 Format of the observation result
 ********************************
@@ -57,7 +57,7 @@ This is an example of the observation result file
       - r0130.fits
       - r0131.fits
       - r0132.fits
-   
+
 *******************************
 Format of the requirements file
 *******************************
@@ -104,16 +104,20 @@ Example requirements file:
 
 
 ********************
-Running the pipeline 
+Running the pipeline
 ********************
 
-:program:`numina` copies the images (calibrations and raw data) from directory 
-``datadir`` to directory ``workdir``, where the processing happens. 
-The result is stored in directory ``resultsdir``. 
-The default values are for each directory are ``data``, ``obsid<id_of_obs>_work`` and ``obsid<id_of_obs>_results``.
-All these directories can be defined in the command line using flags::
+:program:`numina` links the images (calibrations and raw data) from directory
+``datadir`` in directory ``workdir``, where the processing happens (with
+``--copy-files``, the images are copied instead).
+The result is stored in directory ``resultsdir``.
+The default values of these directories are ``data``, ``obsid<id_of_obs>_work`` and ``obsid<id_of_obs>_results``,
+inside ``basedir``, that is the current directory by default.
+The names of the work and result directories are defined in the configuration of numina
+(``workdir_tmpl`` and ``resultdir_tmpl`` in the section ``[tool.run]``).
+The base and data directories can be defined in the command line using flags::
 
-  $ numina run --workdir /tmp/test1 --datadir /scrat/obs/run12222 obs.yaml -r requires.yaml
+  $ numina run --basedir /tmp/test1 --datadir /scrat/obs/run12222 obs.yaml -r requires.yaml
 
 See :ref:`numina:cli` for a full description of the command line interface.
 
