@@ -18,7 +18,7 @@ def main():
     basedir = pathlib.Path().resolve()
 
     tarball = 'MEGARA-cookbook-M15_LCB_HR-R-v1.tar.gz'
-    url = 'http://guaix.fis.ucm.es/~spr/megara_test/{}'.format(tarball)
+    url = 'https://guaix.fis.ucm.es/~spr/megara_test/{}'.format(tarball)
 
     downloaded = download_cache(url)
 
