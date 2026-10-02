@@ -93,8 +93,8 @@ def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser(description="description: overplot traces")
     # positional parameters
-    parser.add_argument("fits_file", help="FITS image containing the spectra", type=str)
-    parser.add_argument("traces_file", help="JSON file with fiber traces", type=str)
+    parser.add_argument("fits_file", help="FITS image containing the spectra")
+    parser.add_argument("traces_file", help="JSON file with fiber traces")
     # optional parameters
     parser.add_argument(
         "--rawimage", help="FITS file is a RAW image (otherwise trimmed " "image is assumed)", action="store_true"
@@ -112,7 +112,7 @@ def main(args=None):
     parser.add_argument("--bbox", help="bounding box tuple: nc1,nc2,ns1,ns2")
     parser.add_argument("--keystitle", help="tuple of FITS keywords.format: " + "key1,key2,...keyn.'format'")
     parser.add_argument("--geometry", help="tuple x,y,dx,dy", default="640,480,0,0")
-    parser.add_argument("--pdffile", help="ouput PDF file name", type=str)
+    parser.add_argument("--pdffile", help="ouput PDF file name")
     parser.add_argument("--echo", help="Display full command line", action="store_true")
 
     args = parser.parse_args(args=args)
