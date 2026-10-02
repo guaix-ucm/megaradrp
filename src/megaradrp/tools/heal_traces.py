@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2024 Universidad Complutense de Madrid
+# Copyright 2014-2026 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -155,10 +155,10 @@ def main(args=None):
     # positional parameters
     parser.add_argument("fits_file",
                         help="FITS image containing the spectra",
-                        type=argparse.FileType('r'))
+                        type=str)
     parser.add_argument("traces_file",
                         help="JSON file with fiber traces",
-                        type=argparse.FileType('r'))
+                        type=str)
     # optional parameters
     parser.add_argument("--global_offset",
                         nargs='+',
@@ -172,10 +172,10 @@ def main(args=None):
                         action="store_true")
     parser.add_argument("--healing",
                         help="YAML healing file to improve traces",
-                        type=argparse.FileType('r'))
+                        type=str)
     parser.add_argument("--updated_traces",
                         help="JSON file with modified fiber traces",
-                        type=argparse.FileType('w'))
+                        type=str)
     parser.add_argument("--z1z2",
                         help="tuple z1,z2, minmax or None (use zscale)")
     parser.add_argument("--bbox",
@@ -188,7 +188,7 @@ def main(args=None):
                         default="0,0,640,480")
     parser.add_argument("--pdffile",
                         help="ouput PDF file name",
-                        type=argparse.FileType('w'))
+                        type=str)
     parser.add_argument("--echo",
                         help="Display full command line",
                         action="store_true")
@@ -207,11 +207,11 @@ def main(args=None):
     # read pdffile
     if args.pdffile is not None:
         from matplotlib.backends.backend_pdf import PdfPages
-        pdf = PdfPages(args.pdffile.name)
+        pdf = PdfPages(args.pdffile)
     else:
         pdf = None
 
-    ax = ximshow_file(args.fits_file.name,
+    ax = ximshow_file(args.fits_file,
                       args_cbar_orientation='vertical',
                       args_z1z2=args.z1z2,
                       args_bbox=args.bbox,
@@ -221,7 +221,7 @@ def main(args=None):
                       show=False)
 
     # read and display traces from JSON file
-    bigdict = json.loads(open(args.traces_file.name).read())
+    bigdict = json.loads(open(args.traces_file).read())
 
     # Load metadata from the traces
     meta_info = bigdict['meta_info']
@@ -282,7 +282,7 @@ def main(args=None):
 
     # if present, read healing JSON file
     if args.healing is not None:
-        with open(args.healing.name, 'rt') as fstream:
+        with open(args.healing, 'rt') as fstream:
             fstream_iterator = yaml.safe_load_all(fstream)
             for operation in fstream_iterator:
                 if 'description' not in operation:
@@ -422,7 +422,7 @@ def main(args=None):
                     refit = operation['refit']
                     if refit:
                         print('refitting...', end="")
-                        coeff = refit_trace(args.fits_file.name, coeff, start, stop, poldeg)
+                        coeff = refit_trace(args.fits_file, coeff, start, stop, poldeg)
                         print('OK!')
                     plot_trace(ax, coeff, start, stop, args.fibids, fiblabel, colour='green')
                     bigdict['contents'][fibid - 1]['start'] = start
@@ -466,7 +466,7 @@ def main(args=None):
                     refit = operation['refit']
                     if refit:
                         print('refitting...', end="")
-                        coeff = refit_trace(args.fits_file.name, coeff, start, stop, poldeg)
+                        coeff = refit_trace(args.fits_file, coeff, start, stop, poldeg)
                         print('OK!')
                     if start < start_reuse:
                         plot_trace(ax, coeff, start, start_reuse, args.fibids, fiblabel, colour='green')
@@ -552,10 +552,10 @@ def main(args=None):
 # update trace map
     if args.updated_traces is not None:
         # avoid overwritting initial JSON file
-        if args.updated_traces.name != args.traces_file.name:
+        if args.updated_traces != args.traces_file:
             # new random uuid for the updated calibration
             bigdict['uuid'] = str(uuid4())
-            with open(args.updated_traces.name, 'w') as outfile:
+            with open(args.updated_traces, 'w') as outfile:
                 json.dump(bigdict, outfile, indent=2)
 
     if pdf is not None:

@@ -1,3 +1,12 @@
+#
+# Copyright 2014-2026 Universidad Complutense de Madrid
+#
+# This file is part of Megara DRP
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+# License-Filename: LICENSE.txt
+#
+
 from __future__ import division
 from __future__ import print_function
 
@@ -14,10 +23,10 @@ def main(args=None):
     # positional parameters
     parser.add_argument("json_file",
                         help="JSON file with fiber traces",
-                        type=argparse.FileType('r'))
+                        type=str)
     parser.add_argument("ds9_file",
                         help="Output region file in ds9 format",
-                        type=argparse.FileType('w'))
+                        type=str)
     # optional parameters
     parser.add_argument("--numpix",
                         help="Number of pixels/trace (default 100)",
@@ -27,7 +36,7 @@ def main(args=None):
                         default=0, type=float)
     parser.add_argument("--new_json",
                         help="New JSON file after applying specified yoffset",
-                        type=argparse.FileType('w'))
+                        type=str)
     parser.add_argument("--rawimage",
                         help="FITS file is a RAW image (RSS assumed instead)",
                         action="store_true")

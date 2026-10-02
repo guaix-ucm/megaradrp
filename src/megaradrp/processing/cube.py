@@ -380,7 +380,7 @@ def main(args=None):
 
     methods = {"nn": 1, "linear": 2}
 
-    parser.add_argument("rss", help="RSS file with fiber traces", type=argparse.FileType("rb"))
+    parser.add_argument("rss", help="RSS file with fiber traces", type=str)
     parser.add_argument(
         "-p", "--pixel-size", type=float, default=0.3, metavar="PIXEL_SIZE", help="Pixel size in arc seconds"
     )

@@ -93,8 +93,8 @@ def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser(description="description: overplot traces")
     # positional parameters
-    parser.add_argument("fits_file", help="FITS image containing the spectra", type=argparse.FileType("r"))
-    parser.add_argument("traces_file", help="JSON file with fiber traces", type=argparse.FileType("r"))
+    parser.add_argument("fits_file", help="FITS image containing the spectra", type=str)
+    parser.add_argument("traces_file", help="JSON file with fiber traces", type=str)
     # optional parameters
     parser.add_argument(
         "--rawimage", help="FITS file is a RAW image (otherwise trimmed " "image is assumed)", action="store_true"
@@ -112,7 +112,7 @@ def main(args=None):
     parser.add_argument("--bbox", help="bounding box tuple: nc1,nc2,ns1,ns2")
     parser.add_argument("--keystitle", help="tuple of FITS keywords.format: " + "key1,key2,...keyn.'format'")
     parser.add_argument("--geometry", help="tuple x,y,dx,dy", default="640,480,0,0")
-    parser.add_argument("--pdffile", help="ouput PDF file name", type=argparse.FileType("w"))
+    parser.add_argument("--pdffile", help="ouput PDF file name", type=str)
     parser.add_argument("--echo", help="Display full command line", action="store_true")
 
     args = parser.parse_args(args=args)
@@ -133,12 +133,12 @@ def main(args=None):
     if args.pdffile is not None:
         from matplotlib.backends.backend_pdf import PdfPages
 
-        pdf = PdfPages(args.pdffile.name)
+        pdf = PdfPages(args.pdffile)
     else:
         pdf = None
 
     ax = ximshow_file(
-        args.fits_file.name,
+        args.fits_file,
         args_cbar_orientation="vertical",
         args_z1z2=args.z1z2,
         args_bbox=args.bbox,
@@ -156,14 +156,14 @@ def main(args=None):
 
     # read and display traces from JSON file
     # TODO: some checks, this should be done by validating the struct
-    with open(args.traces_file.name, mode="r") as fd:
+    with open(args.traces_file, mode="r") as fd:
         import json
 
         data = json.load(fd)
         if "type_fqn" not in data:
             raise ValueError("malformed JSON file, 'type_fqn' missing")
     #
-    apers = structured.open(args.traces_file.name)
+    apers = structured.open(args.traces_file)
     # Load metadata from the traces
     meta_info = apers.meta_info
 

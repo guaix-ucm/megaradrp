@@ -1,3 +1,12 @@
+#
+# Copyright 2014-2026 Universidad Complutense de Madrid
+#
+# This file is part of Megara DRP
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+# License-Filename: LICENSE.txt
+#
+
 from __future__ import division
 from __future__ import print_function
 
@@ -154,7 +163,7 @@ def main(args=None):
     # positional parameters
     parser.add_argument("fitsfile",
                         help="FITS image",
-                        type=argparse.FileType('r'))
+                        type=str)
     parser.add_argument("--channels",
                         help="Channel region to extract cross section ",
                         default=(1990, 2010),
@@ -170,7 +179,7 @@ def main(args=None):
 
     args = parser.parse_args(args=args)
 
-    find_boxes(args.fitsfile.name, args.channels, args.nsearch,
+    find_boxes(args.fitsfile, args.channels, args.nsearch,
                args.debugplot)
 
 
