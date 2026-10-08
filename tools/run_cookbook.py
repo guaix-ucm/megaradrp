@@ -3,9 +3,7 @@ import pathlib
 import logging
 import tarfile
 
-from numina.user.cli import base_config
-from numina.user.helpers import create_datamanager, load_observations
-from numina.user.baserun import run_reduce
+from numina.user.session import Session
 from numina.tests.testcache import download_cache
 
 
@@ -26,14 +24,10 @@ def main():
 
     os.remove(downloaded.name)
 
-    config = base_config()
-    config["tool.run"]["basedir"] = str(basedir)
     # Registry of the reductions, the products are found there in later reductions
-    config["tool.db"]["file"] = "numina-db.json"
+    session = Session(basedir=basedir, control="control.yaml", db="numina-db.json")
 
-    dm = create_datamanager(config, str(basedir / "control.yaml"))
-
-    obsresults = [
+    session.add_observations(
         "0_bias.yaml",
         "2_M15_modelmap.yaml",
         "4_M15_fiberflat.yaml",
@@ -43,13 +37,10 @@ def main():
         "3_M15_wavecalib.yaml",
         "5_M15_twilight.yaml",
         "7_M15_Standardstar.yaml",
-    ]
-
-    sessions, loaded_obs = load_observations([str(basedir / name) for name in obsresults])
-    dm.backend.add_obs(loaded_obs)
+    )
 
     for obsid in ["0_bias", "1_HR-R", "3_HR-R", "4_HR-R", "5_HR-R", "6_HR-R", "7_HR-R", "8_HR-R"]:
-        run_reduce(dm, obsid)
+        session.run(obsid)
 
 
 if __name__ == "__main__":
