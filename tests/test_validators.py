@@ -1,3 +1,4 @@
+import functools
 from types import SimpleNamespace
 
 import astropy.io.fits as fits
@@ -6,6 +7,7 @@ import pytest
 from numina.exceptions import ValidationError
 
 from megaradrp.datatype import MegaraDataType
+from megaradrp.datamodel import create_default_fiber_header
 from megaradrp.validators import ExtChecker, check_as_datatype, definition_validator
 
 
@@ -14,18 +16,37 @@ def create_hdulist(*cards_list):
     return [SimpleNamespace(header=fits.Header(list(cards.items()))) for cards in cards_list]
 
 
-def bias_cards(**kwargs):
+def primary_cards(**kwargs):
     cards = {
         "NAXIS": 2,
         "NAXIS1": 4196,
         "NAXIS2": 4212,
         "INSTRUME": "MEGARA",
-        "OBSMODE": "MegaraBiasImage",
-        "EXPTIME": 0.0,
-        "DARKTIME": 0.0,
+        "OBSMODE": "MegaraSuccess",
+        "DATE-OBS": "2017-08-31T12:00:00.00",
+        "INSCONF": "ca3558e3-e50d-4bbc-86bd-da50a0998a48",
+        "INSMODE": "LCB",
+        "VPH": "HR-R",
+        "EXPTIME": 10.0,
     }
     cards.update(kwargs)
-    return cards
+    # None removes the keyword
+    return {key: value for key, value in cards.items() if value is not None}
+
+
+def bias_cards(**kwargs):
+    cards = {"OBSMODE": "MegaraBiasImage", "EXPTIME": 0.0, "DARKTIME": 0.0}
+    cards.update(kwargs)
+    return primary_cards(**cards)
+
+
+@functools.cache
+def _default_fibers_cards():
+    return dict(create_default_fiber_header("LCB"))
+
+
+def fibers_cards():
+    return dict(_default_fibers_cards())
 
 
 def test_definitions_exist():
@@ -52,14 +73,15 @@ def test_check_bias():
 )
 def test_check_bias_invalid(cards):
     checker = check_as_datatype(MegaraDataType.IMAGE_BIAS)
-    with pytest.raises(jsonschema.exceptions.ValidationError):
+    key = next(iter(cards))
+    with pytest.raises(ValidationError, match=f"HDU 0, keyword {key}: "):
         checker(create_hdulist(bias_cards(**cards)))
 
 
 def test_check_bias_number_of_hdus():
     checker = check_as_datatype(MegaraDataType.IMAGE_BIAS)
     with pytest.raises(ValueError, match="number of HDUs"):
-        checker(create_hdulist(bias_cards(), {"EXTNAME": "FIBERS"}))
+        checker(create_hdulist(bias_cards(), fibers_cards()))
 
 
 def test_definition_validator_resolves_references():
@@ -70,12 +92,11 @@ def test_definition_validator_resolves_references():
         validator.validate({"NAXIS": 2, "NAXIS1": 4300, "NAXIS2": 644, "INSMODE": "LCB"})
 
 
-def lamp_hdulist(lamps_i=(), lamps_s=(), **kwargs):
-    cards = {"NAXIS": 2, "NAXIS1": 4196, "NAXIS2": 4212}
+def lamp_hdulist(lamps_i=(), lamps_s=()):
+    cards = primary_cards()
     cards.update({f"LAMPI{idx}S": int(idx in lamps_i) for idx in range(1, 3)})
     cards.update({f"LAMPS{idx}S": int(idx in lamps_s) for idx in range(1, 6)})
-    cards.update(kwargs)
-    return create_hdulist(cards, {"EXTNAME": "FIBERS"})
+    return create_hdulist(cards, fibers_cards())
 
 
 @pytest.mark.parametrize(
@@ -115,3 +136,33 @@ def test_check_lamps_missing_keyword():
     checker = check_as_datatype(MegaraDataType.IMAGE_FLAT)
     with pytest.raises(ValidationError, match="LAMPS3S"):
         checker(hdulist)
+
+
+@pytest.mark.parametrize(
+    "cards, msg",
+    [
+        ({"INSTRUME": None}, "HDU 0: 'INSTRUME' is a required property"),
+        ({"COVER": "CLOSED"}, "HDU 0, keyword COVER: "),
+        ({"VPH": 3}, "HDU 0, keyword VPH: 3 is not of type 'string'"),
+    ],
+)
+def test_check_full_schema(cards, msg):
+    """The images are also validated with the full schema"""
+    checker = ExtChecker(check_as_datatype.validator_image, [])
+    with pytest.raises(ValidationError, match=msg):
+        checker(create_hdulist(primary_cards(**cards), fibers_cards()))
+
+
+@pytest.mark.parametrize("cover", ["STOPPED", "BOTH_OPEN", 3])
+def test_check_cover(cover):
+    """COVER is an integer in the commissioning images"""
+    checker = ExtChecker(check_as_datatype.validator_image, [])
+    assert checker(create_hdulist(primary_cards(COVER=cover), fibers_cards()))
+
+
+def test_check_without_uuid():
+    """UUID is optional, the commissioning images do not have it"""
+    checker = ExtChecker(check_as_datatype.validator_image, [])
+    assert checker(create_hdulist(primary_cards(UUID=None), fibers_cards()))
+    with pytest.raises(ValidationError, match="HDU 0, keyword UUID: "):
+        checker(create_hdulist(primary_cards(UUID="1"), fibers_cards()))

@@ -141,6 +141,52 @@ def check_invalid(obj, level=None):
     raise ValidationError
 
 
+def _leaf_errors(error):
+    if error.context:
+        for sub_error in error.context:
+            yield from _leaf_errors(sub_error)
+    else:
+        yield error
+
+
+def relevant_error(error):
+    """The most relevant leaf error of a schema error
+
+    In an error of anyOf or oneOf, the relevant alternative is the
+    one that fails deepest in the instance, with fewer errors.
+    """
+    if not error.context:
+        return error
+    alternatives = {}
+    for sub_error in error.context:
+        alternatives.setdefault(sub_error.relative_schema_path[0], []).extend(_leaf_errors(sub_error))
+    leaves = min(alternatives.values(), key=lambda errors: (-max(len(e.absolute_path) for e in errors), len(errors)))
+    return max(leaves, key=lambda e: len(e.absolute_path))
+
+
+def validate_schema(validator, instance, hdu=None):
+    """Validate `instance` with `validator`, raise ValidationError with a short message
+
+    `hdu` is the index of the HDU when `instance` are the values of its header.
+    """
+    error = jsonschema.exceptions.best_match(validator.iter_errors(instance))
+    if error is None:
+        return
+    error = relevant_error(error)
+    path = list(error.absolute_path)
+    if hdu is not None:
+        path = [hdu, "values"] + path
+    if len(path) >= 3 and path[1] == "values":
+        where = f"HDU {path[0]}, keyword {path[2]}: "
+    elif len(path) == 2 and path[1] == "values":
+        where = f"HDU {path[0]}: "
+    elif path:
+        where = "/".join(str(part) for part in path) + ": "
+    else:
+        where = ""
+    raise ValidationError(where + error.message)
+
+
 class Checker:
     def __init__(self, validator):
         super(Checker, self).__init__()
@@ -168,12 +214,7 @@ class ImageChecker(Checker):
         return True
 
     def check_dheaders(self, dheaders, level=None):
-        # Check with json schema
-        # convert header to dict
-        try:
-            self.validator.validate(dheaders)
-        except jsonschema.exceptions.ValidationError:
-            raise
+        validate_schema(self.validator, dheaders)
 
         if len(dheaders) == 2:
             values_fibers = dheaders[1]["values"]
@@ -186,7 +227,7 @@ class StructChecker(Checker):
         super(StructChecker, self).__init__(validator)
 
     def check(self, obj, level=None):
-        self.validator.validate(obj)
+        validate_schema(self.validator, obj)
         self.check_post(obj, level=level)
         return True
 
@@ -214,19 +255,15 @@ class ExtChecker(BaseChecker):
         self.sub_validators = [definition_validator(validator, name) for name in definitions]
 
     def check_dheaders(self, dheaders, level=None):
-
-        try:
-            super(ExtChecker, self).check_dheaders(dheaders, level=level)
-        except jsonschema.exceptions.ValidationError:
-            pass
-        # Image must have only one extension
         if self.n_ext is not None:
             if len(dheaders) != self.n_ext:
                 msg = f"image has not expected number of HDUs ({self.n_ext})"
                 raise ValueError(msg)
 
+        super(ExtChecker, self).check_dheaders(dheaders, level=level)
+
         for sub_validator in self.sub_validators:
-            sub_validator.validate(dheaders[0]["values"])
+            validate_schema(sub_validator, dheaders[0]["values"], hdu=0)
 
 
 def lamps_on(header, kind):
