@@ -9,6 +9,7 @@
 
 """Validators for Observing modes"""
 
+import logging
 import pkgutil
 from io import StringIO
 
@@ -18,6 +19,8 @@ import jsonschema
 from numina.exceptions import ValidationError
 
 from megaradrp.datatype import MegaraDataType
+
+_logger = logging.getLogger(__name__)
 
 
 def validate_focus(mode, obresult):
@@ -73,7 +76,7 @@ def validate_arc(mode, obresult):
 def validate_flat(mode, obresult):
     """Validate FLAT"""
 
-    # Assume that the individual images are valid IMG_COMP
+    # Assume that the individual images are valid IMAGE_FLAT
     return True
 
 
@@ -87,8 +90,6 @@ def validate_keyword_exists(header, key):
 
 
 def validate_keyword_value(header, key, expected):
-    from numina.exceptions import ValidationError
-
     validate_keyword_exists(header, key)
     value = header.get(key)
 
@@ -99,8 +100,6 @@ def validate_keyword_value(header, key, expected):
 
 def validate_keyword_any_value(header, key, any_expected):
     """Validate that keyword has any of allowed values"""
-    from numina.exceptions import ValidationError
-
     validate_keyword_exists(header, key)
     value = header.get(key)
 
@@ -165,7 +164,7 @@ class ImageChecker(Checker):
     def check(self, hdulist, level=None):
         dheaders = convert_headers(hdulist)
         self.check_dheaders(dheaders, level=level)
-        super(ImageChecker, self).check_post(hdulist, level=level)
+        self.check_post(hdulist, level=level)
         return True
 
     def check_dheaders(self, dheaders, level=None):
@@ -230,30 +229,30 @@ class ExtChecker(BaseChecker):
             sub_validator.validate(dheaders[0]["values"])
 
 
+def lamps_on(header, kind):
+    """Keywords of the lamps of `kind` that are ON
+
+    `kind` is "I" for the incandescent lamps and "S" for
+    the comparison lamps.
+    """
+    nlamps = {"I": 2, "S": 5}[kind]
+    keys = [f"LAMP{kind}{idx}S" for idx in range(1, nlamps + 1)]
+    for key in keys:
+        validate_keyword_exists(header, key)
+    return [key for key in keys if header[key]]
+
+
 class FlatImageChecker(ExtChecker):
     def __init__(self, validator):
         super(FlatImageChecker, self).__init__(validator, ["raw_hdu_values", "flat_hdu_values"], n_ext=2)
 
     def check_post(self, hdulist, level=None):
-        """Additional checks"""
-        self.check_post_level1(hdulist)
-
-    def check_post_level1(self, hdulist):
-        """Additional checks"""
+        """Check the lamps: some incandescent ON, all comparison OFF"""
         hdr = hdulist[0].header
-        # Flat must have inc LAMPS-ON
-        # Flat must have comp LAMPS-OFF
-        lamp_i_s = hdr["LAMPI1S"] or hdr["LAMPI1S"]
-        if not lamp_i_s:
-            msg = "all incandescent lamps are OFF"
-            raise ValidationError(msg)
-        lamp_s_s = True
-        for idx in range(1, 6):
-            label = f"LAMPS{idx}S"
-            lamp_s_s = lamp_s_s and hdr[label]
-        if lamp_s_s:
-            msg = "some comparation lamps are ON"
-            raise ValidationError(msg)
+        if not lamps_on(hdr, "I"):
+            raise ValidationError("all incandescent lamps are OFF")
+        if lamps_on(hdr, "S"):
+            raise ValidationError("some comparison lamps are ON")
 
 
 class CompImageChecker(ExtChecker):
@@ -261,25 +260,12 @@ class CompImageChecker(ExtChecker):
         super(CompImageChecker, self).__init__(validator, ["raw_hdu_values", "comp_hdu_values"], n_ext=2)
 
     def check_post(self, hdulist, level=None):
-        """Additional checks"""
-        self.check_post_level1(hdulist)
-
-    def check_post_level1(self, hdulist):
-        """Additional checks"""
+        """Check the lamps: all incandescent OFF, some comparison ON"""
         hdr = hdulist[0].header
-        # Flat must have all inc LAMPS-OFF
-        # Flat must have some comp LAMPS-ON
-        lamp_i_s = hdr["LAMPI1S"] or hdr["LAMPI1S"]
-        if lamp_i_s:
-            msg = "some incandescent lamps are ON"
-            raise ValidationError(msg)
-        lamp_s_s = False
-        for idx in range(1, 6):
-            label = f"LAMPS{idx}S"
-            lamp_s_s = lamp_s_s or hdr[label]
-        if not lamp_s_s:
-            msg = "all comparation lamps are OFF"
-            raise ValidationError(msg)
+        if lamps_on(hdr, "I"):
+            raise ValidationError("some incandescent lamps are ON")
+        if not lamps_on(hdr, "S"):
+            raise ValidationError("all comparison lamps are OFF")
 
 
 class TargetImageChecker(ExtChecker):
@@ -287,25 +273,12 @@ class TargetImageChecker(ExtChecker):
         super(TargetImageChecker, self).__init__(validator, ["raw_hdu_values"], n_ext=2)
 
     def check_post(self, hdulist, level=None):
-        """Additional checks"""
-        self.check_post_level1(hdulist)
-
-    def check_post_level1(self, hdulist):
-        """Additional checks"""
+        """Check the lamps: all incandescent and comparison OFF"""
         hdr = hdulist[0].header
-        # Target must have all inc LAMPS-OFF
-        # Target must have all comp LAMPS-ON
-        lamp_i_s = hdr["LAMPI1S"] or hdr["LAMPI1S"]
-        if lamp_i_s:
-            msg = "some incandescent lamps are ON"
-            raise ValidationError(msg)
-        lamp_s_s = False
-        for idx in range(1, 6):
-            label = f"LAMPS{idx}S"
-            lamp_s_s = lamp_s_s or hdr[label]
-        if lamp_s_s:
-            msg = "some comparation lamps are ON"
-            raise ValidationError(msg)
+        if lamps_on(hdr, "I"):
+            raise ValidationError("some incandescent lamps are ON")
+        if lamps_on(hdr, "S"):
+            raise ValidationError("some comparison lamps are ON")
 
 
 class MasterFlatRSSChecker(ExtChecker):
@@ -339,6 +312,7 @@ def check_header_additional(values_primary, values_fibers):
             if keyname not in values_fibers:
                 raise ValueError(f"keyname {keyname} not in values_fibers")
 
+    missing_names = []
     for idfiber in range(1, nfibers + 1):
         # types are check in the json schema
         for stype in ["A", "D", "R", "X", "Y", "B"]:
@@ -347,12 +321,13 @@ def check_header_additional(values_primary, values_fibers):
                 msg = f"keyname {keyname} not in values_fibers"
                 raise ValueError(msg)
 
-        for stype in ["N"]:
-            keyname = f"FIB{idfiber:03d}_{stype}"
-            if keyname not in values_fibers:
-                msg = f"keyword {keyname} not in values_fibers"
-                print(msg)
-                # raise ValueError(msg)
+        # the names of the fibers are optional
+        keyname = f"FIB{idfiber:03d}_N"
+        if keyname not in values_fibers:
+            missing_names.append(keyname)
+
+    if missing_names:
+        _logger.warning("%d keywords FIBxxx_N not in values_fibers", len(missing_names))
 
 
 class CheckAsDatatype:
