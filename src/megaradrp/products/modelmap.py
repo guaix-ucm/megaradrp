@@ -44,7 +44,8 @@ class GeometricModel(GeometricAperture):
             serial = json_serial_function(val)
             newparams[key] = serial
 
-        state["model"]["params"] = newparams
+        # a copy of the model, the model of the object is not modified
+        state["model"] = dict(state["model"], params=newparams)
         return state
 
     def __setstate__(self, state):
