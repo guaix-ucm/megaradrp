@@ -35,11 +35,6 @@ modes:
   key: MegaraFiberFlatImage
   rawimage: IMAGE_FLAT
   validator: megaradrp.validators.validate_flat
-- name: Image with the fiber MOS
-  summary: Summary of Fiber MOS image
-  description: Lines and mode lines
-  key: MegaraMosImage
-  rawimage: IMAGE_TARGET
 - name: Trace Map
   summary: Summary of Fiber MOS image
   description: Lines and mode lines
