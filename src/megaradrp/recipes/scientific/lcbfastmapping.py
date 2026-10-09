@@ -9,8 +9,7 @@
 
 """LCB Fast Mapping Recipe for Megara"""
 
-
-from numina.core import Product, ObservationResult
+from numina.core import ObservationResult, Result
 
 from megaradrp.ntypes import ProcessedMultiRSS
 from megaradrp.core.recipe import MegaraBaseRecipe
@@ -35,35 +34,36 @@ class LCBFastMappingRecipe(MegaraBaseRecipe):
     are stacked together in multi RSS format.
 
     """
-    final_multirss = Product(ProcessedMultiRSS)
+
+    final_multirss = Result(ProcessedMultiRSS)
 
     def run(self, rinput):
-        self.logger.info('start FastMappingRecipe')
+        self.logger.info("start FastMappingRecipe")
         obresult = rinput.obresult
         imgs = [frame.open() for frame in obresult.frames]
 
         result = generate_multi_rss(imgs)
-        self.logger.info('end FastMappingRecipe')
+        self.logger.info("end FastMappingRecipe")
 
         return self.create_result(final_multirss=result)
 
     @classmethod
-    def build_recipe_input(cls, obsres, dal, pipeline='default'):
+    def build_recipe_input(cls, obsres, dal, pipeline="default"):
         """Quey previous results of LCB image"""
         return cls.build_recipe_input_gtc(obsres, dal, pipeline=pipeline)
 
     @classmethod
-    def build_recipe_input_gtc(cls, obsres, dal, pipeline='default'):
-        cls.logger.debug('start recipe input builder')
+    def build_recipe_input_gtc(cls, obsres, dal, pipeline="default"):
+        cls.logger.debug("start recipe input builder")
         stareImagesIds = obsres.stareImagesIds
-        cls.logger.debug('LCB image IDS %s: ', stareImagesIds)
+        cls.logger.debug("LCB image IDS %s: ", stareImagesIds)
         stareImages = []
         for subresId in stareImagesIds:
             subres = dal.getRecipeResult(subresId)
-            stareImages.append(subres['elements']['final_rss'])
+            stareImages.append(subres["elements"]["final_rss"])
 
         newOR = ObservationResult()
         newOR.frames = stareImages
         newRI = cls.create_input(obresult=newOR)
-        cls.logger.debug('end recipe input builder')
+        cls.logger.debug("end recipe input builder")
         return newRI
