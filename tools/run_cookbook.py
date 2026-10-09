@@ -4,7 +4,7 @@ import logging
 import tarfile
 
 from numina.user.session import Session
-from numina.tests.testcache import download_cache
+from numina.testing.testcache import download_cache
 
 
 def main():

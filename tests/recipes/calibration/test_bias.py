@@ -11,7 +11,7 @@ import os
 
 import pytest
 
-from numina.tests.testcache import download_cache
+from numina.testing.testcache import download_cache
 from numina.core import ObservationResult
 from numina.core import DataFrame
 from numina.instrument.assembly import assembly_instrument

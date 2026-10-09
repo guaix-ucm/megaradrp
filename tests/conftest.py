@@ -7,4 +7,4 @@
 # License-Filename: LICENSE.txt
 #
 
-from numina.tests.plugins import *  # noqa: F403, F401
+from numina.testing.plugins import *  # noqa: F403, F401
