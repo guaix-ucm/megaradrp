@@ -27,15 +27,16 @@ class PseudoSlit:
     def y_pos(self, fibsid):
         result = []
         for fibid in fibsid:
-            pos = self.positions[fibid-1]
+            pos = self.positions[fibid - 1]
             result.append(pos)
         return result
 
     def config_info(self):
-        return {'name': self.name,
-                'insmode': self.insmode,
-                'nfibers': len(self.fiberset.fibers),
-                }
+        return {
+            "name": self.name,
+            "insmode": self.insmode,
+            "nfibers": len(self.fiberset.fibers),
+        }
 
 
 class PseudoSlitSelector(Carrousel):

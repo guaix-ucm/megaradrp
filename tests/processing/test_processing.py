@@ -67,9 +67,7 @@ def test_trim_and_o_fail2():
         "bng": bins,
     }
     with pytest.raises(ValueError) as excinfo:
-        trimOut(
-            f"{temporary_path}/flat.fits", detconf, out=f"{temporary_path}/result.fits"
-        )
+        trimOut(f"{temporary_path}/flat.fits", detconf, out=f"{temporary_path}/result.fits")
     shutil.rmtree(temporary_path)
     assert excinfo.value.args[0] == f"{bins} must be one if '11', '12', '21, '22'"
 

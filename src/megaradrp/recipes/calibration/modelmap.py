@@ -7,7 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
-""" Trace model recipe for Megara"""
+"""Trace model recipe for Megara"""
 
 import multiprocessing as mp
 
@@ -86,8 +86,8 @@ class ModelMapRecipe(MegaraBaseRecipe):
     # FIXME: this is not really necessary, it can be computed
     # from the data
     master_traces = reqs.MasterTraceMapRequirement()
-    processes = Parameter(0, 'Number of processes used for fitting')
-    debug_plot = Parameter(0, 'Save intermediate tracing plots')
+    processes = Parameter(0, "Number of processes used for fitting")
+    debug_plot = Parameter(0, "Save intermediate tracing plots")
     # Results
     reduced_image = Result(ProcessedImage)
     reduced_rss = Result(ProcessedRSS)
@@ -95,7 +95,7 @@ class ModelMapRecipe(MegaraBaseRecipe):
 
     def run(self, rinput):
 
-        self.logger.info('starting model map recipe')
+        self.logger.info("starting model map recipe")
 
         obresult = rinput.obresult
         obresult_meta = obresult.metadata_with(self.datamodel)
@@ -107,18 +107,17 @@ class ModelMapRecipe(MegaraBaseRecipe):
                 processes = 1
         else:
             processes = rinput.processes
-        self.logger.debug('using %d processes', processes)
+        self.logger.debug("using %d processes", processes)
 
-        self.logger.info('start basic reduction')
+        self.logger.info("start basic reduction")
         flow1 = self.init_filters(rinput, rinput.obresult.configuration)
-        reduced = basic_processing_with_combination(
-            rinput, flow1, method=combine.median)
+        reduced = basic_processing_with_combination(rinput, flow1, method=combine.median)
         self.set_base_headers(reduced[0].header)
-        self.logger.info('end basic reduction')
+        self.logger.info("end basic reduction")
 
-        self.save_intermediate_img(reduced, 'reduced_image.fits')
+        self.save_intermediate_img(reduced, "reduced_image.fits")
 
-        self.logger.debug('create result model')
+        self.logger.debug("create result model")
 
         # insconf = obresult.configuration
 
@@ -133,56 +132,52 @@ class ModelMapRecipe(MegaraBaseRecipe):
         # self.logger.debug("refined boxes: %s", box_borders)
 
         # model name for fitting (this could be a parameter
-        model_name = 'gaussbox'
+        model_name = "gaussbox"
 
         model_map = ModelMap(instrument=obresult.instrument)
 
-        self.logger.debug('update metadata in model')
+        self.logger.debug("update metadata in model")
         model_map.update_metadata(self)
         fp_conf = FocalPlaneConf.from_img(reduced)
         model_map.total_fibers = fp_conf.nfibers
         model_map.missing_fibers = rinput.master_traces.missing_fibers
-        model_map.tags = self.extract_tags_from_ref(
-            reduced, model_map.tag_names(), base=obresult.labels)
+        model_map.tags = self.extract_tags_from_ref(reduced, model_map.tag_names(), base=obresult.labels)
         # model_map.boxes_positions = box_borders
         # model_map.ref_column = cstart
         model_map.update_metadata(self)
         model_map.update_metadata_origin(obresult_meta)
         # Temperature in Celsius with 2 decimals
-        model_map.tags['temp'] = round(
-            obresult_meta['info'][0]['temp'] - 273.15, 2)
+        model_map.tags["temp"] = round(obresult_meta["info"][0]["temp"] - 273.15, 2)
 
-        self.logger.info('perform model fitting')
+        self.logger.info("perform model fitting")
 
         tracemap = rinput.master_traces
         data = reduced[0].data
 
         cols = range(100, 4100, 100)
         # cols = range(100, 200, 100)
-        valid_fibers = [(f.fibid, f.boxid)
-                        for f in tracemap.contents if f.valid]
+        valid_fibers = [(f.fibid, f.boxid) for f in tracemap.contents if f.valid]
         # ncol = tracemap.total_fibers
 
         nfit = data.shape[1]
 
-        if model_name == 'gaussbox':
+        if model_name == "gaussbox":
             # parameters for this model
             sigma = 1.53
-            model_kwargs = {'sigma': sigma}
+            model_kwargs = {"sigma": sigma}
         else:
-            raise ValueError(f'model name {model_name} is undefined')
+            raise ValueError(f"model name {model_name} is undefined")
 
         objpath = config[model_name]
         model_class = import_object(objpath)
         model_obj = model_class(**model_kwargs)
 
         # Perform fitting with multiprocessing
-        results_get = fit_model(model_obj, data, tracemap, cols,
-                                processes=processes)
+        results_get = fit_model(model_obj, data, tracemap, cols, processes=processes)
 
-        self.logger.info('perform model fitting end')
+        self.logger.info("perform model fitting end")
 
-        self.logger.info('interpolate parameters')
+        self.logger.info("interpolate parameters")
 
         # summarize values
         params_save = model_obj.params_save
@@ -199,10 +194,10 @@ class ModelMapRecipe(MegaraBaseRecipe):
             g_vals = {name: [] for name in params}
 
             # log only 1 in 100 fibers
-            dolog = (fibid % 100 == 0)
+            dolog = fibid % 100 == 0
 
             if dolog:
-                self.logger.debug('compute fibid %d', fibid)
+                self.logger.debug("compute fibid %d", fibid)
 
             for calc_col, vals in results_get:
                 # Parameters in a given column and fiber fibid
@@ -212,83 +207,72 @@ class ModelMapRecipe(MegaraBaseRecipe):
 
             # Fit a UnivariateSpline to each storable parameter
             for name, deg in zip(params_save, spline_degrees):
-                interpolators[name] = UnivariateSpline(
-                    g_col, g_vals[name], k=deg)
+                interpolators[name] = UnivariateSpline(g_col, g_vals[name], k=deg)
 
             if self.intermediate_results:
                 if dolog:
-                    self.logger.debug('creating plots')
+                    self.logger.debug("creating plots")
                 # plot each storable parameter
                 for name in params_save:
-                    plt.title(f'{name} fib{fibid:03d}')
-                    plt.plot(g_col, g_vals[name], 'b*')
-                    plt.plot(g_col, interpolators[name](g_col), 'r')
-                    plt.savefig(f'fib_{fibid:03d}_{name}.png')
+                    plt.title(f"{name} fib{fibid:03d}")
+                    plt.plot(g_col, g_vals[name], "b*")
+                    plt.plot(g_col, interpolators[name](g_col), "r")
+                    plt.savefig(f"fib_{fibid:03d}_{name}.png")
                     plt.close()
 
                 if dolog:
-                    self.logger.debug('creating plots end')
+                    self.logger.debug("creating plots end")
 
             # summary of model for this fiber
-            model_fib = {'model_name': model_obj.name, 'params': interpolators}
+            model_fib = {"model_name": model_obj.name, "params": interpolators}
             # if invalid. missing, model = {}
-            gm = GeometricModel(fibid, boxid,
-                                start=1, stop=nfit, model=model_fib
-                                )
+            gm = GeometricModel(fibid, boxid, start=1, stop=nfit, model=model_fib)
 
             model_map.contents.append(gm)
 
-        self.logger.info('interpolate parameters end')
+        self.logger.info("interpolate parameters end")
 
         # perform extraction with our own calibration
-        self.logger.info('perform extraction with computed calibration')
+        self.logger.info("perform extraction with computed calibration")
         calibrator_aper = ApertureExtractor(model_map, self.datamodel)
         reduced_copy = copy_img(reduced)
         reduced_rss = calibrator_aper(reduced_copy)
 
         if self.intermediate_results:
-            with open('ds9.reg', 'w') as ds9reg:
-                model_map.to_ds9_reg(ds9reg, rawimage=False,
-                                     numpix=100, fibid_at=2048)
+            with open("ds9.reg", "w") as ds9reg:
+                model_map.to_ds9_reg(ds9reg, rawimage=False, numpix=100, fibid_at=2048)
 
-            with open('ds9_raw.reg', 'w') as ds9reg:
-                model_map.to_ds9_reg(ds9reg, rawimage=True,
-                                     numpix=100, fibid_at=2048)
+            with open("ds9_raw.reg", "w") as ds9reg:
+                model_map.to_ds9_reg(ds9reg, rawimage=True, numpix=100, fibid_at=2048)
 
-        self.logger.info('ending model map recipe')
-        result = self.create_result(reduced_image=reduced,
-                                    reduced_rss=reduced_rss,
-                                    master_model=model_map)
+        self.logger.info("ending model map recipe")
+        result = self.create_result(reduced_image=reduced, reduced_rss=reduced_rss, master_model=model_map)
 
         return result
 
 
-def calc_parallel(model_desc, data, calc_col, tracemap,
-                  nloop=10, average=0):
+def calc_parallel(model_desc, data, calc_col, tracemap, nloop=10, average=0):
 
     if average > 0:
-        column = data[:, calc_col -
-                      average:calc_col - average + 1].mean(axis=1)
+        column = data[:, calc_col - average : calc_col - average + 1].mean(axis=1)
     else:
         column = data[:, calc_col]
 
     valid_fibers = [f.fibid for f in tracemap.contents if f.valid]
-    centers = np.array([f.polynomial(calc_col)
-                       for f in tracemap.contents if f.valid])
+    centers = np.array([f.polynomial(calc_col) for f in tracemap.contents if f.valid])
     # we might need a better approach to logging in multiprocessing
     # https://www.jamesfheath.com/2020/06/logging-in-python-while-multiprocessing.html
-    print('computing in column', calc_col)
+    print("computing in column", calc_col)
 
     # Scale image value
     scale = column.max()
     column_norm = column / scale
 
-    final = calc1d_model(model_desc, column_norm, centers,
-                         valid_fibers, calc_col, lateral=2, nloop=nloop)
+    final = calc1d_model(model_desc, column_norm, centers, valid_fibers, calc_col, lateral=2, nloop=nloop)
 
     # TODO: we may need a function to perform scaling in general
     for idx, params in final.items():
-        final[idx]['amplitude'] *= scale
+        final[idx]["amplitude"] *= scale
 
     return calc_col, final
 
@@ -297,11 +281,10 @@ def fit_model(model_desc, data, tracemap, cols, processes=20):
 
     pool = mp.Pool(processes)
 
-    results = [pool.apply_async(
-        calc_parallel,
-        args=(model_desc, data, col, tracemap),
-        kwds={'nloop': 3, 'average': 2}
-    ) for col in cols]
+    results = [
+        pool.apply_async(calc_parallel, args=(model_desc, data, col, tracemap), kwds={"nloop": 3, "average": 2})
+        for col in cols
+    ]
 
     results_get = [p.get() for p in results]
     return results_get

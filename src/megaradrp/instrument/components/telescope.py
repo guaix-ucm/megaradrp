@@ -27,10 +27,9 @@ class M2FocusActuator(FocusActuator):
     def set_focus(self, x):
         """Arbitrary parametrization of the focus"""
         if x < -4000 or x > 4000:
-            raise ValueError('telescope focus out of limits')
+            raise ValueError("telescope focus out of limits")
 
-        self.internal_focus_factor = 1 + 1.9 * \
-            (math.cosh((x - self._ref_focus) / 3000.0) - 1)
+        self.internal_focus_factor = 1 + 1.9 * (math.cosh((x - self._ref_focus) / 3000.0) - 1)
         self._internal_focus = x
 
 
@@ -48,7 +47,7 @@ class Telescope(HWDevice):
         else:
             self._transmission = transmission
 
-        self.focus_actuator = M2FocusActuator('Focus', self)
+        self.focus_actuator = M2FocusActuator("Focus", self)
 
     def transmission(self, wl):
         return self._transmission.response(wl)

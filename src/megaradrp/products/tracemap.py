@@ -39,13 +39,13 @@ class GeometricTrace(GeometricAperture):
 
     def __getstate__(self):
         state = super(GeometricTrace, self).__getstate__()
-        del state['polynomial']
+        del state["polynomial"]
         return state
 
     def __setstate__(self, state):
         super(GeometricTrace, self).__setstate__(state)
 
-        self._set_polynomial(state['fitparms'])
+        self._set_polynomial(state["fitparms"])
 
     def _set_polynomial(self, fitparms):
         if fitparms:
@@ -59,10 +59,11 @@ class GeometricTrace(GeometricAperture):
 
 class TraceMap(BaseStructuredCalibration):
     """Trace map calibration product"""
-    DATATYPE = MegaraDataType.TRACE_MAP
-    __tags__ = ['insmode', 'vph']
 
-    def __init__(self, instrument='MEGARA'):
+    DATATYPE = MegaraDataType.TRACE_MAP
+    __tags__ = ["insmode", "vph"]
+
+    def __init__(self, instrument="MEGARA"):
         super(TraceMap, self).__init__(instrument)
         self.contents = []
         self.boxes_positions = []
@@ -73,23 +74,21 @@ class TraceMap(BaseStructuredCalibration):
 
     def __getstate__(self):
         st = super(TraceMap, self).__getstate__()
-        st['contents'] = [t.__getstate__() for t in self.contents]
-        st['boxes_positions'] = self.boxes_positions
-        st['global_offset'] = self.global_offset.coef
-        st['ref_column'] = self.ref_column
-        st['expected_range'] = self.expected_range
+        st["contents"] = [t.__getstate__() for t in self.contents]
+        st["boxes_positions"] = self.boxes_positions
+        st["global_offset"] = self.global_offset.coef
+        st["ref_column"] = self.ref_column
+        st["expected_range"] = self.expected_range
         return st
 
     def __setstate__(self, state):
         super(TraceMap, self).__setstate__(state)
-        self.contents = [GeometricTrace(**trace)
-                         for trace in state['contents']]
+        self.contents = [GeometricTrace(**trace) for trace in state["contents"]]
         # fibers in missing fibers and error_fitting are invalid
-        self.boxes_positions = state.get('boxes_positions', [])
-        self.global_offset = nppol.Polynomial(
-            state.get('global_offset', [0.0]))
-        self.ref_column = state.get('ref_column', 2000)
-        self.expected_range = state.get('expected_range', [4, 4092])
+        self.boxes_positions = state.get("boxes_positions", [])
+        self.global_offset = nppol.Polynomial(state.get("global_offset", [0.0]))
+        self.ref_column = state.get("ref_column", 2000)
+        self.expected_range = state.get("expected_range", [4, 4092])
         return self
 
     def to_ds9_reg(self, ds9reg, rawimage=False, numpix=100, fibid_at=0):
@@ -108,8 +107,4 @@ class TraceMap(BaseStructuredCalibration):
             Abscissae where the fibid is shown (default=0 -> not shown).
 
         """
-        return to_ds9_reg_function(self, ds9reg,
-                                   rawimage=rawimage,
-                                   numpix=numpix,
-                                   fibid_at=fibid_at
-                                   )
+        return to_ds9_reg_function(self, ds9reg, rawimage=rawimage, numpix=numpix, fibid_at=fibid_at)

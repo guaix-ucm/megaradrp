@@ -33,10 +33,11 @@ class FiberBundle:
         return [ch.fibid for ch in self.lf if not ch.inactive]
 
     def config_info(self):
-        return {'name': self.name,
-                'nfibers': len(self.lf),
-                'fibs_id': self.fibs_id,
-                'id': self.bunds_id,
-                'static': self.static,
-                'inactive_fibs_id': self.inactive_fibs_id
-                }
+        return {
+            "name": self.name,
+            "nfibers": len(self.lf),
+            "fibs_id": self.fibs_id,
+            "id": self.bunds_id,
+            "static": self.static,
+            "inactive_fibs_id": self.inactive_fibs_id,
+        }

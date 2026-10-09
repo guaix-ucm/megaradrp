@@ -23,10 +23,16 @@ from .modeldesc.base import ModelDescription
 from megaradrp.processing.modeldesc import config
 
 
-def calc1d_model(model_desc: ModelDescription, column: numpy.ndarray,
-                 centers: Sequence[float],
-                 valid: Sequence[int], col: int,
-                 lateral=2, reject=3, nloop=1) -> dict:
+def calc1d_model(
+    model_desc: ModelDescription,
+    column: numpy.ndarray,
+    centers: Sequence[float],
+    valid: Sequence[int],
+    col: int,
+    lateral=2,
+    reject=3,
+    nloop=1,
+) -> dict:
     """Fit a sum of profiles along a 1D column vector"""
 
     nfib = len(centers)
@@ -60,7 +66,7 @@ def calc1d_model(model_desc: ModelDescription, column: numpy.ndarray,
             #
             # print(f'val is {val}')
             # Compute the center of the fiber from the fitted parameters
-            logging.debug(f'fib {fib_id_reorder}')
+            logging.debug(f"fib {fib_id_reorder}")
             params = current[fib_id_reorder]
             logging.debug(f"params of this fiber {params}")
             center = model_desc.fiber_center(params)
@@ -70,17 +76,17 @@ def calc1d_model(model_desc: ModelDescription, column: numpy.ndarray,
             m1 = max(0, m0 - npix * total)
             m2 = m0 + npix * total
 
-            logging.debug(f'm1:m2 is {m1}:{m2}')
+            logging.debug(f"m1:m2 is {m1}:{m2}")
             # Cut regions in the arrays
             yt = column[m1:m2].copy()
             xt = xl[m1:m2]
 
             pos = bisect.bisect(valid, fib_id_reorder)
-            logging.debug(f'pos bisect {pos}')
-            candidates = valid[max(pos - total - 1, 0): pos + total]
-            logging.debug(f'candidates around my fiber  {list(candidates)}')
+            logging.debug(f"pos bisect {pos}")
+            candidates = valid[max(pos - total - 1, 0) : pos + total]
+            logging.debug(f"candidates around my fiber  {list(candidates)}")
             dis_f = [abs(c - fib_id_reorder) for c in candidates]
-            logging.debug(f'distances around my fibers {dis_f}')
+            logging.debug(f"distances around my fibers {dis_f}")
             # for p in range(max(0, val-S), min(nfib, val+S+1)):
             fit_ids = []
             for cfib, fib_df in zip(candidates, dis_f):
@@ -89,7 +95,7 @@ def calc1d_model(model_desc: ModelDescription, column: numpy.ndarray,
                     yt -= model_cls.evaluate(xt, **current[cfib])
                 else:
                     fit_ids.append(cfib)
-            logging.debug(f'candidates around my fiber {fit_ids}')
+            logging.debug(f"candidates around my fiber {fit_ids}")
             # Extract values to create initials
             # We add profiles to a constant value of zero
 
@@ -101,14 +107,11 @@ def calc1d_model(model_desc: ModelDescription, column: numpy.ndarray,
                 # The values of the parameters
                 permutated_fibers = current[fib_id]
                 # Parameters to be fixed
-                p_fixed = model_desc.params_fixed(
-                    permutated_fibers, fib_id, col)
+                p_fixed = model_desc.params_fixed(permutated_fibers, fib_id, col)
                 # Bounded parameters
-                p_bounds = model_desc.params_bounds(
-                    permutated_fibers, fib_id, col)
+                p_bounds = model_desc.params_bounds(permutated_fibers, fib_id, col)
                 # The values of the parameters in a tuple
-                args = tuple(permutated_fibers[name]
-                             for name in model_cls.param_names)
+                args = tuple(permutated_fibers[name] for name in model_cls.param_names)
                 # The model for this fiber
                 newg = model_cls(*args, fixed=p_fixed, bounds=p_bounds)
                 # Add to the current model
@@ -126,8 +129,7 @@ def calc1d_model(model_desc: ModelDescription, column: numpy.ndarray,
                 # if fibid == val:
                 fvalue = {}
                 for name in model_cls.param_names:
-                    fvalue[name] = getattr(
-                        model_fitted, f'{name}_{val_idx}').value
+                    fvalue[name] = getattr(model_fitted, f"{name}_{val_idx}").value
 
                 for name in model_cls.param_names:
                     current[fibid][name] = fvalue[name]
@@ -140,9 +142,9 @@ def calc_matrix(wshape, model, params, valid, clip=1.0e-6, extra=10):
 
     # calc w
     # this is valid for 1 column (there are more broadcasts for N)
-    g_mean = params['mean']
+    g_mean = params["mean"]
 
-    begpix = numpy.ceil(g_mean - 0.5).astype('int')
+    begpix = numpy.ceil(g_mean - 0.5).astype("int")
 
     steps = numpy.arange(-extra, extra)
     # ref is a bidimensional matrix +-10 pixels around the trace
@@ -157,7 +159,7 @@ def calc_matrix(wshape, model, params, valid, clip=1.0e-6, extra=10):
     rrb = begpix - extra
 
     # This was sending warnings. Is there a NaN somewhere?
-    with numpy.errstate(invalid='ignore'):
+    with numpy.errstate(invalid="ignore"):
         rr[rr < clip] = 0.0
 
     # Calc Ws matrix
@@ -166,7 +168,7 @@ def calc_matrix(wshape, model, params, valid, clip=1.0e-6, extra=10):
     w_init = lil_matrix(wshape)
     for fibid in valid:
         idx = fibid - 1
-        w_init[rrb[idx]:rrb[idx] + block, idx] = rr[:, idx, numpy.newaxis]
+        w_init[rrb[idx] : rrb[idx] + block, idx] = rr[:, idx, numpy.newaxis]
 
     wcol = w_init.tocsr()
     return wcol
@@ -190,14 +192,14 @@ def calc_matrix_cols(model_map, datashape, processes=0):
     wshape = (dnrow, nfibs)
     #
     params_reorder = collections.defaultdict(lambda: numpy.zeros(shape))
-    model_name = 'undefined'
+    model_name = "undefined"
     xcol = numpy.arange(dncol)
     for fibermodel in model_map.contents:
         if fibermodel.valid:
             row = fibermodel.fibid - 1
-            interpol_params = fibermodel.model['params']
+            interpol_params = fibermodel.model["params"]
             # it only makes sense to use one model specification
-            model_name = fibermodel.model['model_name']
+            model_name = fibermodel.model["model_name"]
             for name, value in interpol_params.items():
                 params_reorder[name][row] = value(xcol)
 
@@ -210,15 +212,14 @@ def calc_matrix_cols(model_map, datashape, processes=0):
     model = modeldesc.model_cls
 
     # shift center parameter according to global_offset
-    mask = numpy.zeros((model_map.total_fibers,), dtype='bool')
+    mask = numpy.zeros((model_map.total_fibers,), dtype="bool")
     valid_r = [(f.fibid - 1) for f in model_map.contents if f.valid]
     mask[valid_r] = True
 
     params_reorder_c = modeldesc.fiber_center(params_reorder)
     mean_at_ref = params_reorder_c[mask, model_map.ref_column]
     offset = model_map.global_offset(mean_at_ref)
-    params_reorder_c[mask, :] = params_reorder_c[mask, :] + \
-        offset[:, numpy.newaxis]
+    params_reorder_c[mask, :] = params_reorder_c[mask, :] + offset[:, numpy.newaxis]
 
     wcols = {}
     valid = [f.fibid for f in model_map.contents if f.valid]
@@ -237,18 +238,19 @@ def calc_matrix_cols(model_map, datashape, processes=0):
 
     if processes < 2:
         for col in xcol:
-            result = calc_matrix(wshape, model, params_col[col], valid, clip=1e-6,
-                                 extra=10)
+            result = calc_matrix(wshape, model, params_col[col], valid, clip=1e-6, extra=10)
             wcols[col] = result
     else:
         import multiprocessing as mp
+
         pool = mp.Pool(processes=processes)
 
-        results = [pool.apply_async(
-            calc_matrix_adapt,
-            args=(wshape, col, model, params_col[col], valid),
-            kwds={'clip': 1e-6, 'extra': 10}
-        ) for col in xcol]
+        results = [
+            pool.apply_async(
+                calc_matrix_adapt, args=(wshape, col, model, params_col[col], valid), kwds={"clip": 1e-6, "extra": 10}
+            )
+            for col in xcol
+        ]
 
         for p in results:
             col, wcol = p.get()

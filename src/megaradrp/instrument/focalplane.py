@@ -9,7 +9,6 @@
 
 """Focal plane description for MEGARA"""
 
-
 import math
 import re
 import warnings
@@ -23,17 +22,17 @@ from megaradrp.processing.hexgrid import connected6
 class FocalPlaneConf:
     """Configuration of focal plane"""
 
-    def __init__(self, name='LCB'):
+    def __init__(self, name="LCB"):
         self.name = name
         self.conf_id = "00000000-0000-0000-0000-000000000000"
         bundles = dict()
-        if name == 'LCB':
+        if name == "LCB":
             # 1 LCB + 8 SKY
             bundles[0] = LcbBundleConf()
             for i in range(93, 100 + 1):
                 bundles[i] = SkyBundleConf(i)
 
-        elif name == 'MOS':
+        elif name == "MOS":
             # 92 RPs
             for i in range(1, 92 + 1):
                 bundles[i] = BundleConf(i, BundleType.RP)
@@ -67,16 +66,16 @@ class FocalPlaneConf:
         # defaults['LCB'] = (9, 623)
         # defaults['MOS'] = (92, 644)
 
-        insmode = hdr.get('INSMODE')
-        confid = hdr.get('CONFID', "00000000-0000-0000-0000-000000000000")
+        insmode = hdr.get("INSMODE")
+        confid = hdr.get("CONFID", "00000000-0000-0000-0000-000000000000")
 
         conf = FocalPlaneConf(insmode)
         conf.conf_id = confid
 
-        if conf.nbundles != hdr.get('NBUNDLES'):
-            raise ValueError(f'checking NBUNDLES != {conf.nbundles}')
-        if conf.nfibers != hdr.get('NFIBERS'):
-            raise ValueError(f'checking NFIBERS != {conf.nfibers}')
+        if conf.nbundles != hdr.get("NBUNDLES"):
+            raise ValueError(f"checking NBUNDLES != {conf.nbundles}")
+        if conf.nfibers != hdr.get("NFIBERS"):
+            raise ValueError(f"checking NFIBERS != {conf.nfibers}")
 
         conf.funit = hdr.get("FUNIT", "arcsec")
         # Read bundles
@@ -119,23 +118,23 @@ class FocalPlaneConf:
         conf.attach_fibers(fibers)
 
         # Double check
-        if conf.name == 'LCB':
+        if conf.name == "LCB":
             refid = 614
             ref_fiber = conf.fibers[refid]
             if ref_fiber.x < -6:
                 # arcsec
-                if conf.funit != 'arcsec':
-                    print('warning')
+                if conf.funit != "arcsec":
+                    print("warning")
             else:
                 # mm
-                if conf.funit != 'mm':
-                    print('warning')
+                if conf.funit != "mm":
+                    print("warning")
         return conf
 
     @classmethod
     def from_img(cls, img):
         """Create a FocalPlaneConf object from a FITS image"""
-        return cls.from_header(img['FIBERS'].header)
+        return cls.from_header(img["FIBERS"].header)
 
     def sky_fibers(self, valid_only=False, ignored_bundles=None):
         result = []
@@ -156,7 +155,7 @@ class FocalPlaneConf:
 
     def connected_fibers(self, valid_only=False):
         """Return the fibers connected in the IFU"""
-        if self.name == 'MOS':
+        if self.name == "MOS":
             return []
 
         result = []
@@ -182,7 +181,7 @@ class FocalPlaneConf:
         except KeyError as err:
             # equivalent to
             # raise ValueError from None
-            ex = ValueError(f'fibid {fibid} does not exist')
+            ex = ValueError(f"fibid {fibid} does not exist")
             raise ex from err
 
     def inactive_fibers(self):
@@ -234,33 +233,30 @@ class FocalPlaneConf:
 
         import astropy.table
 
-        attrnames = ['id', 'x', 'y', 'pa', 'enabled',
-                     'target_type', 'target_priority', 'target_name']
-        cnames = ['bundle_id', 'x', 'y', 'pa', 'enabled',
-                  'target_type', 'target_priority', 'target_name']
+        attrnames = ["id", "x", "y", "pa", "enabled", "target_type", "target_priority", "target_name"]
+        cnames = ["bundle_id", "x", "y", "pa", "enabled", "target_type", "target_priority", "target_name"]
         obj_data = {}
         for a, c in zip(attrnames, cnames):
             obj_data[c] = [getattr(ob, a) for ob in self.bundles.values()]
         result = astropy.table.Table(obj_data, names=cnames)
-        result['x'].unit = self.funit
-        result['y'].unit = self.funit
-        result['pa'].unit = 'deg'
+        result["x"].unit = self.funit
+        result["y"].unit = self.funit
+        result["pa"].unit = "deg"
         return result
 
     def fibers_to_table(self):
         """Convert fibers to a Table"""
         import astropy.table
-        attrnames = ['fibid', 'name', 'x', 'y', 'inactive', 'valid',
-                     'bundle_id']
-        cnames = ['fibid', 'name', 'x', 'y', 'inactive', 'valid',
-                  'bundle_id']
+
+        attrnames = ["fibid", "name", "x", "y", "inactive", "valid", "bundle_id"]
+        cnames = ["fibid", "name", "x", "y", "inactive", "valid", "bundle_id"]
         obj_data = {}
 
         for a, c in zip(attrnames, cnames):
             obj_data[c] = [getattr(ob, a) for ob in self.fibers.values()]
         result = astropy.table.Table(obj_data, names=cnames)
-        result['x'].unit = self.funit
-        result['y'].unit = self.funit
+        result["x"].unit = self.funit
+        result["y"].unit = self.funit
         return result
 
 
@@ -275,15 +271,22 @@ class FiberConfs(FocalPlaneConf):
 
     def __init__(self):
         super(FiberConfs, self).__init__()
-        warnings.warn("The 'FiberConfs' class was renamed to 'FocalPlaneConf'",
-                      DeprecationWarning, stacklevel=2)
+        warnings.warn("The 'FiberConfs' class was renamed to 'FocalPlaneConf'", DeprecationWarning, stacklevel=2)
 
 
 class BundleConf:
     """Description of a bundle"""
 
-    def __init__(self, bundle_id, bundle_type, target_type=TargetType.UNASSIGNED,
-                 target_priority=0, target_name='unknown', enabled=True, movable=True):
+    def __init__(
+        self,
+        bundle_id,
+        bundle_type,
+        target_type=TargetType.UNASSIGNED,
+        target_priority=0,
+        target_name="unknown",
+        enabled=True,
+        movable=True,
+    ):
         self.id = bundle_id
         self.name = "unknown"
         self.bundle_type = bundle_type
@@ -337,10 +340,7 @@ class LcbBundleConf(BundleConf):
     """Description of the LCB bundle"""
 
     def __init__(self, bundle_id=0):
-        super(LcbBundleConf, self).__init__(
-            bundle_id=bundle_id, bundle_type=BundleType.LCB,
-            movable=False
-        )
+        super(LcbBundleConf, self).__init__(bundle_id=bundle_id, bundle_type=BundleType.LCB, movable=False)
         self.name = "LCB"
         self.nrows = 21
         self.ncols = 27
@@ -351,8 +351,7 @@ class SkyBundleConf(BundleConf):
 
     def __init__(self, bundle_id):
         super(SkyBundleConf, self).__init__(
-            bundle_id=bundle_id, bundle_type=BundleType.SKY,
-            target_type=TargetType.SKY, movable=False
+            bundle_id=bundle_id, bundle_type=BundleType.SKY, target_type=TargetType.SKY, movable=False
         )
 
 
@@ -361,7 +360,7 @@ class FiberConf:
 
     def __init__(self, fibid=0, bundle_id=None, inactive=False):
         self.fibid = fibid
-        self.name = 'unknown'
+        self.name = "unknown"
         self.bundle_id = bundle_id
         self.inactive = inactive
         self.valid = True
@@ -375,12 +374,10 @@ class FiberConf:
         # Coordinates
         dec = hdr["FIB%03d_D" % fibid]
         ra = hdr["FIB%03d_R" % fibid]
-        frame = 'icrs'
+        frame = "icrs"
         ff.d = dec
         ff.r = ra
-        ff.coord = astropy.coordinates.SkyCoord(
-            ra, dec, frame=frame, unit='deg'
-        )
+        ff.coord = astropy.coordinates.SkyCoord(ra, dec, frame=frame, unit="deg")
         ff.o = 0  # hdr["FIB%03d_O" % fibid]
         # Active
         ff.inactive = not hdr["FIB%03d_A" % fibid]
@@ -390,7 +387,7 @@ class FiberConf:
         ff.y = hdr["FIB%03d_Y" % fibid]
 
         ff.bundle_id = hdr["FIB%03d_B" % fibid]
-        ff.name = hdr.get("FIB%03d_N" % fibid, 'unknown')
+        ff.name = hdr.get("FIB%03d_N" % fibid, "unknown")
 
         ff.w1 = hdr.get("FIB%03dW1" % fibid, None)
         ff.w2 = hdr.get("FIB%03dW2" % fibid, None)

@@ -19,7 +19,7 @@ def create_dummy_spectrum(wl_in):
     photons_in = np.zeros_like(wl_in)
 
     for c in wlc:
-        photons_in += 4e4 * np.exp(-0.5*((wl_in-c) / s)**2)
+        photons_in += 4e4 * np.exp(-0.5 * ((wl_in - c) / s) ** 2)
 
     photons_in += 4.0e4
     return photons_in
@@ -28,18 +28,19 @@ def create_dummy_spectrum(wl_in):
 # A ThAR arc...
 def create_th_ar_arc_spectrum(wl_in):
 
-    lines = [(3719.41400, 58.52137),
-             (3803.10800, 54.91138),
-             (3828.37100, 56.63661),
-             (3839.72400, 46.62416),
-             (4019.13100, 40.06343),
-             (4071.99600, 42.12776),
-             (4131.76200, 50.57991),
-             (4158.58400, 68.03227),
-             (4200.65300, 48.00637),
-             (4277.55800, 78.81951),
-             (4348.11900, 80.24873)
-             ]
+    lines = [
+        (3719.41400, 58.52137),
+        (3803.10800, 54.91138),
+        (3828.37100, 56.63661),
+        (3839.72400, 46.62416),
+        (4019.13100, 40.06343),
+        (4071.99600, 42.12776),
+        (4131.76200, 50.57991),
+        (4158.58400, 68.03227),
+        (4200.65300, 48.00637),
+        (4277.55800, 78.81951),
+        (4348.11900, 80.24873),
+    ]
 
     wl_in = wl_in.value
     s = 8e-6
@@ -47,6 +48,6 @@ def create_th_ar_arc_spectrum(wl_in):
 
     for cwl, flux in lines:
         c = cwl / 1e4
-        flux_out += flux * np.exp(-0.5*((wl_in-c) / s)**2)
+        flux_out += flux * np.exp(-0.5 * ((wl_in - c) / s) ** 2)
 
     return flux_out

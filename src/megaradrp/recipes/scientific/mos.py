@@ -69,37 +69,31 @@ class MOSImageRecipe(ImageRecipe):
     sky_rss = Result(ProcessedRSS)
 
     def run(self, rinput):
-        self.logger.info('starting MOS reduction')
+        self.logger.info("starting MOS reduction")
 
         reduced2d, rss_data = super(MOSImageRecipe, self).base_run(rinput)
 
-        self.logger.info('start sky subtraction')
+        self.logger.info("start sky subtraction")
         isb = rinput.ignored_sky_bundles
         if isb:
-            self.logger.info('sky bundles ignored: %s', isb)
-        final, origin, sky = self.run_sky_subtraction(
-            rss_data,
-            sky_rss=rinput.sky_rss,
-            ignored_sky_bundles=isb
-        )
-        self.logger.info('end sky subtraction')
+            self.logger.info("sky bundles ignored: %s", isb)
+        final, origin, sky = self.run_sky_subtraction(rss_data, sky_rss=rinput.sky_rss, ignored_sky_bundles=isb)
+        self.logger.info("end sky subtraction")
         # Flux calibration
         if rinput.master_sensitivity is not None:
-            self.logger.info('start flux calibration')
-            node = FluxCalibration(
-                rinput.master_sensitivity.open(), self.datamodel)
+            self.logger.info("start flux calibration")
+            node = FluxCalibration(rinput.master_sensitivity.open(), self.datamodel)
             final = node(final)
             origin = node(origin)
             sky = node(sky)
-            self.logger.info('end flux calibration')
+            self.logger.info("end flux calibration")
         else:
-            self.logger.info('no flux calibration')
+            self.logger.info("no flux calibration")
 
         # Extinction calibration
         if rinput.reference_extinction is not None:
-            self.logger.info('start extinction correction')
-            extinc_interp = interp1d(rinput.reference_extinction[:, 0],
-                                     rinput.reference_extinction[:, 1])
+            self.logger.info("start extinction correction")
+            extinc_interp = interp1d(rinput.reference_extinction[:, 0], rinput.reference_extinction[:, 1])
 
             wlcalib = astropy.wcs.WCS(final[0].header)
             pixrange = numpy.arange(final[0].data.shape[1])
@@ -113,26 +107,20 @@ class MOSImageRecipe(ImageRecipe):
                 wavelen = wavelen_[:, 0] * wlcalib.wcs.cunit[0]
             wavelen_aa = wavelen.to(u.AA).value
 
-            airmass = final[0].header['AIRMASS']
+            airmass = final[0].header["AIRMASS"]
 
-            extinc_corr = numpy.power(
-                10.0, 0.4 * extinc_interp(wavelen_aa) * airmass)
+            extinc_corr = numpy.power(10.0, 0.4 * extinc_interp(wavelen_aa) * airmass)
 
             final[0].data *= extinc_corr
             origin[0].data *= extinc_corr
             # sky is not corrected from extinction
-            self.logger.info('end extinction correction')
+            self.logger.info("end extinction correction")
         else:
-            self.logger.info('no extinction correction')
+            self.logger.info("no extinction correction")
 
-        self.logger.info('add collapsed extension')
+        self.logger.info("add collapsed extension")
         final = add_collapsed_mos_extension(final)
         origin = add_collapsed_mos_extension(origin)
 
-        self.logger.info('end MOS reduction')
-        return self.create_result(
-            reduced_image=reduced2d,
-            final_rss=final,
-            reduced_rss=origin,
-            sky_rss=sky
-        )
+        self.logger.info("end MOS reduction")
+        return self.create_result(reduced_image=reduced2d, final_rss=final, reduced_rss=origin, sky_rss=sky)

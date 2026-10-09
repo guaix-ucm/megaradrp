@@ -19,7 +19,7 @@ import numpy
 @u.quantity_input(zenith_distance=u.micron)
 def ref_index0(wl):
     wl0 = wl.to(u.micron).value
-    wl1 = (1.0 / wl0)**2
+    wl1 = (1.0 / wl0) ** 2
     return 64.328 + 29498.1 / (146 - wl1) + 255.4 / (41 - wl1)
 
 
@@ -46,14 +46,14 @@ def ref_index2(wl, p=760, t=15, f=0.0):
 
 @u.quantity_input(zenith_distance=u.deg)
 def differential_p(
-        zenith_distance,
-        wl,
-        wl_reference,
-        temperature,
-        pressure,
-        relative_humidity,
+    zenith_distance,
+    wl,
+    wl_reference,
+    temperature,
+    pressure,
+    relative_humidity,
 ):
-    """Differential refraction as given by 1982PASP...94..715F """
+    """Differential refraction as given by 1982PASP...94..715F"""
 
     zd = zenith_distance.to(u.rad).value
     p = pressure.to(u.Pascal).value / 133.322387415
@@ -77,8 +77,9 @@ class DifferentialRefractionModel:
         return differential_p(z, wl, ref, self.temperature, self.pressure, self.relative_humidity)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     from astropy.units import cds
+
     cds.enable()
 
     wl = numpy.linspace(0.3, 1.0, num=15) * u.micron
@@ -86,7 +87,7 @@ if __name__ == '__main__':
     # wl = 0.6 * u.micron
 
     print(wl)
-    zdis = 60*u.deg
+    zdis = 60 * u.deg
     rel = 8.0 / 600.0
     ref = 0.5 * u.micron
     temp = 11.5 * u.deg_C

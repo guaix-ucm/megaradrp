@@ -18,9 +18,7 @@ def generate_bias(detector, number, temporary_path):
     header["VPH"] = "LR-U"
     header["INSMODE"] = "MOS"
     for aux in range(len(fs)):
-        fits.writeto(
-            f"{temporary_path}/bias_{aux}.fits", fs[aux], header=header, overwrite=True
-        )
+        fits.writeto(f"{temporary_path}/bias_{aux}.fits", fs[aux], header=header, overwrite=True)
 
     fs = [f"{temporary_path}/bias_{i}.fits" for i in range(number)]
 

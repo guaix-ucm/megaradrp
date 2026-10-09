@@ -19,10 +19,14 @@ from .base import ModelDescription
 class GaussBoxModelDescription(ModelDescription):
 
     def __init__(self, fixed_center=True, init_simple=False, npix=5, sigma=3.0):
-        super().__init__("gaussbox", GaussBox, fixed_center=fixed_center,
-                         params_fit=['amplitude', 'mean', 'stddev'],
-                         params_save=['mean', 'stddev'],
-                         deg_save=[3, 5])
+        super().__init__(
+            "gaussbox",
+            GaussBox,
+            fixed_center=fixed_center,
+            params_fit=["amplitude", "mean", "stddev"],
+            params_save=["mean", "stddev"],
+            deg_save=[3, 5],
+        )
         self.npix = npix
         self.sigma = sigma
         self.init_simple = init_simple
@@ -31,9 +35,9 @@ class GaussBoxModelDescription(ModelDescription):
     def create_from_centers(cls, fixed_center=True, **kwargs):
 
         # Parameters of __init__ for GaussBox
-        init_simple = kwargs.get('init_simple', False)
-        npix = kwargs.get('npix', 5)
-        sigma = kwargs.get('sigma', 3.0)
+        init_simple = kwargs.get("init_simple", False)
+        npix = kwargs.get("npix", 5)
+        sigma = kwargs.get("sigma", 3.0)
 
         # TODO: this method can be completely general
         # using inspect to obtain the signature of __init__
@@ -43,17 +47,14 @@ class GaussBoxModelDescription(ModelDescription):
         #     init_simple=init_simple,
         #     npix=npix, sigma=sigma)
 
-        obj = GaussBoxModelDescription(
-            fixed_center=fixed_center, init_simple=init_simple,
-            npix=npix, sigma=sigma
-        )
+        obj = GaussBoxModelDescription(fixed_center=fixed_center, init_simple=init_simple, npix=npix, sigma=sigma)
 
         return obj
 
     def _init_1(self, column: np.array, centers: Sequence[float]):
         """init simple"""
         npix = self.npix
-        ecenters = np.ceil(centers - 0.5).astype('int')
+        ecenters = np.ceil(centers - 0.5).astype("int")
         nfib = len(ecenters)
 
         offset = npix // 2
@@ -68,25 +69,25 @@ class GaussBoxModelDescription(ModelDescription):
 
         sig2 = -1 / (2 * c)
         mu = b / sig2
-        ampl = np.exp(a - mu ** 2)
+        ampl = np.exp(a - mu**2)
 
         params = {
-            'mean': centers,
-            'stddev': np.sqrt(sig2),
-            'amplitude': ampl,
-            'hpix': 0.5 * np.ones_like(centers),
+            "mean": centers,
+            "stddev": np.sqrt(sig2),
+            "amplitude": ampl,
+            "hpix": 0.5 * np.ones_like(centers),
         }
         return params
 
     def _init_2(self, column: np.array, centers: Sequence[float]) -> dict:
-        ecenters = np.ceil(centers - 0.5).astype('int')
+        ecenters = np.ceil(centers - 0.5).astype("int")
         nfib = len(centers)
         sigma = self.sigma
         params = {
-            'mean': centers,
-            'stddev': sigma * np.ones_like(centers),
-            'amplitude': [column[ecenters[i]] / 0.25 for i in range(nfib)],
-            'hpix': 0.5 * np.ones_like(centers),
+            "mean": centers,
+            "stddev": sigma * np.ones_like(centers),
+            "amplitude": [column[ecenters[i]] / 0.25 for i in range(nfib)],
+            "hpix": 0.5 * np.ones_like(centers),
         }
         return params
 
@@ -97,26 +98,21 @@ class GaussBoxModelDescription(ModelDescription):
             return self._init_2(column, centers)
 
     def params_fixed(self, values, fibid, col):
-        result = {
-            'hpix': True
-        }
+        result = {"hpix": True}
         if self.fixed_center:
-            result['mean'] = True
+            result["mean"] = True
         return result
 
     def params_bounds(self, values, fibid, col):
 
-        isigma = values['stddev']
-        imean = values['mean']
+        isigma = values["stddev"]
+        imean = values["mean"]
 
-        p_bounds = {
-            "stddev": (isigma - 0.5, isigma + 0.5),
-            "amplitude": (0, None)
-        }
+        p_bounds = {"stddev": (isigma - 0.5, isigma + 0.5), "amplitude": (0, None)}
         if not self.fixed_center:
-            p_bounds['mean'] = (imean - 0.5, imean + 0.5)
+            p_bounds["mean"] = (imean - 0.5, imean + 0.5)
         return p_bounds
 
     def fiber_center(self, values: dict) -> float:
-        center = values['mean']
+        center = values["mean"]
         return center

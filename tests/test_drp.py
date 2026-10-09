@@ -288,9 +288,7 @@ ob_repo1 = {"vph": "HR-I", "insmode": "MOS", "confid": "123", "speclamp": "ThNe"
 ob_repo2 = {"vph": "HR-I", "insmode": "LCB", "confid": "000", "speclamp": "ThNe"}
 
 
-@pytest.mark.parametrize(
-    "ob_repo, results", [(ob_repo1, results1), (ob_repo2, results2)]
-)
+@pytest.mark.parametrize("ob_repo, results", [(ob_repo1, results1), (ob_repo2, results2)])
 def test_recipes_extract_tags(current_drp, ob_repo, results):
 
     calibs = {

@@ -24,6 +24,7 @@ from megaradrp.ntypes import ProcessedRSS, ProcessedFrame
 # Flat 2D
 from megaradrp.processing.combine import basic_processing_with_combination
 from numina.array import combine
+
 # Create RSS
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.wavecalibration import WavelengthCalibrator
@@ -31,7 +32,7 @@ from megaradrp.processing.fiberflat import Splitter, FlipLR
 
 
 def _smoothing_window_check(val):
-    """Check 'smoothing_window' """
+    """Check 'smoothing_window'"""
     # raise ValueError("something")
     if val < 5:
         raise numina.exceptions.ValidationError("must be >= 5")
@@ -81,26 +82,15 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     """
 
     # Requirements
-    method = Parameter(
-        'median',
-        description='Combination method',
-        choices=['mean', 'median', 'mediancr', 'sigmaclip']
-    )
-    method_kwargs = Parameter(
-        dict(),
-        description='Arguments for combination method',
-        optional=True
-    )
+    method = Parameter("median", description="Combination method", choices=["mean", "median", "mediancr", "sigmaclip"])
+    method_kwargs = Parameter(dict(), description="Arguments for combination method", optional=True)
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
     master_slitflat = reqs.MasterSlitFlatRequirement()
-    master_apertures = reqs.MasterAperturesRequirement(alias='master_traces')
-    smoothing_window = Parameter(31, 'Window for smoothing (must be odd)',
-                                 validator=_smoothing_window_check
-                                 )
-    extraction_offset = Parameter(
-        [0.0], 'Offset traces for extraction', accept_scalar=True)
+    master_apertures = reqs.MasterAperturesRequirement(alias="master_traces")
+    smoothing_window = Parameter(31, "Window for smoothing (must be odd)", validator=_smoothing_window_check)
+    extraction_offset = Parameter([0.0], "Offset traces for extraction", accept_scalar=True)
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
 
     # Results
@@ -112,7 +102,10 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         flow = self.init_filters(rinput, rinput.obresult.configuration)
         fmethod = getattr(combine, rinput.method)
         final_image = basic_processing_with_combination(
-            rinput, flow, method=fmethod, method_kwargs=rinput.method_kwargs,
+            rinput,
+            flow,
+            method=fmethod,
+            method_kwargs=rinput.method_kwargs,
         )
         hdr = final_image[0].header
         self.set_base_headers(hdr)
@@ -128,7 +121,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         bad_idxs = [fibid - 1 for fibid in bad_fibers]
         # print(bad_idxs)
 
-        good_idxs_mask = numpy.ones((fp_conf.nfibers,), dtype='bool')
+        good_idxs_mask = numpy.ones((fp_conf.nfibers,), dtype="bool")
         good_idxs_mask[bad_idxs] = False
 
         # Collapse all fiber spectrum
@@ -138,7 +131,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
         col_mean = data0[:, xcol].mean(axis=1)
         # Filter positive values and valid fibers
-        col_mean_pos = (col_mean > 0)
+        col_mean_pos = col_mean > 0
         valid_mask = col_mean_pos & good_idxs_mask
 
         col_good_mean = col_mean[valid_mask]
@@ -147,7 +140,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         data_good[numpy.isnan(data_good)] = 0.0
 
         # This extension was created by WLcalibrator
-        wlmap = rss_wl['WLMAP'].data
+        wlmap = rss_wl["WLMAP"].data
         mm = numpy.sum(wlmap, axis=0)
         # The information is also in the keywords
         # FIBxxxS1, FIBxxxS2
@@ -172,14 +165,14 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         collapse_smooth_s[mask_noinfo] = 1.0
 
         if self.intermediate_results:
-            numpy.savetxt('collapse.txt', collapse)
-            numpy.savetxt('mask_noinfo.txt', mask_noinfo)
+            numpy.savetxt("collapse.txt", collapse)
+            numpy.savetxt("mask_noinfo.txt", mask_noinfo)
             fig, ax = plt.subplots()
-            ax.plot(xx, collapse, '.', label='collapsed')
-            ax.plot(xx, collapse_smooth, '-', label=f'savgol{degree}')
-            ax.plot(xx, collapse_smooth_s, '--', label=f'spline{degree_s}')
+            ax.plot(xx, collapse, ".", label="collapsed")
+            ax.plot(xx, collapse_smooth, "-", label=f"savgol{degree}")
+            ax.plot(xx, collapse_smooth_s, "--", label=f"spline{degree_s}")
             ax.legend()
-            plt.savefig('collapsed_smooth.png')
+            plt.savefig("collapsed_smooth.png")
             plt.close()
 
         # Divide each fiber in rss_wl by spectrum
@@ -208,16 +201,11 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         """
 
         img = self.process_flat2d(rinput)
-        self.save_intermediate_img(img, 'reduced_image.fits')
+        self.save_intermediate_img(img, "reduced_image.fits")
         splitter1 = Splitter()
-        calibrator_aper = ApertureExtractor(
-            rinput.master_apertures,
-            self.datamodel,
-            offset=rinput.extraction_offset
-        )
+        calibrator_aper = ApertureExtractor(rinput.master_apertures, self.datamodel, offset=rinput.extraction_offset)
         splitter2 = Splitter()
-        calibrator_wl = WavelengthCalibrator(
-            rinput.master_wlcalib, self.datamodel)
+        calibrator_wl = WavelengthCalibrator(rinput.master_wlcalib, self.datamodel)
         flipcor = FlipLR()
 
         img = splitter1(img)
@@ -225,26 +213,21 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         img = calibrator_aper(img)
         img = splitter2(img)
         rss_base = splitter2.out  # Copy before el calibration
-        self.logger.debug('Flip RSS left-rigtht, before WL calibration')
+        self.logger.debug("Flip RSS left-rigtht, before WL calibration")
         img = flipcor.run(img)
         # Calibrate in WL
         rss_wl = calibrator_wl(img)
-        self.save_intermediate_img(rss_wl, 'reduced_rss.fits')
+        self.save_intermediate_img(rss_wl, "reduced_rss.fits")
 
         # Obtain flat field
-        self.logger.info('Normalize flat field')
-        rss_wl2 = self.obtain_fiber_flat(
-            rss_wl, window=rinput.smoothing_window)
+        self.logger.info("Normalize flat field")
+        rss_wl2 = self.obtain_fiber_flat(rss_wl, window=rinput.smoothing_window)
         rss_wl2[0].header = self.set_base_headers(rss_wl2[0].header)
-        result = self.create_result(
-            master_fiberflat=rss_wl2,
-            reduced_image=flat2d,
-            reduced_rss=rss_base
-        )
+        result = self.create_result(master_fiberflat=rss_wl2, reduced_image=flat2d, reduced_rss=rss_base)
         return result
 
     def set_base_headers(self, hdr):
         """Set metadata in FITS headers."""
         hdr = super(FiberFlatRecipe, self).set_base_headers(hdr)
-        hdr['NUMTYPE'] = ('MasterFiberFlat', 'Product type')
+        hdr["NUMTYPE"] = ("MasterFiberFlat", "Product type")
         return hdr

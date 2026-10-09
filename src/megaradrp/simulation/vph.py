@@ -51,7 +51,7 @@ class MegaraVPH:
         if conf is None:
             conf = {}
 
-        self.wl_range = conf.get('wl_range', [0.0, 0.0, 0.0])
+        self.wl_range = conf.get("wl_range", [0.0, 0.0, 0.0])
 
     def distortion(self):
         pass
@@ -60,7 +60,7 @@ class MegaraVPH:
         return self._res.response(wl)
 
     def config_info(self):
-        return {'name': self.name, 'setup': self.setup, 'wl_range': self.wl_range}
+        return {"name": self.name, "setup": self.setup, "wl_range": self.wl_range}
 
     def wltable_interp(self):
         res_in = (self.wlmax / self.resolution(self.wlmax)) / self.SAMPLING
@@ -86,7 +86,7 @@ class DummyVPH:
         return self.res * numpy.ones_like(wl)
 
     def config_info(self):
-        return {'name': self.name}
+        return {"name": self.name}
 
     def wltable_interp(self):
         res_in = (self.wlmax_in / self.res) / self.SAMPLING

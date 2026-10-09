@@ -35,6 +35,7 @@ class VphName(enum.Enum):
 
 class BundleType(enum.Enum):
     """Types of bundles"""
+
     LCB = 1
     RP = 2
     SKY = 3
@@ -42,6 +43,7 @@ class BundleType(enum.Enum):
 
 class FiberPatternType(enum.Enum):
     """Types of fiber pattern on bundles"""
+
     FIXED = 1
     RP = 2
     SKY = 3
@@ -49,12 +51,14 @@ class FiberPatternType(enum.Enum):
 
 class SlitType(enum.Enum):
     """Types of slits"""
+
     LCB = 1
     MOS = 2
 
 
 class SlitPosition(enum.Enum):
     """Positions of the pseudo slit"""
+
     LCB = 1
     MOS = 2
     OPEN = 3
@@ -62,6 +66,7 @@ class SlitPosition(enum.Enum):
 
 class TargetType(enum.Enum):
     """Possible targets in a fiber bundle"""
+
     SOURCE = 1
     UNKNOWN = 2
     UNASSIGNED = 3

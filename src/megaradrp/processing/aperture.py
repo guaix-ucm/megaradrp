@@ -20,7 +20,6 @@ import astropy.io.fits as fits
 import numina.array.trace.extract as extract
 import numina.processing
 
-
 _logger = logging.getLogger(__name__)
 
 

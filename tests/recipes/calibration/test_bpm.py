@@ -8,6 +8,7 @@
 #
 
 """Tests for the bpm mode recipe module."""
+
 import shutil
 from tempfile import mkdtemp
 

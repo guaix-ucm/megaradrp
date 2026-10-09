@@ -9,7 +9,6 @@
 
 """Acquisition with the Fiber MOS"""
 
-
 import math
 
 import numpy as np
@@ -66,11 +65,7 @@ class AcquireMOSRecipe(ImageRecipe):
     """
 
     # Requirements are defined in base class
-    extraction_region = Parameter(
-        [1000, 3000],
-        description='Region used to compute a mean flux',
-        nelem=2
-    )
+    extraction_region = Parameter([1000, 3000], description="Region used to compute a mean flux", nelem=2)
 
     reduced_image = Result(ProcessedFrame)
     reduced_rss = Result(ProcessedRSS)
@@ -80,22 +75,18 @@ class AcquireMOSRecipe(ImageRecipe):
 
     def run(self, rinput):
 
-        self.logger.info('starting AC MOS reduction')
+        self.logger.info("starting AC MOS reduction")
 
         reduced2d, reduced1d = super(AcquireMOSRecipe, self).base_run(rinput)
 
         do_sky_subtraction = True
         if do_sky_subtraction:
-            self.logger.info('start sky subtraction')
+            self.logger.info("start sky subtraction")
             isb = rinput.ignored_sky_bundles
             if isb:
-                self.logger.info('sky bundles ignored: %s', isb)
-            final, origin, sky = self.run_sky_subtraction(
-                reduced1d,
-                sky_rss=rinput.sky_rss,
-                ignored_sky_bundles=isb
-            )
-            self.logger.info('end sky subtraction')
+                self.logger.info("sky bundles ignored: %s", isb)
+            final, origin, sky = self.run_sky_subtraction(reduced1d, sky_rss=rinput.sky_rss, ignored_sky_bundles=isb)
+            self.logger.info("end sky subtraction")
         else:
             final = reduced1d
             # origin = final
@@ -108,7 +99,7 @@ class AcquireMOSRecipe(ImageRecipe):
         self.logger.debug("MOS configuration is %s", fp_conf.conf_id)
         rssdata = final[0].data
         scale, funit = self.datamodel.fiber_scale_unit(final, unit=True)
-        self.logger.debug('unit is %s', funit)
+        self.logger.debug("unit is %s", funit)
         platescale = self.datamodel.PLATESCALE
 
         p1 = []
@@ -116,27 +107,25 @@ class AcquireMOSRecipe(ImageRecipe):
         temp = []
         for key, bundle in fp_conf.bundles.items():
             if bundle.target_type == TargetType.REFERENCE:
-                self.logger.debug(
-                    "%s %s %s", key, bundle.target_name, bundle.target_type)
-                sorted_fibers = [bundle.fibers[key]
-                                 for key in sorted(bundle.fibers)]
+                self.logger.debug("%s %s %s", key, bundle.target_name, bundle.target_type)
+                sorted_fibers = [bundle.fibers[key] for key in sorted(bundle.fibers)]
                 # Central fiber is number 4 in the list
                 central_fiber = sorted_fibers[3]
-                central_coords = [central_fiber.x *
-                                  scale, central_fiber.y * scale]
+                central_coords = [central_fiber.x * scale, central_fiber.y * scale]
                 # central_fiber_pair_id
                 # Central fiber is
-                self.logger.debug('Center fiber is %d', central_fiber.fibid)
-                self.logger.debug('Center fiber coordinates %f %f arcsec',
-                                  central_fiber.x * scale, central_fiber.y * scale)
+                self.logger.debug("Center fiber is %d", central_fiber.fibid)
+                self.logger.debug(
+                    "Center fiber coordinates %f %f arcsec", central_fiber.x * scale, central_fiber.y * scale
+                )
 
                 colids = []
                 coords = []
                 for fiber in sorted_fibers:
                     colids.append(fiber.fibid - 1)
                     coords.append((fiber.x, fiber.y))
-                self.logger.debug('nearest fibers')
-                self.logger.debug('%s', [col + 1 for col in colids])
+                self.logger.debug("nearest fibers")
+                self.logger.debug("%s", [col + 1 for col in colids])
                 coords = np.asarray(coords) * scale
                 flux_per_cell = rssdata[colids, cut1:cut2].mean(axis=1)
                 flux_per_cell_total = flux_per_cell.sum()
@@ -144,29 +133,35 @@ class AcquireMOSRecipe(ImageRecipe):
                 # centroid
                 scf = coords.T * flux_per_cell_norm
                 centroid = scf.sum(axis=1)
-                self.logger.info('centroid: %s arcsec', list(centroid))
-                self.logger.info('centroid: %s mm',
-                                 list(centroid / platescale))
+                self.logger.info("centroid: %s arcsec", list(centroid))
+                self.logger.info("centroid: %s mm", list(centroid / platescale))
                 # central coords
                 c_coords = coords - centroid
                 scf0 = scf - centroid[:, np.newaxis] * flux_per_cell_norm
                 mc2 = np.dot(scf0, c_coords)
-                self.logger.info(
-                    '2nd order moments, x2=%f, y2=%f, xy=%f arcsec^2', mc2[0, 0], mc2[1, 1], mc2[0, 1])
+                self.logger.info("2nd order moments, x2=%f, y2=%f, xy=%f arcsec^2", mc2[0, 0], mc2[1, 1], mc2[0, 1])
 
                 p1.append(central_coords)
                 q1.append(centroid)
-                temp.append((bundle.id, central_fiber.fibid, central_fiber.x * scale,
-                             central_fiber.y * scale, centroid[0], centroid[1]))
+                temp.append(
+                    (
+                        bundle.id,
+                        central_fiber.fibid,
+                        central_fiber.x * scale,
+                        central_fiber.y * scale,
+                        centroid[0],
+                        centroid[1],
+                    )
+                )
 
         if self.intermediate_results:
             with open("centroids.txt", "w") as fd:
                 for entry in temp:
                     fd.write("%s %s %6.3f %6.3f %6.3f %6.3f\n" % entry)
 
-        self.logger.info('compute offset and rotation with %d points', len(p1))
+        self.logger.info("compute offset and rotation with %d points", len(p1))
         if len(p1) == 0:
-            self.logger.warn('cant compute offset and rotation with 0 points')
+            self.logger.warn("cant compute offset and rotation with 0 points")
             offset = [0.0, 0.0]
             angle = 0.0
             qc = QC.BAD
@@ -175,18 +170,13 @@ class AcquireMOSRecipe(ImageRecipe):
             angle = math.atan2(rot[1, 0], rot[0, 0])
             angle = angle / math.pi * 180.0
             qc = QC.GOOD
-            self.logger.info('offset is %s', offset)
-            self.logger.info('rot matrix is %s', rot)
-            self.logger.info('rot angle %5.2f deg', angle)
+            self.logger.info("offset is %s", offset)
+            self.logger.info("rot matrix is %s", rot)
+            self.logger.info("rot angle %5.2f deg", angle)
 
         final = add_collapsed_mos_extension(final)
         # origin = add_collapsed_mos_extension(origin)
 
         return self.create_result(
-            reduced_image=reduced2d,
-            reduced_rss=reduced1d,
-            final_rss=final,
-            offset=offset,
-            rotang=angle,
-            qc=qc
+            reduced_image=reduced2d, reduced_rss=reduced1d, final_rss=final, offset=offset, rotang=angle, qc=qc
         )

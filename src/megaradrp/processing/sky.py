@@ -21,20 +21,19 @@ def subtract_sky(img, ignored_sky_bundles=None, logger=None):
     if logger is None:
         logger = logging.getLogger(__name__)
 
-    logger.info('obtain fiber information')
+    logger.info("obtain fiber information")
     sky_img = copy_img(img)
     final_img = copy_img(img)
     fp_conf = fp.FocalPlaneConf.from_img(sky_img)
     # Sky fibers
-    skyfibs = fp_conf.sky_fibers(valid_only=True,
-                                 ignored_bundles=ignored_sky_bundles)
-    logger.debug('sky fibers are: %s', skyfibs)
+    skyfibs = fp_conf.sky_fibers(valid_only=True, ignored_bundles=ignored_sky_bundles)
+    logger.debug("sky fibers are: %s", skyfibs)
     # Create empty sky_data
     target_data = img[0].data
 
-    target_map = img['WLMAP'].data
+    target_map = img["WLMAP"].data
     sky_data = numpy.zeros_like(img[0].data)
-    sky_map = numpy.zeros_like(img['WLMAP'].data)
+    sky_map = numpy.zeros_like(img["WLMAP"].data)
     sky_img[0].data = sky_data
 
     for fibid in skyfibs:
@@ -51,11 +50,10 @@ def subtract_sky(img, ignored_sky_bundles=None, logger=None):
     avg_sky[mask] = coldata[mask] / colsum[mask]
 
     # This should be done only on valid fibers
-    logger.info('ignoring invalid fibers: %s', fp_conf.invalid_fibers())
+    logger.info("ignoring invalid fibers: %s", fp_conf.invalid_fibers())
     for fibid in fp_conf.valid_fibers():
         rowid = fibid - 1
-        final_img[0].data[rowid, mask] = img[0].data[rowid, mask] - \
-            avg_sky[mask]
+        final_img[0].data[rowid, mask] = img[0].data[rowid, mask] - avg_sky[mask]
     # Update headers
     #
     return final_img, img, sky_img
@@ -73,10 +71,10 @@ def subtract_sky_rss(img, sky_img, ignored_sky_bundles=None, logger=None):
     # fiberconf_sky = dm.get_fiberconf(sky_img)
     # fiberconf_target = dm.get_fiberconf(img)
 
-    logger.debug('using WLMAP extension to compute valid regions')
+    logger.debug("using WLMAP extension to compute valid regions")
 
-    v_map = img['WLMAP'].data > 0
-    sky_map = numpy.zeros_like(img['WLMAP'].data)
+    v_map = img["WLMAP"].data > 0
+    sky_map = numpy.zeros_like(img["WLMAP"].data)
     sky_data = sky_img[0].data
     sky_map[:] = v_map[:]
 

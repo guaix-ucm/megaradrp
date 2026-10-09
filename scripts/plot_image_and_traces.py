@@ -18,11 +18,10 @@ plt.ylim([0, 4112])
 plt.imshow(data)
 
 for trace in traces:
-    p = trace['fitparms']
+    p = trace["fitparms"]
     amx = np.poly1d(p)
-    xx = np.arange(trace['start'], trace['stop'])
+    xx = np.arange(trace["start"], trace["stop"])
     y = amx(xx)
 
-
-    plt.plot(xx, y, 'k')
+    plt.plot(xx, y, "k")
 plt.show()

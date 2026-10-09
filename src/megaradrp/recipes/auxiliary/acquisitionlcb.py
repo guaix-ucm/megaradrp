@@ -61,13 +61,8 @@ class AcquireLCBRecipe(ImageRecipe):
 
     # Requirements are defined in base class
     points = Parameter([(0, 0)], "Coordinates")
-    nrings = Parameter(3, "Number of rings to extract the star",
-                       validator=range_validator(minval=1))
-    extraction_region = Parameter(
-        [1000, 3000],
-        description='Region used to compute a mean flux',
-        nelem=2
-    )
+    nrings = Parameter(3, "Number of rings to extract the star", validator=range_validator(minval=1))
+    extraction_region = Parameter([1000, 3000], description="Region used to compute a mean flux", nelem=2)
 
     reduced_image = Result(ProcessedImage)
     reduced_rss = Result(ProcessedRSS)
@@ -77,23 +72,19 @@ class AcquireLCBRecipe(ImageRecipe):
 
     def run(self, rinput):
 
-        self.logger.info('starting AC LCB reduction')
+        self.logger.info("starting AC LCB reduction")
 
         reduced2d, reduced1d = super(AcquireLCBRecipe, self).base_run(rinput)
         # rssdata = rss_data[0].data
 
         do_sky_subtraction = True
         if do_sky_subtraction:
-            self.logger.info('start sky subtraction')
+            self.logger.info("start sky subtraction")
             isb = rinput.ignored_sky_bundles
             if isb:
-                self.logger.info('sky bundles ignored: %s', isb)
-            final, origin, sky = self.run_sky_subtraction(
-                reduced1d,
-                sky_rss=rinput.sky_rss,
-                ignored_sky_bundles=isb
-            )
-            self.logger.info('end sky subtraction')
+                self.logger.info("sky bundles ignored: %s", isb)
+            final, origin, sky = self.run_sky_subtraction(reduced1d, sky_rss=rinput.sky_rss, ignored_sky_bundles=isb)
+            self.logger.info("end sky subtraction")
         else:
             final = reduced1d
             # origin = final
@@ -102,15 +93,9 @@ class AcquireLCBRecipe(ImageRecipe):
         fp_conf = FocalPlaneConf.from_img(final)
         self.logger.debug("LCB configuration is %s", fp_conf.conf_id)
 
-        centroid = calc_centroid_brightest(
-            final, rinput.extraction_region, rinput.nrings)
+        centroid = calc_centroid_brightest(final, rinput.extraction_region, rinput.nrings)
 
         if False:
             self.compute_dar(final)
 
-        return self.create_result(
-            reduced_image=reduced2d,
-            reduced_rss=reduced1d,
-            final_rss=final,
-            offset=-centroid
-        )
+        return self.create_result(reduced_image=reduced2d, reduced_rss=reduced1d, final_rss=final, offset=-centroid)

@@ -13,7 +13,6 @@ import numpy
 from numpy.lib.stride_tricks import as_strided as ast
 from numina.instrument.components.detector import DetectorBase, VirtualDetector
 
-
 _logger = logging.getLogger(__name__)
 
 
@@ -28,7 +27,7 @@ def binning(arr, br, bc):
     bnc = nc // bc
     m = arr.dtype.itemsize
     newshape = bnr, bnc, br, bc
-    newstrides = nc*br*m, bc*m, nc*m, m
+    newstrides = nc * br * m, bc * m, nc * m, m
     binned = ast(arr, shape=newshape, strides=newstrides)
     return binned
 
@@ -45,13 +44,23 @@ class ReadParams:
 class MegaraDetector(DetectorBase):
     """Simple MEGARA detector."""
 
-    _binning = {'11': [1, 1], '21': [1, 2], '12': [2, 1], '22': [2, 2]}
-    _direc = ['normal', 'mirror']
+    _binning = {"11": [1, 1], "21": [1, 2], "12": [2, 1], "22": [2, 2]}
+    _direc = ["normal", "mirror"]
 
-    def __init__(self, name, shape, oscan, pscan,
-                 qe=1.0, qe_wl=None, dark=0.0,
-                 readpars1=None, readpars2=None,
-                 bins='11', direction='normal'):
+    def __init__(
+        self,
+        name,
+        shape,
+        oscan,
+        pscan,
+        qe=1.0,
+        qe_wl=None,
+        dark=0.0,
+        readpars1=None,
+        readpars2=None,
+        bins="11",
+        direction="normal",
+    ):
 
         super(MegaraDetector, self).__init__(name, shape, qe, qe_wl, dark)
 
@@ -66,8 +75,8 @@ class MegaraDetector(DetectorBase):
         self.set_geometry()
 
     def configure(self, profile):
-        if 'bins' in profile:
-            self.set_binning(profile['bins'])
+        if "bins" in profile:
+            self.set_binning(profile["bins"])
 
     def _set_binning(self, bins):
 
@@ -85,11 +94,13 @@ class MegaraDetector(DetectorBase):
     def _set_direction(self, direction):
 
         if direction not in self._direc:
-            raise ValueError(
-                f"{direction} must be either 'normal' or 'mirror'")
+            raise ValueError(f"{direction} must be either 'normal' or 'mirror'")
 
-        if direction == 'normal':
-            def directfun(x): return x
+        if direction == "normal":
+
+            def directfun(x):
+                return x
+
         else:
             directfun = numpy.fliplr
 
@@ -101,14 +112,10 @@ class MegaraDetector(DetectorBase):
         self.set_geometry()
 
     def set_geometry(self):
-        self.fshape, (base1, base2), geom1, geom2 = self.init_regions(self.dshape,
-                                                                      self.oscan, self.pscan,
-                                                                      self.blocks)
+        self.fshape, (base1, base2), geom1, geom2 = self.init_regions(self.dshape, self.oscan, self.pscan, self.blocks)
 
-        self.virt1 = VirtualDetector(
-            base1, geom1, self.directfun, self.readpars1)
-        self.virt2 = VirtualDetector(
-            base2, geom2, self.directfun, self.readpars2)
+        self.virt1 = VirtualDetector(base1, geom1, self.directfun, self.readpars1)
+        self.virt2 = VirtualDetector(base2, geom2, self.directfun, self.readpars2)
 
     def pre_readout(self, elec_pre):
         # FIXME: there is a bug in numpy here
@@ -134,12 +141,14 @@ class MegaraDetector(DetectorBase):
         # det = math.sqrt(b**2-4*a*c)
         # u1 = (-b+det) / (2*a)
 
-        def f1(x): return x
+        def f1(x):
+            return x
 
         def f2(xx):
-            return xx + a * (xx - 45000)**2
+            return xx + a * (xx - 45000) ** 2
 
-        def f3(x): return 52000
+        def f3(x):
+            return 52000
 
         p1 = x < 45000
         p3 = x >= 54312  # 45000 + u1
@@ -211,9 +220,9 @@ class MegaraDetector(DetectorBase):
 
     def init_config_info(self):
         info = super(MegaraDetector, self).init_config_info()
-        info['exposed'] = self._time_last
-        info['vbin'] = int(self.bins[-1])
-        info['hbin'] = int(self.bins[0])
+        info["exposed"] = self._time_last
+        info["vbin"] = int(self.bins[-1])
+        info["hbin"] = int(self.bins[0])
         return info
 
 
@@ -229,4 +238,4 @@ class MegaraDetectorSat(MegaraDetector):
 
     def esp_nonlinearity(self, x):
         sat = 12000.0
-        return sat * (1-sat / (sat + x))
+        return sat * (1 - sat / (sat + x))

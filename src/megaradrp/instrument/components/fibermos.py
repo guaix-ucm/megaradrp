@@ -18,7 +18,7 @@ from megaradrp.instrument.focalplane import TargetType
 class RoboticPositioner(HWDevice):
 
     def __init__(self, name, id, pos=None, parent=None):
-        super(RoboticPositioner, self). __init__(name, parent)
+        super(RoboticPositioner, self).__init__(name, parent)
         self._id = id
         if pos is None:
             pos = (0.0, 0.0, 0.0)
@@ -32,7 +32,7 @@ class RoboticPositioner(HWDevice):
 
         self._target_priority = 0
         self._target_type = TargetType.UNASSIGNED
-        self._target_name = 'unknown'
+        self._target_name = "unknown"
 
         self.fb = None
         self.rpatrol = 10.0
@@ -41,7 +41,7 @@ class RoboticPositioner(HWDevice):
         dis = math.hypot(x - self.x_fix, y - self.y_fix)
         if dis >= self.rpatrol:
             # impossible to move
-            raise ValueError('movement out of patrol area')
+            raise ValueError("movement out of patrol area")
         self.x_ = x
         self.y_ = y
         self.pa_ = pa
@@ -107,8 +107,7 @@ class RoboticPositioner(HWDevice):
 
     @position_relative.setter
     def position_relative(self, value):
-        self.move_to(value[0] + self.x_, value[1] +
-                     self.y_, value[2] + self.pa_)
+        self.move_to(value[0] + self.x_, value[1] + self.y_, value[2] + self.pa_)
 
     @property
     def target_priority(self):
@@ -138,9 +137,9 @@ class RoboticPositioner(HWDevice):
         meta = super(RoboticPositioner, self).init_config_info()
         meta["id"] = self._id
         if self.fb:
-            meta['bundle'] = self.fb.config_info()
+            meta["bundle"] = self.fb.config_info()
             _, pos = self.fibers_in_focal_plane()
-            meta['fibers_pos'] = pos
+            meta["fibers_pos"] = pos
         return meta
 
 
@@ -221,8 +220,7 @@ class LargeCompactBundle(BaseFibersPlane):
 
     def fibers_in_focal_plane(self):
         fibid = [fiber.fibid for fiber in self.fiberset.fibers.values()]
-        pos = [self.lcb_pos[fiber.fibid]
-               for fiber in self.fiberset.fibers.values()]
+        pos = [self.lcb_pos[fiber.fibid] for fiber in self.fiberset.fibers.values()]
 
         return fibid, pos
 

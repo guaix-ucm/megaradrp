@@ -19,7 +19,7 @@ import megaradrp.processing.wcs as mwcs
 
 def fix_missing_fiber(rss, fibid):
     """Interpolate missing fiber fibid"""
-    hdr = rss['FIBERS'].header
+    hdr = rss["FIBERS"].header
     fp = FocalPlaneConf.from_img(rss)
     # Fibers around 623 are
     idxs = fp.nearby_fibers(fibid)
@@ -41,9 +41,9 @@ def fix_missing_fiber(rss, fibid):
         l1 = hdr[l1fmt.format(fibid)]
         l2 = hdr[l2fmt.format(fibid)]
         if l1 > 1:
-            avg[0:l1 - 1] = 0
+            avg[0 : l1 - 1] = 0
         if l2 < len(avg):
-            avg[l2 - 1:] = 0
+            avg[l2 - 1 :] = 0
     except KeyError:
         pass
 
@@ -52,7 +52,7 @@ def fix_missing_fiber(rss, fibid):
 
 
 def recompute_wcs(hdr, ipa):
-    """Recompute the WCS rotations from IPA """
+    """Recompute the WCS rotations from IPA"""
     pa = mwcs.compute_pa_from_ipa(ipa)
     # print('IPA angle is:', ipa, 'PA angle is', math.fmod(pa, 360))
     # x = hdr['PC1_1']

@@ -13,6 +13,5 @@ import logging
 
 from megaradrp._version import __version__  # noqa: F401
 
-
 # Top level NullHandler
 logging.getLogger("megaradrp").addHandler(logging.NullHandler())

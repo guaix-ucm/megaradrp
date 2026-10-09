@@ -11,7 +11,6 @@
 
 import astropy.units as u
 
-
 # FIXME: duplicated in megaradrp.instrument
 # without units
 

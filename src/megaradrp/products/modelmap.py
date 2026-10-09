@@ -38,40 +38,40 @@ class GeometricModel(GeometricAperture):
         state = super(GeometricModel, self).__getstate__()
         # del state['model']
 
-        params = state['model']['params']
+        params = state["model"]["params"]
         newparams = {}
         for key, val in params.items():
             serial = json_serial_function(val)
             newparams[key] = serial
 
-        state['model']['params'] = newparams
+        state["model"]["params"] = newparams
         return state
 
     def __setstate__(self, state):
         super(GeometricModel, self).__setstate__(state)
-        self._set_model(state['model'])
+        self._set_model(state["model"])
 
     def _set_model(self, model):
         if model:
             params = {}
-            for key, val in model['params'].items():
+            for key, val in model["params"].items():
                 params[key] = convert_function(val)
-            model['params'] = params
+            model["params"] = params
 
     @property
     def polynomial(self):
         # FIXME: this is a workaround
-        return self.model['params']['mean']
+        return self.model["params"]["mean"]
 
     def aper_center(self):
-        return self.model['params']['mean']
+        return self.model["params"]["mean"]
 
 
 class ModelMap(BaseStructuredCalibration):
 
-    __tags__ = ['insmode', 'vph']
+    __tags__ = ["insmode", "vph"]
 
-    def __init__(self, instrument='unknown'):
+    def __init__(self, instrument="unknown"):
         super(ModelMap, self).__init__(instrument)
         self.contents = []
         self.boxes_positions = []
@@ -81,24 +81,23 @@ class ModelMap(BaseStructuredCalibration):
 
     def __getstate__(self):
         st = super(ModelMap, self).__getstate__()
-        st['contents'] = [t.__getstate__() for t in self.contents]
-        st['boxes_positions'] = self.boxes_positions
-        st['global_offset'] = self.global_offset.coef
-        st['ref_column'] = self.ref_column
+        st["contents"] = [t.__getstate__() for t in self.contents]
+        st["boxes_positions"] = self.boxes_positions
+        st["global_offset"] = self.global_offset.coef
+        st["ref_column"] = self.ref_column
         return st
 
     def __setstate__(self, state):
         super(ModelMap, self).__setstate__(state)
         # self.contents = [GeometricModel(**trace) for trace in state['contents']]
         self.contents = []
-        for trace in state['contents']:
+        for trace in state["contents"]:
             m = GeometricModel.__new__(GeometricModel)
             m.__setstate__(trace)
             self.contents.append(m)
-        self.boxes_positions = state.get('boxes_positions', [])
-        self.global_offset = nppol.Polynomial(
-            state.get('global_offset', [0.0]))
-        self.ref_column = state.get('ref_column', 2000)
+        self.boxes_positions = state.get("boxes_positions", [])
+        self.global_offset = nppol.Polynomial(state.get("global_offset", [0.0]))
+        self.ref_column = state.get("ref_column", 2000)
         self._wcols = None
 
     def calculate_matrices(self, shape, processes=0):
@@ -126,11 +125,7 @@ class ModelMap(BaseStructuredCalibration):
             Abscissae where the fibid is shown (default=0 -> not shown).
 
         """
-        return to_ds9_reg_function(self, ds9reg,
-                                   rawimage=rawimage,
-                                   numpix=numpix,
-                                   fibid_at=fibid_at
-                                   )
+        return to_ds9_reg_function(self, ds9reg, rawimage=rawimage, numpix=numpix, fibid_at=fibid_at)
 
 
 # BUILD MATRICES

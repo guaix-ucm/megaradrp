@@ -33,7 +33,5 @@ def test_calc_lcb_grid():
     res_x, res_y = calc_lcb_grid()
     assert res_x.shape == (567,)
     assert res_y.shape == (567,)
-    assert np.allclose(
-        [res_x.min(), res_x.max()], [-11.258330249197702, 11.258330249197702]
-    )
+    assert np.allclose([res_x.min(), res_x.max()], [-11.258330249197702, 11.258330249197702])
     assert np.allclose([res_y.min(), res_y.max()], [-10.5, 10.0])

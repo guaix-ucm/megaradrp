@@ -19,7 +19,6 @@ import pytest
 from megaradrp.datatype import MegaraDataType
 import megaradrp.products.tracemap as tm
 
-
 state1 = {"fibid": 100, "boxid": 12, "start": 1000, "stop": 2000}
 
 state2 = {"fibid": 100, "boxid": 12, "start": 1000, "stop": 2000, "fitparms": [1, 2, 3]}

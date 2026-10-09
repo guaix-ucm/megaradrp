@@ -47,9 +47,6 @@ def create_test_tracemap2():
     data.total_fibers = 623
     data.expected_range = [2, 4092]
     data.ref_column = 2001
-    data.contents = [
-        tm.GeometricTrace(fibid, 1, 4, 4090, fitparms=[200 + fibid * 3.5, 0.0])
-        for fibid in range(1, 624)
-    ]
+    data.contents = [tm.GeometricTrace(fibid, 1, 4, 4090, fitparms=[200 + fibid * 3.5, 0.0]) for fibid in range(1, 624)]
 
     return data

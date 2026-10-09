@@ -21,7 +21,6 @@ from numina.util.convert import convert_date
 from megaradrp.datatype import MegaraDataType, DataOrigin
 import megaradrp.instrument.constants as cons
 
-
 _logger = logging.getLogger(__name__)
 
 
@@ -29,65 +28,62 @@ class MegaraDataModel(DataModel):
     """Data model of MEGARA images"""
 
     query_attrs = {
-        'vph': QueryAttribute('vph', str),
-        'insmode': QueryAttribute('insmode', str),
-        'insconf': QueryAttribute('insconf', str),
-        'speclamp': QueryAttribute('speclamp', str),
-        'temp': QueryAttribute('temp', float),
-        'confid': QueryAttribute('confid', str)
+        "vph": QueryAttribute("vph", str),
+        "insmode": QueryAttribute("insmode", str),
+        "insconf": QueryAttribute("insconf", str),
+        "speclamp": QueryAttribute("speclamp", str),
+        "temp": QueryAttribute("temp", float),
+        "confid": QueryAttribute("confid", str),
     }
 
     meta_info_headers = [
-        'instrument',
-        'object',
-        'observation_date',
-        'uuid',
-        'type',
-        'mode',
-        'exptime',
-        'darktime',
-        'insconf',
-        'blckuuid',
-        'quality_control',
-        'vph',
-        'insmode'
+        "instrument",
+        "object",
+        "observation_date",
+        "uuid",
+        "type",
+        "mode",
+        "exptime",
+        "darktime",
+        "insconf",
+        "blckuuid",
+        "quality_control",
+        "vph",
+        "insmode",
     ]
 
     db_info_keys = [
-        'instrument',
-        'object',
-        'observation_date',
-        'uuid',
-        'type',
-        'mode',
-        'exptime',
-        'darktime',
-        'insconf',
-        'blckuuid',
-        'quality_control',
-        'vph',
-        'insmode'
+        "instrument",
+        "object",
+        "observation_date",
+        "uuid",
+        "type",
+        "mode",
+        "exptime",
+        "darktime",
+        "insconf",
+        "blckuuid",
+        "quality_control",
+        "vph",
+        "insmode",
     ]
 
-    db_info_keys_extra = [
-        'vph',
-        'insmode'
-    ]
+    db_info_keys_extra = ["vph", "insmode"]
 
     meta_dinfo_headers = [
-        'exptime',
-        'observation_date',
-        'vph',
-        'vphpos',
-        'insmode',
-        'focus',
-        'osfilter',
-        'uuid',
-        'temp',
-        'block_uuid',
-        'insconf_uuid',
-        'speclamp',
-        'imgid'
+        "exptime",
+        "observation_date",
+        "vph",
+        "vphpos",
+        "insmode",
+        "focus",
+        "osfilter",
+        "uuid",
+        "temp",
+        "block_uuid",
+        "insconf_uuid",
+        "speclamp",
+        "imgid",
     ]
 
     PLATESCALE = cons.GTC_FC_A_PLATESCALE.value
@@ -95,23 +91,20 @@ class MegaraDataModel(DataModel):
     def __init__(self):
 
         instrument_mappings = {
-            'date_obs': ('DATE-OBS', 0, convert_date),
-            'insconf': 'insconf',
-            'insconf_uuid': 'insconf',
-            'blckuuid': 'blckuuid',
-            'block_uuid': 'blckuuid',
-            'vph': ('VPH', 'undefined'),
-            'vphpos': ('VPHWHPOS', 'undefined'),
-            'focus': ('FOCUS', 'undefined'),
-            'osfilter': ('OSFILTER', 'undefined'),
-            'temp': ('SENTEMP4', 0.0),
-            'speclamp': ('SPECLAMP', 'undefined'),
-            'confid': KeyDefinition('CONFID', ext='FIBERS'),
+            "date_obs": ("DATE-OBS", 0, convert_date),
+            "insconf": "insconf",
+            "insconf_uuid": "insconf",
+            "blckuuid": "blckuuid",
+            "block_uuid": "blckuuid",
+            "vph": ("VPH", "undefined"),
+            "vphpos": ("VPHWHPOS", "undefined"),
+            "focus": ("FOCUS", "undefined"),
+            "osfilter": ("OSFILTER", "undefined"),
+            "temp": ("SENTEMP4", 0.0),
+            "speclamp": ("SPECLAMP", "undefined"),
+            "confid": KeyDefinition("CONFID", ext="FIBERS"),
         }
-        super(MegaraDataModel, self).__init__(
-            'MEGARA',
-            instrument_mappings
-        )
+        super(MegaraDataModel, self).__init__("MEGARA", instrument_mappings)
 
     def get_fiberconf(self, img):
         """Obtain FiberConf from image"""
@@ -125,7 +118,7 @@ class MegaraDataModel(DataModel):
 
 
 def fiber_scale_unit(img, unit=False):
-    funit = img['FIBERS'].header.get("FUNIT", "arcsec")
+    funit = img["FIBERS"].header.get("FUNIT", "arcsec")
 
     if funit == "arcsec":
         scale = 1
@@ -140,12 +133,12 @@ def fiber_scale_unit(img, unit=False):
 def get_fiberconf(img):
     """Obtain FiberConf from image"""
 
-    main_insmode = img[0].header.get('INSMODE', '')
+    main_insmode = img[0].header.get("INSMODE", "")
 
-    if 'FIBERS' in img:
+    if "FIBERS" in img:
         # We have a 'fibers' extension
         # Information os there
-        hdr_fiber = img['FIBERS'].header
+        hdr_fiber = img["FIBERS"].header
         return read_fibers_extension(hdr_fiber, insmode=main_insmode)
     else:
         return get_fiberconf_default(main_insmode)
@@ -153,16 +146,16 @@ def get_fiberconf(img):
 
 def create_default_fiber_header(insmode):
     """Obtain default FIBER header"""
-    if insmode == 'LCB':
-        slit_file = 'lcb_default_header.txt'
-    elif insmode == 'MOS':
-        slit_file = 'mos_default_header.txt'
+    if insmode == "LCB":
+        slit_file = "lcb_default_header.txt"
+    elif insmode == "MOS":
+        slit_file = "mos_default_header.txt"
     else:
         # Read fiber info from headers
-        raise ValueError(f'Invalid INSMODE {insmode}')
+        raise ValueError(f"Invalid INSMODE {insmode}")
 
-    data = pkgutil.get_data('megaradrp.instrument.configs', slit_file)
-    default_hdr = StringIO(data.decode('utf8'))
+    data = pkgutil.get_data("megaradrp.instrument.configs", slit_file)
+    default_hdr = StringIO(data.decode("utf8"))
     hdr_fiber = fits.header.Header.fromfile(default_hdr)
     return hdr_fiber
 
@@ -173,7 +166,7 @@ def get_fiberconf_default(insmode):
     return read_fibers_extension(hdr_fiber)
 
 
-def read_fibers_extension(hdr, insmode='LCB'):
+def read_fibers_extension(hdr, insmode="LCB"):
     """Read the FIBERS extension
 
     Parameters
@@ -190,6 +183,7 @@ def read_fibers_extension(hdr, insmode='LCB'):
 
     """
     import megaradrp.instrument.focalplane as fp
+
     return fp.FocalPlaneConf.from_header(hdr)
 
 
@@ -204,7 +198,7 @@ def describe_hdulist_megara(hdulist):
     # date_obs = convert_date(prim.get("DATE-OBS"))
     date_obs = prim.get("DATE-OBS")
     img_uuid = prim.get("UUID")
-    insconf = prim.get("INSCONF", 'undefined')
+    insconf = prim.get("INSCONF", "undefined")
 
     if image_type is None:
         # inferr from header
@@ -219,13 +213,16 @@ def describe_hdulist_megara(hdulist):
     else:
         origin = DataOrigin.PROCESSED
 
-    return {'instrument': instrument, 'datatype': datatype,
-            'origin': origin, 'uuid': img_uuid,
-            'insconf': insconf,
-            'observation': obs,
-            'observation_date': date_obs,
-            'processing': proc
-            }
+    return {
+        "instrument": instrument,
+        "datatype": datatype,
+        "origin": origin,
+        "uuid": img_uuid,
+        "insconf": insconf,
+        "observation": obs,
+        "observation_date": date_obs,
+        "processing": proc,
+    }
 
 
 def megara_inferr_datatype(obj):
@@ -240,7 +237,7 @@ def megara_inferr_datatype(obj):
 
 def megara_inferr_datetype_from_dict(obj):
     # this comes from JSON
-    dtype = obj['type_fqn']
+    dtype = obj["type_fqn"]
     if dtype in ["megaradrp.products.tracemap.TraceMap"]:
         return MegaraDataType.TRACE_MAP
     elif dtype in ["megaradrp.products.modelmap.ModelMap"]:
@@ -306,11 +303,9 @@ def megara_inferr_datetype_from_image(hdulist):
             sub_datatype = MegaraDataType.IMAGE_TWILIGHT
         elif obsmode in ["MegaraLcbImage", "MegaraMosImage"]:
             sub_datatype = MegaraDataType.IMAGE_TARGET
-        elif obsmode in ["MegaraMosStdStar", "MegaraExtinctionStar",
-                         "MegaraLcbStdStar", "MegaraSensitivityStar"]:
+        elif obsmode in ["MegaraMosStdStar", "MegaraExtinctionStar", "MegaraLcbStdStar", "MegaraSensitivityStar"]:
             sub_datatype = MegaraDataType.IMAGE_TARGET
-        elif obsmode in ["MegaraFocusTelescope",
-                         "MegaraLcbAcquisition", "MegaraMosAcquisition"]:
+        elif obsmode in ["MegaraFocusTelescope", "MegaraLcbAcquisition", "MegaraMosAcquisition"]:
             sub_datatype = MegaraDataType.IMAGE_TARGET
         elif obsmode in ["MegaraBadPixelMask", "MegaraFocusSpectrograph"]:
             sub_datatype = MegaraDataType.IMAGE_RAW
@@ -320,7 +315,7 @@ def megara_inferr_datetype_from_image(hdulist):
         return sub_datatype
     elif datatype == MegaraDataType.SPEC_PROCESSED:
         numrnam = prim.get("NUMRNAM", "unknown")
-        if numrnam in ['LCBStandardRecipe', 'MOSStandardRecipe']:
+        if numrnam in ["LCBStandardRecipe", "MOSStandardRecipe"]:
             sub_datatype = MegaraDataType.MASTER_SENSITIVITY
         else:
             sub_datatype = datatype
@@ -330,12 +325,13 @@ def megara_inferr_datetype_from_image(hdulist):
 
 def check_obj_megara(obj, astype=None, level=None):
     import megaradrp.validators as val
+
     if astype is None:
         datatype = megara_inferr_datatype(obj)
-        _logger.debug(f'check object as it says it is ({datatype})')
+        _logger.debug(f"check object as it says it is ({datatype})")
         thistype = datatype
     else:
-        _logger.debug(f'check object as {astype}')
+        _logger.debug(f"check object as {astype}")
         thistype = astype
     checker = val.check_as_datatype(thistype)
     res = checker(obj, level=level)

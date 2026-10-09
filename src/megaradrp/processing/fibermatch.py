@@ -9,6 +9,7 @@
 
 
 """Match and identify fibers"""
+
 import enum
 import itertools
 
@@ -41,10 +42,7 @@ class PeakMatch:
     idx: int = attrs.field()
 
 
-def generate_box_model(nfibers, start=1,
-                       missing_relids=None,
-                       skip_fibids=None
-                       ):
+def generate_box_model(nfibers, start=1, missing_relids=None, skip_fibids=None):
     """Generate a model of the expected peaks in a box"""
 
     if skip_fibids is None:
@@ -77,7 +75,7 @@ def count_peaks(peaks, tol=1.2, distance=6.0, start=1, max_scale_jump=3):
     pid = start
 
     if len(peaks) == 0:
-        raise ValueError('no peaks to count')
+        raise ValueError("no peaks to count")
 
     p1, rest = peaks[0], peaks[1:]
     # pref = p1
@@ -115,7 +113,7 @@ def count_peaks(peaks, tol=1.2, distance=6.0, start=1, max_scale_jump=3):
                 rest = rest[1:]
                 if scale > max_scale_jump:
                     # print('moving too far away')
-                    msg = f'peak {pid} not found within expected distance from peak {last_info.count}'
+                    msg = f"peak {pid} not found within expected distance from peak {last_info.count}"
                     print(msg)
                     # end process
                     rest = rest[-1:]

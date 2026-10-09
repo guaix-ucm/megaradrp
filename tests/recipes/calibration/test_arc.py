@@ -15,7 +15,6 @@ from numina.user.cli import main
 
 from megaradrp.loader import load_drp
 
-
 BASE_URL = "https://guaix.fis.ucm.es/~spr/megara_test/"
 
 

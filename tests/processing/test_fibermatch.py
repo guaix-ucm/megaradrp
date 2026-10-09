@@ -3,7 +3,6 @@ import pytest
 from megaradrp.processing.fibermatch import generate_box_model, FiberModelElement
 from megaradrp.processing.fibermatch import count_peaks, PeakMatch, PeakFound, PeakMode
 
-
 PEAKS = [
     3.806000000000000000e03,
     3.812000000000000000e03,

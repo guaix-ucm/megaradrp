@@ -18,8 +18,7 @@ class InterpolFile:
 
     def __init__(self, fname, fill_value=0.0, factor=1.0):
         rawdata = numpy.loadtxt(fname)
-        self._interp = ii.interp1d(rawdata[:, 0] / 1e4, rawdata[:, 1],
-                                   bounds_error=False, fill_value=fill_value)
+        self._interp = ii.interp1d(rawdata[:, 0] / 1e4, rawdata[:, 1], bounds_error=False, fill_value=fill_value)
         self.factor = factor
 
     def __call__(self, wl):
@@ -39,9 +38,7 @@ class InterpolFitsUVES:
             # WL is in Angstroms -> to microns
             all_wl = wcs.all_pix2world(range(hdul[0].data.size), 0)
 
-        self._interp = ii.interp1d(all_wl[0] / 1e4, numpy.abs(rawdata),
-                                   bounds_error=False,
-                                   fill_value=fill_value)
+        self._interp = ii.interp1d(all_wl[0] / 1e4, numpy.abs(rawdata), bounds_error=False, fill_value=fill_value)
 
     def __call__(self, wl):
         return self._interp(wl)
@@ -50,8 +47,7 @@ class InterpolFitsUVES:
 class EfficiencyFile(Efficiency):
 
     def __init__(self, fname, fill_value=0.0, factor=1.0):
-        self.interpf = InterpolFile(
-            fname, fill_value=fill_value, factor=factor)
+        self.interpf = InterpolFile(fname, fill_value=fill_value, factor=factor)
 
     def response(self, wl):
         return self.interpf(wl)

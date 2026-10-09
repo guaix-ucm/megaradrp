@@ -21,12 +21,11 @@ import megaradrp.validators as valid
 from megaradrp.datatype import MegaraDataType
 from megaradrp.datamodel import MegaraDataModel, QueryAttribute
 
-
 _logger = logging.getLogger(__name__)
 
 
 def validate_fiber_ext(header_f):
-    _logger.debug('validate fiber extension')
+    _logger.debug("validate fiber extension")
 
 
 class Point2D(ArrayNType):
@@ -38,6 +37,7 @@ class Point2D(ArrayNType):
 
 class MegaraFrame(DataFrameType):
     """A processed frame"""
+
     DATATYPE = MegaraDataType.IMAGE_RAW
     tags_headers = {}
 
@@ -45,7 +45,7 @@ class MegaraFrame(DataFrameType):
         super(MegaraFrame, self).__init__(datamodel=MegaraDataModel)
 
     def validate_hdulist(self, hdulist):
-        _logger.debug('validate MasterBias')
+        _logger.debug("validate MasterBias")
         checker = valid.check_as_datatype(self.DATATYPE)
         return checker(hdulist)
 
@@ -53,7 +53,7 @@ class MegaraFrame(DataFrameType):
         """Extract tags from serialized file"""
 
         objl = self.convert(obj)
-        ext = self.datamodel.extractor_map['fits']
+        ext = self.datamodel.extractor_map["fits"]
         tags = {}
 
         if objl:
@@ -67,27 +67,32 @@ class MegaraFrame(DataFrameType):
 
 class ProcessedFrame(MegaraFrame):
     """A processed frame"""
+
     DATATYPE = MegaraDataType.IMAGE_PROCESSED
     tags_headers = {}
 
 
 class ProcessedImage(ProcessedFrame):
     """A processed image"""
+
     DATATYPE = MegaraDataType.IMAGE_PROCESSED
 
 
 class ProcessedRSS(ProcessedFrame):
     """A processed RSS image"""
+
     DATATYPE = MegaraDataType.RSS_PROCESSED
 
 
 class ProcessedMultiRSS(ProcessedFrame):
     """A processed RSS image not to be stored"""
+
     pass
 
 
 class ProcessedSpectrum(ProcessedFrame):
     """A 1d spectrum"""
+
     DATATYPE = MegaraDataType.SPEC_PROCESSED
     pass
 
@@ -105,8 +110,7 @@ class ProcessedSpectrumProduct(DataProductMixin, ProcessedSpectrum):
 
 
 class MegaraLinesCatalog(LinesCatalog):
-    __tags__ = {'speclamp': QueryAttribute(
-        'speclamp', str), 'vph': QueryAttribute('vph', str)}
+    __tags__ = {"speclamp": QueryAttribute("speclamp", str), "vph": QueryAttribute("vph", str)}
     # We are not passing the table of query_attrs in datamodel
 
     def name(self):
@@ -115,51 +119,58 @@ class MegaraLinesCatalog(LinesCatalog):
 
 class MasterBias(ProcessedImageProduct):
     """A Master Bias image"""
+
     DATATYPE = MegaraDataType.MASTER_BIAS
 
 
 class MasterTwilightFlat(ProcessedRSSProduct):
-    __tags__ = ['insmode', 'vph', 'confid']
+    __tags__ = ["insmode", "vph", "confid"]
     DATATYPE = MegaraDataType.MASTER_TWILIGHT
 
 
 class MasterDark(ProcessedImageProduct):
     """A Master Dark image"""
+
     DATATYPE = MegaraDataType.MASTER_DARK
 
 
 class MasterFiberFlat(ProcessedRSSProduct):
-    __tags__ = ['insmode', 'vph', 'confid']
+    __tags__ = ["insmode", "vph", "confid"]
     DATATYPE = MegaraDataType.MASTER_FLAT
 
 
 class MasterSlitFlat(ProcessedImageProduct):
-    __tags__ = ['insmode', 'vph']
+    __tags__ = ["insmode", "vph"]
     DATATYPE = MegaraDataType.MASTER_SLITFLAT
 
 
 class MasterBPM(ProcessedImageProduct):
     """Bad Pixel Mask product"""
+
     DATATYPE = MegaraDataType.MASTER_BPM
 
 
 class CRMasks(ProcessedImageProduct):
     """Cosmic Ray Masks product"""
+
     DATATYPE = MegaraDataType.CR_MASKS
 
 
 class DiffuseLightCorrection(ProcessedImageProduct):
     """Image to correct from diffuse light"""
+
     pass
 
 
 class MasterSensitivity(ProcessedSpectrumProduct):
     """Sensitivity correction."""
+
     pass
 
 
 class SkyRSS(ProcessedRSS):
     """A processed RSS image"""
+
     pass
 
 
@@ -183,6 +194,7 @@ class ReferenceExtinctionTable(DataProductMixin, ArrayType):
 
 class ReferenceSpectrumTable(DataProductMixin, ArrayType):
     """The spectrum of a reference star"""
+
     pass
 
 
@@ -192,18 +204,19 @@ class JSONstorage(DataType):
 
     def _datatype_dump(self, obj, where):
         import json
-        filename = where + '.json'
 
-        with open(filename, 'w') as fd:
-            fd.write(json.dumps(obj, sort_keys=True, indent=2,
-                                separators=(',', ': ')))
+        filename = where + ".json"
+
+        with open(filename, "w") as fd:
+            fd.write(json.dumps(obj, sort_keys=True, indent=2, separators=(",", ": ")))
 
         return filename
 
     def _datatype_load(self, obj):
         import json
+
         try:
-            with open(obj, 'r') as fd:
+            with open(obj, "r") as fd:
                 data = json.load(fd)
         except IOError as e:
             raise e
@@ -212,4 +225,5 @@ class JSONstorage(DataType):
 
 class FocusWavelength(JSONstorage):
     """Rich table with focus and wavelength"""
+
     pass

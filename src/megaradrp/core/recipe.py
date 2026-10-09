@@ -32,13 +32,14 @@ class MegaraBaseRecipe(BaseRecipe):
     """
 
     obresult = ObservationResultRequirement()
-    logger = logging.getLogger('numina.recipes.megara')
+    logger = logging.getLogger("numina.recipes.megara")
     datamodel = MegaraDataModel()
 
     def validate_input(self, recipe_input):
         """Validate the input of the recipe"""
 
         import numina.types.multitype
+
         # print('ATTRS', recipe_input.attrs())
         # print('STORED', recipe_input.stored())
         # print('tag_names', recipe_input.tag_names())
@@ -46,7 +47,7 @@ class MegaraBaseRecipe(BaseRecipe):
         # Find reference tags
         ref_tags = {}
         for key, val in recipe_input.attrs().items():
-            if key == 'obresult':
+            if key == "obresult":
                 ref_tags = val.tags
                 break
 
@@ -73,15 +74,15 @@ class MegaraBaseRecipe(BaseRecipe):
                 query_expr = rtype.query_expr
 
             q2 = query_expr.fill_placeholders(**ref_tags)
-            self.logger.debug('type %s with tags %s, expr %s', rtype, tags, q2)
+            self.logger.debug("type %s with tags %s, expr %s", rtype, tags, q2)
             is_valid = q2.eval(**tags)
             if not is_valid:
                 val_results.append((key, q2, tags, ref_tags))
-        msg = 'invalid {} with expression {} and tags {} and obs_tags {}'
+        msg = "invalid {} with expression {} and tags {} and obs_tags {}"
         for key, q2, tags, ref_tags in val_results:
             self.logger.error(msg.format(key, q2, tags, ref_tags))
         if val_results:
-            raise ValueError('Validation error', val_results)
+            raise ValueError("Validation error", val_results)
 
     def run_qc(self, recipe_input, recipe_result):
         """Run Quality Control checks."""
@@ -91,13 +92,15 @@ class MegaraBaseRecipe(BaseRecipe):
     def types_getter(self):
         from megaradrp.ntypes import MasterBias, MasterDark, MasterBPM, MasterSlitFlat
         from megaradrp.ntypes import DiffuseLightCorrection
-        imgtypes = [MasterBPM, MasterBias, MasterDark,
-                    MasterSlitFlat, DiffuseLightCorrection]
-        getters = [cor.get_corrector_bpm, cor.get_corrector_bias,
-                   [cor.get_corrector_dark, cor.get_corrector_gain],
-                   cor.get_corrector_slit_flat,
-                   cor.get_corrector_diffuse_light,
-                   ]
+
+        imgtypes = [MasterBPM, MasterBias, MasterDark, MasterSlitFlat, DiffuseLightCorrection]
+        getters = [
+            cor.get_corrector_bpm,
+            cor.get_corrector_bias,
+            [cor.get_corrector_dark, cor.get_corrector_gain],
+            cor.get_corrector_slit_flat,
+            cor.get_corrector_diffuse_light,
+        ]
         return imgtypes, getters
 
     def create_getters(self):

@@ -45,11 +45,11 @@ def update_wcs_from_ipa(hdr, pa):
     sin_pa = math.sin(pa_rad)
 
     # Update PC_ keywords
-    hdr['PC1_1'] = cos_pa
-    hdr['PC2_2'] = cos_pa
-    hdr['PC1_2'] = -sin_pa
-    hdr['PC2_1'] = sin_pa
+    hdr["PC1_1"] = cos_pa
+    hdr["PC2_2"] = cos_pa
+    hdr["PC1_2"] = -sin_pa
+    hdr["PC2_1"] = sin_pa
     # CDELT1 must be negative
-    hdr['CDELT1'] = -abs(hdr['CDELT1'])
+    hdr["CDELT1"] = -abs(hdr["CDELT1"])
 
     return hdr

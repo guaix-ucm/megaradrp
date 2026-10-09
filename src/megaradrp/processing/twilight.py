@@ -19,15 +19,13 @@ import numpy
 
 from numina.processing import Corrector
 
-
-_logger = logging.getLogger('numina.processing')
+_logger = logging.getLogger("numina.processing")
 
 
 class TwilightCorrector(Corrector):
-
     """A Node that corrects from twilight flat."""
 
-    def __init__(self, twilight, datamodel=None, calibid='calibid-unknown', dtype='float32'):
+    def __init__(self, twilight, datamodel=None, calibid="calibid-unknown", dtype="float32"):
 
         if isinstance(twilight, fits.HDUList):
             self.corr = twilight[0].data
@@ -37,32 +35,30 @@ class TwilightCorrector(Corrector):
         else:
             self.corr = numpy.asarray(twilight)
 
-        super(TwilightCorrector, self).__init__(datamodel=datamodel,
-                                                calibid=calibid,
-                                                dtype=dtype)
+        super(TwilightCorrector, self).__init__(datamodel=datamodel, calibid=calibid, dtype=dtype)
 
         self.corrmean = self.corr.mean()
-        self.flattag = 'twilight'
+        self.flattag = "twilight"
 
     def run(self, img):
         imgid = self.get_imgid(img)
         cap = self.flattag.capitalize()
-        _logger.debug('correct from %s in image %s', cap, imgid)
+        _logger.debug("correct from %s in image %s", cap, imgid)
 
         # Avoid nan values when divide
         my_mask = self.corr == 0.0
         self.corr[my_mask] = 1.0
 
         img[0].data /= self.corr
-        hdr = img['primary'].header
+        hdr = img["primary"].header
 
         self.header_update(hdr, imgid)
 
         return img
 
     def header_update(self, hdr, imgid):
-        hdr['NUM-TWIF'] = self.calibid
+        hdr["NUM-TWIF"] = self.calibid
         cap = self.flattag.capitalize()
         now = datetime.datetime.now(datetime.UTC).isoformat()
-        hdr['history'] = f'{cap} flat correction {imgid}'
-        hdr['history'] = f'{cap} flat correction time {now}'
+        hdr["history"] = f"{cap} flat correction {imgid}"
+        hdr["history"] = f"{cap} flat correction time {now}"

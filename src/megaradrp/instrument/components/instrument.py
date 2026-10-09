@@ -41,10 +41,9 @@ class FocusActuator(HWDevice):
     def set_focus(self, x):
         """Arbitrary parametrization of the focus"""
         if x < -1000 or x > 3000:
-            raise ValueError('focus out of limits')
+            raise ValueError("focus out of limits")
 
-        self.internal_focus_factor = 1 + 1.9 * \
-            (math.cosh((x - self._ref_focus) / 3000.0) - 1)
+        self.internal_focus_factor = 1 + 1.9 * (math.cosh((x - self._ref_focus) / 3000.0) - 1)
         self._internal_focus = x
 
     @property
@@ -59,9 +58,9 @@ class FocusActuator(HWDevice):
 class MegaraInstrument(HWDevice):
     def __init__(self, focal_plane, pseudo_slit, internal_optics, wheel, detector, shutter):
 
-        super(MegaraInstrument, self).__init__('MEGARA')
+        super(MegaraInstrument, self).__init__("MEGARA")
 
-        self._mode = 'LCB'
+        self._mode = "LCB"
         self.detector = detector
         self.detector.set_parent(self)
 
@@ -84,7 +83,7 @@ class MegaraInstrument(HWDevice):
         self.dev_shutter = shutter
         self.dev_shutter.set_parent(self)
 
-        self.focal_actuator = FocusActuator('Focus', self)
+        self.focal_actuator = FocusActuator("Focus", self)
 
         # Callbacks get called on predefined events on the devices
         # A callback to maintain self.vph updated
@@ -103,7 +102,7 @@ class MegaraInstrument(HWDevice):
     def set_mode(self, mode):
         """Set overall mode of the instrument."""
         mode_u = mode.upper()
-        if mode_u not in ['MOS', 'LCB']:
+        if mode_u not in ["MOS", "LCB"]:
             raise ValueError(f'mode "{mode}" not valid')
 
         self._mode = mode_u
@@ -158,7 +157,7 @@ class MegaraInstrument(HWDevice):
 
         # This will compute only the illuminated fibers
         tab = self.get_visible_fibers()
-        visible_fib_ids = tab['fibid']
+        visible_fib_ids = tab["fibid"]
         return project_rss(visible_fib_ids, self.pseudo_slit, self.vph, self.detector, sigma, wl_in, spec_in)
 
     def project_rss(self, wl_in, spec_in):
@@ -166,8 +165,7 @@ class MegaraInstrument(HWDevice):
 
     def project_rss_w(self):
         # This will compute only the illuminated fibers
-        visible_fib_ids = [fibid for fibid,
-                           _ in self.focal_plane.get_visible_fibers()]
+        visible_fib_ids = [fibid for fibid, _ in self.focal_plane.get_visible_fibers()]
         sigma = self.fiberset.sigma
         return project_rss_w(visible_fib_ids, self.pseudo_slit, self.vph, sigma)
 
@@ -211,9 +209,9 @@ class MegaraInstrument(HWDevice):
         base_coverage = np.zeros((self.fiberset.nfibers, 1))
 
         tab = self.get_visible_fibers()
-        fibid = tab['fibid']
+        fibid = tab["fibid"]
 
-        base_coverage[fibid-1, 0] = tab['cover']
+        base_coverage[fibid - 1, 0] = tab["cover"]
 
         # This should work with 1D and 2D
         photon_cover = base_coverage * photons_in
@@ -239,12 +237,12 @@ class MegaraInstrument(HWDevice):
 
         tab = self.focal_plane.get_all_fibers(self.fiberset)
 
-        fibid = tab['fibid']
-        pos_x = tab['x']
-        pos_y = tab['y']
+        fibid = tab["fibid"]
+        pos_x = tab["x"]
+        pos_y = tab["y"]
 
         if illumination:
-            base_coverage[fibid-1, 0] = illumination(pos_x, pos_y)
+            base_coverage[fibid - 1, 0] = illumination(pos_x, pos_y)
         return base_coverage * photons
 
 
@@ -259,8 +257,7 @@ def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, 
     xcenter = detector.dshape[1] // 2
     ycenter = detector.dshape[0] // 2
 
-    spos = PIXSCALE * \
-        (np.arange(0, DSHAPE[1] * scale) - scale * xcenter) / scale
+    spos = PIXSCALE * (np.arange(0, DSHAPE[1] * scale) - scale * xcenter) / scale
 
     wl_in_super = vph.ps_x_wl(y_ps_fibers, spos, grid=True)
     # revert
@@ -281,7 +278,7 @@ def project_rss(vis_fibs_id, pseudo_slit, vph, detector, sigma, wl_in, spec_in, 
 
     # kernel is constant in pixels
     # This is a gaussian convolved with a square
-    kernel = compute_kernel(scale*sigma, truncate=5.0, d=0.5 * scale)
+    kernel = compute_kernel(scale * sigma, truncate=5.0, d=0.5 * scale)
     out = convolve1d(spec_in_super, kernel, axis=1)
 
     # Downsample after convolution
@@ -358,14 +355,14 @@ def project_rss_w(visible_fib_ids, pseudo_slit, vph, detector, sigma):
         l1.extend(minp + sidx[0])
         l2.extend(sidx[1])
         l3.extend(base[sidx])
-        l4.extend([idx]*len(sidx[0]))
+        l4.extend([idx] * len(sidx[0]))
 
     return l1, l2, l3, l4
     #      row, col, val, fib
 
 
 def coor_to_pix(x):
-    return np.ceil(x - 0.5).astype('int')
+    return np.ceil(x - 0.5).astype("int")
 
 
 def pixcont_int_pix(i, x0, sig, d=0.5):
@@ -373,11 +370,11 @@ def pixcont_int_pix(i, x0, sig, d=0.5):
     zs = (i - x0) / sig
     z2 = zs + d / sig
     z1 = zs - d / sig
-    return (norm.cdf(z2) - norm.cdf(z1)) / (2*d)
+    return (norm.cdf(z2) - norm.cdf(z1)) / (2 * d)
 
 
 def pixcont_int(i, x0, sig):
-    '''Integrate a gaussian profile.'''
+    """Integrate a gaussian profile."""
     z2 = (i + 0.5 - x0) / sig
     z1 = (i - 0.5 - x0) / sig
     return norm.cdf(z2) - norm.cdf(z1)

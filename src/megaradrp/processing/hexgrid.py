@@ -52,7 +52,7 @@ def calc_matrix(nrow, ncol, grid_type=2):
         s = (i + f * (i % 2)) // 2
         for j in range(nrow):
             kcol.append(i)
-            krow.append(j+s)
+            krow.append(j + s)
 
     sl = np.array([kcol, krow])  # x y
     r0l = np.dot(rr0, sl)

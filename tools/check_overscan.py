@@ -1,23 +1,22 @@
-
 import matplotlib.pyplot as plt
 import astropy.io.fits as fits
 import numpy as np
 import scipy.ndimage.filters as filt
 from scipy.interpolate import LSQUnivariateSpline
 
-
-conf = {"trim1": [[0,2056],[50,4146]],
-     "trim2": [[2156,4212],[50,4146]],
-     "overscan1": [[0,2056],[4146,4196]],
-     "overscan1_corner": [[2056,2106],[4146,4196]],
-     "overscan2": [[2156,4212],[0,50]],
-     "overscan2_corner": [[2106,2156],[4146,4196]],
-     "prescan1": [[0,2056],[0,50]],
-     "prescan2": [[2156,4212],[4146,4196]],
-     "middle1": [[2056,2106],[50,4146]],
-     "middle2": [[2106,2156],[50,4146]],
-     "gain1": 1.73,
-     "gain2": 1.6
+conf = {
+    "trim1": [[0, 2056], [50, 4146]],
+    "trim2": [[2156, 4212], [50, 4146]],
+    "overscan1": [[0, 2056], [4146, 4196]],
+    "overscan1_corner": [[2056, 2106], [4146, 4196]],
+    "overscan2": [[2156, 4212], [0, 50]],
+    "overscan2_corner": [[2106, 2156], [4146, 4196]],
+    "prescan1": [[0, 2056], [0, 50]],
+    "prescan2": [[2156, 4212], [4146, 4196]],
+    "middle1": [[2056, 2106], [50, 4146]],
+    "middle2": [[2106, 2156], [50, 4146]],
+    "gain1": 1.73,
+    "gain2": 1.6,
 }
 
 
@@ -26,12 +25,12 @@ def to_slice(sec):
     return slice(*sec1), slice(*sec2)
 
 
-def to_str(sec, format='fits'):
+def to_str(sec, format="fits"):
     sec1, sec2 = sec
     return str([to_index(sec2), to_index(sec1)])
 
 
-def to_index(ssec, format='fits'):
+def to_index(ssec, format="fits"):
     a, b = ssec
     return [a + 1, b]
 
@@ -68,17 +67,14 @@ def plot4(data, reg, axis_u, axis_v, knots, ax, s=0, r=-1):
     ax.plot(u[s:r], v_spl2[s:r], label="S2")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import os
     import argparse
 
-    parser = argparse.ArgumentParser(description='Check overscan')
-    parser.add_argument('filename', metavar='FILE', nargs='+',
-                        help='Check overscan')
-
+    parser = argparse.ArgumentParser(description="Check overscan")
+    parser.add_argument("filename", metavar="FILE", nargs="+", help="Check overscan")
 
     args = parser.parse_args()
-
 
     for fname in args.filename:
         print(fname)
@@ -99,7 +95,7 @@ if __name__ == '__main__':
         knots2 = [3100]
         knotsm = [2100]
 
-        for regname, knots in zip(['overscan1', 'overscan2'], [knots1, knots2]):
+        for regname, knots in zip(["overscan1", "overscan2"], [knots1, knots2]):
             fig, axes = plt.subplots(1, 1)
             regs = to_str(conf[regname])
             axes.set_title("{}\n{} {}".format(fname, regname, regs))
@@ -107,7 +103,7 @@ if __name__ == '__main__':
             plt.savefig("{}_{}.png".format(fname_base, regname))
             plt.close()
 
-        for regname, knots in zip(['middle1', 'middle2'], [knotsm, knotsm]):
+        for regname, knots in zip(["middle1", "middle2"], [knotsm, knotsm]):
             fig, axes = plt.subplots(1, 1)
             regs = to_str(conf[regname])
             axes.set_title("{}\n{} {}".format(fname, regname, regs))

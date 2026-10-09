@@ -19,7 +19,6 @@ from megaradrp.processing.combine import basic_processing_with_combination
 
 
 class DarkRecipe(MegaraBaseRecipe):
-
     """Process DARK images and provide MASTER_DARK."""
 
     master_bias = MasterBiasRequirement()
@@ -29,8 +28,7 @@ class DarkRecipe(MegaraBaseRecipe):
     def run(self, rinput):
 
         flow = self.init_filters(rinput, rinput.obresult.configuration)
-        hdulist = basic_processing_with_combination(
-            rinput, flow, method=combine.median)
+        hdulist = basic_processing_with_combination(rinput, flow, method=combine.median)
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
 
@@ -40,5 +38,5 @@ class DarkRecipe(MegaraBaseRecipe):
     def set_base_headers(self, hdr):
         """Set metadata in FITS headers."""
         hdr = super(DarkRecipe, self).set_base_headers(hdr)
-        hdr['NUMTYPE'] = ('MasterDark', 'Product type')
+        hdr["NUMTYPE"] = ("MasterDark", "Product type")
         return hdr

@@ -21,7 +21,6 @@ import numpy as np
 
 from megaradrp.simulation.convolution import hex_c, setup_grid
 
-
 # Hexagon constants
 M_SQRT3 = math.sqrt(3)
 
@@ -139,54 +138,59 @@ def hexspline2(x1, x2):
     h_aux_mm1 = Heaviside(aux_mm1, ref)
 
     scale = M_SQRT3_2D3
-    res = 4 * x2 * aux_m0 * h_p0 * h_aux_m0 - \
-        4 * x2 * aux_p0 * h_m0 * h_aux_p0 + \
-        x2 * aux_m0_m23 * h_p0 * h_aux_m0_m23 + \
-        x2 * aux_m0_p23 * h_p0 * h_aux_m0_p23 - \
-        x2 * aux_p0_m23 * h_m0 * h_aux_p0_m23 - \
-        x2 * aux_p0_p23 * h_m0 * h_aux_p0_p23 + \
-        x_p0_m1 * aux_m1_p3 * h_p0_m1 * h_aux_m1_p3 - \
-        x_p0_m1 * aux_p1_m3 * h_m0_p1 * h_aux_p1_m3 - \
-        2 * (x_p0_m12) * aux_m12_m6 * h_p0_m12 * h_aux_m12_m6 - \
-        2 * (x_p0_m12) * aux_m12_p2 * h_p0_m12 * h_aux_m12_p2 + \
-        2 * (x_p0_m12) * aux_p12_m2 * h_m0_p12 * h_aux_p12_m2 + \
-        2 * (x_p0_m12) * aux_p12_p6 * h_m0_p12 * h_aux_p12_p6 - \
-        2 * (x_p0_p12) * aux_mm12_m2 * h_p0_p12 * h_aux_mm12_m2 - \
-        2 * (x_p0_p12) * aux_mm12_p6 * h_p0_p12 * h_aux_mm12_p6 + \
-        2 * (x_p0_p12) * aux_pm12_m6 * h_m0_m12 * h_aux_pm12_m6 + \
-        2 * (x_p0_p12) * aux_pm12_p2 * h_m0_m12 * h_aux_pm12_p2 + \
-        (x_p0_p1) * (aux_mm1_m3) * h_p0_p1 * h_aux_mm1_m3 - \
-        (x_p0_p1) * (aux_pm1_p3) * h_m0_m1 * h_aux_pm1_p3 + \
-        M_SQRT3 * ((aux_m0) ** 2 * h_p0 * h_aux_m0 +
-                   (aux_p0) ** 2 * h_m0 * h_aux_p0 +
-                   (aux_m1) ** 2 * h_aux_m1 * h_p0_m1 / 2 +
-                   (aux_p1) ** 2 * h_m0_p1 * h_aux_p1 / 2 +
-                   (aux_mm1) ** 2 * h_aux_mm1 * h_p0_p1 / 2 +
-                   (aux_mm1) ** 2 * h_aux_mm1 * h_m0_m1 / 2 +
-                   (aux_m0_m23) ** 2 * h_p0 * h_aux_m0_m23 / 2 +
-                   (aux_m0_m3) ** 2 * h_p0 * Heaviside(aux_m0_m3, ref) / 2 +
-                   (aux_m0_p3) ** 2 * h_p0 * Heaviside(aux_m0_p3, ref) / 2 +
-                   (aux_m0_p23) ** 2 * h_p0 * h_aux_m0_p23 / 2 +
-                   (aux_p0_m23) ** 2 * h_m0 * h_aux_p0_m23 / 2 +
-                   (aux_p0_m3) ** 2 * h_m0 * Heaviside(aux_p0_m3, ref) / 2 +
-                   (aux_p0_p3) ** 2 * h_m0 * Heaviside(aux_p0_p3, ref) / 2 +
-                   (aux_p0_p23) ** 2 * h_m0 * h_aux_p0_p23 / 2 -
-                   (aux_m12_m2) ** 2 * h_p0_m12 * Heaviside(aux_m12_m2, ref) / 2 -
-                   (aux_m12_m6) ** 2 * h_p0_m12 * h_aux_m12_m6 / 2 -
-                   (aux_m12_p6) ** 2 * h_p0_m12 * Heaviside(aux_m12_p6, ref) / 2 -
-                   (aux_m12_p2) ** 2 * h_p0_m12 * h_aux_m12_p2 / 2 -
-                   (aux_p12_m2) ** 2 * h_m0_p12 * h_aux_p12_m2 / 2 -
-                   (aux_p12_m6) ** 2 * h_m0_p12 * Heaviside(aux_p12_m6, ref) / 2 -
-                   (aux_p12_p6) ** 2 * h_m0_p12 * h_aux_p12_p6 / 2 -
-                   (aux_p12_p2) ** 2 * h_m0_p12 * Heaviside(aux_p12_p2, ref) / 2 -
-                   (aux_mm12_m2) ** 2 * h_p0_p12 * h_aux_mm12_m2 / 2 -
-                   (aux_mm12_m6) ** 2 * h_p0_p12 * Heaviside(aux_mm12_m6, ref) / 2 -
-                   (aux_mm12_p6) ** 2 * h_p0_p12 * h_aux_mm12_p6 / 2 -
-                   (aux_mm12_p2) ** 2 * h_p0_p12 * Heaviside(aux_mm12_p2, ref) / 2 -
-                   (aux_pm12_m2) ** 2 * h_m0_m12 * Heaviside(aux_pm12_m2, ref) / 2 -
-                   (aux_pm12_m6) ** 2 * h_m0_m12 * h_aux_pm12_m6 / 2 -
-                   (aux_pm12_p6) ** 2 * h_m0_m12 * Heaviside(aux_pm12_p6, ref) / 2 -
-                   (aux_pm12_p2) ** 2 * h_m0_m12 * h_aux_pm12_p2 / 2)
+    res = (
+        4 * x2 * aux_m0 * h_p0 * h_aux_m0
+        - 4 * x2 * aux_p0 * h_m0 * h_aux_p0
+        + x2 * aux_m0_m23 * h_p0 * h_aux_m0_m23
+        + x2 * aux_m0_p23 * h_p0 * h_aux_m0_p23
+        - x2 * aux_p0_m23 * h_m0 * h_aux_p0_m23
+        - x2 * aux_p0_p23 * h_m0 * h_aux_p0_p23
+        + x_p0_m1 * aux_m1_p3 * h_p0_m1 * h_aux_m1_p3
+        - x_p0_m1 * aux_p1_m3 * h_m0_p1 * h_aux_p1_m3
+        - 2 * (x_p0_m12) * aux_m12_m6 * h_p0_m12 * h_aux_m12_m6
+        - 2 * (x_p0_m12) * aux_m12_p2 * h_p0_m12 * h_aux_m12_p2
+        + 2 * (x_p0_m12) * aux_p12_m2 * h_m0_p12 * h_aux_p12_m2
+        + 2 * (x_p0_m12) * aux_p12_p6 * h_m0_p12 * h_aux_p12_p6
+        - 2 * (x_p0_p12) * aux_mm12_m2 * h_p0_p12 * h_aux_mm12_m2
+        - 2 * (x_p0_p12) * aux_mm12_p6 * h_p0_p12 * h_aux_mm12_p6
+        + 2 * (x_p0_p12) * aux_pm12_m6 * h_m0_m12 * h_aux_pm12_m6
+        + 2 * (x_p0_p12) * aux_pm12_p2 * h_m0_m12 * h_aux_pm12_p2
+        + (x_p0_p1) * (aux_mm1_m3) * h_p0_p1 * h_aux_mm1_m3
+        - (x_p0_p1) * (aux_pm1_p3) * h_m0_m1 * h_aux_pm1_p3
+        + M_SQRT3
+        * (
+            (aux_m0) ** 2 * h_p0 * h_aux_m0
+            + (aux_p0) ** 2 * h_m0 * h_aux_p0
+            + (aux_m1) ** 2 * h_aux_m1 * h_p0_m1 / 2
+            + (aux_p1) ** 2 * h_m0_p1 * h_aux_p1 / 2
+            + (aux_mm1) ** 2 * h_aux_mm1 * h_p0_p1 / 2
+            + (aux_mm1) ** 2 * h_aux_mm1 * h_m0_m1 / 2
+            + (aux_m0_m23) ** 2 * h_p0 * h_aux_m0_m23 / 2
+            + (aux_m0_m3) ** 2 * h_p0 * Heaviside(aux_m0_m3, ref) / 2
+            + (aux_m0_p3) ** 2 * h_p0 * Heaviside(aux_m0_p3, ref) / 2
+            + (aux_m0_p23) ** 2 * h_p0 * h_aux_m0_p23 / 2
+            + (aux_p0_m23) ** 2 * h_m0 * h_aux_p0_m23 / 2
+            + (aux_p0_m3) ** 2 * h_m0 * Heaviside(aux_p0_m3, ref) / 2
+            + (aux_p0_p3) ** 2 * h_m0 * Heaviside(aux_p0_p3, ref) / 2
+            + (aux_p0_p23) ** 2 * h_m0 * h_aux_p0_p23 / 2
+            - (aux_m12_m2) ** 2 * h_p0_m12 * Heaviside(aux_m12_m2, ref) / 2
+            - (aux_m12_m6) ** 2 * h_p0_m12 * h_aux_m12_m6 / 2
+            - (aux_m12_p6) ** 2 * h_p0_m12 * Heaviside(aux_m12_p6, ref) / 2
+            - (aux_m12_p2) ** 2 * h_p0_m12 * h_aux_m12_p2 / 2
+            - (aux_p12_m2) ** 2 * h_m0_p12 * h_aux_p12_m2 / 2
+            - (aux_p12_m6) ** 2 * h_m0_p12 * Heaviside(aux_p12_m6, ref) / 2
+            - (aux_p12_p6) ** 2 * h_m0_p12 * h_aux_p12_p6 / 2
+            - (aux_p12_p2) ** 2 * h_m0_p12 * Heaviside(aux_p12_p2, ref) / 2
+            - (aux_mm12_m2) ** 2 * h_p0_p12 * h_aux_mm12_m2 / 2
+            - (aux_mm12_m6) ** 2 * h_p0_p12 * Heaviside(aux_mm12_m6, ref) / 2
+            - (aux_mm12_p6) ** 2 * h_p0_p12 * h_aux_mm12_p6 / 2
+            - (aux_mm12_p2) ** 2 * h_p0_p12 * Heaviside(aux_mm12_p2, ref) / 2
+            - (aux_pm12_m2) ** 2 * h_m0_m12 * Heaviside(aux_pm12_m2, ref) / 2
+            - (aux_pm12_m6) ** 2 * h_m0_m12 * h_aux_pm12_m6 / 2
+            - (aux_pm12_p6) ** 2 * h_m0_m12 * Heaviside(aux_pm12_p6, ref) / 2
+            - (aux_pm12_p2) ** 2 * h_m0_m12 * h_aux_pm12_p2 / 2
+        )
+    )
     res = res * scale
     return res
 
@@ -222,15 +226,18 @@ def _hexspline2_t1(x1, x2):
     aux_m0_p3 = aux_m0 + M_SQRT3_D_3
 
     scale = M_SQRT3_2D3
-    res = x2 * aux_m0_p23 + \
-        2 * x_p0_m12 * aux_p12_p6 + \
-        M_SQRT3 * (
-            (aux_m0_p3) ** 2 / 2 +
-            (aux_m0_p23) ** 2 / 2 -
-            (aux_p12_p6) ** 2 / 2 -
-            (aux_p12_p2) ** 2 / 2 -
-            (aux_mm12_p2) ** 2 / 2
+    res = (
+        x2 * aux_m0_p23
+        + 2 * x_p0_m12 * aux_p12_p6
+        + M_SQRT3
+        * (
+            (aux_m0_p3) ** 2 / 2
+            + (aux_m0_p23) ** 2 / 2
+            - (aux_p12_p6) ** 2 / 2
+            - (aux_p12_p2) ** 2 / 2
+            - (aux_mm12_p2) ** 2 / 2
         )
+    )
     res = res * scale
     return res
 
@@ -356,7 +363,7 @@ def _hexspline2_regions(x1, x2):
 
     inter = locals().copy()
     for key in inter:
-        if key.startswith('h_'):
+        if key.startswith("h_"):
             r[key] = inter[key]
     return r
 
@@ -394,6 +401,7 @@ def hexspline_gauss(xx, yy, p):
     Eq B.4
     """
     from scipy.stats import multivariate_normal
+
     zz = np.array([xx, yy])
     zz = np.moveaxis(zz, 0, -1)
     in_support = hexspline_support(xx, yy, p)
@@ -466,15 +474,15 @@ def rescaling_kernel(p, scale=1):
     if p == 1:
         hex_kernel = hex1
     elif p == 2:
-        hex2 = signal.fftconvolve(hex1, hex1, mode='same') * DA / detR0
+        hex2 = signal.fftconvolve(hex1, hex1, mode="same") * DA / detR0
         hex_kernel = hex2
     elif p == 3:
-        hex2 = signal.fftconvolve(hex1, hex1, mode='same') * DA / detR0
-        hex3 = signal.fftconvolve(hex2, hex1, mode='same') * DA / detR0
+        hex2 = signal.fftconvolve(hex1, hex1, mode="same") * DA / detR0
+        hex3 = signal.fftconvolve(hex2, hex1, mode="same") * DA / detR0
         hex_kernel = hex3
     else:
-        raise ValueError('p>3 not implemented')
+        raise ValueError("p>3 not implemented")
 
-    kernel = signal.fftconvolve(rect_kernel, hex_kernel, mode='same') * DA
+    kernel = signal.fftconvolve(rect_kernel, hex_kernel, mode="same") * DA
     rbs = interp.RectBivariateSpline(xs, ys, kernel)
     return rbs

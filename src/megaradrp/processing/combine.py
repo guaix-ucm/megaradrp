@@ -16,29 +16,29 @@ from numina.processing.combine import combine_imgs
 
 
 def basic_processing_with_combination(
-        rinput, reduction_flows,
-        method=combine.mean, method_kwargs=None,
-        errors=True, prolog=None):
+    rinput, reduction_flows, method=combine.mean, method_kwargs=None, errors=True, prolog=None
+):
 
-    if method.__name__ in ['mediancr', 'meancrt', 'meancr', 'meancr2']:
+    if method.__name__ in ["mediancr", "meancrt", "meancr", "meancr2"]:
         # Special case for combination using a cosmic ray mask
         return basic_processing_with_combination_frames_crmasks(
-            rinput.obresult.frames, rinput.crmasks, reduction_flows,
-            method=method, method_kwargs=method_kwargs
+            rinput.obresult.frames, rinput.crmasks, reduction_flows, method=method, method_kwargs=method_kwargs
         )
     else:
         # General case for other combination methods
         return basic_processing_with_combination_frames(
-            rinput.obresult.frames, reduction_flows,
-            method=method, method_kwargs=method_kwargs,
-            errors=errors, prolog=prolog
+            rinput.obresult.frames,
+            reduction_flows,
+            method=method,
+            method_kwargs=method_kwargs,
+            errors=errors,
+            prolog=prolog,
         )
 
 
 def basic_processing_with_combination_frames(
-        frames, reduction_flows,
-        method=combine.mean, method_kwargs=None,
-        errors=True, prolog=None):
+    frames, reduction_flows, method=combine.mean, method_kwargs=None, errors=True, prolog=None
+):
     """Perform basic reduction on set of DataFrames.
 
     The reduction_flows are split in two parts.
@@ -54,8 +54,7 @@ def basic_processing_with_combination_frames(
 
         hdul_ot = [reduction_flow_ot(hdul) for hdul in hduls]
 
-        hdu_combined = combine_imgs(hdul_ot, method=method, method_kwargs=method_kwargs,
-                                    errors=errors, prolog=prolog)
+        hdu_combined = combine_imgs(hdul_ot, method=method, method_kwargs=method_kwargs, errors=errors, prolog=prolog)
 
         result = reduction_flow_1im(hdu_combined)
 
@@ -63,8 +62,7 @@ def basic_processing_with_combination_frames(
 
 
 def basic_processing_with_combination_frames_crmasks(
-        frames, crmasks, reduction_flows, method, method_kwargs,
-        errors=True, prolog=None
+    frames, crmasks, reduction_flows, method, method_kwargs, errors=True, prolog=None
 ):
     """Perform basic reduction on set of DataFrames using a cosmic ray mask.
 
@@ -83,7 +81,7 @@ def basic_processing_with_combination_frames_crmasks(
     reduction_flow_ot, reduction_flow_1im = reduction_flows
 
     if crmasks is None:
-        raise ValueError(f'Cosmic ray masks are required for {method.__name__}')
+        raise ValueError(f"Cosmic ray masks are required for {method.__name__}")
     crmasks = crmasks.open()
 
     with contextlib.ExitStack() as stack:
@@ -97,11 +95,12 @@ def basic_processing_with_combination_frames_crmasks(
         hdul_otbg = [reduction_flow_1im(hdul) for hdul in hdul_ot]
 
         method_kwargs = method_kwargs or {}
-        if 'dtype' not in method_kwargs:
-            method_kwargs['dtype'] = 'float32'
+        if "dtype" not in method_kwargs:
+            method_kwargs["dtype"] = "float32"
 
-        result = combine_imgs(hdul_otbg, method=method, method_kwargs=method_kwargs,
-                              errors=errors, prolog=prolog, crmasks=crmasks)
+        result = combine_imgs(
+            hdul_otbg, method=method, method_kwargs=method_kwargs, errors=errors, prolog=prolog, crmasks=crmasks
+        )
 
         result[0].header.add_history(f'Masks uuid:{crmasks[0].header["UUID"]}')
 

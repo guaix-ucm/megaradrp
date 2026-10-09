@@ -22,136 +22,104 @@ class MasterBiasRequirement(Requirement):
 
     def __init__(self, optional=False):
         super(MasterBiasRequirement, self).__init__(
-            megaradrp.ntypes.MasterBias,
-            'Master BIAS image',
-            optional=optional,
-            validation=True
+            megaradrp.ntypes.MasterBias, "Master BIAS image", optional=optional, validation=True
         )
 
 
 class MasterBPMRequirement(Requirement):
     def __init__(self, optional=True):
         super(MasterBPMRequirement, self).__init__(
-            megaradrp.ntypes.MasterBPM,
-            'Master Bad Pixel Mask',
-            optional=optional,
-            validation=False
+            megaradrp.ntypes.MasterBPM, "Master Bad Pixel Mask", optional=optional, validation=False
         )
 
 
 class MasterDarkRequirement(Requirement):
     def __init__(self, optional=True):
         super(MasterDarkRequirement, self).__init__(
-            megaradrp.ntypes.MasterDark,
-            'Master DARK image',
-            optional=optional,
-            validation=True
+            megaradrp.ntypes.MasterDark, "Master DARK image", optional=optional, validation=True
         )
 
 
 class MasterFiberFlatRequirement(Requirement):
     def __init__(self):
         super(MasterFiberFlatRequirement, self).__init__(
-            megaradrp.ntypes.MasterFiberFlat,
-            'Master fiber flat calibration',
-            validation=True
+            megaradrp.ntypes.MasterFiberFlat, "Master fiber flat calibration", validation=True
         )
 
 
 class MasterSlitFlatRequirement(Requirement):
     def __init__(self, optional=True):
-        super(MasterSlitFlatRequirement,
-              self).__init__(megaradrp.ntypes.MasterSlitFlat,
-                             'Master slit flat calibration',
-                             optional=optional
-                             )
+        super(MasterSlitFlatRequirement, self).__init__(
+            megaradrp.ntypes.MasterSlitFlat, "Master slit flat calibration", optional=optional
+        )
 
 
 class MasterTwilightRequirement(Requirement):
     def __init__(self, optional=True):
-        super(MasterTwilightRequirement,
-              self).__init__(megaradrp.ntypes.MasterTwilightFlat,
-                             'Master twlight flat calibration',
-                             optional=optional
-                             )
+        super(MasterTwilightRequirement, self).__init__(
+            megaradrp.ntypes.MasterTwilightFlat, "Master twlight flat calibration", optional=optional
+        )
 
 
 class MasterTraceMapRequirement(Requirement):
     def __init__(self):
         super(MasterTraceMapRequirement, self).__init__(
-            megaradrp.products.TraceMap,
-            'Trace information of the Apertures',
-            validation=True
+            megaradrp.products.TraceMap, "Trace information of the Apertures", validation=True
         )
 
 
 class MasterAperturesRequirement(Requirement):
     def __init__(self, alias=None):
-        super(MasterAperturesRequirement, self).__init__(MultiType(
-            megaradrp.products.modelmap.ModelMap,
-            megaradrp.products.TraceMap),
-            'Apertures information for extraction',
+        super(MasterAperturesRequirement, self).__init__(
+            MultiType(megaradrp.products.modelmap.ModelMap, megaradrp.products.TraceMap),
+            "Apertures information for extraction",
             validation=True,
-            alias=alias
+            alias=alias,
         )
 
 
 class WavelengthCalibrationRequirement(Requirement):
     def __init__(self):
         super(WavelengthCalibrationRequirement, self).__init__(
-            megaradrp.products.WavelengthCalibration,
-            'Wavelength calibration table',
-            validation=True
+            megaradrp.products.WavelengthCalibration, "Wavelength calibration table", validation=True
         )
 
 
 class LinesCatalogRequirement(Requirement):
     def __init__(self):
-        super(LinesCatalogRequirement, self).__init__(
-            megaradrp.ntypes.MegaraLinesCatalog, 'Catalog of lines')
+        super(LinesCatalogRequirement, self).__init__(megaradrp.ntypes.MegaraLinesCatalog, "Catalog of lines")
 
 
 class SkyRSSRequirement(Requirement):
     def __init__(self, optional=True):
         super(SkyRSSRequirement, self).__init__(
-            megaradrp.ntypes.SkyRSS,
-            'Row Stacked Spectra of the sky',
-            optional=optional
+            megaradrp.ntypes.SkyRSS, "Row Stacked Spectra of the sky", optional=optional
         )
 
 
 class SensitivityRequirement(Requirement):
     def __init__(self, optional=True):
-        super(SensitivityRequirement,
-              self).__init__(megaradrp.ntypes.MasterSensitivity,
-                             'Master sensitivity for flux calibration',
-                             optional=optional
-                             )
+        super(SensitivityRequirement, self).__init__(
+            megaradrp.ntypes.MasterSensitivity, "Master sensitivity for flux calibration", optional=optional
+        )
 
 
 class ReferenceExtinction(Requirement):
     def __init__(self, optional=True):
-        super(ReferenceExtinction,
-              self).__init__(megaradrp.ntypes.ReferenceExtinctionTable,
-                             "Reference extinction",
-                             optional=optional
-                             )
+        super(ReferenceExtinction, self).__init__(
+            megaradrp.ntypes.ReferenceExtinctionTable, "Reference extinction", optional=optional
+        )
 
 
 class DiffuseLightRequirement(Requirement):
     def __init__(self, optional=True):
-        super(DiffuseLightRequirement,
-              self).__init__(megaradrp.ntypes.DiffuseLightCorrection,
-                             'Diffuse light correction image',
-                             optional=optional
-                             )
+        super(DiffuseLightRequirement, self).__init__(
+            megaradrp.ntypes.DiffuseLightCorrection, "Diffuse light correction image", optional=optional
+        )
 
 
 class CRMasksRequirement(Requirement):
     def __init__(self, optional=True):
         super(CRMasksRequirement, self).__init__(
-            megaradrp.ntypes.CRMasks,
-            'CR Pixel Masks',
-            optional=optional,
-            validation=False
+            megaradrp.ntypes.CRMasks, "CR Pixel Masks", optional=optional, validation=False
         )

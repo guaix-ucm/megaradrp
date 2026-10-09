@@ -20,7 +20,7 @@ class LightFiber:
         self.fibid = fibid
         # Geometry of the fibers
         self.size = 0.31 * u.arcsec
-        self.area = math.sqrt(3) * self.size ** 2 / 2.0
+        self.area = math.sqrt(3) * self.size**2 / 2.0
         self.fwhm = 3.6
         self.sigma = self.fwhm / 2.3548
         self.inactive = inactive
@@ -34,10 +34,7 @@ class LightFiber:
         return self._transmission.response(wl)
 
     def config_info(self):
-        return {'name': self.name,
-                'fibid': self.fibid,
-                'inactive': self.inactive
-                }
+        return {"name": self.name, "fibid": self.fibid, "inactive": self.inactive}
 
 
 class FiberSet:
@@ -48,7 +45,7 @@ class FiberSet:
 
         # Geometry of the fibers
         self.size = size
-        self.area = math.sqrt(3) * self.size ** 2 / 2.0
+        self.area = math.sqrt(3) * self.size**2 / 2.0
         self.fwhm = fwhm
         self.sigma = self.fwhm / 2.3548
 
@@ -66,8 +63,9 @@ class FiberSet:
         return result
 
     def config_info(self):
-        return {'name': self.name,
-                'nfibers': self.nfibers,
-                'fwhm': self.fwhm,
-                'sigma': self.sigma,
-                }
+        return {
+            "name": self.name,
+            "nfibers": self.nfibers,
+            "fwhm": self.fwhm,
+            "sigma": self.sigma,
+        }

@@ -9,7 +9,6 @@
 
 """Validators for Observing modes"""
 
-
 import pkgutil
 from io import StringIO
 
@@ -27,11 +26,10 @@ def validate_focus(mode, obresult):
     for idx, frame in enumerate(obresult.frames):
         with frame.open() as img:
             try:
-                focus_val = img[0].header['FOCUS']
+                focus_val = img[0].header["FOCUS"]
                 # FIXME: This should be done using an scheme for MEGARA
                 if not isinstance(focus_val, (int, float)):
-                    raise ValidationError(
-                        f"FOCUS must be integer, not {type(focus_val)}")
+                    raise ValidationError(f"FOCUS must be integer, not {type(focus_val)}")
                 if focus_val not in image_groups:
                     image_groups[focus_val] = []
                 image_groups[focus_val].append(frame)
@@ -39,8 +37,7 @@ def validate_focus(mode, obresult):
                 raise ValidationError from exc
 
     if len(image_groups) < 2:
-        raise ValidationError(
-            f'We have only {len(image_groups)} different focus in OB')
+        raise ValidationError(f"We have only {len(image_groups)} different focus in OB")
 
     return True
 
@@ -70,7 +67,7 @@ def validate_arc(mode, obresult):
     """Validate ARC_CALIBRATION"""
 
     # Assume that the individual images are valid IMG_COMP
-    return validate_key(mode, obresult, 'SPECLAMP')
+    return validate_key(mode, obresult, "SPECLAMP")
 
 
 def validate_flat(mode, obresult):
@@ -124,7 +121,7 @@ def convert_header(header):
     hdu_v = {}
     hdu_c = {}
     hdu_o = []
-    hdu_repr = {'values': hdu_v, 'comments': hdu_c, 'ordering': hdu_o}
+    hdu_repr = {"values": hdu_v, "comments": hdu_c, "ordering": hdu_o}
 
     for card in header.cards:
         key = card.keyword
@@ -180,8 +177,8 @@ class ImageChecker(Checker):
             raise
 
         if len(dheaders) == 2:
-            values_fibers = dheaders[1]['values']
-            values_primary = dheaders[0]['values']
+            values_fibers = dheaders[1]["values"]
+            values_primary = dheaders[0]["values"]
             check_header_additional(values_primary, values_fibers)
 
 
@@ -208,17 +205,17 @@ _sub_schema_rss = {
             "properties": {
                 # "NAXIS1": {"const": 4300},
                 "NAXIS2": {"const": 623},
-                "INSMODE": {"const": "LCB"}
-            }
+                "INSMODE": {"const": "LCB"},
+            },
         },
         {
             "type": "object",
             "properties": {
                 # "NAXIS1": {"const": 4300},
                 "NAXIS2": {"const": 644},
-                "INSMODE": {"const": "MOS"}
-            }
-        }
+                "INSMODE": {"const": "MOS"},
+            },
+        },
     ]
 }
 
@@ -229,17 +226,12 @@ _sub_schema_bias = {
         "OBSMODE": {"const": "MegaraBiasImage"},
         "IMAGETYP": {"const": "IMAGE_BIAS"},
         "EXPTIME": {"type": "number", "maximum": 0},
-        "DARKTIME": {"type": "number", "maximum": 0}
-    }
+        "DARKTIME": {"type": "number", "maximum": 0},
+    },
 }
 
 
-_sub_schema_master_bpm = {
-    "type": "object",
-    "properties": {
-        "NUMTYPE": {"enum": ['MasterBias', 'MASTER_BPM']}
-    }
-}
+_sub_schema_master_bpm = {"type": "object", "properties": {"NUMTYPE": {"enum": ["MasterBias", "MASTER_BPM"]}}}
 
 _sub_schema_master_bias = {
     "type": "object",
@@ -249,8 +241,8 @@ _sub_schema_master_bias = {
         "IMAGETYP": {"const": "MASTER_BIAS"},
         "EXPTIME": {"type": "number", "maximum": 0},
         "DARKTIME": {"type": "number", "maximum": 0},
-        "NUMTYPE": {"enum": ['MasterBias', 'MASTER_BIAS']}
-    }
+        "NUMTYPE": {"enum": ["MasterBias", "MASTER_BIAS"]},
+    },
 }
 
 
@@ -259,7 +251,7 @@ _sub_schema_dark = {
     "properties": {
         "OBSMODE": {"const": "MegaraDarkImage"},
         "IMAGETYP": {"const": "IMAGE_DARK"},
-    }
+    },
 }
 
 
@@ -268,7 +260,7 @@ _sub_schema_master_dark = {
     "properties": {
         "OBSMODE": {"const": "MegaraDarkImage"},
         "IMAGETYP": {"const": "MASTER_DARK"},
-    }
+    },
 }
 
 
@@ -287,7 +279,7 @@ class ExtChecker(BaseChecker):
         # Image must have only one extension
         if self.n_ext is not None:
             if len(dheaders) != self.n_ext:
-                msg = f'image has not expected number of HDUs ({self.n_ext})'
+                msg = f"image has not expected number of HDUs ({self.n_ext})"
                 raise ValueError(msg)
 
         for sub_schema in self.sub_schemas:
@@ -297,7 +289,7 @@ class ExtChecker(BaseChecker):
                 else:
                     fragment = sub_schema
 
-                jsonschema.validate(dheaders[0]['values'], schema=fragment)
+                jsonschema.validate(dheaders[0]["values"], schema=fragment)
             except jsonschema.exceptions.ValidationError:
                 raise
 
@@ -308,15 +300,12 @@ class FlatImageChecker(ExtChecker):
         _sub_schema_flat = {
             "type": "object",
             "properties": {
-                "OBSMODE": {"enum": [
-                    "MegaraFiberFlatImage", "MegaraTraceMap", "MegaraModelMap", "MegaraSuccess"]
-                },
+                "OBSMODE": {"enum": ["MegaraFiberFlatImage", "MegaraTraceMap", "MegaraModelMap", "MegaraSuccess"]},
                 "IMAGETYP": {"const": "IMAGE_FLAT"},
-            }
+            },
         }
 
-        super(FlatImageChecker, self).__init__(
-            schema, ["#/definitions/raw_hdu_values", _sub_schema_flat], n_ext=2)
+        super(FlatImageChecker, self).__init__(schema, ["#/definitions/raw_hdu_values", _sub_schema_flat], n_ext=2)
 
     def check_post(self, hdulist, level=None):
         """Additional checks"""
@@ -327,16 +316,16 @@ class FlatImageChecker(ExtChecker):
         hdr = hdulist[0].header
         # Flat must have inc LAMPS-ON
         # Flat must have comp LAMPS-OFF
-        lamp_i_s = (hdr['LAMPI1S'] or hdr['LAMPI1S'])
+        lamp_i_s = hdr["LAMPI1S"] or hdr["LAMPI1S"]
         if not lamp_i_s:
-            msg = 'all incandescent lamps are OFF'
+            msg = "all incandescent lamps are OFF"
             raise ValidationError(msg)
         lamp_s_s = True
         for idx in range(1, 6):
-            label = f'LAMPS{idx}S'
+            label = f"LAMPS{idx}S"
             lamp_s_s = lamp_s_s and hdr[label]
         if lamp_s_s:
-            msg = 'some comparation lamps are ON'
+            msg = "some comparation lamps are ON"
             raise ValidationError(msg)
 
 
@@ -348,11 +337,10 @@ class CompImageChecker(ExtChecker):
             "properties": {
                 "OBSMODE": {"enum": ["MegaraArcCalibration", "MegaraSuccess"]},
                 "IMAGETYP": {"const": "IMAGE_COMP"},
-            }
+            },
         }
 
-        super(CompImageChecker, self).__init__(
-            schema, ["#/definitions/raw_hdu_values", _sub_schema_comp], n_ext=2)
+        super(CompImageChecker, self).__init__(schema, ["#/definitions/raw_hdu_values", _sub_schema_comp], n_ext=2)
 
     def check_post(self, hdulist, level=None):
         """Additional checks"""
@@ -363,31 +351,25 @@ class CompImageChecker(ExtChecker):
         hdr = hdulist[0].header
         # Flat must have all inc LAMPS-OFF
         # Flat must have some comp LAMPS-ON
-        lamp_i_s = (hdr['LAMPI1S'] or hdr['LAMPI1S'])
+        lamp_i_s = hdr["LAMPI1S"] or hdr["LAMPI1S"]
         if lamp_i_s:
-            msg = 'some incandescent lamps are ON'
+            msg = "some incandescent lamps are ON"
             raise ValidationError(msg)
         lamp_s_s = False
         for idx in range(1, 6):
-            label = f'LAMPS{idx}S'
+            label = f"LAMPS{idx}S"
             lamp_s_s = lamp_s_s or hdr[label]
         if not lamp_s_s:
-            msg = 'all comparation lamps are OFF'
+            msg = "all comparation lamps are OFF"
             raise ValidationError(msg)
 
 
 class TargetImageChecker(ExtChecker):
     def __init__(self, schema):
 
-        _sub_schema_target = {
-            "type": "object",
-            "properties": {
-            }
-        }
+        _sub_schema_target = {"type": "object", "properties": {}}
 
-        super(TargetImageChecker, self).__init__(schema,
-                                                 ["#/definitions/raw_hdu_values", _sub_schema_target], n_ext=2
-                                                 )
+        super(TargetImageChecker, self).__init__(schema, ["#/definitions/raw_hdu_values", _sub_schema_target], n_ext=2)
 
     def check_post(self, hdulist, level=None):
         """Additional checks"""
@@ -398,24 +380,22 @@ class TargetImageChecker(ExtChecker):
         hdr = hdulist[0].header
         # Target must have all inc LAMPS-OFF
         # Target must have all comp LAMPS-ON
-        lamp_i_s = (hdr['LAMPI1S'] or hdr['LAMPI1S'])
+        lamp_i_s = hdr["LAMPI1S"] or hdr["LAMPI1S"]
         if lamp_i_s:
-            msg = 'some incandescent lamps are ON'
+            msg = "some incandescent lamps are ON"
             raise ValidationError(msg)
         lamp_s_s = False
         for idx in range(1, 6):
-            label = f'LAMPS{idx}S'
+            label = f"LAMPS{idx}S"
             lamp_s_s = lamp_s_s or hdr[label]
         if lamp_s_s:
-            msg = 'some comparation lamps are ON'
+            msg = "some comparation lamps are ON"
             raise ValidationError(msg)
 
 
 class MasterFlatRSSChecker(ExtChecker):
     def __init__(self, schema):
-        super(MasterFlatRSSChecker, self).__init__(schema,
-                                                   [_sub_schema_rss], n_ext=3
-                                                   )
+        super(MasterFlatRSSChecker, self).__init__(schema, [_sub_schema_rss], n_ext=3)
 
 
 class MasterSensitivityChecker(ExtChecker):
@@ -428,27 +408,27 @@ class MasterSensitivityChecker(ExtChecker):
 def check_header_additional(values_primary, values_fibers):
     """Additional checks than can't be done with schema"""
 
-    if values_primary['INSMODE'] != values_fibers['INSMODE']:
-        raise ValueError('insmode in PRIMARY != insmode in FIBERS')
+    if values_primary["INSMODE"] != values_fibers["INSMODE"]:
+        raise ValueError("insmode in PRIMARY != insmode in FIBERS")
 
-    if values_fibers['INSMODE'] == 'LCB':
+    if values_fibers["INSMODE"] == "LCB":
         rbundles = [0, 93, 94, 95, 96, 97, 98, 99, 100]
     else:
         rbundles = range(1, 92 + 1)
 
-    nfibers = values_fibers['NFIBERS']
+    nfibers = values_fibers["NFIBERS"]
     # nbundles = values_fibers['NBUNDLES']
 
     for idbundle in rbundles:
         # types are check in the json schema
-        for stype in ['P', "I", "T", "X", "Y", "O", "E"]:
+        for stype in ["P", "I", "T", "X", "Y", "O", "E"]:
             keyname = f"BUN{idbundle:03d}_{stype}"
             if keyname not in values_fibers:
                 raise ValueError(f"keyname {keyname} not in values_fibers")
 
     for idfiber in range(1, nfibers + 1):
         # types are check in the json schema
-        for stype in ['A', "D", "R", "X", "Y", "B"]:
+        for stype in ["A", "D", "R", "X", "Y", "B"]:
             keyname = f"FIB{idfiber:03d}_{stype}"
             if keyname not in values_fibers:
                 msg = f"keyname {keyname} not in values_fibers"
@@ -470,23 +450,20 @@ class CheckAsDatatype:
         image_schema_path = "baseimage.json"
         json_schema_path = "basestruct.json"
 
-        data_image = pkgutil.get_data('megaradrp.schemas', image_schema_path)
-        data_json = pkgutil.get_data('megaradrp.schemas', json_schema_path)
-        schema_image = json.load(StringIO(data_image.decode('utf8')))
-        schema_json = json.load(StringIO(data_json.decode('utf8')))
+        data_image = pkgutil.get_data("megaradrp.schemas", image_schema_path)
+        data_json = pkgutil.get_data("megaradrp.schemas", json_schema_path)
+        schema_image = json.load(StringIO(data_image.decode("utf8")))
+        schema_json = json.load(StringIO(data_json.decode("utf8")))
 
         ValClass = jsonschema.validators.validator_for(schema_image)
         self.validator_image = ValClass(schema_image)
         ValClass = jsonschema.validators.validator_for(schema_json)
         self.validator_json = ValClass(schema_json)
 
-        raw_checker = ExtChecker(self.validator_image, [
-                                 "#/definitions/raw_hdu_values"])
-        proc_checker = ExtChecker(self.validator_image, [
-                                  "#/definitions/proc_hdu_values"])
+        raw_checker = ExtChecker(self.validator_image, ["#/definitions/raw_hdu_values"])
+        proc_checker = ExtChecker(self.validator_image, ["#/definitions/proc_hdu_values"])
         rss_checker = ExtChecker(self.validator_image, [_sub_schema_rss])
-        spec_checker = ExtChecker(self.validator_image, [
-                                  "#/definitions/spec_hdu_values"])
+        spec_checker = ExtChecker(self.validator_image, ["#/definitions/spec_hdu_values"])
         sens_checker = MasterSensitivityChecker(self.validator_image)
         struct_checker = StructChecker(self.validator_json)
 
@@ -494,24 +471,23 @@ class CheckAsDatatype:
         _megara_checkers[MegaraDataType.UNKNOWN] = check_null
         _megara_checkers[MegaraDataType.IMAGE_RAW] = raw_checker
         _megara_checkers[MegaraDataType.IMAGE_BIAS] = ExtChecker(
-            self.validator_image, ["#/definitions/raw_hdu_values", _sub_schema_bias], n_ext=1)
+            self.validator_image, ["#/definitions/raw_hdu_values", _sub_schema_bias], n_ext=1
+        )
         _megara_checkers[MegaraDataType.IMAGE_DARK] = ExtChecker(
-            self.validator_image, ["#/definitions/raw_hdu_values", _sub_schema_dark], n_ext=1)
+            self.validator_image, ["#/definitions/raw_hdu_values", _sub_schema_dark], n_ext=1
+        )
         _megara_checkers[MegaraDataType.IMAGE_SLITFLAT] = raw_checker
-        _megara_checkers[MegaraDataType.IMAGE_FLAT] = FlatImageChecker(
-            self.validator_image)
-        _megara_checkers[MegaraDataType.IMAGE_COMP] = CompImageChecker(
-            self.validator_image)
+        _megara_checkers[MegaraDataType.IMAGE_FLAT] = FlatImageChecker(self.validator_image)
+        _megara_checkers[MegaraDataType.IMAGE_COMP] = CompImageChecker(self.validator_image)
         #
         _megara_checkers[MegaraDataType.IMAGE_TWILIGHT] = raw_checker
         _megara_checkers[MegaraDataType.IMAGE_TEST] = raw_checker
-        _megara_checkers[MegaraDataType.IMAGE_TARGET] = TargetImageChecker(
-            self.validator_image)
+        _megara_checkers[MegaraDataType.IMAGE_TARGET] = TargetImageChecker(self.validator_image)
         #
         _megara_checkers[MegaraDataType.IMAGE_PROCESSED] = proc_checker
-        _megara_checkers[MegaraDataType.MASTER_BPM] = ExtChecker(self.validator_image, [
-            "#/definitions/proc_hdu_values", _sub_schema_master_bpm
-        ], n_ext=1)
+        _megara_checkers[MegaraDataType.MASTER_BPM] = ExtChecker(
+            self.validator_image, ["#/definitions/proc_hdu_values", _sub_schema_master_bpm], n_ext=1
+        )
         _megara_checkers[MegaraDataType.MASTER_BIAS] = ExtChecker(
             self.validator_image, ["#/definitions/proc_hdu_values", _sub_schema_master_bias], n_ext=1
         )
@@ -523,8 +499,7 @@ class CheckAsDatatype:
         #
         _megara_checkers[MegaraDataType.RSS_PROCESSED] = rss_checker
         _megara_checkers[MegaraDataType.RSS_WL_PROCESSED] = rss_checker
-        _megara_checkers[MegaraDataType.MASTER_FLAT] = MasterFlatRSSChecker(
-            self.validator_image)
+        _megara_checkers[MegaraDataType.MASTER_FLAT] = MasterFlatRSSChecker(self.validator_image)
         _megara_checkers[MegaraDataType.MASTER_TWILIGHT] = rss_checker
 
         _megara_checkers[MegaraDataType.SPEC_PROCESSED] = spec_checker

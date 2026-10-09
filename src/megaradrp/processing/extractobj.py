@@ -1,4 +1,3 @@
-
 # Copyright 2011-2023 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
@@ -43,13 +42,13 @@ def coverage_det(arr):
     diffa = numpy.diff(arr)
 
     # For the left, find first +1
-    val_f, = numpy.where(diffa == 1)
+    (val_f,) = numpy.where(diffa == 1)
     pix_f = 0
     if len(val_f) > 0:
         pix_f = val_f[0] + 1
 
     # For the rigth, find first -1
-    val_l, = numpy.where(diffa == -1)
+    (val_l,) = numpy.where(diffa == -1)
     pix_l = maxcover
     if len(val_l) > 0:
         pix_l = val_l[0] + 1
@@ -62,13 +61,13 @@ def extract_star(rssimage, position, npoints, fiberconf, logger=None):
 
     # FIXME: handle several positions
 
-    logger.info('extracting star')
+    logger.info("extracting star")
 
     # fiberconf = dm.get_fiberconf(rssimage)
     logger.debug("Configuration UUID is %s", fiberconf.conf_id)
 
     rssdata = rssimage[0].data
-    pdata = rssimage['wlmap'].data
+    pdata = rssimage["wlmap"].data
 
     points = [position]
     fibers = fiberconf.connected_fibers(valid_only=True)
@@ -85,17 +84,17 @@ def extract_star(rssimage, position, npoints, fiberconf, logger=None):
 
     dis_p, idx_p = kdtree.query(points, k=npoints)
 
-    logger.info('Using %d nearest fibers', npoints)
+    logger.info("Using %d nearest fibers", npoints)
     totals = []
     for diss, idxs, point in zip(dis_p, idx_p, points):
         # For each point
-        logger.info('For point %s', point)
+        logger.info("For point %s", point)
         colids = []
         coords = []
         for dis, idx in zip(diss, idxs):
             fiber = fibers[idx]
             colids.append(fiber.fibid - 1)
-            logger.debug('adding fibid %d', fiber.fibid)
+            logger.debug("adding fibid %d", fiber.fibid)
 
             coords.append((fiber.x, fiber.y))
 
@@ -113,8 +112,8 @@ def extract_star(rssimage, position, npoints, fiberconf, logger=None):
         # nz_max, = numpy.nonzero(numpy.diff(max_value_region))
         # Interval with at least 1 fiber
         # nz_some, = numpy.nonzero(numpy.diff(some_value_region))
-        nz_max_slice = coverage_det(max_value_region.astype('int'))
-        nz_some_slice = coverage_det(some_value_region.astype('int'))
+        nz_max_slice = coverage_det(max_value_region.astype("int"))
+        nz_some_slice = coverage_det(some_value_region.astype("int"))
 
         # Collapse the flux in the optimal region
         perf = flux_fiber[:, nz_max_slice].sum(axis=1)
@@ -179,10 +178,10 @@ def compute_centroid(rssdata, fiberconf, c1, c2, point, logger=None):
     points = [point]
     dis_p, idx_p = kdtree.query(points, k=npoints)
 
-    logger.info('Using %d nearest fibers', npoints)
+    logger.info("Using %d nearest fibers", npoints)
     for diss, idxs, point in zip(dis_p, idx_p, points):
         # For each point
-        logger.info('For point %s', point)
+        logger.info("For point %s", point)
         colids = []
         coords = []
         for dis, idx in zip(diss, idxs):
@@ -197,13 +196,12 @@ def compute_centroid(rssdata, fiberconf, c1, c2, point, logger=None):
         # centroid
         scf = coords.T * flux_per_cell_norm
         centroid = scf.sum(axis=1)
-        logger.info('centroid: %s', centroid)
+        logger.info("centroid: %s", centroid)
         # central coords
         c_coords = coords - centroid
         scf0 = scf - centroid[:, numpy.newaxis] * flux_per_cell_norm
         mc2 = numpy.dot(scf0, c_coords)
-        logger.info('2nd order moments, x2=%f, y2=%f, xy=%f',
-                    mc2[0, 0], mc2[1, 1], mc2[0, 1])
+        logger.info("2nd order moments, x2=%f, y2=%f, xy=%f", mc2[0, 0], mc2[1, 1], mc2[0, 1])
         return centroid
 
 
@@ -238,8 +236,7 @@ def compute_dar(img, logger=None, debug_plot=False):
         c2 = c + delt // 2
 
         z = rssdata[colids, c1:c2].mean(axis=1)
-        centroid = compute_centroid(
-            rssdata, fp_conf, c1, c2, point, logger=logger)
+        centroid = compute_centroid(rssdata, fp_conf, c1, c2, point, logger=logger)
         cols.append(c)
         xdar.append(centroid[0])
         ydar.append(centroid[1])
@@ -279,7 +276,7 @@ def compute_dar(img, logger=None, debug_plot=False):
         col = vis.hexplot(ax, x, y, z, cmap=plt.cm.YlOrRd_r)
         plt.title(f"Fiber map, {c1} {c2}")
         cb = plt.colorbar(col)
-        cb.set_label('counts')
+        cb.set_label("counts")
         plt.show()
 
         zenith_distance = 60 * u.deg
@@ -295,9 +292,9 @@ def compute_dar(img, logger=None, debug_plot=False):
             pressure=press,
             relative_humidity=rel,
         )
-        plt.plot(world[:, 0], xdar, '*-')
-        plt.plot(world[:, 0], ydar, '*-')
-        plt.plot(world[:, 0], 2.0 * u.arcsec + ll.to(u.arcsec), '-')
+        plt.plot(world[:, 0], xdar, "*-")
+        plt.plot(world[:, 0], ydar, "*-")
+        plt.plot(world[:, 0], 2.0 * u.arcsec + ll.to(u.arcsec), "-")
         plt.show()
 
     return world[:, 0], xdar, ydar
@@ -325,9 +322,17 @@ def mix_values(wcsl, spectrum, star_interp):
     return wavelen_aa, response_0, response_1
 
 
-def compute_broadening(flux_low, flux_high, sigmalist,
-                       remove_mean=False, frac_cosbell=None, zero_padding=None,
-                       fminmax=None, naround_zero=None, nfit_peak=None):
+def compute_broadening(
+    flux_low,
+    flux_high,
+    sigmalist,
+    remove_mean=False,
+    frac_cosbell=None,
+    zero_padding=None,
+    fminmax=None,
+    naround_zero=None,
+    nfit_peak=None,
+):
 
     # normalize each spectrum dividing by its median
     flux_low /= numpy.median(flux_low)
@@ -343,7 +348,8 @@ def compute_broadening(flux_low, flux_high, sigmalist,
 
         # periodic correlation between the two spectra
         offset, fpeak = periodic_corr1d(
-            flux_ref_broad, flux_low,
+            flux_ref_broad,
+            flux_low,
             remove_mean=remove_mean,
             frac_cosbell=frac_cosbell,
             zero_padding=zero_padding,
@@ -371,8 +377,7 @@ def compute_broadening(flux_low, flux_high, sigmalist,
     return offset_broad, sigma_broad
 
 
-def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
-                         wl_coverage1, wl_coverage2, sigma=20.0):
+def generate_sensitivity(final, spectrum, star_interp, extinc_interp, wl_coverage1, wl_coverage2, sigma=20.0):
     """Generate sensitivity response"""
 
     wcsl = astropy.wcs.WCS(final[0].header)
@@ -390,8 +395,8 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
 
     wavelen_aa = wavelen.to(u.AA)
 
-    airmass = final[0].header['AIRMASS']
-    exptime = final[0].header['EXPTIME']
+    airmass = final[0].header["AIRMASS"]
+    exptime = final[0].header["EXPTIME"]
 
     response_0 = spectrum / exptime
     r0max = response_0.max()
@@ -403,8 +408,7 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
 
     # In magAB
     # f(Jy) = 3631 * 10^-0.4 mAB
-    mag_ref = (star_interp(wavelen_aa) +
-               extinc_interp(wavelen_aa) * airmass) * u.ABmag
+    mag_ref = (star_interp(wavelen_aa) + extinc_interp(wavelen_aa) * airmass) * u.ABmag
     response_1 = mag_ref.to(u.Jy).value
 
     r1max = response_1.max()
@@ -420,10 +424,10 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
     pixr2 = wl_coverage2.stop
 
     pixlims = {}
-    pixlims['PIXLIMR1'] = pixr1 + 1  # Convert to 1-ref
-    pixlims['PIXLIMR2'] = pixr2
-    pixlims['PIXLIMM1'] = pixm1 + 1  # Convert to 1-ref
-    pixlims['PIXLIMM2'] = pixm2
+    pixlims["PIXLIMR1"] = pixr1 + 1  # Convert to 1-ref
+    pixlims["PIXLIMR2"] = pixr2
+    pixlims["PIXLIMM1"] = pixm1 + 1  # Convert to 1-ref
+    pixlims["PIXLIMM2"] = pixm2
 
     max_valid = numpy.zeros_like(valid)
     max_valid[wl_coverage1] = True
@@ -434,13 +438,12 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
     valid = numpy.zeros_like(response_0)
     valid[wl_coverage1] = 1
 
-    pixf1, pixf2 = int(math.floor(pixm1 + 2 * sigma)
-                       ), int(math.ceil(pixm2 - 2 * sigma))
+    pixf1, pixf2 = int(math.floor(pixm1 + 2 * sigma)), int(math.ceil(pixm2 - 2 * sigma))
 
-    pixlims['PIXLIMF1'] = pixf1 + 1
-    pixlims['PIXLIMF2'] = pixf2
+    pixlims["PIXLIMF1"] = pixf1 + 1
+    pixlims["PIXLIMF2"] = pixf2
 
-    flux_valid = numpy.zeros_like(valid, dtype='bool')
+    flux_valid = numpy.zeros_like(valid, dtype="bool")
     flux_valid[pixf1:pixf2] = True
 
     if sigma > 0:
@@ -455,12 +458,12 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp,
     sens = fits.PrimaryHDU(s_response, header=final[0].header)
     # delete second axis keywords
     # FIXME: delete axis with wcslib
-    for key in ['CRPIX2', 'CRVAL2', 'CDELT2', 'CTYPE2']:
+    for key in ["CRPIX2", "CRVAL2", "CDELT2", "CTYPE2"]:
         if key in sens.header:
             del sens.header[key]
 
-    sens.header['uuid'] = str(uuid.uuid1())
-    sens.header['tunit'] = ('Jy', "Final units")
+    sens.header["uuid"] = str(uuid.uuid1())
+    sens.header["tunit"] = ("Jy", "Final units")
 
     update_flux_limits(sens.header, pixlims, wcs=wcsl, ref=0)
 

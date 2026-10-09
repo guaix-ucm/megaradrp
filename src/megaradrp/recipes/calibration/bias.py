@@ -34,16 +34,9 @@ class BiasRecipe(MegaraBaseRecipe):
     megaradrp.types.MasterBias: description of the MasterBias product
 
     """
-    method = Parameter(
-        'median',
-        description='Combination method',
-        choices=['mean', 'median', 'mediancr', 'sigmaclip']
-    )
-    method_kwargs = Parameter(
-        dict(),
-        description='Arguments for combination method',
-        optional=True
-    )
+
+    method = Parameter("median", description="Combination method", choices=["mean", "median", "mediancr", "sigmaclip"])
+    method_kwargs = Parameter(dict(), description="Arguments for combination method", optional=True)
 
     master_bpm = MasterBPMRequirement()
     master_bias = Result(MasterBias)
@@ -61,29 +54,26 @@ class BiasRecipe(MegaraBaseRecipe):
         BiasRecipe.RecipeResult
 
         """
-        self.logger.info('start bias recipe')
+        self.logger.info("start bias recipe")
         flow = self.init_filters(rinput, rinput.obresult.configuration)
         errors = False
         if not errors:
-            self.logger.info('not computing errors')
+            self.logger.info("not computing errors")
 
         fmethod = getattr(combine, rinput.method)
 
         hdulist = basic_processing_with_combination(
-            rinput, flow,
-            method=fmethod,
-            method_kwargs=rinput.method_kwargs,
-            errors=errors
+            rinput, flow, method=fmethod, method_kwargs=rinput.method_kwargs, errors=errors
         )
         hdr = hdulist[0].header
         self.set_base_headers(hdr)
         result = self.create_result(master_bias=hdulist)
-        self.logger.info('end bias recipe')
+        self.logger.info("end bias recipe")
         return result
 
     def set_base_headers(self, hdr):
         """Set metadata in FITS headers."""
         hdr = super(BiasRecipe, self).set_base_headers(hdr)
-        hdr['NUMTYPE'] = ('MasterBias', 'Product type')
-        hdr['IMGTYPE'] = ('MASTER_BIAS', 'Product type')
+        hdr["NUMTYPE"] = ("MasterBias", "Product type")
+        hdr["IMGTYPE"] = ("MASTER_BIAS", "Product type")
         return hdr

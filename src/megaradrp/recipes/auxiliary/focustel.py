@@ -9,7 +9,6 @@
 
 """Focus Telescope Recipe for Megara"""
 
-
 import numpy
 from numina.array import combine
 from numina.core.dataholders import Result, Parameter, Requirement
@@ -59,52 +58,48 @@ class FocusTelescopeRecipe(ImageRecipe):
     master_bias = reqs.MasterBiasRequirement()
     master_dark = reqs.MasterDarkRequirement()
     master_bpm = reqs.MasterBPMRequirement()
-    master_apertures = reqs.MasterAperturesRequirement(alias='master_traces')
-    extraction_offset = Parameter(
-        [0.0], 'Offset traces for extraction', accept_scalar=True)
+    master_apertures = reqs.MasterAperturesRequirement(alias="master_traces")
+    extraction_offset = Parameter([0.0], "Offset traces for extraction", accept_scalar=True)
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
-    position = Requirement(
-        list, "Position of the reference object", default=(0, 0))
+    position = Requirement(list, "Position of the reference object", default=(0, 0))
     # Products
     focus_table = Result(float)
 
     # @numina.core.validator.validate
     def run(self, rinput):
         # Basic processing
-        self.logger.info('start focus telescope')
+        self.logger.info("start focus telescope")
 
         obresult = rinput.obresult
 
         flow = self.init_filters(rinput, obresult.configuration)
 
         coors = rinput.position
-        focus_t = 'M2UZ'
+        focus_t = "M2UZ"
 
         image_groups = {}
-        self.logger.info('group images by focus')
+        self.logger.info("group images by focus")
 
         for idx, frame in enumerate(obresult.frames):
             with frame.open() as img:
                 focus_val = img[0].header[focus_t]
                 if focus_val not in image_groups:
-                    self.logger.debug('new focus %s', focus_val)
+                    self.logger.debug("new focus %s", focus_val)
                     image_groups[focus_val] = []
-                self.logger.debug('image %s in group %s', img, focus_val)
+                self.logger.debug("image %s in group %s", img, focus_val)
                 image_groups[focus_val].append(frame)
 
         if len(image_groups) < 2:
-            raise RecipeError(
-                f'We have only {len(image_groups)} different focus')
+            raise RecipeError(f"We have only {len(image_groups)} different focus")
 
         all_images = {}
         for focus, frames in image_groups.items():
-            self.logger.info('processing focus %s', focus)
+            self.logger.info("processing focus %s", focus)
 
             try:
-                img = basic_processing_with_combination_frames(
-                    frames, flow, method=combine.median, errors=False)
+                img = basic_processing_with_combination_frames(frames, flow, method=combine.median, errors=False)
 
-                self.save_intermediate_img(img, f'focus2d-{focus}.fits')
+                self.save_intermediate_img(img, f"focus2d-{focus}.fits")
 
                 # 1D, extraction, Wl calibration, Flat fielding
                 _, img1d = self.run_reduction_1d(
@@ -112,34 +107,33 @@ class FocusTelescopeRecipe(ImageRecipe):
                     rinput.master_apertures,
                     rinput.master_wlcalib,
                     rinput.master_fiberflat,
-                    offset=rinput.extraction_offset
+                    offset=rinput.extraction_offset,
                 )
 
                 do_sky_subtraction = True
                 if do_sky_subtraction:
-                    self.logger.info('start sky subtraction')
-                    final, origin, sky = self.run_sky_subtraction(
-                        img1d, rinput.ignored_sky_bundles)
-                    self.logger.info('end sky subtraction')
+                    self.logger.info("start sky subtraction")
+                    final, origin, sky = self.run_sky_subtraction(img1d, rinput.ignored_sky_bundles)
+                    self.logger.info("end sky subtraction")
                 else:
                     final = img1d
                     # origin = final
                     # sky = final
 
-                self.save_intermediate_img(final, f'focus1d-{focus}.fits')
+                self.save_intermediate_img(final, f"focus1d-{focus}.fits")
 
-                self.logger.info('find lines and compute FWHM')
+                self.logger.info("find lines and compute FWHM")
                 star_rss_fwhm = self.run_on_image(final, coors)
                 all_images[focus] = star_rss_fwhm
 
             except ValueError:
-                self.logger.info('focus %s cannot be processed', focus)
+                self.logger.info("focus %s cannot be processed", focus)
 
-        self.logger.info('fit FWHM of star')
+        self.logger.info("fit FWHM of star")
         final = self.reorder_and_fit(all_images)
-        self.logger.info('best focus is %s', final)
+        self.logger.info("best focus is %s", final)
 
-        self.logger.info('end focus telescope')
+        self.logger.info("end focus telescope")
         return self.create_result(focus_table=final)
 
     def run_on_image(self, img, coors):
@@ -171,10 +165,10 @@ class FocusTelescopeRecipe(ImageRecipe):
         # 1 + 6  + 12  + 18 for third ring
         dis_p, idx_p = kdtree.query(points, k=npoints)
 
-        self.logger.info('Using %d nearest fibers', npoints)
+        self.logger.info("Using %d nearest fibers", npoints)
         for diss, idxs, point in zip(dis_p, idx_p, points):
             # For each point
-            self.logger.info('For point %s', point)
+            self.logger.info("For point %s", point)
             colids = []
             coords = []
             for dis, idx in zip(diss, idxs):
@@ -189,13 +183,12 @@ class FocusTelescopeRecipe(ImageRecipe):
             # centroid
             scf = coords.T * flux_per_cell_norm
             centroid = scf.sum(axis=1)
-            self.logger.info('centroid: %s', centroid)
+            self.logger.info("centroid: %s", centroid)
             # central coords
             c_coords = coords - centroid
             scf0 = scf - centroid[:, numpy.newaxis] * flux_per_cell_norm
             mc2 = numpy.dot(scf0, c_coords)
-            self.logger.info(
-                '2nd order moments, x2=%f, y2=%f, xy=%f', mc2[0, 0], mc2[1, 1], mc2[0, 1])
+            self.logger.info("2nd order moments, x2=%f, y2=%f, xy=%f", mc2[0, 0], mc2[1, 1], mc2[0, 1])
 
         # FIXME: returning only 1 value for 1 star
         return mc2[0, 0]
@@ -210,8 +203,8 @@ class FocusTelescopeRecipe(ImageRecipe):
 
         try:
             res = numpy.polyfit(focii, ally, deg=2)
-            self.logger.debug('fitting to deg 2 polynomial, done')
-            self.logger.debug('parameters are %s', res)
+            self.logger.debug("fitting to deg 2 polynomial, done")
+            self.logger.debug("parameters are %s", res)
             best = -res[1] / (2 * res[0])
         except ValueError as error:
             self.logger.warning("Error in fitting: %s", error)

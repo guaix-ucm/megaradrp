@@ -9,7 +9,6 @@
 
 """Calibration Recipes for Megara"""
 
-
 from numina.core import Result, Requirement
 from numina.types.datatype import ListOfType
 from numina.core.requirements import ObservationResultRequirement
@@ -37,16 +36,14 @@ class Recipe(MegaraBaseRecipe):
     # Requirements
     obresult = ObservationResultRequirement()
 
-    master_extinction = Requirement(typs.ReferenceExtinctionTable,
-                                    "Atmospheric extinction")
-    reference_spectra = Requirement(ListOfType(typs.ReferenceSpectrumTable),
-                                    "Reference spectra of Std stars")
+    master_extinction = Requirement(typs.ReferenceExtinctionTable, "Atmospheric extinction")
+    reference_spectra = Requirement(ListOfType(typs.ReferenceSpectrumTable), "Reference spectra of Std stars")
 
     master_sensitivity = Result(typs.MasterSensitivity)
 
     def run(self, rinput):
 
-        self.logger.info('starting SensivityStarRecipe reduction')
+        self.logger.info("starting SensivityStarRecipe reduction")
 
         result = super(Recipe, self).run(rinput)
 

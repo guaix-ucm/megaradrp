@@ -9,7 +9,6 @@
 
 """Products of the Megara Pipeline"""
 
-
 import numina.types.structured as structured
 import numina.core.tagexpr as tagexpr
 
@@ -20,7 +19,7 @@ from megaradrp.datatype import MegaraDataType
 class BaseStructuredCalibration(structured.BaseStructuredCalibration):
     DATATYPE = MegaraDataType.STRUCT_PROCESSED
 
-    def __init__(self, instrument='unknown'):
+    def __init__(self, instrument="unknown"):
         datamodel = megaradrp.datamodel.MegaraDataModel()
         super(BaseStructuredCalibration, self).__init__(instrument, datamodel)
         my_tag_table = self.datamodel.query_attrs

@@ -39,42 +39,44 @@ def to_ds9_reg(obj, ds9reg, rawimage=False, numpix=100, fibid_at=0):
 
     # open output file and insert header
 
-    ds9reg.write('# Region file format: DS9 version 4.1\n')
+    ds9reg.write("# Region file format: DS9 version 4.1\n")
     ds9reg.write(
         'global color=green dashlist=2 4 width=2 font="helvetica 10 '
         'normal roman" select=1 highlite=1 dash=1 fixed=0 edit=1 '
-        'move=1 delete=1 include=1 source=1\n')
-    ds9reg.write('physical\n')
+        "move=1 delete=1 include=1 source=1\n"
+    )
+    ds9reg.write("physical\n")
     ds9reg.write(f"#\n# insmode: {obj.tags['insmode']}\n")
     ds9reg.write(f"# vph: {obj.tags['vph']}\n")
-    ds9reg.write(f'# uuid: {obj.uuid}\n')
-    colorbox = ['#ff77ff', '#4444ff']
+    ds9reg.write(f"# uuid: {obj.uuid}\n")
+    colorbox = ["#ff77ff", "#4444ff"]
     itercolors = itertools.cycle(colorbox)
     for fiberdict in obj.contents:
         fibid = fiberdict.fibid
         # boxid = fiberdict.boxid
         xmin = fiberdict.start
         xmax = fiberdict.stop
-        ds9reg.write(f'#\n# fibid: {fibid}\n')
+        ds9reg.write(f"#\n# fibid: {fibid}\n")
         # skip fibers without trace
         if fiberdict.valid:
             xp = numpy.linspace(start=xmin, stop=xmax, num=numpix)
             yp = fiberdict.polynomial(xp)
             if rawimage:
-                lcut = (yp > 2056.5)
+                lcut = yp > 2056.5
                 yp[lcut] += 100
             for i in range(len(xp) - 1):
                 x1 = xp[i] + ix_offset
                 y1 = yp[i] + 1
                 x2 = xp[i + 1] + ix_offset
                 y2 = yp[i + 1] + 1
-                ds9reg.write(f'line {x1} {y1} {x2} {y2}')
+                ds9reg.write(f"line {x1} {y1} {x2} {y2}")
                 # Alternate colors
                 next_color = next(itercolors)
-                ds9reg.write(f' # color={next_color}\n')
+                ds9reg.write(f" # color={next_color}\n")
                 if fibid_at != 0:
                     if x1 <= fibid_at <= x2:
-                        ds9reg.write('text {0} {1} {{{2}}} # color=green '
-                                     'font="helvetica 10 bold '
-                                     'roman"\n'.format((x1+x2)/2,
-                                                       (y1+y2)/2, fibid))
+                        ds9reg.write(
+                            "text {0} {1} {{{2}}} # color=green "
+                            'font="helvetica 10 bold '
+                            'roman"\n'.format((x1 + x2) / 2, (y1 + y2) / 2, fibid)
+                        )

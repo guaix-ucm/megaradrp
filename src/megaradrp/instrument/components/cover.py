@@ -15,8 +15,8 @@ from numina.instrument.components.signal import Signal
 
 class HemiCover(HWDevice):
     STATES = [0, 1]
-    NAMES = {'PARKED': 1, 'INPLACE': 0}
-    CODES = {1: 'PARKED', 0: 'INPLACE'}
+    NAMES = {"PARKED": 1, "INPLACE": 0}
+    CODES = {1: "PARKED", 0: "INPLACE"}
 
     def __init__(self, name, parent=None):
         self._pos = 0  # Closed
@@ -28,7 +28,7 @@ class HemiCover(HWDevice):
 
     def set(self, pos):
         if pos not in self.STATES:
-            raise ValueError('%d is not a valid state' % pos)
+            raise ValueError("%d is not a valid state" % pos)
         if pos != self._pos:  # We have to move
             self.flip()
 
@@ -66,13 +66,13 @@ class FullCover(HWDevice):
     # STATES = 00, 01, 10, 11
     # FULL CLOSED, CLOSED LEFT, CLOSED RIGHT, FULL OPEN
     STATES = [0, 1, 2, 3]
-    NAMES = {'UNSET': 3, 'LEFT': 2, 'RIGHT': 1, 'SET': 0}
-    CODES = {3: 'UNSET', 2: 'LEFT', 1: 'RIGHT', 0: 'SET'}
+    NAMES = {"UNSET": 3, "LEFT": 2, "RIGHT": 1, "SET": 0}
+    CODES = {3: "UNSET", 2: "LEFT", 1: "RIGHT", 0: "SET"}
 
     def __init__(self, name=None, parent=None):
         super(FullCover, self).__init__(name, parent=parent)
-        self.left = HemiCover(name='Left', parent=self)
-        self.right = HemiCover(name='Right', parent=self)
+        self.left = HemiCover(name="Left", parent=self)
+        self.right = HemiCover(name="Right", parent=self)
 
         self.changed_left = self.left.changed
         self.opened_left = self.left.opened
@@ -96,7 +96,7 @@ class FullCover(HWDevice):
 
     def set(self, pos):
         if pos not in self.STATES:
-            raise ValueError('%d is not a valid state' % pos)
+            raise ValueError("%d is not a valid state" % pos)
 
         l_pos = pos // 2
         r_pos = pos % 2
@@ -126,18 +126,21 @@ class FullCover(HWDevice):
 
 class MegaraCover(FullCover):
     """MEGARA Cover"""
-    NAMES = {'UNSET': 3, 'LEFT': 2, 'RIGHT': 1, 'SET': 0}
-    CODES = {3: 'UNSET', 2: 'LEFT', 1: 'RIGHT', 0: 'SET'}
-    HCODES = {1: 'PARKED', 0: 'INPLACE'}
 
-    VALS = {3: lambda pos: np.ones(pos[:, 0].shape, dtype='bool'),
-            2: lambda pos: pos[:, 0] < -0.7,
-            1: lambda pos: pos[:, 0] > 0.7,
-            0: lambda pos: np.zeros(pos[:, 0].shape, dtype='bool')}
+    NAMES = {"UNSET": 3, "LEFT": 2, "RIGHT": 1, "SET": 0}
+    CODES = {3: "UNSET", 2: "LEFT", 1: "RIGHT", 0: "SET"}
+    HCODES = {1: "PARKED", 0: "INPLACE"}
+
+    VALS = {
+        3: lambda pos: np.ones(pos[:, 0].shape, dtype="bool"),
+        2: lambda pos: pos[:, 0] < -0.7,
+        1: lambda pos: pos[:, 0] > 0.7,
+        0: lambda pos: np.zeros(pos[:, 0].shape, dtype="bool"),
+    }
 
     def __init__(self, parent=None):
-        self.mode = 'UNSET'
-        super(MegaraCover, self).__init__(name='Cover', parent=parent)
+        self.mode = "UNSET"
+        super(MegaraCover, self).__init__(name="Cover", parent=parent)
         self.set_mode(self.mode)
 
         self._filter_s = lambda x: True
@@ -169,8 +172,7 @@ class MegaraCover(FullCover):
             self._cover_s = lambda pos: 0.0
 
     def visible_fibers(self, fibid, allpos):
-        p1 = [(fid, pos[0], pos[1], self._cover_s(pos))
-              for fid, pos in zip(fibid, allpos) if self._filter_s(pos)]
+        p1 = [(fid, pos[0], pos[1], self._cover_s(pos)) for fid, pos in zip(fibid, allpos) if self._filter_s(pos)]
         return p1
 
     def __call__(self, fiber_positions):
