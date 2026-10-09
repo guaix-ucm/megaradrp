@@ -36,13 +36,18 @@ class MegaraBaseRecipe(BaseRecipe):
     datamodel = MegaraDataModel()
 
     def validate_input(self, recipe_input):
-        """Validate the input of the recipe"""
+        """Validate the input of the recipe.
+
+        First, the validation of numina: the raw images of the observation
+        result with the schemas of MEGARA, the validator of the observing
+        mode and the other requirements with their types. Then, the tags of
+        the requirements must be compatible with those of the observation
+        result.
+        """
 
         import numina.types.multitype
 
-        # print('ATTRS', recipe_input.attrs())
-        # print('STORED', recipe_input.stored())
-        # print('tag_names', recipe_input.tag_names())
+        super().validate_input(recipe_input)
 
         # Find reference tags
         ref_tags = {}
@@ -51,7 +56,6 @@ class MegaraBaseRecipe(BaseRecipe):
                 ref_tags = val.tags
                 break
 
-        # super(MegaraBaseRecipe, self).validate_input(recipe_input)
         # check all the rest against reference tags
         stored = recipe_input.stored()
         attrs = recipe_input.attrs()

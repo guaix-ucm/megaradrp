@@ -222,7 +222,6 @@ _sub_schema_rss = {
 _sub_schema_bias = {
     "type": "object",
     "properties": {
-        "OBJECT": {"const": "BIAS"},
         "OBSMODE": {"const": "MegaraBiasImage"},
         "IMAGETYP": {"const": "IMAGE_BIAS"},
         "EXPTIME": {"type": "number", "maximum": 0},
