@@ -181,6 +181,66 @@
         "NAXIS1": {"const": 4300}
       }
     },
+    "bias_hdu_values": {
+      "description": "Headers of raw bias images",
+      "type": "object",
+      "properties": {
+        "OBSMODE": {"const": "MegaraBiasImage"},
+        "IMAGETYP": {"const": "IMAGE_BIAS"},
+        "EXPTIME": {"type": "number", "maximum": 0},
+        "DARKTIME": {"type": "number", "maximum": 0}
+      }
+    },
+    "dark_hdu_values": {
+      "description": "Headers of raw dark images",
+      "type": "object",
+      "properties": {
+        "OBSMODE": {"const": "MegaraDarkImage"},
+        "IMAGETYP": {"const": "IMAGE_DARK"}
+      }
+    },
+    "flat_hdu_values": {
+      "description": "Headers of raw flat images",
+      "type": "object",
+      "properties": {
+        "OBSMODE": {"enum": ["MegaraFiberFlatImage", "MegaraTraceMap", "MegaraModelMap", "MegaraSuccess"]},
+        "IMAGETYP": {"const": "IMAGE_FLAT"}
+      }
+    },
+    "comp_hdu_values": {
+      "description": "Headers of raw arc images",
+      "type": "object",
+      "properties": {
+        "OBSMODE": {"enum": ["MegaraArcCalibration", "MegaraSuccess"]},
+        "IMAGETYP": {"const": "IMAGE_COMP"}
+      }
+    },
+    "master_bpm_hdu_values": {
+      "description": "Headers of master bad pixel masks",
+      "type": "object",
+      "properties": {
+        "NUMTYPE": {"enum": ["MasterBias", "MASTER_BPM"]}
+      }
+    },
+    "master_bias_hdu_values": {
+      "description": "Headers of master bias images",
+      "type": "object",
+      "properties": {
+        "OBSMODE": {"const": "MegaraBiasImage"},
+        "IMAGETYP": {"const": "MASTER_BIAS"},
+        "EXPTIME": {"type": "number", "maximum": 0},
+        "DARKTIME": {"type": "number", "maximum": 0},
+        "NUMTYPE": {"enum": ["MasterBias", "MASTER_BIAS"]}
+      }
+    },
+    "master_dark_hdu_values": {
+      "description": "Headers of master dark images",
+      "type": "object",
+      "properties": {
+        "OBSMODE": {"const": "MegaraDarkImage"},
+        "IMAGETYP": {"const": "MASTER_DARK"}
+      }
+    },
     "rss_naxis2": {
       "type": "object",
       "allOf": [
