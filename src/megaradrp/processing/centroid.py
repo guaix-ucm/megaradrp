@@ -78,8 +78,8 @@ def calc_centroid(final, extraction_region, point, nrings):
     positions = []
     for diss, idxs, point in zip(dis_p, idx_p, points):
         # For each point
-        value = [p * scale for p in point]
-        value_mm = [(v / platescale) for v in value]
+        value = [float(p * scale) for p in point]
+        value_mm = [float(v / platescale) for v in value]
         _logger.info("For point %s arcsec", value)
         _logger.info("For point %s mm", value_mm)
         colids = []
@@ -98,8 +98,8 @@ def calc_centroid(final, extraction_region, point, nrings):
         # centroid
         scf = coords.T * flux_per_cell_norm
         centroid = scf.sum(axis=1)
-        _logger.info("centroid: %s arcsec", list(centroid))
-        _logger.info("centroid: %s mm", list(centroid / platescale))
+        _logger.info("centroid: %s arcsec", centroid.tolist())
+        _logger.info("centroid: %s mm", (centroid / platescale).tolist())
         # central coords
         c_coords = coords - centroid
         scf0 = scf - centroid[:, numpy.newaxis] * flux_per_cell_norm

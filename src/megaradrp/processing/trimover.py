@@ -257,8 +257,8 @@ class OverscanCorrector(Corrector):
         for spl, label in zip([spl1, spl2], ["overscan1", "overscan2"]):
             k, c, deg = spl._eval_args
             hdr["history"] = f"{label} deg {deg}"
-            hdr["history"] = f"{label} knots {list(k)}"
-            hdr["history"] = f"{label} coeffs {list(c)}"
+            hdr["history"] = f"{label} knots {k.tolist()}"
+            hdr["history"] = f"{label} coeffs {c.tolist()}"
 
         return img
 

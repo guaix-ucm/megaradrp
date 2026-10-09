@@ -207,7 +207,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
             reduced, box_borders0, cstart, intermediate_results=self.intermediate_results
         )
         self.logger.debug(f"refined boxes computed in column {cstart}")
-        self.logger.debug("refined boxes: %s", box_borders)
+        self.logger.debug("refined boxes: %s", numpy.asarray(box_borders).tolist())
 
         self.logger.info("END refining boxes")
 
@@ -416,7 +416,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
                     else:
                         start = xfit[0]
                         stop = xfit[-1]
-                    self.logger.debug(f"trace limits {start=} {stop=}")
+                    self.logger.debug(f"trace limits start={start} stop={stop}")
             else:
                 if conf_ok:
                     self.logger.warning("error tracing fibid %d", dtrace.fibid)

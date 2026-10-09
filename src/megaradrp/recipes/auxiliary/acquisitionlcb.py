@@ -98,4 +98,6 @@ class AcquireLCBRecipe(ImageRecipe):
         if False:
             self.compute_dar(final)
 
-        return self.create_result(reduced_image=reduced2d, reduced_rss=reduced1d, final_rss=final, offset=-centroid)
+        return self.create_result(
+            reduced_image=reduced2d, reduced_rss=reduced1d, final_rss=final, offset=(-centroid).tolist()
+        )
