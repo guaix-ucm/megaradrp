@@ -43,6 +43,7 @@ dependencies = [
 test = [
     "pytest>=6",
     "pytest-remotedata",
+    "pytest-xdist",
 ]
 docs = [
     "sphinx",

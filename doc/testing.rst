@@ -10,22 +10,32 @@ Running tests
 
 MEGARA DRP uses `pytest <http://pytest.org>`_ as its testing framework.
 We require also the package `pytest-remotedata` to control access to online
-resources during testing.
+resources during testing. The optional dependencies for testing are installed
+with::
 
-As MEGARA DRP does not contain C/Cython extensions, the tests can be run
-directly in the source code, as::
+    pip install -e ".[test]"
 
-    cd megaradrp-0.4.0
-    pytest megaradrp
-    
+The tests are in the directory ``tests``, and are run from the root of the
+source tree::
+
+    pytest
+
 Some of the tests rely on data downloaded from a server. These tests are
 skipped by default. To enable them run instead::
 
-    py.test --remote-data megaradrp
+    pytest --remote-data=any
 
 The reduction recipes are tested with remote data. Each recipe is run in
 a directory created under the default ``$TMPDIR``, which is based on
 the user temporal directory. The base of the created directories can be changed
 with the option ``--basetemp=dir``::
 
-    py.test --basetemp=/home/spr/test100 --remote-data megaradrp
+    pytest --basetemp=/home/spr/test100 --remote-data=any
+
+The tests can be run in parallel with
+`pytest-xdist <https://pytest-xdist.readthedocs.io>`_, that is included in the
+optional dependencies for testing. The tests of a file must be run in the same
+process, as they share the downloaded data and can use the results of previous
+tests, so use the option ``--dist loadfile``::
+
+    pytest -n auto --dist loadfile --remote-data=any
