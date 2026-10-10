@@ -186,17 +186,14 @@ after 0.37.1.
 Checking images in Python
 **************************
 
-In Python, an image can be checked with the function that MEGARA
-registers in numina, the same used by ``numina verify``:
+In Python, an image can be checked with :data:`numina.core.config.check`,
+that uses the checker of the MEGARA DRP, as ``numina verify`` does:
 
 .. code-block:: python
 
     import astropy.io.fits as fits
     import numina.core.config as cfg
-    import numina.drps
     from megaradrp.datatype import MegaraDataType
-
-    numina.drps.get_system_drps()  # loads the DRPs and their checkers
 
     with fits.open("0001310880-20170827-MEGARA-MegaraBiasImage.fits.gz") as hdulist:
         cfg.check("MEGARA", hdulist, astype=MegaraDataType.IMAGE_BIAS)

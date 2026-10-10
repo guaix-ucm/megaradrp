@@ -32,7 +32,9 @@ class MegaraDrpLoader:
 
 def load_drp():
     """Entry point to load MEGARA DRP."""
-    return drp_load("megaradrp", "drp.yaml", confclass=MegaraDrpLoader)
+    drp = drp_load("megaradrp", "drp.yaml", confclass=MegaraDrpLoader)
+    drp.checker = check_obj_megara
+    return drp
 
 
 def is_fits_megara(pathname):
@@ -59,9 +61,8 @@ def describe_fits_megara(pathname):
         return DM.describe_hdulist_megara(hdulist)
 
 
-@cfg.check.register("MEGARA")
 def check_obj_megara(obj, astype=None, level=None):
-    """Check an object of MEGARA, registered in numina.core.config.check
+    """Check an object of MEGARA, the checker of the DRP
 
     See :func:`megaradrp.datamodel.check_obj_megara`.
     """

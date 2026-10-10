@@ -21,7 +21,7 @@ There are two kinds of validators:
   :mod:`megaradrp.schemas`, and then do additional checks in Python.
 
 The checkers are used by :func:`megaradrp.datamodel.check_obj_megara`,
-the function registered for MEGARA in :data:`numina.core.config.check`.
+the checker of the MEGARA DRP, used by :data:`numina.core.config.check`.
 """
 
 import logging
