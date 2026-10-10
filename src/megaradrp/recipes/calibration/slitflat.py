@@ -84,13 +84,13 @@ class SlitFlatRecipe(MegaraBaseRecipe):
         hdu.header["UUID"] = str(uuid.uuid1())
 
         master_slitflat = fits.HDUList([hdu])
-        self.set_base_headers(master_slitflat[0].header)
+        self.set_product_headers(master_slitflat[0].header)
 
         self.logger.info("end slit flat recipe")
         return self.create_result(master_slitflat=master_slitflat, reduced_image=reduced)
 
-    def set_base_headers(self, hdr):
-        """Set metadata in FITS headers."""
-        hdr = super(SlitFlatRecipe, self).set_base_headers(hdr)
+    def set_product_headers(self, hdr):
+        """Set metadata in the FITS headers of the main product."""
+        hdr = self.set_base_headers(hdr)
         hdr["NUMTYPE"] = ("MasterSlitFlat", "Product type")
         return hdr

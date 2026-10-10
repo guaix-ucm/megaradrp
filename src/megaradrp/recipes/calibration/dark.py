@@ -30,13 +30,13 @@ class DarkRecipe(MegaraBaseRecipe):
         flow = self.init_filters(rinput, rinput.obresult.configuration)
         hdulist = basic_processing_with_combination(rinput, flow, method=combine.median)
         hdr = hdulist[0].header
-        self.set_base_headers(hdr)
+        self.set_product_headers(hdr)
 
         result = self.create_result(master_dark=hdulist)
         return result
 
-    def set_base_headers(self, hdr):
-        """Set metadata in FITS headers."""
-        hdr = super(DarkRecipe, self).set_base_headers(hdr)
+    def set_product_headers(self, hdr):
+        """Set metadata in the FITS headers of the main product."""
+        hdr = self.set_base_headers(hdr)
         hdr["NUMTYPE"] = ("MasterDark", "Product type")
         return hdr

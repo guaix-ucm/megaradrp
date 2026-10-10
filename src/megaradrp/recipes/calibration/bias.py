@@ -66,14 +66,14 @@ class BiasRecipe(MegaraBaseRecipe):
             rinput, flow, method=fmethod, method_kwargs=rinput.method_kwargs, errors=errors
         )
         hdr = hdulist[0].header
-        self.set_base_headers(hdr)
+        self.set_product_headers(hdr)
         result = self.create_result(master_bias=hdulist)
         self.logger.info("end bias recipe")
         return result
 
-    def set_base_headers(self, hdr):
-        """Set metadata in FITS headers."""
-        hdr = super(BiasRecipe, self).set_base_headers(hdr)
+    def set_product_headers(self, hdr):
+        """Set metadata in the FITS headers of the main product."""
+        hdr = self.set_base_headers(hdr)
         hdr["NUMTYPE"] = ("MasterBias", "Product type")
         hdr["IMGTYPE"] = ("MASTER_BIAS", "Product type")
         return hdr

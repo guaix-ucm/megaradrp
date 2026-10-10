@@ -190,21 +190,12 @@ def read_fibers_extension(hdr, insmode="LCB"):
 def describe_hdulist_megara(hdulist):
     prim = hdulist[0].header
     instrument = prim.get("INSTRUME", "unknown")
-    image_type = prim.get("IMAGETYP")
-    if image_type is None:
-        # try this also
-        image_type = prim.get("NUMTYPE")
-
     # date_obs = convert_date(prim.get("DATE-OBS"))
     date_obs = prim.get("DATE-OBS")
     img_uuid = prim.get("UUID")
     insconf = prim.get("INSCONF", "undefined")
 
-    if image_type is None:
-        # inferr from header
-        datatype = megara_inferr_datetype_from_image(hdulist)
-    else:
-        datatype = MegaraDataType[image_type]
+    datatype = megara_inferr_datetype_from_image(hdulist)
 
     obs = {}
     proc = {}
@@ -248,79 +239,89 @@ def megara_inferr_datetype_from_dict(obj):
         return MegaraDataType.UNKNOWN
 
 
+# The datatypes deduced from the shape of the image
+_SHAPE_DATATYPES = {
+    (4212, 4196): MegaraDataType.IMAGE_RAW,
+    (4112, 4096): MegaraDataType.IMAGE_PROCESSED,
+    (623, 4096): MegaraDataType.RSS_PROCESSED,  # LCB
+    (644, 4096): MegaraDataType.RSS_PROCESSED,  # MOS
+    (623, 4300): MegaraDataType.RSS_WL_PROCESSED,  # LCB
+    (644, 4300): MegaraDataType.RSS_WL_PROCESSED,  # MOS
+    (4300,): MegaraDataType.SPEC_PROCESSED,
+}
+
+# The datatypes of the raw images, from OBSMODE
+_OBSMODE_DATATYPES = {
+    "MegaraSuccess": MegaraDataType.IMAGE_TEST,
+    "MegaraFail": MegaraDataType.IMAGE_TEST,
+    "MegaraBiasImage": MegaraDataType.IMAGE_BIAS,
+    "MegaraDarkImage": MegaraDataType.IMAGE_DARK,
+    "MegaraSlitFlat": MegaraDataType.IMAGE_SLITFLAT,
+    "MegaraFiberFlatImage": MegaraDataType.IMAGE_FLAT,
+    "MegaraTraceMap": MegaraDataType.IMAGE_FLAT,
+    "MegaraModelMap": MegaraDataType.IMAGE_FLAT,
+    "MegaraArcCalibration": MegaraDataType.IMAGE_COMP,
+    "MegaraTwilightFlatImage": MegaraDataType.IMAGE_TWILIGHT,
+    "MegaraLcbImage": MegaraDataType.IMAGE_TARGET,
+    "MegaraMosImage": MegaraDataType.IMAGE_TARGET,
+    "MegaraMosStdStar": MegaraDataType.IMAGE_TARGET,
+    "MegaraExtinctionStar": MegaraDataType.IMAGE_TARGET,
+    "MegaraLcbStdStar": MegaraDataType.IMAGE_TARGET,
+    "MegaraSensitivityStar": MegaraDataType.IMAGE_TARGET,
+    "MegaraFocusTelescope": MegaraDataType.IMAGE_TARGET,
+    "MegaraLcbAcquisition": MegaraDataType.IMAGE_TARGET,
+    "MegaraMosAcquisition": MegaraDataType.IMAGE_TARGET,
+    "MegaraBadPixelMask": MegaraDataType.IMAGE_RAW,
+    "MegaraFocusSpectrograph": MegaraDataType.IMAGE_RAW,
+}
+
+
+def _datatype_group(datatype):
+    """The datatype that describes the shape of the images of `datatype`"""
+    if datatype in [MegaraDataType.MASTER_FLAT, MegaraDataType.MASTER_TWILIGHT]:
+        return MegaraDataType.RSS_WL_PROCESSED
+    value = datatype.value
+    if 100 <= value < 200:
+        return MegaraDataType.IMAGE_RAW
+    if 200 <= value < 300:
+        return MegaraDataType.IMAGE_PROCESSED
+    if 300 <= value < 400:
+        return MegaraDataType.RSS_PROCESSED
+    if 400 <= value < 500:
+        return MegaraDataType.RSS_WL_PROCESSED
+    if 500 <= value < 600:
+        return MegaraDataType.SPEC_PROCESSED
+    return MegaraDataType.UNKNOWN
+
+
 def megara_inferr_datetype_from_image(hdulist):
-    IMAGE_RAW_SHAPE = (4212, 4196)
-    IMAGE_PROC_SHAPE = (4112, 4096)
-    RSS_IFU_PROC_SHAPE = (623, 4096)
-    RSS_MOS_PROC_SHAPE = (644, 4096)
-    RSS_IFU_PROC_WL_SHAPE = (623, 4300)
-    RSS_MOS_PROC_WL_SHAPE = (644, 4300)
-    SPECTRUM_PROC_SHAPE = (4300,)
+    """Datatype of a MEGARA image
+
+    The datatype is the one of the keyword IMAGETYP or NUMTYPE, if it
+    is a name of MegaraDataType and agrees with the shape of the image.
+    Otherwise, the datatype is deduced from the shape of the image and,
+    for raw images, from OBSMODE.
+    """
     prim = hdulist[0].header
+    shape_datatype = _SHAPE_DATATYPES.get(hdulist[0].shape, MegaraDataType.UNKNOWN)
 
-    image_type = prim.get("IMAGETYP")
-    if image_type is None:
-        # try this also
-        image_type = prim.get("NUMTYPE")
-
-    if image_type is not None:
-        datatype = MegaraDataType[image_type]
-        return datatype
-
-    pshape = hdulist[0].shape
-    obsmode = prim.get("OBSMODE", "unknown")
-    if pshape == IMAGE_RAW_SHAPE:
-        datatype = MegaraDataType.IMAGE_RAW
-    elif pshape == IMAGE_PROC_SHAPE:
-        datatype = MegaraDataType.IMAGE_PROCESSED
-    elif pshape == RSS_IFU_PROC_SHAPE:  # IFU
-        datatype = MegaraDataType.RSS_PROCESSED
-    elif pshape == RSS_MOS_PROC_SHAPE:  # MOS
-        datatype = MegaraDataType.RSS_PROCESSED
-    elif pshape == RSS_IFU_PROC_WL_SHAPE:  # IFU
-        datatype = MegaraDataType.RSS_WL_PROCESSED
-    elif pshape == RSS_MOS_PROC_WL_SHAPE:  # MOS
-        datatype = MegaraDataType.RSS_WL_PROCESSED
-    elif pshape == SPECTRUM_PROC_SHAPE:
-        datatype = MegaraDataType.SPEC_PROCESSED
-    else:
-        datatype = MegaraDataType.UNKNOWN
-
-    if datatype == MegaraDataType.IMAGE_RAW:
-        if obsmode in ["MegaraSuccess", "MegaraFail"]:
-            sub_datatype = MegaraDataType.IMAGE_TEST
-        elif obsmode in ["MegaraBiasImage"]:
-            sub_datatype = MegaraDataType.IMAGE_BIAS
-        elif obsmode in ["MegaraDarkImage"]:
-            sub_datatype = MegaraDataType.IMAGE_DARK
-        elif obsmode in ["MegaraSlitFlat"]:
-            sub_datatype = MegaraDataType.IMAGE_SLITFLAT
-        elif obsmode in ["MegaraFiberFlatImage", "MegaraTraceMap", "MegaraModelMap"]:
-            sub_datatype = MegaraDataType.IMAGE_FLAT
-        elif obsmode in ["MegaraArcCalibration"]:
-            sub_datatype = MegaraDataType.IMAGE_COMP
-        elif obsmode in ["MegaraTwilightFlatImage"]:
-            sub_datatype = MegaraDataType.IMAGE_TWILIGHT
-        elif obsmode in ["MegaraLcbImage", "MegaraMosImage"]:
-            sub_datatype = MegaraDataType.IMAGE_TARGET
-        elif obsmode in ["MegaraMosStdStar", "MegaraExtinctionStar", "MegaraLcbStdStar", "MegaraSensitivityStar"]:
-            sub_datatype = MegaraDataType.IMAGE_TARGET
-        elif obsmode in ["MegaraFocusTelescope", "MegaraLcbAcquisition", "MegaraMosAcquisition"]:
-            sub_datatype = MegaraDataType.IMAGE_TARGET
-        elif obsmode in ["MegaraBadPixelMask", "MegaraFocusSpectrograph"]:
-            sub_datatype = MegaraDataType.IMAGE_RAW
+    for key in ["IMAGETYP", "NUMTYPE"]:
+        name = prim.get(key)
+        if name is None:
+            continue
+        declared = MegaraDataType.__members__.get(name)
+        if declared is None:
+            _logger.debug(f"{key}={name} is not a datatype")
+        elif shape_datatype == MegaraDataType.UNKNOWN or _datatype_group(declared) == _datatype_group(shape_datatype):
+            return declared
         else:
-            sub_datatype = MegaraDataType.UNKNOWN
+            # The products of a recipe could have the NUMTYPE of its main product
+            _logger.debug(f"{key}={name} does not agree with the shape of the image")
 
-        return sub_datatype
-    elif datatype == MegaraDataType.SPEC_PROCESSED:
-        numrnam = prim.get("NUMRNAM", "unknown")
-        if numrnam in ["LCBStandardRecipe", "MOSStandardRecipe"]:
-            sub_datatype = MegaraDataType.MASTER_SENSITIVITY
-        else:
-            sub_datatype = datatype
-        return sub_datatype
-    return datatype
+    if shape_datatype == MegaraDataType.IMAGE_RAW:
+        obsmode = prim.get("OBSMODE", "unknown")
+        return _OBSMODE_DATATYPES.get(obsmode, MegaraDataType.UNKNOWN)
+    return shape_datatype
 
 
 def check_obj_megara(obj, astype=None, level=None):

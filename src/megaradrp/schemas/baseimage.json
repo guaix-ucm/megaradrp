@@ -223,7 +223,7 @@
       "description": "Headers of master bad pixel masks",
       "type": "object",
       "properties": {
-        "NUMTYPE": {"enum": ["MasterBias", "MASTER_BPM"]}
+        "NUMTYPE": {"enum": ["MasterBPM", "MASTER_BPM"]}
       }
     },
     "master_bias_hdu_values": {

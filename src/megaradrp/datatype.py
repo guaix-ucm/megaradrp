@@ -23,10 +23,13 @@ class MegaraDataType(enum.Enum):
     #
     IMAGE_PROCESSED = 200
     MASTER_BPM = 201
+    MasterBPM = 201  # Alias
     MASTER_BIAS = 202
     MasterBias = 202  # Alias
     MASTER_DARK = 203
+    MasterDark = 203  # Alias
     MASTER_SLITFLAT = 204
+    MasterSlitFlat = 204  # Alias
     CR_MASKS = 205
     DIFFUSE_LIGHT = 211
     #
@@ -34,6 +37,7 @@ class MegaraDataType(enum.Enum):
     MASTER_FLAT = 305
     MasterFiberFlat = 305  # Alias
     MASTER_TWILIGHT = 306
+    MasterTwilightFlat = 306  # Alias
     RSS_WL_PROCESSED = 400
     SPEC_PROCESSED = 500
     MASTER_SENSITIVITY = 503

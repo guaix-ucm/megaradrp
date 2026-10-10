@@ -79,7 +79,7 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
         hdu = fits.PrimaryHDU(mask, header=reduced1[0].header)
         hdu.header["UUID"] = str(uuid.uuid1())
 
-        self.set_base_headers(hdu.header)
+        self.set_product_headers(hdu.header)
 
         tnow = datetime.datetime.now(datetime.UTC)
         hdu.header["history"] = "BPM creation time {}".format(tnow.isoformat())
@@ -113,8 +113,8 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
         # Continue with additional checks
         return super(BadPixelsMaskRecipe, self).validate_input(recipe_input)
 
-    def set_base_headers(self, hdr):
-        """Set metadata in FITS headers."""
-        hdr = super(BadPixelsMaskRecipe, self).set_base_headers(hdr)
+    def set_product_headers(self, hdr):
+        """Set metadata in the FITS headers of the main product."""
+        hdr = self.set_base_headers(hdr)
         hdr["NUMTYPE"] = ("MasterBPM", "Product type")
         return hdr

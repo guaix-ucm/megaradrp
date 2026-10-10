@@ -8,10 +8,13 @@
 #
 
 
+import astropy.io.fits
 import astropy.table
+import numpy
 import pytest
 
-from megaradrp.datamodel import MegaraDataModel
+from megaradrp.datamodel import MegaraDataModel, megara_inferr_datatype
+from megaradrp.datatype import MegaraDataType
 from megaradrp.instrument.focalplane import FocalPlaneConf
 from megaradrp.testing.create_image import create_empty_img
 
@@ -185,3 +188,36 @@ def test_sky_fibers(ignored, fibs):
 
     skyfibs = conf.sky_fibers(valid_only=True, ignored_bundles=ignored)
     assert sorted(skyfibs) == fibs
+
+
+def image_with_type(shape, **cards):
+    hdu = astropy.io.fits.PrimaryHDU(numpy.empty(shape, dtype="uint8"))
+    hdu.header.update(cards)
+    return astropy.io.fits.HDUList([hdu])
+
+
+@pytest.mark.parametrize(
+    "shape, cards, datatype",
+    [
+        ((4212, 4196), {"OBSMODE": "MegaraBiasImage"}, MegaraDataType.IMAGE_BIAS),
+        ((4212, 4196), {"OBSMODE": "MegaraTraceMap"}, MegaraDataType.IMAGE_FLAT),
+        ((4212, 4196), {"OBSMODE": "MegaraOther"}, MegaraDataType.UNKNOWN),
+        ((4212, 4196), {"IMAGETYP": "IMAGE_COMP"}, MegaraDataType.IMAGE_COMP),
+        ((4112, 4096), {"NUMTYPE": "MasterBias"}, MegaraDataType.MASTER_BIAS),
+        ((4112, 4096), {"NUMTYPE": "MasterBPM"}, MegaraDataType.MASTER_BPM),
+        ((4112, 4096), {"NUMTYPE": "MasterDark"}, MegaraDataType.MASTER_DARK),
+        ((4112, 4096), {"NUMTYPE": "MasterSlitFlat"}, MegaraDataType.MASTER_SLITFLAT),
+        ((623, 4300), {"NUMTYPE": "MasterFiberFlat"}, MegaraDataType.MASTER_FLAT),
+        ((623, 4300), {"NUMTYPE": "MasterTwilightFlat"}, MegaraDataType.MASTER_TWILIGHT),
+        ((4300,), {"NUMTYPE": "MASTER_SENSITIVITY"}, MegaraDataType.MASTER_SENSITIVITY),
+        # Older products had the NUMTYPE of the main product of the recipe
+        ((4112, 4096), {"NUMTYPE": "MasterFiberFlat"}, MegaraDataType.IMAGE_PROCESSED),
+        ((623, 4300), {"NUMTYPE": "MASTER_SENSITIVITY"}, MegaraDataType.RSS_WL_PROCESSED),
+        ((623, 4096), {"NUMTYPE": "MasterFiberFlat"}, MegaraDataType.RSS_PROCESSED),
+        # Unknown values
+        ((644, 4096), {"NUMTYPE": "MasterOther"}, MegaraDataType.RSS_PROCESSED),
+        ((4300,), {"NUMRNAM": "LCBStandardRecipe"}, MegaraDataType.SPEC_PROCESSED),
+    ],
+)
+def test_inferr_datatype(shape, cards, datatype):
+    assert megara_inferr_datatype(image_with_type(shape, **cards)) is datatype

@@ -222,12 +222,12 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         # Obtain flat field
         self.logger.info("Normalize flat field")
         rss_wl2 = self.obtain_fiber_flat(rss_wl, window=rinput.smoothing_window)
-        rss_wl2[0].header = self.set_base_headers(rss_wl2[0].header)
+        rss_wl2[0].header = self.set_product_headers(rss_wl2[0].header)
         result = self.create_result(master_fiberflat=rss_wl2, reduced_image=flat2d, reduced_rss=rss_base)
         return result
 
-    def set_base_headers(self, hdr):
-        """Set metadata in FITS headers."""
-        hdr = super(FiberFlatRecipe, self).set_base_headers(hdr)
+    def set_product_headers(self, hdr):
+        """Set metadata in the FITS headers of the main product."""
+        hdr = self.set_base_headers(hdr)
         hdr["NUMTYPE"] = ("MasterFiberFlat", "Product type")
         return hdr

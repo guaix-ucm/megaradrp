@@ -174,7 +174,7 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
 
         master_t = fits.HDUList([hdu.copy() for hdu in reduced_rss])
         master_t[0].data = normalized
-        self.set_base_headers(master_t[0].header)
+        self.set_product_headers(master_t[0].header)
 
         self.logger.info("twilight fiber flat reduction ended")
         result = self.create_result(reduced_image=reduced_image, reduced_rss=reduced_rss, master_twilightflat=master_t)
@@ -193,9 +193,9 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
         good_idxs_mask[bad_idxs] = False
         return good_idxs_mask
 
-    def set_base_headers(self, hdr):
-        """Set metadata in FITS headers."""
-        hdr = super(TwilightFiberFlatRecipe, self).set_base_headers(hdr)
+    def set_product_headers(self, hdr):
+        """Set metadata in the FITS headers of the main product."""
+        hdr = self.set_base_headers(hdr)
         hdr["NUMTYPE"] = ("MasterTwilightFlat", "Product type")
         return hdr
 

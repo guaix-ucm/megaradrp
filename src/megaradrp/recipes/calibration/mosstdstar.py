@@ -108,6 +108,13 @@ class MOSStandardRecipe(ImageRecipe):
     fiber_ids = Result(ArrayType)
     sigma = Result(float)
 
+    def set_product_headers(self, hdr):
+        """Set metadata in the FITS headers of the main product."""
+        hdr = self.set_base_headers(hdr)
+        hdr["NUMTYPE"] = ("MASTER_SENSITIVITY", "Product type")
+        hdr["IMGTYPE"] = ("MASTER_SENSITIVITY", "Product type")
+        return hdr
+
     def run(self, rinput):
 
         self.logger.info("starting MOSStandardRecipe reduction")
@@ -199,6 +206,7 @@ class MOSStandardRecipe(ImageRecipe):
         self.logger.info("compute smoothed sensitivity")
 
         sens = sens_raw.copy()
+        self.set_product_headers(sens.header)
         i_knots = rinput.smoothing_knots
         self.logger.debug(f"using adaptive spline with t={i_knots} interior knots")
         spl = AdaptiveLSQUnivariateSpline(x=wl_aa.value, y=sens_raw.data, t=i_knots)
