@@ -539,6 +539,9 @@ class CheckAsDatatype:
             self.validator_image, ["proc_hdu_values", "master_dark_hdu_values"], n_ext=1
         )
         _megara_checkers[MegaraDataType.MASTER_SLITFLAT] = proc_checker
+        # The number of HDUs of the masks of cosmic rays is variable,
+        # there is no schema for them
+        _megara_checkers[MegaraDataType.CR_MASKS] = check_null
         _megara_checkers[MegaraDataType.DIFFUSE_LIGHT] = proc_checker
         #
         _megara_checkers[MegaraDataType.RSS_PROCESSED] = rss_checker

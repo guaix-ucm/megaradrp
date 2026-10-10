@@ -49,6 +49,11 @@ def fibers_cards():
     return dict(_default_fibers_cards())
 
 
+def test_all_datatypes_have_checker():
+    for datatype in MegaraDataType:
+        assert callable(check_as_datatype(datatype))
+
+
 def test_definitions_exist():
     definitions = check_as_datatype.validator_image.schema["definitions"]
     for checker in check_as_datatype._megara_checkers.values():
