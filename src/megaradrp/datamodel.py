@@ -354,7 +354,7 @@ def check_obj_megara(obj, astype=None, level=None):
     Raises
     ------
     numina.exceptions.ValidationError
-        If the object is not valid. Some checks raise ValueError.
+        If the object is not valid.
     """
     import megaradrp.validators as val
 

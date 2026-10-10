@@ -80,7 +80,7 @@ def test_check_bias_invalid(cards):
 
 def test_check_bias_number_of_hdus():
     checker = check_as_datatype(MegaraDataType.IMAGE_BIAS)
-    with pytest.raises(ValueError, match="number of HDUs"):
+    with pytest.raises(ValidationError, match="image has 2 HDUs, not the expected number of HDUs"):
         checker(create_hdulist(bias_cards(), fibers_cards()))
 
 
@@ -166,3 +166,18 @@ def test_check_without_uuid():
     assert checker(create_hdulist(primary_cards(UUID=None), fibers_cards()))
     with pytest.raises(ValidationError, match="HDU 0, keyword UUID: "):
         checker(create_hdulist(primary_cards(UUID="1"), fibers_cards()))
+
+
+def test_check_fibers_insmode():
+    checker = ExtChecker(check_as_datatype.validator_image, [])
+    with pytest.raises(ValidationError, match="INSMODE in HDU 0 is not equal to INSMODE in FIBERS"):
+        checker(create_hdulist(primary_cards(INSMODE="MOS"), fibers_cards()))
+
+
+@pytest.mark.parametrize("keyword", ["BUN093_P", "FIB100_X"])
+def test_check_fibers_missing_keyword(keyword):
+    fibers = fibers_cards()
+    del fibers[keyword]
+    checker = ExtChecker(check_as_datatype.validator_image, [])
+    with pytest.raises(ValidationError, match=f"HDU 1: keyword {keyword} is missing"):
+        checker(create_hdulist(primary_cards(), fibers))

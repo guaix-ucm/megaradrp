@@ -350,8 +350,8 @@ class ExtChecker(BaseChecker):
         """Check the number of HDUs, the full schema and the definitions"""
         if self.n_ext is not None:
             if len(dheaders) != self.n_ext:
-                msg = f"image has not expected number of HDUs ({self.n_ext})"
-                raise ValueError(msg)
+                msg = f"image has {len(dheaders)} HDUs, not the expected number of HDUs ({self.n_ext})"
+                raise ValidationError(msg)
 
         super(ExtChecker, self).check_dheaders(dheaders, level=level)
 
@@ -441,12 +441,12 @@ def check_header_additional(values_primary, values_fibers):
 
     Raises
     ------
-    ValueError
+    numina.exceptions.ValidationError
         If the extension is not valid.
     """
 
     if values_primary["INSMODE"] != values_fibers["INSMODE"]:
-        raise ValueError("insmode in PRIMARY != insmode in FIBERS")
+        raise ValidationError("INSMODE in HDU 0 is not equal to INSMODE in FIBERS")
 
     if values_fibers["INSMODE"] == "LCB":
         rbundles = [0, 93, 94, 95, 96, 97, 98, 99, 100]
@@ -461,7 +461,7 @@ def check_header_additional(values_primary, values_fibers):
         for stype in ["P", "I", "T", "X", "Y", "O", "E"]:
             keyname = f"BUN{idbundle:03d}_{stype}"
             if keyname not in values_fibers:
-                raise ValueError(f"keyname {keyname} not in values_fibers")
+                raise ValidationError(f"HDU 1: keyword {keyname} is missing")
 
     missing_names = []
     for idfiber in range(1, nfibers + 1):
@@ -469,8 +469,7 @@ def check_header_additional(values_primary, values_fibers):
         for stype in ["A", "D", "R", "X", "Y", "B"]:
             keyname = f"FIB{idfiber:03d}_{stype}"
             if keyname not in values_fibers:
-                msg = f"keyname {keyname} not in values_fibers"
-                raise ValueError(msg)
+                raise ValidationError(f"HDU 1: keyword {keyname} is missing")
 
         # the names of the fibers are optional
         keyname = f"FIB{idfiber:03d}_N"
@@ -478,7 +477,7 @@ def check_header_additional(values_primary, values_fibers):
             missing_names.append(keyname)
 
     if missing_names:
-        _logger.warning("%d keywords FIBxxx_N not in values_fibers", len(missing_names))
+        _logger.warning("HDU 1: %d keywords FIBxxx_N are missing", len(missing_names))
 
 
 class CheckAsDatatype:
