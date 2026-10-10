@@ -122,15 +122,17 @@ the schema ``basestruct.json``.
 When the validation fails
 *****************************
 
-If an input is not valid, the reduction stops before running the recipe.
-The error lists the invalid inputs and, for each raw image, the name of
-the file, the HDU and the keyword:
+If an input is not valid, the reduction stops before running the recipe,
+and ``numina run`` exits with status 1. The error lists the invalid inputs
+and, for each raw image, the name of the file, the HDU and the keyword:
 
 .. code-block:: text
 
-    numina.exceptions.ValidationError: invalid BiasRecipeInput: obresult:
-    invalid raw images: bad_bias.fits: ValidationError: HDU 0: 'VPH' is
-    a required property
+    ERROR: invalid BiasRecipeInput: obresult: invalid raw images:
+    bad_bias.fits: ValidationError: HDU 0: 'VPH' is a required property
+
+With the option ``-d`` of numina (``numina -d run ...``), the traceback
+of the error is also shown.
 
 Other examples of errors:
 
