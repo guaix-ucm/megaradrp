@@ -143,12 +143,51 @@ Other examples of errors:
     HDU 1: keyword BUN093_P is missing
     some incandescent lamps are ON
 
+*********************************
+Checking images before reducing
+*********************************
+
+The raw images can be checked without running a recipe, with
+``numina verify``, for example to discard the images with incomplete
+headers as soon as they arrive from GTC::
+
+    $ numina verify 0001310880-20170827-MEGARA-MegaraBiasImage.fits.gz 0001310889-20170827-MEGARA-MegaraBiasImage.fits
+    OK 0001310880-20170827-MEGARA-MegaraBiasImage.fits.gz
+    INVALID 0001310889-20170827-MEGARA-MegaraBiasImage.fits: HDU 0: 'VPH' is a required property
+    1 valid, 1 invalid, 0 not checked
+
+The type of each image is inferred from its headers and shape (see
+:func:`megaradrp.datamodel.megara_inferr_datatype`). With ``--mode``, the
+images are checked as the raw images of an observing mode, as in the table
+above::
+
+    $ numina verify --mode MegaraArcCalibration 0001312246-20170831-MEGARA-MegaraSuccess.fits.gz
+    INVALID 0001312246-20170831-MEGARA-MegaraSuccess.fits.gz: some incandescent lamps are ON
+    0 valid, 1 invalid, 0 not checked
+
+With ``--ob``, the files are observation results: their raw images, in the
+directory given by ``--datadir``, are checked as the raw images of the
+observing mode, and then the observation result with the checks of the
+mode, as ``numina run --validate`` does::
+
+    $ numina verify --ob --datadir data 3_M15_wavecalib.yaml
+    OK data/0001312249-20170831-MEGARA-MegaraSuccess.fits.gz
+    OK data/0001312250-20170831-MEGARA-MegaraSuccess.fits.gz
+    OK data/0001312251-20170831-MEGARA-MegaraSuccess.fits.gz
+    OK 3_M15_wavecalib.yaml (id 3_HR-R)
+    4 valid, 0 invalid, 0 not checked
+
+The exit status of ``numina verify`` is 1 if some file is invalid, so it
+can be used in scripts. The structured calibrations (JSON files) can be
+checked too. ``numina verify`` is available in the versions of numina
+after 0.37.1.
+
 **************************
 Checking images in Python
 **************************
 
-An image can be checked without running a recipe, with the function that
-MEGARA registers in numina:
+In Python, an image can be checked with the function that MEGARA
+registers in numina, the same used by ``numina verify``:
 
 .. code-block:: python
 
