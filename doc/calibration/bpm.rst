@@ -72,9 +72,3 @@ Recipe, inputs and results
 
 .. autoclass:: megaradrp.recipes.calibration.bpm.BadPixelsMaskRecipe
       :members:
-
-.. autoclass:: megaradrp.recipes.calibration.bpm::BadPixelsMaskRecipe.BadPixelsMaskRecipeInput
-      :members:
-
-.. autoclass:: megaradrp.recipes.calibration.bpm::BadPixelsMaskRecipe.BadPixelsMaskRecipeResult
-      :members:

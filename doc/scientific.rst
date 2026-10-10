@@ -132,3 +132,4 @@ Recipe, inputs and results
 
 .. autoclass:: megaradrp.recipes.scientific.mos.MOSImageRecipe
       :members:
+      :exclude-members: ImageRecipeInput
