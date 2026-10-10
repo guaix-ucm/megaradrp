@@ -11,7 +11,6 @@
 
 import numpy
 from astropy.io import fits
-import matplotlib.pyplot as plt
 from numina.core import Result, Parameter
 import numina.exceptions
 
@@ -165,6 +164,8 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         collapse_smooth_s[mask_noinfo] = 1.0
 
         if self.intermediate_results:
+            import matplotlib.pyplot as plt
+
             numpy.savetxt("collapse.txt", collapse)
             numpy.savetxt("mask_noinfo.txt", mask_noinfo)
             fig, ax = plt.subplots()

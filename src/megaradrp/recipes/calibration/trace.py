@@ -12,7 +12,6 @@
 import logging
 import warnings
 
-import matplotlib.pyplot as plt
 import numpy
 import numpy.polynomial.polynomial as nppol
 from numina.array import combine
@@ -305,6 +304,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
         debug_plot=0,
     ):
 
+        import matplotlib.pyplot as plt
+
         data = reduced[0].data
         if xmin_fit < 1 or xmax_fit > data.shape[1] or xmin_fit >= xmax_fit:
             raise ValueError(f"Invalid values for xmin_fit and xmax_fit: {xmin_fit}, {xmax_fit}")
@@ -453,6 +454,8 @@ class FiberTraceInfo:
 
 
 def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, debug_plot=0):
+
+    import matplotlib.pyplot as plt
 
     _logger = logging.getLogger(__name__)
 
@@ -608,6 +611,8 @@ def refine_boxes_from_array(arr, expected, col, hwidth=3, nsearch=20, intermedia
     with a reference value
 
     """
+    import matplotlib.pyplot as plt
+
     # Cut freq in Fourier space
     cut_frec = 0.10
     # Cosine bell
@@ -695,6 +700,8 @@ def refine_boxes_from_array(arr, expected, col, hwidth=3, nsearch=20, intermedia
 
 
 def obtain_boxes_from_image(reduced, expected, npeaks, col):
+    import matplotlib.pyplot as plt
+
     from numina.array.peaks.peakdet import find_peaks_indexes
 
     data = reduced[0].data

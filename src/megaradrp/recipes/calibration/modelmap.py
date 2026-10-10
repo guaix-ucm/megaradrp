@@ -13,7 +13,6 @@ import multiprocessing as mp
 
 import numpy as np
 from scipy.interpolate import UnivariateSpline
-import matplotlib.pyplot as plt
 from numina.core import Result, Parameter
 from numina.array import combine
 from numina.frame.utils import copy_img
@@ -210,6 +209,8 @@ class ModelMapRecipe(MegaraBaseRecipe):
                 interpolators[name] = UnivariateSpline(g_col, g_vals[name], k=deg)
 
             if self.intermediate_results:
+                import matplotlib.pyplot as plt
+
                 if dolog:
                     self.logger.debug("creating plots")
                 # plot each storable parameter
