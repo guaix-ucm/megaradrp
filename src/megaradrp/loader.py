@@ -61,6 +61,10 @@ def describe_fits_megara(pathname):
 
 @cfg.check.register("MEGARA")
 def check_obj_megara(obj, astype=None, level=None):
+    """Check an object of MEGARA, registered in numina.core.config.check
+
+    See :func:`megaradrp.datamodel.check_obj_megara`.
+    """
     import megaradrp.datamodel as DM
 
     return DM.check_obj_megara(obj, astype=astype, level=level)

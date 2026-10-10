@@ -188,6 +188,7 @@ def read_fibers_extension(hdr, insmode="LCB"):
 
 
 def describe_hdulist_megara(hdulist):
+    """Description of a MEGARA image: datatype, origin, dates and processing"""
     prim = hdulist[0].header
     instrument = prim.get("INSTRUME", "unknown")
     # date_obs = convert_date(prim.get("DATE-OBS"))
@@ -217,6 +218,15 @@ def describe_hdulist_megara(hdulist):
 
 
 def megara_inferr_datatype(obj):
+    """The MegaraDataType of an image or a serialized structured calibration.
+
+    Parameters
+    ----------
+    obj : astropy.io.fits.HDUList or dict
+        An image, see :func:`megara_inferr_datetype_from_image`, or a
+        structured calibration serialized as a dictionary, see
+        :func:`megara_inferr_datetype_from_dict`.
+    """
 
     if isinstance(obj, fits.HDUList):
         return megara_inferr_datetype_from_image(obj)
@@ -227,6 +237,7 @@ def megara_inferr_datatype(obj):
 
 
 def megara_inferr_datetype_from_dict(obj):
+    """The MegaraDataType of a structured calibration, from its type_fqn"""
     # this comes from JSON
     dtype = obj["type_fqn"]
     if dtype in ["megaradrp.products.tracemap.TraceMap"]:
@@ -325,6 +336,26 @@ def megara_inferr_datetype_from_image(hdulist):
 
 
 def check_obj_megara(obj, astype=None, level=None):
+    """Check an image or a structured calibration of MEGARA.
+
+    The object is checked with the checker of its datatype in
+    :data:`megaradrp.validators.check_as_datatype`.
+
+    Parameters
+    ----------
+    obj : astropy.io.fits.HDUList or dict
+        The object to check.
+    astype : MegaraDataType, optional
+        The datatype of the object. If None, it is inferred with
+        :func:`megara_inferr_datatype`.
+    level : optional
+        Not used.
+
+    Raises
+    ------
+    numina.exceptions.ValidationError
+        If the object is not valid. Some checks raise ValueError.
+    """
     import megaradrp.validators as val
 
     if astype is None:

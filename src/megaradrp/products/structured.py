@@ -43,7 +43,11 @@ class BaseStructuredCalibration(structured.BaseStructuredCalibration):
         return st
 
     def validate(self, obj):
-        """Validate objects with the TRACE_MAP schema"""
+        """Validate the calibration with the checker of its DATATYPE.
+
+        The calibration is serialized to a dictionary and validated
+        with the schema basestruct.json.
+        """
         import json
         from numina.util.jsonencoder import ExtEncoder
         import megaradrp.validators as valid

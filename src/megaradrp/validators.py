@@ -7,7 +7,22 @@
 # License-Filename: LICENSE.txt
 #
 
-"""Validators for Observing modes"""
+"""Validation of MEGARA images and calibrations
+
+There are two kinds of validators:
+
+* The validators of the observing modes (``validator`` in ``drp.yaml``),
+  that check the observation result as a whole, for example
+  :func:`validate_arc`.
+* The checkers of the images and structured calibrations of each
+  :class:`~megaradrp.datatype.MegaraDataType`, collected in
+  :data:`check_as_datatype`. They validate the headers with the JSON
+  schemas ``baseimage.json`` and ``basestruct.json`` of
+  :mod:`megaradrp.schemas`, and then do additional checks in Python.
+
+The checkers are used by :func:`megaradrp.datamodel.check_obj_megara`,
+the function registered for MEGARA in :data:`numina.core.config.check`.
+"""
 
 import logging
 import pkgutil
@@ -24,7 +39,16 @@ _logger = logging.getLogger(__name__)
 
 
 def validate_focus(mode, obresult):
-    """Validate FOCUS_SPECTROGRAPH"""
+    """Validate the observation result of the mode MegaraFocusSpectrograph.
+
+    The frames must have a numeric FOCUS, with at least two different
+    values.
+
+    Raises
+    ------
+    numina.exceptions.ValidationError
+        If the observation result is not valid.
+    """
     image_groups = {}
     for idx, frame in enumerate(obresult.frames):
         with frame.open() as img:
@@ -46,7 +70,13 @@ def validate_focus(mode, obresult):
 
 
 def validate_key(mode, obresult, key):
-    """Validate key"""
+    """Validate that all the frames have the same value of the keyword `key`.
+
+    Raises
+    ------
+    numina.exceptions.ValidationError
+        If a frame does not have the keyword, or the values are different.
+    """
 
     # Assume that the individual images are valid IMG_COMP
     # check consistency of key
@@ -67,14 +97,20 @@ def validate_key(mode, obresult, key):
 
 
 def validate_arc(mode, obresult):
-    """Validate ARC_CALIBRATION"""
+    """Validate the observation result of the mode MegaraArcCalibration.
+
+    All the frames must have the same SPECLAMP, see :func:`validate_key`.
+    """
 
     # Assume that the individual images are valid IMG_COMP
     return validate_key(mode, obresult, "SPECLAMP")
 
 
 def validate_flat(mode, obresult):
-    """Validate FLAT"""
+    """Validate the observation result of the mode MegaraFiberFlatImage.
+
+    Nothing is checked, apart from the raw images.
+    """
 
     # Assume that the individual images are valid IMAGE_FLAT
     return True
@@ -90,6 +126,7 @@ def validate_keyword_exists(header, key):
 
 
 def validate_keyword_value(header, key, expected):
+    """Validate that the keyword has the value `expected`"""
     validate_keyword_exists(header, key)
     value = header.get(key)
 
@@ -112,11 +149,17 @@ def validate_keyword_any_value(header, key, any_expected):
 
 
 def convert_headers(hdulist):
+    """Convert the headers of `hdulist` to a list of dictionaries, see :func:`convert_header`"""
     headers = [convert_header(hdu.header) for hdu in hdulist]
     return headers
 
 
 def convert_header(header):
+    """Convert a FITS header to a dictionary that can be validated with a JSON schema.
+
+    The dictionary has the keys "values" and "comments", with the values
+    and comments of each keyword, and "ordering", the list of keywords.
+    """
     hdu_v = {}
     hdu_c = {}
     hdu_o = []
@@ -134,10 +177,12 @@ def convert_header(header):
 
 
 def check_null(obj, level=None):
+    """A checker that accepts every object"""
     return True
 
 
 def check_invalid(obj, level=None):
+    """A checker that rejects every object"""
     raise ValidationError
 
 
@@ -167,7 +212,15 @@ def relevant_error(error):
 def validate_schema(validator, instance, hdu=None):
     """Validate `instance` with `validator`, raise ValidationError with a short message
 
-    `hdu` is the index of the HDU when `instance` are the values of its header.
+    The message names the HDU and the keyword, for example
+    "HDU 0, keyword EXPTIME: ...", using the most relevant error,
+    see :func:`relevant_error`. `hdu` is the index of the HDU when
+    `instance` are the values of its header.
+
+    Raises
+    ------
+    numina.exceptions.ValidationError
+        If `instance` is not valid.
     """
     error = jsonschema.exceptions.best_match(validator.iter_errors(instance))
     if error is None:
@@ -188,32 +241,52 @@ def validate_schema(validator, instance, hdu=None):
 
 
 class Checker:
+    """Base class of the checkers of objects with a JSON schema.
+
+    A checker is called with the object, and returns True or raises
+    an exception if the object is not valid. `level` is not used.
+
+    Parameters
+    ----------
+    validator : jsonschema validator
+        The validator of the schema.
+    """
+
     def __init__(self, validator):
         super(Checker, self).__init__()
         self.validator = validator
 
     def check(self, obj, level=None):
-
+        """Check `obj`, only with :meth:`check_post`"""
         return self.check_post(obj, level=level)
 
     def __call__(self, hdulist, level=None):
         return self.check(hdulist, level=level)
 
     def check_post(self, hdulist, level=None):
+        """Additional checks after the schema, nothing by default"""
         return True
 
 
 class ImageChecker(Checker):
+    """Checker of images, validates the headers of all the HDUs with the schema"""
+
     def __init__(self, validator):
         super(ImageChecker, self).__init__(validator)
 
     def check(self, hdulist, level=None):
+        """Check the headers with :meth:`check_dheaders`, and then :meth:`check_post`"""
         dheaders = convert_headers(hdulist)
         self.check_dheaders(dheaders, level=level)
         self.check_post(hdulist, level=level)
         return True
 
     def check_dheaders(self, dheaders, level=None):
+        """Validate the converted headers with the schema.
+
+        In images with two HDUs, the FIBERS extension is also checked
+        with :func:`check_header_additional`.
+        """
         validate_schema(self.validator, dheaders)
 
         if len(dheaders) == 2:
@@ -223,6 +296,8 @@ class ImageChecker(Checker):
 
 
 class StructChecker(Checker):
+    """Checker of structured calibrations, serialized as dictionaries"""
+
     def __init__(self, validator):
         super(StructChecker, self).__init__(validator)
 
@@ -233,6 +308,8 @@ class StructChecker(Checker):
 
 
 class BaseChecker(ImageChecker):
+    """Base class of :class:`ExtChecker`"""
+
     def __init__(self, validator):
         super(BaseChecker, self).__init__(validator)
 
@@ -248,6 +325,21 @@ def definition_validator(validator, name):
 
 
 class ExtChecker(BaseChecker):
+    """Checker of images with definitions of the schema for the primary HDU.
+
+    The image is validated with the full schema and then the values of
+    the primary header with each of the `definitions`.
+
+    Parameters
+    ----------
+    validator : jsonschema validator
+        The validator of baseimage.json.
+    definitions : list of str
+        Names of definitions of the schema, for example "raw_hdu_values".
+    n_ext : int, optional
+        The number of HDUs of the image, if it is fixed.
+    """
+
     def __init__(self, validator, definitions, n_ext=None):
         super(ExtChecker, self).__init__(validator)
         self.n_ext = n_ext
@@ -255,6 +347,7 @@ class ExtChecker(BaseChecker):
         self.sub_validators = [definition_validator(validator, name) for name in definitions]
 
     def check_dheaders(self, dheaders, level=None):
+        """Check the number of HDUs, the full schema and the definitions"""
         if self.n_ext is not None:
             if len(dheaders) != self.n_ext:
                 msg = f"image has not expected number of HDUs ({self.n_ext})"
@@ -280,6 +373,8 @@ def lamps_on(header, kind):
 
 
 class FlatImageChecker(ExtChecker):
+    """Checker of raw flat images, with two HDUs"""
+
     def __init__(self, validator):
         super(FlatImageChecker, self).__init__(validator, ["raw_hdu_values", "flat_hdu_values"], n_ext=2)
 
@@ -293,6 +388,8 @@ class FlatImageChecker(ExtChecker):
 
 
 class CompImageChecker(ExtChecker):
+    """Checker of raw arc images, with two HDUs"""
+
     def __init__(self, validator):
         super(CompImageChecker, self).__init__(validator, ["raw_hdu_values", "comp_hdu_values"], n_ext=2)
 
@@ -306,6 +403,8 @@ class CompImageChecker(ExtChecker):
 
 
 class TargetImageChecker(ExtChecker):
+    """Checker of raw images of targets, with two HDUs"""
+
     def __init__(self, validator):
         super(TargetImageChecker, self).__init__(validator, ["raw_hdu_values"], n_ext=2)
 
@@ -319,17 +418,32 @@ class TargetImageChecker(ExtChecker):
 
 
 class MasterFlatRSSChecker(ExtChecker):
+    """Checker of master fiber flats, RSS with three HDUs"""
+
     def __init__(self, validator):
         super(MasterFlatRSSChecker, self).__init__(validator, ["rss_naxis2"], n_ext=3)
 
 
 class MasterSensitivityChecker(ExtChecker):
+    """Checker of master sensitivities, spectra with one HDU"""
+
     def __init__(self, validator):
         super(MasterSensitivityChecker, self).__init__(validator, ["spec_hdu_values", "sensitivity_values"], n_ext=1)
 
 
 def check_header_additional(values_primary, values_fibers):
-    """Additional checks than can't be done with schema"""
+    """Checks of the FIBERS extension that can't be done with the schema.
+
+    INSMODE must be the same in the primary header and in FIBERS, and
+    FIBERS must have the keywords of every bundle and fiber of the
+    mode. The names of the fibers (FIBxxx_N) are optional, a warning
+    is logged if they are missing.
+
+    Raises
+    ------
+    ValueError
+        If the extension is not valid.
+    """
 
     if values_primary["INSMODE"] != values_fibers["INSMODE"]:
         raise ValueError("insmode in PRIMARY != insmode in FIBERS")
@@ -368,7 +482,13 @@ def check_header_additional(values_primary, values_fibers):
 
 
 class CheckAsDatatype:
-    """Collection of schemas for validation"""
+    """The checkers of each MegaraDataType.
+
+    The checkers use the schemas baseimage.json, for images, and
+    basestruct.json, for structured calibrations. Calling the object
+    with a datatype returns its checker. The instance used by the DRP
+    is :data:`check_as_datatype`.
+    """
 
     def __init__(self):
 
@@ -438,7 +558,9 @@ class CheckAsDatatype:
         self._megara_checkers = _megara_checkers
 
     def __call__(self, datatype):
+        """The checker of `datatype`"""
         return self._megara_checkers[datatype]
 
 
+#: The checkers of each MegaraDataType
 check_as_datatype = CheckAsDatatype()

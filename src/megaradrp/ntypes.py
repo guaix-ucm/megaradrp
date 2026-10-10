@@ -45,7 +45,8 @@ class MegaraFrame(DataFrameType):
         super(MegaraFrame, self).__init__(datamodel=MegaraDataModel)
 
     def validate_hdulist(self, hdulist):
-        _logger.debug("validate MasterBias")
+        """Validate the frame with the checker of its DATATYPE"""
+        _logger.debug(f"validate {self.DATATYPE.name}")
         checker = valid.check_as_datatype(self.DATATYPE)
         return checker(hdulist)
 
