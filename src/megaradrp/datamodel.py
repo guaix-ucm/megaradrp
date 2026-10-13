@@ -93,9 +93,7 @@ class MegaraDataModel(DataModel):
         instrument_mappings = {
             "date_obs": ("DATE-OBS", 0, convert_date),
             "insconf": "insconf",
-            "insconf_uuid": "insconf",
             "blckuuid": "blckuuid",
-            "block_uuid": "blckuuid",
             "vph": ("VPH", "undefined"),
             "vphpos": ("VPHWHPOS", "undefined"),
             "focus": ("FOCUS", "undefined"),
@@ -109,9 +107,6 @@ class MegaraDataModel(DataModel):
     def get_fiberconf(self, img):
         """Obtain FiberConf from image"""
         return get_fiberconf(img)
-
-    def gather_info_oresult(self, val):
-        return [self.gather_info_dframe(f) for f in val.images]
 
     def fiber_scale_unit(self, img, unit=False):
         return fiber_scale_unit(img, unit=unit)
