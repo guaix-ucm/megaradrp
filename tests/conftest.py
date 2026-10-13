@@ -7,4 +7,9 @@
 # License-Filename: LICENSE.txt
 #
 
-from numina.testing.plugins import *  # noqa: F403, F401
+import matplotlib
+
+pytest_plugins = ["numina.testing.plugins"]
+
+# The recipes draw plots, use a backend without display
+matplotlib.use("Agg")
