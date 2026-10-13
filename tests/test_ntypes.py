@@ -5,6 +5,7 @@ import numina.core
 import numina.dal
 from numina.exceptions import NoResultFound
 
+import megaradrp.ntypes
 import megaradrp.testing.create_image
 from megaradrp.ntypes import MasterFiberFlat
 from megaradrp.products.tracemap import TraceMap
@@ -82,8 +83,6 @@ def _test_extinction_filename():
 
 
 def test_tag1():
-    import megaradrp.testing.create_header as simple
-
     fr = megaradrp.testing.create_image.create_simple_hdul()
 
     tipo = MasterFiberFlat()
@@ -102,3 +101,19 @@ def test_tag2():
     _ = tipo.extract_db_info(fr, keys)
 
     assert True
+
+
+@pytest.mark.parametrize(
+    "cls, tags",
+    [
+        (megaradrp.ntypes.MasterSensitivity, {"insmode", "vph"}),
+        (megaradrp.ntypes.MasterFiberFlat, {"insmode", "vph", "confid"}),
+        (megaradrp.ntypes.MasterTwilightFlat, {"insmode", "vph", "confid"}),
+        (megaradrp.ntypes.MasterSlitFlat, {"insmode", "vph"}),
+    ],
+)
+def test_product_tags(cls, tags):
+    """The tags of the products, used to select them from the registry"""
+    product = cls()
+    assert set(product.tag_names()) == tags
+    assert product.query_expr.tags() == tags

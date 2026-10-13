@@ -166,7 +166,7 @@ class DiffuseLightCorrection(ProcessedImageProduct):
 class MasterSensitivity(ProcessedSpectrumProduct):
     """Sensitivity correction."""
 
-    pass
+    __tags__ = ["insmode", "vph"]
 
 
 class SkyRSS(ProcessedRSS):
