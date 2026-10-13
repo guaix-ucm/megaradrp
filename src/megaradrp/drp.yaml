@@ -8,6 +8,11 @@ configurations:
   - 9f3fecbf-376c-47ae-a188-313b7d829104
   default: 9f3fecbf-376c-47ae-a188-313b7d829104
 datamodel: megaradrp.datamodel.MegaraDataModel
+calibrations:
+- name: megaradrp-calibrations-2026.2
+  description: Calibrations of MEGARA, release 2026.2
+  url: https://zenodo.org/records/18623771/files/guaix-ucm/megaradrp-calibrations-2026.2.zip
+  known_hash: md5:3d98803089d4822ee00ed03a4dbba229
 modes:
 - name: Success
   summary: A mode where the recipe successes
