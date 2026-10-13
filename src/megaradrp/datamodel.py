@@ -36,39 +36,8 @@ class MegaraDataModel(DataModel):
         "confid": QueryAttribute("confid", str),
     }
 
-    meta_info_headers = [
-        "instrument",
-        "object",
-        "observation_date",
-        "uuid",
-        "type",
-        "mode",
-        "exptime",
-        "darktime",
-        "insconf",
-        "blckuuid",
-        "quality_control",
-        "vph",
-        "insmode",
-    ]
-
-    db_info_keys = [
-        "instrument",
-        "object",
-        "observation_date",
-        "uuid",
-        "type",
-        "mode",
-        "exptime",
-        "darktime",
-        "insconf",
-        "blckuuid",
-        "quality_control",
-        "vph",
-        "insmode",
-    ]
-
     db_info_keys_extra = ["vph", "insmode"]
+    db_info_keys = DataModel.db_info_keys + db_info_keys_extra
 
     meta_dinfo_headers = [
         "exptime",
