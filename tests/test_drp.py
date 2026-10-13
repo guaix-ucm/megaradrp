@@ -375,3 +375,20 @@ def test_recipes_extract_tags(current_drp, ob_repo, results):
                         except KeyError:
                             pass
             assert results[key] == match_per_recipe
+
+
+def test_products_can_be_loaded(current_drp):
+    """The classes of the section products of the pipelines exist, with the names of their types"""
+    for pipeline in current_drp.pipelines.values():
+        for label in pipeline.products:
+            product_class = pipeline.load_product_class(label)
+            assert product_class().name() == label
+
+
+def test_provided_products_match_recipes(current_drp):
+    """The products provided by each mode are the types of the results of its recipe"""
+    pipeline = current_drp.pipelines["default"]
+    for label, entry in pipeline._provides_by_p.items():
+        recipe = pipeline.get_recipe_object(entry.mode)
+        result_type = recipe.products()[entry.field].type
+        assert pipeline.load_product_class(label) is type(result_type)

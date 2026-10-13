@@ -129,17 +129,17 @@ pipelines:
   default:
     version: 1
     products:
-      MasterBias: megaradrp.types.MasterBias
-      MasterBPM: megaradrp.types.MasterBPM
-      MasterDark: megaradrp.types.MasterDark
+      MasterBias: megaradrp.ntypes.MasterBias
+      MasterBPM: megaradrp.ntypes.MasterBPM
+      MasterDark: megaradrp.ntypes.MasterDark
       WavelengthCalibration: megaradrp.products.WavelengthCalibration
-      MasterSlitFlat: megaradrp.types.MasterSlitFlat
+      MasterSlitFlat: megaradrp.ntypes.MasterSlitFlat
       TraceMap: megaradrp.products.TraceMap
       ModelMap: megaradrp.products.ModelMap
-      MasterFiberFlat: megaradrp.types.MasterFiberFlat
-      MasterTwilightFlat: megaradrp.types.MasterTwilightFlat
-      LinesCatalog: numina.core.products.LinesCatalog
-      MegaraCrDetection: megaradrp.types.CRMasks
+      MasterFiberFlat: megaradrp.ntypes.MasterFiberFlat
+      MasterTwilightFlat: megaradrp.ntypes.MasterTwilightFlat
+      LinesCatalog: megaradrp.ntypes.MegaraLinesCatalog
+      CRMasks: megaradrp.ntypes.CRMasks
     provides:
       - name: MasterBias
         mode: MegaraBiasImage
