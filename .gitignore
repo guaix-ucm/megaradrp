@@ -65,3 +65,4 @@ target/
 .pydevproject
 # PyCharm
 .idea
+.mcp.json
