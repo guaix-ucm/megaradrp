@@ -35,7 +35,7 @@ templates_path = ["_templates"]
 exclude_patterns = ["_build"]
 
 project = "MEGARA Data Reduction Pipeline"
-copyright = "2013-2023, Universidad Complutense de Madrid"
+copyright = "2013-2026, Universidad Complutense de Madrid"
 release = importlib.metadata.version("megaradrp")
 version = ".".join(release.split(".")[:2])
 show_authors = True
@@ -45,10 +45,11 @@ numpydoc_show_inherited_class_members = False
 
 
 # -- Options for HTML output ---------------------------------------------------
-html_theme = "default"
+html_theme = "alabaster"
 # html_theme_path = []
 # html_theme_options = {}
-# html_static_path = ['_static']
+html_theme_options = {"logo": "megara.png", "show_related": True, "show_relbar_bottom": True, "show_relbar_top": False}
+html_static_path = ["_static"]
 # html_logo = None
 # html_last_updated_fmt = '%b %d, %Y'
 # html_use_smartypants = True
