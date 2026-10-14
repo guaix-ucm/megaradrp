@@ -111,7 +111,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     )
     nlines = Parameter(
         20,
-        "Use the 'nlines' brigthest lines of the spectrum",
+        "Use the 'nlines' brightest lines of the spectrum",
         as_list=True,
         nelem="+",
         validator=range_validator(minval=0),
@@ -265,7 +265,10 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         elif lines_catalog.shape[1] == 3:  # assume new format
             wv_flag = lines_catalog[:, 1]
             wv_master = wv_master_all[numpy.where(wv_flag == 1)]
-            refine_wv_calibration = True
+            if numpy.any(wv_flag == 0):
+                refine_wv_calibration = True
+            else:
+                refine_wv_calibration = False
             if abs(debugplot) >= 10:
                 print("wv_master:\n", wv_master)
         else:
