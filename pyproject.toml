@@ -31,7 +31,7 @@ dependencies = [
     "jsonschema",
     "matplotlib",
     "numpy",
-    "numina >= 0.37.0",
+    "numina >= 0.40.0",
     "packaging",
     "pooch",
     "scikit-image",
