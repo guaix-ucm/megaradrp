@@ -45,7 +45,7 @@ numpydoc_show_inherited_class_members = False
 
 
 # -- Options for HTML output ---------------------------------------------------
-html_theme = "alabaster"
+html_theme = "sphinx_rtd_theme"
 # html_theme_path = []
 # html_theme_options = {}
 html_theme_options = {"logo": "megara.png", "show_related": True, "show_relbar_bottom": True, "show_relbar_top": False}
