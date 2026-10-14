@@ -22,7 +22,7 @@ Format of the observation result
 The contents of the file is a serialized dictionary with the
 following keys:
 
-*id*: not required, string, defaults to 1
+*id*: required, string or integer
     Unique identifier of the observing block
 
 *instrument*: required, string
@@ -31,7 +31,7 @@ following keys:
 *mode*: required, string
     Name of the observing mode, as returned by ``numina show-modes``
 
-*frames*: required, list of strings
+*frames* (or *images*): list of strings
     List of images names
 
 *children*: not required, list of integers, defaults to empty list
@@ -71,36 +71,41 @@ Example requirements file:
 
 .. code-block:: yaml
 
-    version: 1                                             (1)
-    products:                                              (2)
-      EMIR:
-       - {id: 1, content: 'file1.fits', type: 'MasterFlat', tags: {'filter': 'J'}, ob: 200}     (3)
-       - {id: 4, content: 'file4.fits', type: 'MasterBias', tags: {'readmode': 'cds'}, ob: 400} (3)
+    version: 1                                                       # (1)
+    products:                                                        # (2)
       MEGARA:
-       - {id: 1, content: 'file1.fits', type: 'MasterFiberFlat', tags: {'vph': 'LR-U'}, ob: 1200} (3)
-       - {id: 2, content: 'file2.yml', type: 'TraceMap', tags: {'vph': 'LR2', 'readmode': 'fast'}, ob: 1203} (3)
-    requirements: (4)
+        4fd05b24-2ed9-457b-b563-a3c618bb1d4c:                        # (3)
+          - {id: 1, content: 'file1.fits', type: 'MasterFiberFlat', tags: {'vph': 'LR-U'}}  # (4)
+          - {id: 2, content: 'file2.json', type: 'TraceMap', tags: {'vph': 'LR-R', 'insmode': 'LCB'}}  # (4)
+    requirements:                                                    # (5)
       MEGARA:
-         default:
-           MegaraArcImage:  (5)
-              polynomial_degree: 5 (6)
-              nlines: [5, 5]       (6)
+        4fd05b24-2ed9-457b-b563-a3c618bb1d4c:                        # (3)
+          default:                                                   # (6)
+            MegaraArcCalibration:                                    # (7)
+              - {name: polynomial_degree, tags: {}, content: 5}      # (8)
+              - {name: nlines, tags: {'vph': 'LR-U'}, content: [5, 5]}  # (8)
 
 
 1. Mandatory entry, ``version`` must be 1
-2. Products of other recipes are list, by instrument
-3. The products of the reduction recipes are listed. Each result must contain:
+2. Products of other recipes, by instrument and instrument profile
+3. The instrument profile, the UUID of the instrument configuration
+   (keyword ``INSCONF`` of the images)
+4. The products of the reduction recipes. Each product contains:
     * A ``type``, one of the types of the products of the DRP in string format
     * A ``tags`` field, used to select the correct calibration based on the keywords of
       the input.
-    * A ``content`` field, a pointer to the serialized version of the calibration.
+    * A ``content`` field, the path of the calibration, relative to the data directory.
     * A ``id`` field, unique integer
-    * A ``ob`` field, optional integer, used to store the observation id of the images that
-      created the calibration.
-4. Numerical parameters of the recipes are stored in ``requirements``, with different sections
-   per instrument.
-5. The name of the observing mode.
-6. Different parameters for the recipe corresponding to the observing mode in (5)
+5. Numerical parameters of the recipes are stored in ``requirements``, by instrument,
+   instrument profile, pipeline and observing mode.
+6. The name of the pipeline.
+7. The name of the observing mode.
+8. The parameters of the recipe of the observing mode in (7). Each parameter contains
+   its ``name``, its value (``content``) and the ``tags`` of the observations where it
+   is used.
+
+The file is validated with the schema ``control-schema.json`` of numina
+(:mod:`numina.schemas`).
 
 
 ********************
@@ -127,17 +132,31 @@ there the raw frames from ``r0121.fits`` to ``r0132.fits`` and the master bias `
 Then we run::
 
   $ numina run obsresult.yaml -r requirements.yaml
-  INFO: Numina simple recipe runner version 0.15
-  INFO: Loading observation result from 'obsrun.yaml'
-  INFO: Identifier of the observation result: 1
-  INFO: instrument name: MEGARA
+  INFO: Numina simple recipe runner version 0.40.0
+  INFO: observation results from 'obsresult.yaml'
+  INFO: reading control from requirements.yaml
+  INFO: control format version 1
+  INFO: procesing OB with id=dark-test-21
+  INFO: running recipe
+  megaradrp.core.correctors INFO loading master_bias
   ...
-  numina.recipes.megara INFO stacking 4 images using median
-  numina.recipes.megara INFO bias reduction ended
-  INFO: result: BiasRecipeResult(qc=Product(type=QualityControlProduct(), dest='qc'), biasframe=Product(type=MasterBias(), dest='biasframe'))
-  INFO: storing result
+  megaradrp.processing.trimover DEBUG trimming image 2017-11-09T11:11:00.0
+  INFO: stacking 12 images using 'median'
+  INFO: storing result uuid=7d495e2e-c7ab-11f1-963b-a0369f681a26, quality=QC.GOOD
+  INFO: storing task id=dark-test-21
 
-We get information of what's going on through logging messages. In the end, the result and log files are stored in ``obsid<id_of_obs>_results``.
+The requirements file of this example is:
+
+.. code-block:: yaml
+
+    version: 1
+    products:
+      MEGARA:
+        4fd05b24-2ed9-457b-b563-a3c618bb1d4c:
+          - {id: 1, content: 'master_bias-1.fits', type: 'MasterBias', tags: {}}
+
+We get information of what's going on through logging messages. In the end, the result and log files are stored in ``obsid<id_of_obs>_results``
+(``master_dark.fits``, ``result.json``, ``task.json`` and ``processing.log``).
 The working directory ``obsid<id_of_obs>_work`` can be inspected too. Intermediate results will be saved here.
 
 
@@ -201,14 +220,14 @@ next Recipe if it is needed. Taking this in mind, the content of the
     version: 1
     products:
       MEGARA:
-      - {id: 1, type: 'LinesCatalog', tags: {}, content: 'ThAr_arc_LR-U.txt'}
-      - {id: 2, type: 'MasterBias', tags: {}, content: 'master_bias.fits'}
-      - {id: 3, type: 'TraceMap', tags: {}, content: 'master_traces.json'}
-      - {id: 4, type: 'MasterFiberFlat', tags: {}, content: 'master_fiberflat.fits'}
-      - {id: 5, type: 'WavelengthCalibration', tags: {}, content: 'master_wlcalib.json'}
-      - {id: 6, type: 'MasterFiberFlatFrame', tags: {}, content: 'fiberflat_frame.fits'}
-      - {id: 7, type: 'ModelMap', tags: {}, content: 'master_model.json'}
-      - {id: 8, type: 'MasterSlitFlat', tags: {}, content: 'master_slitflat.fits'}
+        4fd05b24-2ed9-457b-b563-a3c618bb1d4c:
+          - {id: 1, type: 'LinesCatalog', tags: {}, content: 'ThAr_arc_LR-U.txt'}
+          - {id: 2, type: 'MasterBias', tags: {}, content: 'master_bias.fits'}
+          - {id: 3, type: 'TraceMap', tags: {}, content: 'master_traces.json'}
+          - {id: 4, type: 'MasterFiberFlat', tags: {}, content: 'master_fiberflat.fits'}
+          - {id: 5, type: 'WavelengthCalibration', tags: {}, content: 'master_wlcalib.json'}
+          - {id: 6, type: 'ModelMap', tags: {}, content: 'master_model.json'}
+          - {id: 7, type: 'MasterSlitFlat', tags: {}, content: 'master_slitflat.fits'}
     requirements: {}
 
 In order to run the next example, the user should execute the next command
