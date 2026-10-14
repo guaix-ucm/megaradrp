@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2025 Universidad Complutense de Madrid
+# Copyright 2015-2026 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -32,7 +32,6 @@ from megaradrp.processing.wavecalibration import WavelengthCalibrator
 from megaradrp.processing.fiberflat import FlipLR, FiberFlatCorrector
 
 import numina.core.recipeinout as recipeio
-from numina.core.metarecipes import generate_docs
 
 
 def pixel_2d_check(value):
@@ -50,7 +49,7 @@ def pixel_2d_check_or_none(value):
     return pixel_2d_check(value)
 
 
-@generate_docs
+@recipeio.generate_docs
 class RecipeInput(recipeio.RecipeInput):
     obresult = ObservationResultRequirement()
     master_bias = reqs.MasterBiasRequirement()
@@ -67,7 +66,7 @@ class RecipeInput(recipeio.RecipeInput):
     master_fiberflat = reqs.MasterFiberFlatRequirement()
 
 
-@generate_docs
+@recipeio.generate_docs
 class RecipeResult(recipeio.RecipeResult):
     reduced_image = Result(ProcessedFrame)
     reduced_rss = Result(ProcessedRSS)
@@ -159,18 +158,18 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
 
         start, end = rinput.normalize_region
         self.logger.info("doing mean between columns %d-%d", start, end)
-        colapse = rss_wl_data[:, start:end].mean(axis=1)
+        collapse = rss_wl_data[:, start:end].mean(axis=1)
         if rinput.continuum_region is not None:
             start_c, end_c = rinput.continuum_region
             if end_c > start_c:
                 self.logger.info("subtract mean of columns %d-%d", start_c, end_c)
-                colapse_c = rss_wl_data[:, start_c:end_c].mean(axis=1)
-                colapse -= colapse_c
+                collapse_c = rss_wl_data[:, start_c:end_c].mean(axis=1)
+                collapse -= collapse_c
 
-        # Normalize the colapsed array
-        colapse_good = colapse[mask]
-        colapse_norm = colapse / colapse_good.mean()
-        normalized = numpy.tile(colapse_norm[:, numpy.newaxis], rss_wl_data.shape[1])
+        # Normalize the collapsed array
+        collapse_good = collapse[mask]
+        collapse_norm = collapse / collapse_good.mean()
+        normalized = numpy.tile(collapse_norm[:, numpy.newaxis], rss_wl_data.shape[1])
 
         master_t = fits.HDUList([hdu.copy() for hdu in reduced_rss])
         master_t[0].data = normalized
