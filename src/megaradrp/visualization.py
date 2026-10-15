@@ -278,7 +278,7 @@ def main(argv=None):
         "--stretch",
         choices=["linear", "sqrt", "power", "log", "asinh"],
         default="linear",
-        help="Name of the strech method used for display",
+        help="Name of the stretch method used for display",
     )
 
     group_c = parser.add_argument_group("contouring")
