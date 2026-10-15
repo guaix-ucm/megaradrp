@@ -8,7 +8,7 @@ authors:
 - affiliation: Universidad Complutense de Madrid
   family-names: Pascual
   given-names: Sergio
-  orcid: 'https://orcid.org/0000-0002-9351-6051' 
+  orcid: 'https://orcid.org/0000-0002-9351-6051'
 - affiliation: Universidad Complutense de Madrid
   family-names: Cardiel
   given-names: Nicolás
@@ -21,17 +21,17 @@ authors:
   family-names: Gil de Paz
   given-names: Armando
   orcid: 'https://orcid.org/0000-0001-6150-2854'
-date-released: '2025-12-05'
-doi: 10.5281/zenodo.17830388
+date-released: '2026-10-15'
+doi: 10.5281/zenodo.593647
 identifiers:
 - type: doi
   value: 10.5281/zenodo.593647
 repository-code: 'https://github.com/guaix-ucm/megaradrp'
 abstract: >-
-  This is Megara DRP, the data reduction pipeline for MEGARA, the optical 
-  Integral-Field Unit and Multi-Object Spectrograph designed for the 
+  This is Megara DRP, the data reduction pipeline for MEGARA, the optical
+  Integral-Field Unit and Multi-Object Spectrograph designed for the
   Gran telescopio Canarias (GTC).
 keywords:
 - MEGARA
 license: GPL-3.0-or-later
-version: 0.19
+version: '0.22'
