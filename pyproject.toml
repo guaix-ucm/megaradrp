@@ -8,7 +8,7 @@ dynamic = ["version"]
 description = "MEGARA Data Reduction Pipeline"
 readme = "README.rst"
 requires-python = ">=3.10"
-license = {text = "GPL-3.0-or-later"}
+license = "GPL-3.0-or-later"
 authors = [
   {name = "Sergio Pascual", email = "sergiopr@fis.ucm.es"},
 ]
@@ -21,7 +21,6 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "Intended Audience :: Science/Research",
-    "License :: OSI Approved :: GNU General Public License (GPL)",
     "Operating System :: OS Independent",
     "Topic :: Scientific/Engineering :: Astronomy",
 ]
@@ -30,13 +29,13 @@ dependencies = [
     "attrs",
     "jsonschema",
     "matplotlib",
-    "numpy",
     "numina >= 0.40.0",
+    "numpy",
     "packaging",
     "pooch",
+    "requests",
     "scikit-image",
     "scipy >= 1.12",
-    "requests"
 ]
 
 [project.optional-dependencies]
