@@ -1,0 +1,26 @@
+# Container image with megaradrp
+#
+# The image installs the wheel of megaradrp in dist/, so the build
+# context is the root of the repository:
+#
+#   python -m build --wheel
+#   podman build -f container/Containerfile .
+#
+# The release workflow builds and publishes it in
+# ghcr.io/guaix-ucm/megaradrp and quay.io/guaix-ucm/megaradrp, see
+# container/build.sh to build it locally.
+
+ARG PYTHON_VERSION="3.12"
+
+FROM python:${PYTHON_VERSION}-slim
+
+LABEL org.opencontainers.image.authors="Sergio Pascual <sergiopr@fis.ucm.es>" \
+      org.opencontainers.image.vendor="GUAIX - Universidad Complutense de Madrid" \
+      org.opencontainers.image.url="https://guaix.ucm.es"
+
+COPY dist/megaradrp-*.whl /tmp/dist/
+
+RUN pip install --no-cache-dir /tmp/dist/megaradrp-*.whl \
+    && rm -rf /tmp/dist
+
+CMD ["python3"]
