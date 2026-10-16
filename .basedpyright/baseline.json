@@ -1,0 +1,252 @@
+{
+    "files": {
+        "./src/megaradrp/db/control.py": [
+            {
+                "code": "reportMissingImports",
+                "range": {
+                    "startColumn": 5,
+                    "endColumn": 19,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/megaradrp/db/model.py": [
+            {
+                "code": "reportMissingImports",
+                "range": {
+                    "startColumn": 5,
+                    "endColumn": 15,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportMissingImports",
+                "range": {
+                    "startColumn": 5,
+                    "endColumn": 15,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportMissingImports",
+                "range": {
+                    "startColumn": 5,
+                    "endColumn": 15,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportMissingImports",
+                "range": {
+                    "startColumn": 5,
+                    "endColumn": 18,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/megaradrp/instrument/components/detector.py": [
+            {
+                "code": "reportSelfClsParameterName",
+                "range": {
+                    "startColumn": 21,
+                    "endColumn": 24,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/megaradrp/instrument/components/instrument.py": [
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 4,
+                    "endColumn": 15,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 8,
+                    "endColumn": 24,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 8,
+                    "endColumn": 24,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 8,
+                    "endColumn": 19,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/megaradrp/processing/cube.py": [
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 13,
+                    "endColumn": 30,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/megaradrp/processing/extractobj.py": [
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 15,
+                    "endColumn": 26,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 17,
+                    "endColumn": 28,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 17,
+                    "endColumn": 28,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 17,
+                    "endColumn": 28,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 11,
+                    "endColumn": 22,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 18,
+                    "endColumn": 32,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 18,
+                    "endColumn": 32,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/megaradrp/processing/fluxcalib.py": [
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 18,
+                    "endColumn": 32,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 18,
+                    "endColumn": 32,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/megaradrp/processing/modelmap.py": [
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 16,
+                    "endColumn": 29,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/megaradrp/processing/trimover.py": [
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 28,
+                    "endColumn": 50,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 28,
+                    "endColumn": 50,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/megaradrp/recipes/calibration/modelmap.py": [
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 20,
+                    "endColumn": 47,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/megaradrp/recipes/scientific/lcb.py": [
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 26,
+                    "endColumn": 40,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 26,
+                    "endColumn": 40,
+                    "lineCount": 1
+                }
+            }
+        ],
+        "./src/megaradrp/recipes/scientific/mos.py": [
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 26,
+                    "endColumn": 40,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 26,
+                    "endColumn": 40,
+                    "lineCount": 1
+                }
+            }
+        ]
+    }
+}
