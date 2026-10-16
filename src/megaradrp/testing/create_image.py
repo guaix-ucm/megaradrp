@@ -6,21 +6,17 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # License-Filename: LICENSE.txt
 #
+import warnings
+
 import numina.core
 import numpy
 from astropy.io import fits as fits
 import numpy as np
-from numina.core import ObservationResult
-from numina.instrument import assembly as asb
 from numina.types.dataframe import DataFrame
 
 from megaradrp.datamodel import create_default_fiber_header
-from megaradrp.instrument.components.detector import (
-    ReadParams,
-    MegaraDetectorSat,
-    MegaraDetector,
-)
 from megaradrp.simulation.actions import simulate_flat
+from megaradrp.testing.common import DSHAPE, make_detector, make_obresult, raw_header
 from megaradrp.testing.create_ob import generate_bias
 
 
@@ -84,32 +80,17 @@ def create_rss(scene, wlmap):
 
 
 def generate_bias_file():
-    PSCAN = 50
-    DSHAPE = (2056 * 2, 2048 * 2)
-    OSCAN = 50
+    """A simulated flat, of a detector with dead pixels
 
-    ron = 2.0
-    gain = 1.0
-    bias = 1000.0
+    .. deprecated:: 0.23
+            The tests use the fixture `simulated_flats`. It will be
+            removed in 0.24
 
+    """
+    warnings.warn("'generate_bias_file' is deprecated, it will be removed in 0.24", DeprecationWarning, stacklevel=2)
     qe = 0.8 * np.ones(DSHAPE)
     qe[0:15, 0:170] = 0.0
-
-    readpars1 = ReadParams(gain=gain, ron=ron, bias=bias)
-    readpars2 = ReadParams(gain=gain, ron=ron, bias=bias)
-
-    detector = MegaraDetectorSat(
-        "megara_test_detector",
-        DSHAPE,
-        OSCAN,
-        PSCAN,
-        qe=qe,
-        dark=(3.0 / 3600.0),
-        readpars1=readpars1,
-        readpars2=readpars2,
-        bins="11",
-    )
-
+    detector = make_detector(qe=qe)
     return simulate_flat(detector, exposure=1.0, source=5000.0)
 
 
@@ -128,95 +109,37 @@ def generate_imgs(nimages, nfibers, nsamples):
 
 
 def create_detector():
-    DSHAPE = (2056 * 2, 2048 * 2)
-    PSCAN = 50
-    OSCAN = 50
-    qe = 1.0
-    dcurrent = 3.0 / 3600
-
-    readpars1 = ReadParams(gain=1.0, ron=2.0, bias=1000.0)
-    readpars2 = ReadParams(gain=1.0, ron=2.0, bias=1005.0)
-
-    detector = MegaraDetector(
-        "Detector",
-        DSHAPE,
-        OSCAN,
-        PSCAN,
-        qe=qe,
-        dark=dcurrent,
-        readpars1=readpars1,
-        readpars2=readpars2,
-        bins="11",
-    )
-    return detector
+    return make_detector(qe=1.0, bias=(1000.0, 1005.0), saturation=False)
 
 
 def create_sample_files(temporary_path, number=5):
-    from megaradrp.simulation.actions import simulate_flat
-    from megaradrp.instrument.components.detector import ReadParams, MegaraDetectorSat
-    from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
+    """Simulated flats, master bias and mask of bad pixels, in temporary_path
 
-    config_uuid = "4fd05b24-2ed9-457b-b563-a3c618bb1d4c"
-    date_obs = "2017-11-09T11:00:00.0"
-    PSCAN = 50
-    DSHAPE = (2056 * 2, 2048 * 2)
-    OSCAN = 50
-    ron = 2.0
-    gain = 1.0
-    bias = 1000.0
+    .. deprecated:: 0.23
+            The tests use the fixtures `simulated_flats` and `master_bpm`.
+            It will be removed in 0.24
+
+    """
+    warnings.warn("'create_sample_files' is deprecated, it will be removed in 0.24", DeprecationWarning, stacklevel=2)
+    from megaradrp.recipes.calibration.bpm import BadPixelsMaskRecipe
 
     qe = 0.8 * np.ones(DSHAPE)
     qe[0:15, 0:170] = 0.0
+    detector = make_detector(qe=qe)
 
-    readpars1 = ReadParams(gain=gain, ron=ron, bias=bias)
-    readpars2 = ReadParams(gain=gain, ron=ron, bias=bias)
-
-    detector = MegaraDetectorSat(
-        "megara_test_detector",
-        DSHAPE,
-        OSCAN,
-        PSCAN,
-        qe=qe,
-        dark=(3.0 / 3600.0),
-        readpars1=readpars1,
-        readpars2=readpars2,
-        bins="11",
-    )
-
-    source2 = 1.0
-
-    fs = [simulate_flat(detector, exposure=1.0, source=5000 * source2) for i in range(number)]
-
-    header = fits.Header()
-    header["DATE-OBS"] = date_obs
-    header["INSCONF"] = config_uuid
-    header["INSTRUME"] = "MEGARA"
-    header["VPH"] = "LR-U"
-    header["INSMODE"] = "MOS"
-    for aux in range(len(fs)):
-        fits.writeto(f"{temporary_path}/flat_{aux}.fits", fs[aux], header=header, overwrite=True)
+    header = raw_header()
+    names = [f"{temporary_path}/flat_{idx}.fits" for idx in range(number)]
+    for name in names:
+        fits.writeto(name, simulate_flat(detector, exposure=1.0, source=5000.0), header=header, overwrite=True)
 
     result = generate_bias(detector, number, temporary_path)
     result.master_bias.frame.writeto(f"{temporary_path}/master_bias_data0.fits", overwrite=True)  # Master Bias
 
-    ob = ObservationResult()
-    ob.instrument = "MEGARA"
-    ob.mode = "bias_image"
-    pkg_paths = ["megaradrp.instrument.configs"]
-    store = asb.load_paths_store(pkg_paths)
-    insmodel = asb.assembly_instrument(store, config_uuid, date_obs, by_key="uuid")
-    insmodel.configure_with_header(header)
-    ob.configuration = insmodel
-
-    names = []
-    for aux in range(number):
-        names.append(f"{temporary_path}/flat_{aux}.fits")
-    ob.frames = [DataFrame(filename=nombre) for nombre in names]
-
+    ob = make_obresult("bias_image", names, header)
     recipe = BadPixelsMaskRecipe()
     ri = recipe.create_input(
         obresult=ob,
-        master_bias=DataFrame(filename=temporary_path + "/master_bias_data0.fits"),
+        master_bias=DataFrame(filename=f"{temporary_path}/master_bias_data0.fits"),
     )
     aux = recipe.run(ri)
     aux.master_bpm.frame.writeto(f"{temporary_path}/master_bpm.fits", overwrite=True)

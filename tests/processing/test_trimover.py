@@ -57,7 +57,3 @@ def test_amp_1():
     data[oc.trim2] -= fit2[:, numpy.newaxis]
 
     assert fit2.shape == (2056,)
-
-
-if __name__ == "__main__":
-    test_OverscanCorrector()

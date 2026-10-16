@@ -1,5 +1,3 @@
-import shutil
-from tempfile import mkdtemp
 import os
 
 import astropy.io.fits as fits
@@ -7,68 +5,44 @@ import pytest
 
 from megaradrp.processing.trimover import trimOut
 from megaradrp.processing.trimover import apextract_weights
-from megaradrp.testing.create_image import generate_bias_file
+
+DETCONF = {
+    "trim1": [[0, 2056], [50, 4146]],
+    "trim2": [[2156, 4212], [50, 4146]],
+    "bng": [1, 1],
+}
+
+
+@pytest.fixture
+def flat(simulated_flats):
+    """A simulated flat, and the name of its file"""
+    filename = simulated_flats.low[0]
+    return fits.getdata(filename), str(filename)
 
 
 @pytest.mark.parametrize("direction", ["normal", "mirror"])
-def test_trim_and_o(direction):
-    temporary_path = mkdtemp()
-    detconf = {
-        "trim1": [[0, 2056], [50, 4146]],
-        "trim2": [[2156, 4212], [50, 4146]],
-        "bng": [1, 1],
-    }
-    fs = generate_bias_file()
-    fits.writeto(f"{temporary_path}/flat.fits", fs, overwrite=True)
-    trimOut(
-        f"{temporary_path}/flat.fits",
-        detconf,
-        out=f"{temporary_path}/result.fits",
-        direction=direction,
-    )
-    with fits.open(f"{temporary_path}/result.fits") as hdul:
-        assert hdul[0].shape[0] + 100 == fs.shape[0]
-        assert hdul[0].shape[1] + 100 == fs.shape[1]
-
-    shutil.rmtree(temporary_path)
+def test_trim_and_o(flat, tmp_path, direction):
+    data, filename = flat
+    trimOut(filename, DETCONF, out=str(tmp_path / "result.fits"), direction=direction)
+    with fits.open(tmp_path / "result.fits") as hdul:
+        assert hdul[0].shape[0] + 100 == data.shape[0]
+        assert hdul[0].shape[1] + 100 == data.shape[1]
 
 
-def test_trim_and_o_fail():
-    temporary_path = mkdtemp()
-    fs = generate_bias_file()
-    fits.writeto(f"{temporary_path}/flat.fits", fs, overwrite=True)
-
+def test_trim_and_o_fail(flat, tmp_path):
+    _, filename = flat
     direction = "fails"
-    detconf = {
-        "trim1": [[0, 2056], [50, 4146]],
-        "trim2": [[2156, 4212], [50, 4146]],
-        "bng": [1, 1],
-    }
     with pytest.raises(ValueError) as excinfo:
-        trimOut(
-            f"{temporary_path}/flat.fits",
-            detconf,
-            out=f"{temporary_path}/result.fits",
-            direction=direction,
-        )
-    shutil.rmtree(temporary_path)
+        trimOut(filename, DETCONF, out=str(tmp_path / "result.fits"), direction=direction)
     assert excinfo.value.args[0] == f"{direction} must be either 'normal' or 'mirror'"
 
 
-def test_trim_and_o_fail2():
-    temporary_path = mkdtemp()
-    fs = generate_bias_file()
-    fits.writeto(f"{temporary_path}/flat.fits", fs, overwrite=True)
-
+def test_trim_and_o_fail2(flat, tmp_path):
+    _, filename = flat
     bins = "fail"
-    detconf = {
-        "trim1": [[0, 2056], [50, 4146]],
-        "trim2": [[2156, 4212], [50, 4146]],
-        "bng": bins,
-    }
+    detconf = dict(DETCONF, bng=bins)
     with pytest.raises(ValueError) as excinfo:
-        trimOut(f"{temporary_path}/flat.fits", detconf, out=f"{temporary_path}/result.fits")
-    shutil.rmtree(temporary_path)
+        trimOut(filename, detconf, out=str(tmp_path / "result.fits"))
     assert excinfo.value.args[0] == f"{bins} must be one if '11', '12', '21, '22'"
 
 
@@ -87,10 +61,3 @@ def test_apextract_weights():
     final = fits.HDUList([hdu_rss])
     final.writeto("rss.fits", overwrite=True)
     assert True
-
-
-if __name__ == "__main__":
-    test_trim_and_o("normal")
-    # test_trim_and_o_fail()
-    # test_trim_and_o_fail2()
-    # test_apextract_weights()

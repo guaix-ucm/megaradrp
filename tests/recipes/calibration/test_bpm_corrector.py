@@ -7,81 +7,46 @@
 # License-Filename: LICENSE.txt
 #
 
-"""Tests for the bpm mode recipe module."""
+"""The correction of bad pixels in the basic processing"""
 
 import astropy.io.fits as fits
+import numpy as np
 from numina.array import combine
-from numina.core import DataFrame, ObservationResult
+from numina.core import DataFrame
 from numina.core.requirements import ObservationResultRequirement
-import numina.instrument.assembly as asb
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.processing.combine import basic_processing_with_combination
-from megaradrp.testing.create_image import create_sample_files
+from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
+from megaradrp.testing.common import make_obresult
 
 
 class DerivedRecipe(MegaraBaseRecipe):
+    """Combine the images with the basic processing, keep the result in reduced"""
+
     obresult = ObservationResultRequirement()
     master_bias = MasterBiasRequirement()
     master_bpm = MasterBPMRequirement()
 
-    def __init__(self, directorio):
-        self.directorio = directorio
-        super(DerivedRecipe, self).__init__()
-
     def run(self, rinput):
-        import copy
-
-        N = len(rinput.obresult.frames)
-        obresult1 = copy.copy(rinput.obresult)
-        obresult1.frames = rinput.obresult.frames[:N]
-
         flow1 = self.init_filters(rinput, rinput.obresult.configuration)
-        img = basic_processing_with_combination(rinput, flow1, method=combine.median)
-        hdr = img[0].header
-        self.set_base_headers(hdr)
-
-        reduced1 = img
-
-        fits.writeto(self.directorio + "/reduced_flat.fits", reduced1[0].data, overwrite=True)
-
-        fits.writeto(self.directorio + "/reduced_flat_bpm.fits", reduced1[0].data, overwrite=True)
-
+        self.reduced = basic_processing_with_combination(rinput, flow1, method=combine.median)
         return self.create_result()
 
 
-def test_bpm_corrector():
-    import shutil
-    from tempfile import mkdtemp
-
-    config_uuid = "4fd05b24-2ed9-457b-b563-a3c618bb1d4c"
-    date_obs = "2017-11-09T11:00:00.0"
-    directorio = mkdtemp()
-    names = create_sample_files(directorio, number=4)
-
-    ob = ObservationResult()
-    ob.instrument = "MEGARA"
-    ob.mode = "MegaraBiasImage"
-    pkg_paths = ["megaradrp.instrument.configs"]
-    store = asb.load_paths_store(pkg_paths)
-    insmodel = asb.assembly_instrument(store, config_uuid, date_obs, by_key="uuid")
-    header = fits.Header()
-    header["DATE-OBS"] = date_obs
-    header["INSCONF"] = config_uuid
-    header["INSTRUME"] = "MEGARA"
-    header["VPH"] = "LR-U"
-    header["INSMODE"] = "MOS"
-    insmodel.configure_with_header(header)
-    ob.configuration = insmodel
-    ob.frames = [DataFrame(filename=nombre) for nombre in names]
-
-    recipe = DerivedRecipe(directorio)
+def test_bpm_corrector(simulated_flats, master_bpm):
+    ob = make_obresult("MegaraBiasImage", simulated_flats.low, simulated_flats.header)
+    recipe = DerivedRecipe()
     ri = recipe.create_input(
         obresult=ob,
-        master_bias=DataFrame(filename=directorio + "/master_bias_data0.fits"),
-        master_bpm=DataFrame(filename=directorio + "/master_bpm.fits"),
+        master_bias=DataFrame(filename=str(simulated_flats.master_bias)),
+        master_bpm=DataFrame(filename=str(master_bpm)),
     )
-
     recipe.run(ri)
-    shutil.rmtree(directorio)
+
+    data = recipe.reduced[0].data
+    bad = fits.getdata(master_bpm) > 0
+    # the correction is recorded, and the good pixels have the level of
+    # the flats (5000 counts with a quantum efficiency of 0.8)
+    assert recipe.reduced[0].header["NUM-BPM"]
+    assert np.allclose(np.median(data[~bad]), 4000, rtol=0.01)
