@@ -1,4 +1,4 @@
-import numina.types
+import numina.types.qc
 
 from megaradrp.products import tracemap as tm
 

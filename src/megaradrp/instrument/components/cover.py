@@ -10,7 +10,7 @@
 import numpy as np
 
 from numina.instrument.hwdevice import HWDevice
-from numina.instrument.components.signal import Signal
+from numina.instrument.signal import Signal
 
 
 class HemiCover(HWDevice):

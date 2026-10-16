@@ -43,8 +43,4 @@ class Recipe(MegaraBaseRecipe):
 
     def run(self, rinput):
 
-        self.logger.info("starting SensivityStarRecipe reduction")
-
-        result = super(Recipe, self).run(rinput)
-
-        return self.create_result(final=result[0], target=result[1], sky=result[2])
+        raise NotImplementedError("this recipe is not implemented yet")

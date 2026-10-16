@@ -85,11 +85,6 @@ modes:
   description: Image with the MOS
   key: MegaraMosImage
   rawimage: IMAGE_TARGET
-- name: Extinction Star Recipe
-  summary: Extinction Star Recipe
-  description: Extinction Star Recipe
-  key: MegaraExtinctionStar
-  rawimage: IMAGE_TARGET
 - name: LCB Standard Recipe
   summary: LCB Standard Recipe
   description: LCB Standard Recipe
@@ -99,11 +94,6 @@ modes:
   summary: MOS Standard Recipe
   description: MOS Standard Recipe
   key: MegaraMosStdStar
-  rawimage: IMAGE_TARGET
-- name: Sensivity Star Recipe
-  summary: Sensivity Star Recipe
-  description: Sensivity Star Recipe
-  key: MegaraSensitivityStar
   rawimage: IMAGE_TARGET
 - name: Telescope Focus
   summary: Telescope Focus
@@ -194,6 +184,4 @@ pipelines:
       MegaraMosAcquisition: megaradrp.recipes.auxiliary.acquisitionmos.AcquireMOSRecipe
       MegaraMosImage: megaradrp.recipes.scientific.mos.MOSImageRecipe
       MegaraMosStdStar: megaradrp.recipes.calibration.mosstdstar.MOSStandardRecipe
-      MegaraExtinctionStar: megaradrp.recipes.combined.extinctionstar.Recipe
-      MegaraSensitivityStar: megaradrp.recipes.combined.sensstar.Recipe
       MegaraCrDetection: megaradrp.recipes.calibration.crdetect.CRMasksRecipe

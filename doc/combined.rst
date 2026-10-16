@@ -5,6 +5,11 @@ Combined Modes
 The observing modes described in this section are those that require
 the outputs of previous observing blocks.
 
+.. note::
+
+   These modes are not implemented yet, they are not available in the
+   DRP and their recipes raise :class:`NotImplementedError`.
+
 
 Compute Sensitivity from Std Stars
 ----------------------------------
@@ -41,5 +46,3 @@ Recipe, inputs and results
 
 .. autoclass:: megaradrp.recipes.combined.extinctionstar.Recipe
       :members:
-
-

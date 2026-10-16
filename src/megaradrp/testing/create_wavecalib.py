@@ -1,4 +1,4 @@
-import numina.types
+import numina.types.qc
 from numina.array.wavecalib.solutionarc import (
     WavecalFeature,
     CrLinear,

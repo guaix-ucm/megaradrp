@@ -167,7 +167,7 @@ class MegaraInstrument(HWDevice):
         # This will compute only the illuminated fibers
         visible_fib_ids = [fibid for fibid, _ in self.focal_plane.get_visible_fibers()]
         sigma = self.fiberset.sigma
-        return project_rss_w(visible_fib_ids, self.pseudo_slit, self.vph, sigma)
+        return project_rss_w(visible_fib_ids, self.pseudo_slit, self.vph, self.detector, sigma)
 
     def apply_transmissions(self, wltable_in, photons_in):
         """Simulate the image in the focal plane,"""
@@ -227,7 +227,7 @@ class MegaraInstrument(HWDevice):
         # QE of the detector
         spec_in *= self.detector.qe_wl(wltable_in)
 
-        return self.project_rss(self.focal_actuator.internal_focus_factor * self.fiberset.sigma, wltable_in, spec_in)
+        return self.project_rss(wltable_in, spec_in)
 
     def illumination_in_focal_plane(self, photons, illumination=None):
 

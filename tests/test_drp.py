@@ -49,8 +49,6 @@ expected_tags = {
     "MegaraMosAcquisition": {"confid", "insmode", "vph"},
     "MegaraMosImage": {"confid", "insmode", "vph"},
     "MegaraMosStdStar": {"confid", "insmode", "vph"},
-    "MegaraExtinctionStar": set(),
-    "MegaraSensitivityStar": set(),
     "MegaraCrDetection": set(),
 }
 
@@ -168,8 +166,6 @@ results1 = {
         "master_twilight": 59,
         "master_apertures": 11,
     },
-    "MegaraExtinctionStar": {},
-    "MegaraSensitivityStar": {},
     "MegaraCrDetection": {"master_bias": 105, "master_bpm": 205},
 }
 
@@ -278,8 +274,6 @@ results2 = {
         "master_twilight": 52,
         "master_apertures": 12,
     },
-    "MegaraExtinctionStar": {},
-    "MegaraSensitivityStar": {},
     "MegaraCrDetection": {"master_bias": 105, "master_bpm": 205},
 }
 

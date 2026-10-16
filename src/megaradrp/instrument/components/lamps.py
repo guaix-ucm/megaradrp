@@ -9,7 +9,7 @@
 
 import numpy as np
 from astropy import units as u
-from astropy.modeling.blackbody import blackbody_lambda
+from astropy.modeling.physical_models import BlackBody
 from numina.instrument.hwdevice import HWDevice
 
 from megaradrp.simulation.extended import create_th_ar_arc_spectrum
@@ -39,7 +39,9 @@ class BlackBodyLamp(Lamp):
         super(BlackBodyLamp, self).__init__(name, factor=factor, illumination=illumination)
 
     def flux(self, wl_in):
-        energy_in_flat = blackbody_lambda(wl_in, self.temp)
+        # the flux per unit wavelength, as the other lamps
+        units = u.erg * u.s**-1 * u.cm**-2 * u.AA**-1 * u.sr**-1
+        energy_in_flat = BlackBody(temperature=self.temp, scale=1.0 * units)(wl_in)
         return self.factor * energy_in_flat
 
 
