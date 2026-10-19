@@ -9,6 +9,7 @@
 
 import astropy.io.fits as fits
 import numpy
+import pytest
 from numina.core import DataFrame
 
 from megaradrp.recipes.calibration.dark import DarkRecipe
@@ -17,6 +18,7 @@ from megaradrp.simulation.factory import MegaraImageFactory
 from megaradrp.testing.common import DSHAPE, make_detector, make_obresult, raw_header
 
 
+@pytest.mark.slow
 def test_dark(tmp_path):
     numpy.random.seed(422992983)
 

@@ -25,6 +25,16 @@ skipped by default. To enable them run instead::
 
     pytest --remote-data=any
 
+Some tests are slow, like those that simulate images of the detector, and
+are marked with ``slow``. They are skipped by default too, and the tests of
+the continuous integration run them. To enable them run::
+
+    pytest --runslow
+
+The two options can be combined, to run all the tests::
+
+    pytest --runslow --remote-data=any
+
 The reduction recipes are tested with remote data. Each recipe is run in
 a directory created under the default ``$TMPDIR``, which is based on
 the user temporal directory. The base of the created directories can be changed

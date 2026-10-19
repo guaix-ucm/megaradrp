@@ -24,6 +24,28 @@ pytest_plugins = ["numina.testing.plugins"]
 # The recipes draw plots, use a backend without display
 matplotlib.use("Agg")
 
+
+def pytest_addoption(parser):
+    parser.addoption("--runslow", action="store_true", default=False, help="run also the slow tests")
+
+
+def pytest_configure(config):
+    config.addinivalue_line("markers", "slow: slow test, skipped without --runslow")
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip the slow tests without --runslow
+
+    The tests that use the simulated data, slow to create, are slow.
+    """
+    skip_slow = pytest.mark.skip(reason="slow test, use --runslow to run it")
+    for item in items:
+        if "simulated_flats" in getattr(item, "fixturenames", ()):
+            item.add_marker(pytest.mark.slow)
+        if not config.getoption("--runslow") and item.get_closest_marker("slow"):
+            item.add_marker(skip_slow)
+
+
 # The simulated detector has a row of dead pixels
 DEAD_ROW = 5
 DEAD_COLS = 170
