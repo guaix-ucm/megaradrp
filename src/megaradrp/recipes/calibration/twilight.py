@@ -13,7 +13,6 @@ import numpy
 from astropy.io import fits
 
 from numina.core import Result, Parameter
-from numina.core.requirements import ObservationResultRequirement
 from numina.util.flow import SerialFlow
 from numina.exceptions import ValidationError
 
@@ -31,8 +30,6 @@ from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.wavecalibration import WavelengthCalibrator
 from megaradrp.processing.fiberflat import FlipLR, FiberFlatCorrector
 
-import numina.core.recipeinout as recipeio
-
 
 def pixel_2d_check(value):
     """Check this is a valid 2D pixel list"""
@@ -49,32 +46,6 @@ def pixel_2d_check_or_none(value):
     return pixel_2d_check(value)
 
 
-@recipeio.generate_docs
-class RecipeInput(recipeio.RecipeInput):
-    obresult = ObservationResultRequirement()
-    master_bias = reqs.MasterBiasRequirement()
-    master_dark = reqs.MasterDarkRequirement()
-    master_bpm = reqs.MasterBPMRequirement()
-    master_slitflat = reqs.MasterSlitFlatRequirement()
-    master_apertures = reqs.MasterAperturesRequirement(alias="master_traces")
-    extraction_offset = Parameter([0.0], "Offset traces for extraction", accept_scalar=True)
-    normalize_region = Parameter([1900, 2100], "Region used to normalize the flat-field", validator=pixel_2d_check)
-    continuum_region = Parameter(
-        [1900, 1900], "Subtract this region before normalize the flat-field", validator=pixel_2d_check_or_none
-    )
-    master_wlcalib = reqs.WavelengthCalibrationRequirement()
-    master_fiberflat = reqs.MasterFiberFlatRequirement()
-
-
-@recipeio.generate_docs
-class RecipeResult(recipeio.RecipeResult):
-    reduced_image = Result(ProcessedFrame)
-    reduced_rss = Result(ProcessedRSS)
-    master_twilightflat = Result(MasterTwilightFlat)
-
-
-@recipeio.define_input(RecipeInput)
-@recipeio.define_result(RecipeResult)
 class TwilightFiberFlatRecipe(MegaraBaseRecipe):
     """Process TWILIGHT_FLAT images and create MASTER_TWILIGHT_FLAT product.
 
@@ -112,6 +83,23 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
     image is returned in the field `master_twilightflat` of the recipe result.
 
     """
+
+    master_bias = reqs.MasterBiasRequirement()
+    master_dark = reqs.MasterDarkRequirement()
+    master_bpm = reqs.MasterBPMRequirement()
+    master_slitflat = reqs.MasterSlitFlatRequirement()
+    master_apertures = reqs.MasterAperturesRequirement(alias="master_traces")
+    extraction_offset = Parameter([0.0], "Offset traces for extraction", accept_scalar=True)
+    normalize_region = Parameter([1900, 2100], "Region used to normalize the flat-field", validator=pixel_2d_check)
+    continuum_region = Parameter(
+        [1900, 1900], "Subtract this region before normalize the flat-field", validator=pixel_2d_check_or_none
+    )
+    master_wlcalib = reqs.WavelengthCalibrationRequirement()
+    master_fiberflat = reqs.MasterFiberFlatRequirement()
+
+    reduced_image = Result(ProcessedFrame)
+    reduced_rss = Result(ProcessedRSS)
+    master_twilightflat = Result(MasterTwilightFlat)
 
     def process_flat2d(self, rinput):
         flow = self.init_filters(rinput, rinput.obresult.configuration)
@@ -207,3 +195,9 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
         scales = median_max / median_vals
         self.logger.info("scale values are %s", scales)
         return combine.median(arrays, scales=scales, dtype=dtype)
+
+
+# The input and result classes, with their names before the fields were
+# declared in the recipe
+RecipeInput = TwilightFiberFlatRecipe.RecipeInput
+RecipeResult = TwilightFiberFlatRecipe.RecipeResult

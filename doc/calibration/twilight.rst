@@ -6,8 +6,8 @@ Twilight fiber-flat
 :Key: MegaraTwilightFlatImage
 :Product: :class:`~megaradrp.types.MasterTwilightFlat`
 :Recipe: :class:`~megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe`
-:Recipe input: :class:`megaradrp.recipes.calibration.twilight.RecipeInput`
-:Recipe result: :class:`megaradrp.recipes.calibration.twilight.RecipeResult`
+:Recipe input: :class:`~megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe.RecipeInput`
+:Recipe result: :class:`~megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe.RecipeResult`
 
 Depending on the final performance of the ICM (provided by the GTC) at F-C the
 twilight fiber-flat mode (proposed in this section) might be offered as
@@ -65,12 +65,6 @@ processing.
 
 Recipe, inputs and results
 ++++++++++++++++++++++++++
-
-.. autoclass:: megaradrp.recipes.calibration.twilight.RecipeInput
-      :members:
-
-.. autoclass:: megaradrp.recipes.calibration.twilight.RecipeResult
-      :members:
 
 .. autoclass:: megaradrp.recipes.calibration.twilight.TwilightFiberFlatRecipe
       :members:
