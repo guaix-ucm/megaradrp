@@ -10,10 +10,13 @@
 
 """Match and identify fibers"""
 
+import logging
 import enum
 import itertools
 
 import attrs
+
+_logger = logging.getLogger(__name__)
 
 
 class PeakMode(enum.Enum):
@@ -113,8 +116,7 @@ def count_peaks(peaks, tol=1.2, distance=6.0, start=1, max_scale_jump=3):
                 rest = rest[1:]
                 if scale > max_scale_jump:
                     # print('moving too far away')
-                    msg = f"peak {pid} not found within expected distance from peak {last_info.count}"
-                    print(msg)
+                    _logger.warning("peak %s not found within expected distance from peak %s", pid, last_info.count)
                     # end process
                     rest = rest[-1:]
                 break

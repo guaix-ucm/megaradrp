@@ -9,6 +9,7 @@
 
 """Trace model recipe for Megara"""
 
+import logging
 import multiprocessing as mp
 
 import numpy as np
@@ -28,6 +29,8 @@ from megaradrp.ntypes import ProcessedImage, ProcessedRSS
 from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.core.recipe import MegaraBaseRecipe
 import megaradrp.requirements as reqs
+
+_logger = logging.getLogger(__name__)
 
 
 class ModelMapRecipe(MegaraBaseRecipe):
@@ -261,9 +264,9 @@ def calc_parallel(model_desc, data, calc_col, tracemap, nloop=10, average=0):
 
     valid_fibers = [f.fibid for f in tracemap.contents if f.valid]
     centers = np.array([f.polynomial(calc_col) for f in tracemap.contents if f.valid])
-    # we might need a better approach to logging in multiprocessing
-    # https://www.jamesfheath.com/2020/06/logging-in-python-while-multiprocessing.html
-    print("computing in column", calc_col)
+    # in a pool of processes, the messages of the workers reach the
+    # handlers inherited from the parent process
+    _logger.debug("computing in column %d", calc_col)
 
     # Scale image value
     scale = column.max()

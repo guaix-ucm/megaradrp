@@ -60,3 +60,21 @@ def test_nearby_exception_lcb(focalplane, fibid):
 def test_nearby_exception_mos(focalplane, fibid):
     with pytest.raises(ValueError):
         focalplane.nearby_fibers(fibid)
+
+
+@pytest.mark.parametrize("funit, warns", [(None, False), ("arcsec", True)])
+def test_lcb_units(caplog, capsys, funit, warns):
+    """A warning if the units of the fibers do not match the position of the reference fiber"""
+    import logging
+
+    from megaradrp.datamodel import create_default_fiber_header
+    from megaradrp.instrument.focalplane import FocalPlaneConf
+
+    hdr = create_default_fiber_header("LCB")
+    if funit is not None:
+        hdr["FUNIT"] = funit
+    caplog.set_level(logging.WARNING)
+    conf = FocalPlaneConf.from_header(hdr)
+    assert conf.name == "LCB"
+    assert ("is in mm, but the units of the fibers are arcsec" in caplog.text) == warns
+    assert capsys.readouterr().out == ""

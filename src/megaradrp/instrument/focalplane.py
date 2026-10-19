@@ -9,6 +9,7 @@
 
 """Focal plane description for MEGARA"""
 
+import logging
 import math
 import re
 import warnings
@@ -17,6 +18,8 @@ import astropy.coordinates
 
 from .ienums import TargetType, BundleType
 from megaradrp.processing.hexgrid import connected6
+
+_logger = logging.getLogger(__name__)
 
 
 class FocalPlaneConf:
@@ -121,14 +124,16 @@ class FocalPlaneConf:
         if conf.name == "LCB":
             refid = 614
             ref_fiber = conf.fibers[refid]
-            if ref_fiber.x < -6:
-                # arcsec
-                if conf.funit != "arcsec":
-                    print("warning")
-            else:
-                # mm
-                if conf.funit != "mm":
-                    print("warning")
+            # the position of the reference fiber is in arcsec or in mm
+            expected_unit = "arcsec" if ref_fiber.x < -6 else "mm"
+            if conf.funit != expected_unit:
+                _logger.warning(
+                    "the position of the fiber %d of the LCB, x=%s, is in %s, but the units of the fibers are %s",
+                    refid,
+                    ref_fiber.x,
+                    expected_unit,
+                    conf.funit,
+                )
         return conf
 
     @classmethod
