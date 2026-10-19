@@ -22,6 +22,8 @@ import numpy
 from .modeldesc.base import ModelDescription
 from megaradrp.processing.modeldesc import config
 
+_logger = logging.getLogger(__name__)
+
 
 def calc1d_model(
     model_desc: ModelDescription,
@@ -66,27 +68,27 @@ def calc1d_model(
             #
             # print(f'val is {val}')
             # Compute the center of the fiber from the fitted parameters
-            logging.debug(f"fib {fib_id_reorder}")
+            _logger.debug("fib %s", fib_id_reorder)
             params = current[fib_id_reorder]
-            logging.debug(f"params of this fiber {params}")
+            _logger.debug("params of this fiber %s", params)
             center = model_desc.fiber_center(params)
-            logging.debug(f"center of this fiber {center}")
+            _logger.debug("center of this fiber %s", center)
             # Region containing the fibers and its neighbours
             m0 = int(math.ceil(center - 0.5))
             m1 = max(0, m0 - npix * total)
             m2 = m0 + npix * total
 
-            logging.debug(f"m1:m2 is {m1}:{m2}")
+            _logger.debug("m1:m2 is %s:%s", m1, m2)
             # Cut regions in the arrays
             yt = column[m1:m2].copy()
             xt = xl[m1:m2]
 
             pos = bisect.bisect(valid, fib_id_reorder)
-            logging.debug(f"pos bisect {pos}")
+            _logger.debug("pos bisect %s", pos)
             candidates = valid[max(pos - total - 1, 0) : pos + total]
-            logging.debug(f"candidates around my fiber  {list(candidates)}")
+            _logger.debug("candidates around my fiber %s", list(candidates))
             dis_f = [abs(c - fib_id_reorder) for c in candidates]
-            logging.debug(f"distances around my fibers {dis_f}")
+            _logger.debug("distances around my fibers %s", dis_f)
             # for p in range(max(0, val-S), min(nfib, val+S+1)):
             fit_ids = []
             for cfib, fib_df in zip(candidates, dis_f):
@@ -95,7 +97,7 @@ def calc1d_model(
                     yt -= model_cls.evaluate(xt, **current[cfib])
                 else:
                     fit_ids.append(cfib)
-            logging.debug(f"candidates around my fiber {fit_ids}")
+            _logger.debug("candidates around my fiber %s", fit_ids)
             # Extract values to create initials
             # We add profiles to a constant value of zero
 

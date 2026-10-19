@@ -19,7 +19,7 @@ import numpy
 
 from numina.processing import Corrector
 
-_logger = logging.getLogger("numina.processing")
+_logger = logging.getLogger(__name__)
 
 
 class TwilightCorrector(Corrector):

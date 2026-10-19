@@ -14,7 +14,7 @@ from numina.instrument.simulation.factory import PersistentRunCounter
 from megaradrp.simulation.actions import megara_sequences
 from megaradrp.simulation.efficiency import InterpolFile
 
-_logger = logging.getLogger("simulation")
+_logger = logging.getLogger(__name__)
 
 
 class PointLike:

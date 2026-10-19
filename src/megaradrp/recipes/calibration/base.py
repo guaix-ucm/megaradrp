@@ -9,8 +9,6 @@
 
 """Calibration Recipes for Megara"""
 
-import logging
-
 from numina.core import Result
 from numina.core.requirements import ObservationResultRequirement
 from numina.types.array import ArrayType
@@ -18,8 +16,6 @@ from numina.types.array import ArrayType
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.requirements import MasterBiasRequirement
 from megaradrp.ntypes import MasterFiberFlat
-
-_logger = logging.getLogger("numina.recipes.megara")
 
 
 class LCB_IFU_StdStarRecipe(MegaraBaseRecipe):
