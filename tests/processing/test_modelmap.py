@@ -78,10 +78,16 @@ def test_calc1():
     model = GaussBoxModelDescription().model_cls
     g_mean = 100 + 6 * np.arange(623)
     g_std = 1 + np.zeros_like(g_mean)
-    valid = range(623)
+    # the fibers are numbered from 1
+    valid = range(1, 624)
     wshape = (4112, 623)
     params = {}
     params["mean"] = g_mean
     params["stddev"] = g_std
     wm = calc_matrix(wshape, model, params, valid)
     assert isinstance(wm, scipy.sparse.csr_matrix)
+    # each fiber is in its column, around its row
+    assert wm.shape == wshape
+    assert wm[100, 0] > 0.3
+    assert wm[106, 1] > 0.3
+    assert wm[100, 1] == 0

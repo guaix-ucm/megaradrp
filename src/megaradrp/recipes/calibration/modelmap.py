@@ -10,6 +10,7 @@
 """Trace model recipe for Megara"""
 
 import logging
+import os
 import multiprocessing as mp
 
 import numpy as np
@@ -76,7 +77,9 @@ class ModelMapRecipe(MegaraBaseRecipe):
     The recipe returns also the RSS obtained by applying advanced extraction
     to `reduced_image`. As an intermediate result, the recipe proceduces DS9
     reg files with the position of the center of the profiles, that can be
-    used with raw and reduced images.
+    used with raw and reduced images. With `debug_plot`, it also saves plots
+    of the parameters of the profile of each fiber and their interpolation,
+    fib_NNN_mean.png and fib_NNN_stddev.png.
 
     """
 
@@ -189,6 +192,9 @@ class ModelMapRecipe(MegaraBaseRecipe):
         # vector of columns where we have performed the fit
         g_col = np.asarray(cols)
 
+        save_plots = self.intermediate_results and rinput.debug_plot
+        # the values to plot, (name of the file, title, values, interpolated values)
+        plots = []
         for fibid, boxid in valid_fibers:
             # interpolator of the parameters of a given fiber
             interpolators = {name: None for name in params_save}
@@ -211,21 +217,17 @@ class ModelMapRecipe(MegaraBaseRecipe):
             for name, deg in zip(params_save, spline_degrees):
                 interpolators[name] = UnivariateSpline(g_col, g_vals[name], k=deg)
 
-            if self.intermediate_results:
-                import matplotlib.pyplot as plt
-
-                if dolog:
-                    self.logger.debug("creating plots")
+            if save_plots:
                 # plot each storable parameter
                 for name in params_save:
-                    plt.title(f"{name} fib{fibid:03d}")
-                    plt.plot(g_col, g_vals[name], "b*")
-                    plt.plot(g_col, interpolators[name](g_col), "r")
-                    plt.savefig(f"fib_{fibid:03d}_{name}.png")
-                    plt.close()
-
-                if dolog:
-                    self.logger.debug("creating plots end")
+                    plots.append(
+                        (
+                            f"fib_{fibid:03d}_{name}.png",
+                            f"{name} fib{fibid:03d}",
+                            g_vals[name],
+                            interpolators[name](g_col),
+                        )
+                    )
 
             # summary of model for this fiber
             model_fib = {"model_name": model_obj.name, "params": interpolators}
@@ -235,6 +237,10 @@ class ModelMapRecipe(MegaraBaseRecipe):
             model_map.contents.append(gm)
 
         self.logger.info("interpolate parameters end")
+
+        if save_plots:
+            self.logger.info("save %d plots of the parameters", len(plots))
+            save_parameter_plots(g_col, plots, processes=processes)
 
         # perform extraction with our own calibration
         self.logger.info("perform extraction with computed calibration")
@@ -255,17 +261,56 @@ class ModelMapRecipe(MegaraBaseRecipe):
         return result
 
 
-def calc_parallel(model_desc, data, calc_col, tracemap, nloop=10, average=0):
+def plot_parameters(g_col, plots):
+    """Save the plots of the parameters, reusing one figure
 
+    Each plot is (name of the file, title, values, interpolated values)
+    of the parameter in the columns g_col.
+    """
+    # a figure without pyplot, independent of the backend and of
+    # the figures of other processes
+    from matplotlib.figure import Figure
+
+    fig = Figure()
+    ax = fig.subplots()
+    (points,) = ax.plot(g_col, g_col, "b*")
+    (line,) = ax.plot(g_col, g_col, "r")
+    for filename, title, values, interpolated in plots:
+        ax.set_title(title)
+        points.set_ydata(values)
+        line.set_ydata(interpolated)
+        ax.relim()
+        ax.autoscale_view()
+        fig.savefig(filename)
+
+
+def save_parameter_plots(g_col, plots, processes=1):
+    """Save the plots of the parameters, in a pool of processes"""
+    # the processes of the pool can have other working directory
+    plots = [(os.path.abspath(filename), *rest) for filename, *rest in plots]
+    if processes < 2:
+        plot_parameters(g_col, plots)
+        return
+    chunks = [plots[idx::processes] for idx in range(processes)]
+    with mp.Pool(processes) as pool:
+        pool.starmap(plot_parameters, [(g_col, chunk) for chunk in chunks if chunk])
+
+
+def column_to_fit(data, calc_col, average=0):
+    """The column of data fitted in calc_col"""
     if average > 0:
-        column = data[:, calc_col - average : calc_col - average + 1].mean(axis=1)
+        return data[:, calc_col - average : calc_col - average + 1].mean(axis=1)
     else:
-        column = data[:, calc_col]
+        return data[:, calc_col]
 
+
+def calc_parallel(model_desc, column, calc_col, tracemap, nloop=10):
+    """Fit the profiles of the fibers in column, the column calc_col of the image"""
     valid_fibers = [f.fibid for f in tracemap.contents if f.valid]
     centers = np.array([f.polynomial(calc_col) for f in tracemap.contents if f.valid])
-    # in a pool of processes, the messages of the workers reach the
-    # handlers inherited from the parent process
+    # with the start methods spawn and forkserver (the default since
+    # Python 3.14), the messages of the processes of the pool do not
+    # reach the handlers of the parent process
     _logger.debug("computing in column %d", calc_col)
 
     # Scale image value
@@ -281,14 +326,13 @@ def calc_parallel(model_desc, data, calc_col, tracemap, nloop=10, average=0):
     return calc_col, final
 
 
-def fit_model(model_desc, data, tracemap, cols, processes=20):
-
-    pool = mp.Pool(processes)
-
-    results = [
-        pool.apply_async(calc_parallel, args=(model_desc, data, col, tracemap), kwds={"nloop": 3, "average": 2})
-        for col in cols
-    ]
-
-    results_get = [p.get() for p in results]
+def fit_model(model_desc, data, tracemap, cols, processes=20, nloop=3, average=2):
+    """Fit the profiles of the fibers in the columns cols of data, in a pool of processes"""
+    with mp.Pool(processes) as pool:
+        # each process receives only its column, not the whole image
+        results = [
+            pool.apply_async(calc_parallel, args=(model_desc, column_to_fit(data, col, average), col, tracemap, nloop))
+            for col in cols
+        ]
+        results_get = [p.get() for p in results]
     return results_get

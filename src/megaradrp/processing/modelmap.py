@@ -121,8 +121,8 @@ def calc1d_model(
 
             # Fitter for this loop
             fitter = fitting.LevMarLSQFitter()
-            # Fit the model
-            model_fitted = fitter(model, xt, yt)
+            # Fit the model, the model is new in each loop, it is not copied
+            model_fitted = fitter(model, xt, yt, inplace=True)
 
             # Extract the parameters of the model and
             # update 'current' with them
@@ -140,7 +140,7 @@ def calc1d_model(
 
 
 def calc_matrix(wshape, model, params, valid, clip=1.0e-6, extra=10):
-    from scipy.sparse import lil_matrix
+    from scipy.sparse import csr_matrix
 
     # calc w
     # this is valid for 1 column (there are more broadcasts for N)
@@ -164,15 +164,15 @@ def calc_matrix(wshape, model, params, valid, clip=1.0e-6, extra=10):
     with numpy.errstate(invalid="ignore"):
         rr[rr < clip] = 0.0
 
-    # Calc Ws matrix
-    block, valid_nfib = rr.shape
-
-    w_init = lil_matrix(wshape)
-    for fibid in valid:
-        idx = fibid - 1
-        w_init[rrb[idx] : rrb[idx] + block, idx] = rr[:, idx, numpy.newaxis]
-
-    wcol = w_init.tocsr()
+    # Calc Ws matrix, the profile of each valid fiber in its column,
+    # starting in its row rrb, without the zero values
+    block = rr.shape[0]
+    idx = numpy.asarray(valid) - 1
+    rows = rrb[idx] + numpy.arange(block)[:, numpy.newaxis]
+    cols = numpy.broadcast_to(idx, rows.shape)
+    values = rr[:, idx]
+    nonzero = values != 0
+    wcol = csr_matrix((values[nonzero], (rows[nonzero], cols[nonzero])), shape=wshape)
     return wcol
 
 

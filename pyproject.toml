@@ -25,7 +25,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Astronomy",
 ]
 dependencies = [
-    "astropy >= 6.1.7",
+    "astropy >= 7.0",
     "attrs",
     "jsonschema",
     "matplotlib",
