@@ -416,21 +416,3 @@ def pixel_borders(arr):
     import numina.array.wavecalib.resample as W
 
     return W.map_borders(arr)
-
-
-if __name__ == "__main__":
-    import numina.types.structured as stru
-    import logging
-
-    logging.basicConfig(level=logging.DEBUG)
-
-    rssname = "/home/spr/Documentos/Congresos/ria_megara/M15_LCB_HR-R/obsid3_results/reduced_rss.fits"
-    rss = fits.open(rssname)
-    wlname = "/home/spr/Documentos/Congresos/ria_megara/M15_LCB_HR-R/obsid2_results/master_wlcalib.json"
-    solutionwl = stru.open(wlname)
-
-    rss2 = calibrate_wl_rss_megara(rss, solutionwl)
-    rss2.writeto("result_span0b.fits", overwrite=True)
-
-    rss2 = calibrate_wl_rss_megara(rss, solutionwl, span=2)
-    rss2.writeto("result_span2b.fits", overwrite=True)

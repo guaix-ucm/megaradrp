@@ -553,7 +553,6 @@ def add_targets_lcb(targets, subfinal, wl, fibrad, pos_x, pos_y, oe, telescope, 
     # Scale with focus
     seeing_fwhm_focus = seeing_fwhm * telescope.focus_actuator.internal_focus_factor
     telescope.focus_actuator.focus = 1200
-    print("intnl focus factor", telescope.focus_actuator.internal_focus_factor)
     seeing_profile = atmosphere.seeing.profile(seeing_fwhm_focus)
     psf = None
     fraction_of_flux = simulate_point_like_profile(seeing_profile, psf, fibrad.value)

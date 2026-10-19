@@ -161,7 +161,7 @@ class AcquireMOSRecipe(ImageRecipe):
 
         self.logger.info("compute offset and rotation with %d points", len(p1))
         if len(p1) == 0:
-            self.logger.warn("cant compute offset and rotation with 0 points")
+            self.logger.warning("cant compute offset and rotation with 0 points")
             offset = [0.0, 0.0]
             angle = 0.0
             qc = QC.BAD

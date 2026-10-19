@@ -3,4 +3,4 @@ import megaradrp.db.control  # noqa: F401
 
 
 def load_db():
-    print("load db")
+    """Load the database model of MEGARA, the modules are imported with this one"""
