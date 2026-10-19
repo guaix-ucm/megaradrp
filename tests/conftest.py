@@ -27,6 +27,8 @@ matplotlib.use("Agg")
 # The simulated detector has a row of dead pixels
 DEAD_ROW = 5
 DEAD_COLS = 170
+# Seed of the noise of the simulated data
+SEED = 20261016
 
 
 @pytest.fixture(scope="session")
@@ -38,8 +40,14 @@ def simulated_flats(tmp_path_factory):
     source of 5000 counts (low) and five with 40000 counts (high). The
     simulation is slow, the files are shared by the tests, that must not
     modify them.
+
+    The detector draws the noise with the global generator of numpy, it
+    is seeded so that the data are always the same, and its state is
+    restored at the end.
     """
     basedir = tmp_path_factory.mktemp("simulated")
+    state = np.random.get_state()
+    np.random.seed(SEED)
     qe = 0.8 * np.ones(DSHAPE)
     qe[DEAD_ROW, 0:DEAD_COLS] = 0.0
     detector = make_detector(qe=qe)
@@ -56,6 +64,7 @@ def simulated_flats(tmp_path_factory):
     high = write_flats("flat_high", 40000.0)
     master_bias = basedir / "master_bias.fits"
     generate_bias(detector, 5, basedir).master_bias.frame.writeto(master_bias)
+    np.random.set_state(state)
     return types.SimpleNamespace(
         header=header, low=low, high=high, master_bias=master_bias, dead_row=DEAD_ROW, dead_cols=DEAD_COLS
     )
