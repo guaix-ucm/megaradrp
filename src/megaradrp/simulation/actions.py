@@ -546,7 +546,7 @@ def add_targets_lcb(targets, subfinal, wl, fibrad, pos_x, pos_y, oe, telescope, 
     airmass = oe.airmass
     extinction = np.power(10, -0.4 * airmass * atmosphere.extinction(wl))
     seeing_fwhm = atmosphere.seeing.fwhm(wl[0], oe.zenith_distance)
-    _logger.debug("seeing FWHM is %", seeing_fwhm)
+    _logger.debug("seeing FWHM is %s", seeing_fwhm)
     # This is not really correct, but is simpler
     # than doing the whole PSF convolution
     _logger.debug("internal focus factor %s", telescope.focus_actuator.internal_focus_factor)
