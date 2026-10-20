@@ -194,7 +194,7 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
         median_max = numpy.max(median_vals)
         scales = median_vals / median_max
         self.logger.info("scale values are %s", scales)
-        return combine.median(arrays, scales=scales, dtype=dtype)
+        return combine.median(arrays, masks=masks, scales=scales, dtype=dtype)
 
 
 # The input and result classes, with their names before the fields were
