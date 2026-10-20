@@ -192,7 +192,7 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
         self.logger.info("median values are %s", median_vals)
         # normalize by max value
         median_max = numpy.max(median_vals)
-        scales = median_max / median_vals
+        scales = median_vals / median_max
         self.logger.info("scale values are %s", scales)
         return combine.median(arrays, scales=scales, dtype=dtype)
 
