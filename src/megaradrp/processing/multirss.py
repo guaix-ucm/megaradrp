@@ -29,7 +29,7 @@ def generate_multi_rss(imgs):
     hdu = fits.PrimaryHDU(data=fdata, header=refimg[0].header)
     hdu.header["MEG-NRSS"] = nimages
     # Generate a new UUID
-    hdu.header["UUID"] = str(uuid.uuid1())
+    hdu.header["UUID"] = str(uuid.uuid4())
 
     allhdus = [hdu]
     for idx, img in enumerate(imgs, 1):

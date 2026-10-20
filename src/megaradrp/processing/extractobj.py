@@ -462,7 +462,7 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp, wl_coverag
         if key in sens.header:
             del sens.header[key]
 
-    sens.header["uuid"] = str(uuid.uuid1())
+    sens.header["uuid"] = str(uuid.uuid4())
     sens.header["tunit"] = ("Jy", "Final units")
 
     # pixlims are 1-based

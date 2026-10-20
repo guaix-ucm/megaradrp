@@ -77,7 +77,7 @@ class BadPixelsMaskRecipe(MegaraBaseRecipe):
         ratio, mask, sigma = ccdmask(reduced1[0].data, reduced2[0].data, mode="full")
 
         hdu = fits.PrimaryHDU(mask, header=reduced1[0].header)
-        hdu.header["UUID"] = str(uuid.uuid1())
+        hdu.header["UUID"] = str(uuid.uuid4())
 
         self.set_product_headers(hdu.header)
 

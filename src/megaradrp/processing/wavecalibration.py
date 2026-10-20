@@ -175,7 +175,7 @@ def calibrate_wl_rss(rss, solutionwl, npix, targetwcs, dtype="float32", span=0, 
     hdr["history"] = f"Wavelength calibration time {datetime.datetime.now(datetime.UTC).isoformat()}"
     hdr["history"] = f"Resample span={span}"
     # Update UUID
-    hdr["UUID"] = str(uuid.uuid1())
+    hdr["UUID"] = str(uuid.uuid4())
 
     # Update other HDUs if needed
     # dtype here can be int16 or uint8

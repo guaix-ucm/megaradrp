@@ -84,7 +84,7 @@ class SlitFlatRecipe(MegaraBaseRecipe):
         qe2[numpy.isnan(qe2)] = 1.0
 
         hdu = fits.PrimaryHDU(qe2.astype("float32"), header=reduced[0].header)
-        hdu.header["UUID"] = str(uuid.uuid1())
+        hdu.header["UUID"] = str(uuid.uuid4())
 
         master_slitflat = fits.HDUList([hdu])
         self.set_product_headers(master_slitflat[0].header)
