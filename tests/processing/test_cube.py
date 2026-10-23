@@ -121,9 +121,9 @@ def test_create_cube_from_array_conserve_flux(focal_plane, p):
 
 
 @pytest.mark.parametrize("scale", [0.3, 0.5, 1.0])
-@pytest.mark.parametrize("p", [1])
+@pytest.mark.parametrize("p", [1, 2])
 def test_create_cube_from_array_total_flux(focal_plane, p, scale):
-    """The flux of the cube is the flux of the fibers"""
+    """The flux of the cube is the flux of the fibers (#343)"""
     rss = np.ones((623, 1))
     cube = create_cube_from_array(rss, focal_plane, p=p, target_scale_arcsec=scale)
     total = rss[connected_rows(focal_plane)].sum()

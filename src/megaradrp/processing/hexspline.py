@@ -453,12 +453,43 @@ def _bspline(x, n):
 
 # Convolution, compute kernel
 def rescaling_kernel(p, scale=1):
-    """Rescaling kernel from hexgrid to rectangular grid"""
+    """Rescaling kernel from hexgrid to rectangular grid
+
+    The kernel is the convolution of the hexspline of order `p` with
+    the B-spline of degree `p - 1` and width `scale`.
+
+    Parameters
+    ----------
+    p : {1, 2, 3}
+        Order of the hexspline
+    scale : float, optional
+        Size of the pixels of the rectangular grid, in units of the
+        distance between the points of the hexagonal grid
+
+    Returns
+    -------
+    scipy.interpolate.RectBivariateSpline
+        The kernel, tabulated in a grid that contains its support.
+        Its arguments are (y, x). Outside the grid it does not
+        return zero, but the values in the border (that are zero)
+
+    Raises
+    ------
+    ValueError
+        If `p` > 3
+    """
     Dx = 0.005
     Dy = 0.005
     DA = Dx * Dy
-    # TODO: the support should be computed from the scale and p
-    xsize = ysize = 3.0
+    # The support of the hexspline of order p is a hexagon of
+    # radius p / sqrt(3), the B-spline of degree p - 1 has a
+    # half width of p * scale / 2; the grid contains the support
+    # of their convolution, with a margin. The half size is a multiple
+    # of the step, so that the origin is a point of the grid, and
+    # at least 1.5, the size used when it was fixed
+    support = p / M_SQRT3 + p * scale / 2 + 10 * Dx
+    half_size = max(1.5, Dx * math.ceil(support / Dx))
+    xsize = ysize = 2 * half_size
     xx, yy, xs, ys, xl, yl = setup_grid(xsize, ysize, Dx, Dy)
 
     detR0 = M_SQRT3 / 2
