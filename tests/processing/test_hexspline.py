@@ -6,7 +6,18 @@ from megaradrp.processing.hexspline import rescaling_kernel, hexspline2
 
 
 # scales of the cubes with pixels of 0.3, 0.5 and 1 arcsec
-@pytest.mark.parametrize("p, scale", [(p, s) for p in [1, 2] for s in [0.56, 0.93, 1.86]] + [(3, 1.0)])
+@pytest.mark.parametrize(
+    "p, scale",
+    [
+        (1, 0.56),
+        (1, 0.93),
+        (1, 1.86),
+        (2, 0.56),
+        (2, 0.93),
+        pytest.param(2, 1.86, marks=pytest.mark.slow),
+        pytest.param(3, 1.0, marks=pytest.mark.slow),
+    ],
+)
 def test_rescaling_kernel_normalization(p, scale):
     rbs = rescaling_kernel(p, scale=scale)
     expected_area = math.sqrt(3) / 2
@@ -14,8 +25,7 @@ def test_rescaling_kernel_normalization(p, scale):
     assert np.allclose(area, expected_area, rtol=1e-2)
 
 
-@pytest.mark.parametrize("p", [1, 2])
-@pytest.mark.parametrize("scale", [0.56, 1.86])
+@pytest.mark.parametrize("p, scale", [(1, 0.56), (1, 1.86), (2, 0.56), pytest.param(2, 1.86, marks=pytest.mark.slow)])
 def test_rescaling_kernel_support(p, scale):
     """The kernel is zero far from the origin (#343)"""
     rbs = rescaling_kernel(p, scale=scale)

@@ -89,7 +89,7 @@ def test_create_cube_raise():
         create_cube(None, None, 3)
 
 
-@pytest.mark.parametrize("p", [1, 2])
+@pytest.mark.parametrize("p", [1, pytest.param(2, marks=pytest.mark.slow)])
 def test_create_cube_from_array_shape(focal_plane, p):
     nwl = 3
     scale = 1.0
@@ -109,7 +109,7 @@ def test_create_cube_from_array_1d(focal_plane):
     assert np.allclose(cube, cube2d)
 
 
-@pytest.mark.parametrize("p", [1, 2])
+@pytest.mark.parametrize("p", [1, pytest.param(2, marks=pytest.mark.slow)])
 def test_create_cube_from_array_conserve_flux(focal_plane, p):
     """The flux is multiplied by the area of the pixel over the area of the fiber"""
     scale = 1.0
@@ -120,8 +120,17 @@ def test_create_cube_from_array_conserve_flux(focal_plane, p):
     assert np.allclose(cube, cube_nc * target_scale**2 / HA_HEX, rtol=1e-5)
 
 
-@pytest.mark.parametrize("scale", [0.3, 0.5, 1.0])
-@pytest.mark.parametrize("p", [1, 2])
+@pytest.mark.parametrize(
+    "p, scale",
+    [
+        (1, 0.3),
+        (1, 0.5),
+        (1, 1.0),
+        (2, 0.3),
+        pytest.param(2, 0.5, marks=pytest.mark.slow),
+        pytest.param(2, 1.0, marks=pytest.mark.slow),
+    ],
+)
 def test_create_cube_from_array_total_flux(focal_plane, p, scale):
     """The flux of the cube is the flux of the fibers (#343)"""
     rss = np.ones((623, 1))
@@ -130,8 +139,17 @@ def test_create_cube_from_array_total_flux(focal_plane, p, scale):
     assert math.isclose(cube.sum(), total, rel_tol=0.02)
 
 
-@pytest.mark.parametrize("p", [1, 2])
-@pytest.mark.parametrize("fibid", [1, 311, 614])
+@pytest.mark.parametrize(
+    "p, fibid",
+    [
+        (1, 1),
+        (1, 311),
+        (1, 614),
+        pytest.param(2, 1, marks=pytest.mark.slow),
+        (2, 311),
+        pytest.param(2, 614, marks=pytest.mark.slow),
+    ],
+)
 def test_create_cube_from_array_fiber_position(focal_plane, p, fibid):
     """The light of a fiber is in the pixel nearest to its position"""
     scale = 0.5
@@ -167,8 +185,15 @@ def test_create_cube_from_rss_header(fiber_header):
     assert np.allclose([hdr["CRVAL3"], hdr["CDELT3"]], [hdr_spec["CRVAL1"], hdr_spec["CDELT1"]])
 
 
-@pytest.mark.parametrize("rotated", [False, True])
-@pytest.mark.parametrize("scale", [0.3, 0.7])
+@pytest.mark.parametrize(
+    "scale, rotated",
+    [
+        pytest.param(0.3, False, marks=pytest.mark.slow),
+        pytest.param(0.3, True, marks=pytest.mark.slow),
+        pytest.param(0.7, False, marks=pytest.mark.slow),
+        (0.7, True),
+    ],
+)
 def test_create_cube_from_rss_wcs(fiber_header, focal_plane, rotated, scale):
     """The WCS of the cube gives the sky position of the fibers (#342)"""
     if rotated:
@@ -289,7 +314,15 @@ def rss_file(tmp_path, fiber_header):
     return path
 
 
-@pytest.mark.parametrize("options", [[], ["-m", "linear"], ["-d"], ["--fix-missing"]])
+@pytest.mark.parametrize(
+    "options",
+    [
+        [],
+        pytest.param(["-m", "linear"], marks=pytest.mark.slow),
+        pytest.param(["-d"], marks=pytest.mark.slow),
+        pytest.param(["--fix-missing"], marks=pytest.mark.slow),
+    ],
+)
 def test_main(tmp_path, rss_file, options):
     outfile = tmp_path / "cube.fits"
     main([str(rss_file), "-o", str(outfile), "-p", "1.0"] + options)
@@ -298,6 +331,7 @@ def test_main(tmp_path, rss_file, options):
         assert cube[0].header["CDELT2"] == pytest.approx(1.0 / 3600)
 
 
+@pytest.mark.slow
 def test_main_pa(tmp_path, rss_file, fiber_header):
     """The rotation is computed from IPA, or taken from the header with --wcs-pa-from-header"""
     outfile = tmp_path / "cube.fits"
