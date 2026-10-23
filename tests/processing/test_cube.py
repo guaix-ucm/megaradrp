@@ -167,6 +167,33 @@ def test_create_cube_from_rss_header(fiber_header):
     assert np.allclose([hdr["CRVAL3"], hdr["CDELT3"]], [hdr_spec["CRVAL1"], hdr_spec["CDELT1"]])
 
 
+@pytest.mark.parametrize("rotated", [False, True])
+@pytest.mark.parametrize("scale", [0.3, 0.7])
+def test_create_cube_from_rss_wcs(fiber_header, focal_plane, rotated, scale):
+    """The WCS of the cube gives the sky position of the fibers (#342)"""
+    if rotated:
+        sky = create_sky_header2()
+        for key in ["PC1_1", "PC1_2", "PC2_1", "PC2_2"]:
+            fiber_header[key] = sky[key]
+    rss = make_rss(np.ones((623, 1)), fiber_header)
+    cube = create_cube_from_rss(rss, target_scale_arcsec=scale)
+    wcs_cube = astropy.wcs.WCS(cube[0].header, fix=False).celestial
+    wcs_fibers = astropy.wcs.WCS(fiber_header, fix=False)
+
+    r0l, _ = calc_matrix_from_fiberconf(focal_plane)
+    fibids = [fiber.fibid for fiber in focal_plane.connected_fibers()]
+    target_scale = scale / HEX_SCALE
+    (i1min, _), (j1min, _) = hexgrid_extremes(r0l, target_scale)
+    for fibid in [1, 311, 614]:
+        fiber = focal_plane.fibers[fibid]
+        # the positions of the fibers are the pixel coordinates of FIBERS
+        expected = wcs_fibers.all_pix2world(fiber.x, fiber.y, 1)
+        # position of the fiber in the array of the cube, 0-based
+        x, y = r0l[:, fibids.index(fibid)]
+        world = wcs_cube.all_pix2world(x / target_scale - j1min, y / target_scale - i1min, 0)
+        assert np.allclose(world, expected, rtol=0, atol=1e-3 / 3600)
+
+
 def test_sub_wcs():
     hdr_sky = create_sky_header2()
     hdr_spec = create_spec_header2()

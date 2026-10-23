@@ -308,11 +308,12 @@ def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
     target_scale = target_scale_arcsec / HEX_SCALE
     r0l, (refx, refy) = calc_matrix_from_fiberconf(fiberconf)
     (i1min, i1max), (j1min, j1max) = hg.hexgrid_extremes(r0l, target_scale)
+    # 0-based position of the center of the field in the cube
     crpix_x = -refx / target_scale - j1min
     crpix_y = -refy / target_scale - i1min
-    # Map the center of original field
-    sky_header["CRPIX1"] = crpix_x
-    sky_header["CRPIX2"] = crpix_y
+    # Map the center of original field, CRPIX is 1-based
+    sky_header["CRPIX1"] = crpix_x + 1
+    sky_header["CRPIX2"] = crpix_y + 1
     sky_header["CDELT1"] = -target_scale_arcsec / 3600.0
     sky_header["CDELT2"] = target_scale_arcsec / 3600.0
 
