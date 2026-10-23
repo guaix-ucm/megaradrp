@@ -7,10 +7,23 @@
 # License-Filename: LICENSE.txt
 #
 
-"""
-Interpolation method based on:
-'Hex-Splines: A Novel Spline Family for Hexagonal Lattices'
-van de Ville et al. IEEE Transactions on Image Processing 2004, 13, 6
+"""Construction of data cubes from the RSS of the LCB
+
+The fibers of the LCB sample the sky in a hexagonal grid. The cube is
+obtained resampling, at each wavelength, the values of the fibers in a
+rectangular grid of square pixels. The resampling uses hex-splines,
+the splines of the hexagonal grid:
+
+    D. Van De Ville et al., 'Hex-Splines: A Novel Spline Family for
+    Hexagonal Lattices', IEEE Transactions on Image Processing 13, 6 (2004)
+
+The values of the fibers are the coefficients of a hex-spline of order
+`p`, which is integrated over each pixel of the rectangular grid. The
+order 1 (the indicator function of the hexagon) gives a nearest neighbor
+interpolation; the order 2 gives a linear interpolation.
+
+The command line tool ``megaradrp-cube`` (:func:`main`) converts a RSS
+file in a cube file.
 """
 
 import argparse
@@ -40,15 +53,29 @@ HEX_SCALE = cons.SPAXEL_SCALE.to(u.arcsec, GTC_PLATESCALE).value
 
 def calc_matrix_from_fiberconf(fpconf, refid=614):
     """
-    Compute hexagonal grid matrix from FocalPlaneConf
+    Compute the positions of the fibers in the hexagonal grid
+
+    The positions are in units of the distance between fibers
+    (the size of a spaxel), relative to the reference fiber.
 
     Parameters
     ----------
     fpconf : megaradrp.instrument.focalplane.FocalPlaneConf
-    refid : int
-        fiber ID of reference fiber for grid coordinates
+        Focal plane configuration, with the positions of the fibers
+        in mm or in arcsec
+    refid : int, optional
+        Fiber ID of the reference fiber, the origin of the grid
+        coordinates. Fiber 614 is in the lower left corner of the LCB
+
     Returns
     -------
+    r0l : numpy.ndarray
+        Positions (x, y) of the connected fibers, an array of shape
+        (2, number of connected fibers), in the order of
+        `fpconf.connected_fibers()`
+    ref : tuple of float
+        Position (x, y) of the reference fiber relative to the center
+        of the focal plane, in grid units
 
     """
 
@@ -80,16 +107,35 @@ def calc_matrix_from_fiberconf(fpconf, refid=614):
 
 def create_cube(r0l, zval, p=1, target_scale=1.0):
     """
+    Resample values in a hexagonal grid to a rectangular grid
+
+    Each pixel of the result is the integral over the pixel of the
+    hex-spline of order `p` whose coefficients are the values in the
+    hexagonal grid. For `p` = 2, the result is postfiltered with
+    :func:`scipy.signal.cspline2d`.
 
     Parameters
     ----------
-    r0l
-    zval
+    r0l : numpy.ndarray
+        Positions (x, y) of the points of the hexagonal grid, an array
+        of shape (2, npoints), in units of the distance between points
+    zval : numpy.ndarray
+        Values in the points, an array of shape (npoints,) or
+        (npoints, nwl), with the wavelength in the last axis
     p : {1, 2}
+        Order of the hex-spline, 1 for nearest neighbor interpolation,
+        2 for linear interpolation
     target_scale : float, optional
+        Size of the pixels of the rectangular grid, in units of the
+        distance between points
 
     Returns
     -------
+    numpy.ndarray
+        Array of shape (ny, nx, nwl). The pixel (0, 0) is the lower
+        left corner of the rectangle that covers the hexagons of
+        all the points (see :func:`megaradrp.processing.hexgrid.hexgrid_extremes`).
+        The values are not scaled by the area of the pixels
 
     Raises
     ------
@@ -166,17 +212,31 @@ def create_cube_from_array(rss_data, fiberconf, p=1, target_scale_arcsec=1.0, co
     """
     Create a cube array from a 2D or 1D array and focal plane configuration
 
+    Only the connected fibers are used, the row of the fiber with
+    ID `fibid` is `fibid - 1`.
+
     Parameters
     ----------
-    rss_data
+    rss_data : numpy.ndarray
+        RSS data, an array of shape (nfibers, nwl), or (nfibers,) for
+        a single wavelength
     fiberconf : megaradrp.instrument.focalplane.FocalPlaneConf
-    p : {1, 2}
-    target_scale_arcsec : float
-    conserve_flux : bool
+        Focal plane configuration, with the positions of the fibers
+    p : {1, 2}, optional
+        Order of the interpolation, 1 for nearest neighbor, 2 for linear
+    target_scale_arcsec : float, optional
+        Size of the pixels of the cube, in arcsec
+    conserve_flux : bool, optional
+        If True, the values are multiplied by the area of a pixel
+        divided by the area of a fiber, so that the cube has the same
+        flux as the fibers. If False, the values are a surface
+        brightness, the flux in the area of a fiber
 
     Returns
     -------
-    np.ndarray
+    numpy.ndarray
+        Cube of float32, of shape (nwl, ny, nx), the wavelength is the
+        first axis (the last in FITS)
 
     """
 
@@ -202,18 +262,31 @@ def create_cube_from_array(rss_data, fiberconf, p=1, target_scale_arcsec=1.0, co
 
 def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
     """
-    Create a cube HDUlist from a RSS HDUList
+    Create a cube HDUList from a RSS HDUList
+
+    The positions of the fibers are read from the extension FIBERS. The
+    cube has the header and the extensions of the RSS, with a WCS of
+    three axes: the two sky axes of the WCS of FIBERS, with the size of
+    the pixels of the cube, and the spectral axis of the primary header
+    of the RSS. Each WCS of the primary header (the main and the
+    alternatives) gives a WCS of the cube.
 
     Parameters
     ----------
-    rss : fits.HDUList
-    p : {1, 2}
+    rss : astropy.io.fits.HDUList
+        RSS of the LCB, with the extension FIBERS
+    p : {1, 2}, optional
+        Order of the interpolation, 1 for nearest neighbor, 2 for linear
     target_scale_arcsec : float, optional
+        Size of the pixels of the cube, in arcsec
     conserve_flux : bool, optional
+        If True, the cube has the same flux as the fibers,
+        see :func:`create_cube_from_array`
 
     Returns
     -------
-    fits.HDUList
+    astropy.io.fits.HDUList
+        Cube, with the wavelength in the third axis of FITS
     """
 
     fiberconf = FocalPlaneConf.from_img(rss)
@@ -255,7 +328,26 @@ def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
 def merge_wcs(hdr_sky, hdr_spec, out=None):
     """Merge sky WCS with spectral WCS
 
-    Works only with main WCS and B WCS
+    The result has a WCS of three axes for each WCS of `hdr_spec`
+    (the main and the alternatives, as B): the axes 1 and 2 are the axes
+    of the main WCS of `hdr_sky`, the axis 3 is the axis 1 of the
+    WCS of `hdr_spec`.
+
+    Parameters
+    ----------
+    hdr_sky : astropy.io.fits.Header
+        Header with the sky WCS, of two axes
+    hdr_spec : astropy.io.fits.Header
+        Header with the spectral WCS in the axis 1, as the header
+        of a RSS
+    out : astropy.io.fits.Header, optional
+        Header updated with the merged WCS. If None, a copy
+        of `hdr_spec` is updated
+
+    Returns
+    -------
+    astropy.io.fits.Header
+        The header with the merged WCS
 
     """
     if out is None:
@@ -280,7 +372,25 @@ def merge_wcs(hdr_sky, hdr_spec, out=None):
 
 
 def merge_wcs_alt(hdr_sky, hdr_spec, out, spec_suffix=" "):
-    """Merge sky WCS with spectral WCS"""
+    """Merge sky WCS with spectral WCS, for one WCS of `hdr_spec`
+
+    Parameters
+    ----------
+    hdr_sky : astropy.io.fits.Header
+        Header with the sky WCS, of two axes
+    hdr_spec : astropy.io.fits.Header
+        Header with the spectral WCS in the axis 1
+    out : astropy.io.fits.Header
+        Header updated with the merged WCS
+    spec_suffix : str, optional
+        Key of the WCS of `hdr_spec`, " " for the main WCS
+
+    Returns
+    -------
+    astropy.io.fits.Header
+        `out`, with the merged WCS
+
+    """
 
     hdr = out
     if spec_suffix == " ":
@@ -371,7 +481,20 @@ def merge_wcs_alt(hdr_sky, hdr_spec, out, spec_suffix=" "):
 
 
 def main(args=None):
-    """Main function to convert RSS to cube"""
+    """Convert a RSS file in a cube file, the command line tool ``megaradrp-cube``
+
+    By default, the rotation of the sky WCS is recomputed from the
+    instrument position angle (keyword IPA of the primary header),
+    the pixels have 0.3 arcsec, the interpolation is nearest neighbor
+    and the flux is conserved. With ``--fix-missing``, the values of
+    fiber 623 are interpolated from the fibers around it
+    (:func:`megaradrp.processing.fixrss.fix_missing_fiber`).
+
+    Parameters
+    ----------
+    args : list of str, optional
+        Command line arguments, `sys.argv` if None
+    """
 
     # parse command-line options
     parser = argparse.ArgumentParser(prog="convert_rss_cube")

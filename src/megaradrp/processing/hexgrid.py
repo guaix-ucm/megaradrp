@@ -27,15 +27,22 @@ HA_HEX = 6 * A_HEX  # detR0 == ha
 
 def calc_matrix(nrow, ncol, grid_type=2):
     """
+    Positions of the points of a hexagonal grid of unit spacing
 
     Parameters
     ----------
     nrow : int
+        Number of points in each column
     ncol : int
-    grid_type : int
+        Number of columns
+    grid_type : int, optional
+        Type of grid, 2 is the grid of MEGARA, where the odd columns
+        are shifted down by half a point
 
     Returns
     -------
+    numpy.ndarray
+        Positions (x, y) of the points, an array of shape (2, nrow * ncol)
 
     """
 
@@ -62,13 +69,17 @@ def calc_matrix(nrow, ncol, grid_type=2):
 
 def calc_lcb_grid(scale=1.0):
     """
+    Positions of the spaxels of the LCB, centered in the origin
 
     Parameters
     ----------
-    scale : float
+    scale : float, optional
+        Distance between spaxels
 
     Returns
     -------
+    tuple of numpy.ndarray
+        Positions x and y of the 567 spaxels
 
     """
 
@@ -85,14 +96,26 @@ def calc_lcb_grid(scale=1.0):
 
 def hexgrid_extremes(r0l, target_scale):
     """
+    Extremes of the rectangular grid that covers a hexagonal grid
+
+    The rectangular grid has square pixels of size `target_scale`, the
+    center of the pixel (i, j) is (j * target_scale, i * target_scale).
+    The pixels cover the hexagons around all the points.
 
     Parameters
     ----------
-    r0l
+    r0l : numpy.ndarray
+        Positions (x, y) of the points of the hexagonal grid, an array
+        of shape (2, npoints), in units of the distance between points
     target_scale : float
+        Size of the pixels of the rectangular grid, in units of the
+        distance between points
 
     Returns
     -------
+    tuple
+        ((i1min, i1max), (j1min, j1max)), the minimum and maximum indices
+        of the rows (y) and of the columns (x) of the rectangular grid
 
     """
     # geometry

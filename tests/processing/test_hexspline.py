@@ -27,3 +27,8 @@ def test_hexspline2():
     ]
     res = hexspline2(x, y)
     assert np.allclose(res, expected_res, rtol=1e-2)
+
+
+def test_rescaling_kernel_raise():
+    with pytest.raises(ValueError):
+        rescaling_kernel(4)

@@ -18,7 +18,26 @@ import megaradrp.processing.wcs as mwcs
 
 
 def fix_missing_fiber(rss, fibid):
-    """Interpolate missing fiber fibid"""
+    """Interpolate missing fiber fibid
+
+    The values of the fiber are the average of the values of the fibers
+    around it. If the header of FIBERS has the limits of the valid
+    region of the fibers (FIBnnnW1 and FIBnnnW2), the limits of the
+    fiber are the narrowest of the fibers around it, and its values
+    outside them are 0.
+
+    Parameters
+    ----------
+    rss : astropy.io.fits.HDUList
+        RSS, with the extension FIBERS
+    fibid : int
+        Fiber ID of the missing fiber
+
+    Returns
+    -------
+    astropy.io.fits.HDUList
+        `rss`, modified in place
+    """
     hdr = rss["FIBERS"].header
     fp = FocalPlaneConf.from_img(rss)
     # Fibers around 623 are
@@ -52,7 +71,20 @@ def fix_missing_fiber(rss, fibid):
 
 
 def recompute_wcs(hdr, ipa):
-    """Recompute the WCS rotations from IPA"""
+    """Recompute the WCS rotations from IPA
+
+    Parameters
+    ----------
+    hdr : astropy.io.fits.Header
+        Header with the sky WCS, modified in place
+    ipa : float
+        Instrument position angle, in degrees
+
+    Returns
+    -------
+    astropy.io.fits.Header
+        `hdr`, with the PC matrix of the position angle
+    """
     pa = mwcs.compute_pa_from_ipa(ipa)
     # print('IPA angle is:', ipa, 'PA angle is', math.fmod(pa, 360))
     # x = hdr['PC1_1']
