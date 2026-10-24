@@ -49,5 +49,3 @@
 .. autoclass:: megaradrp.ntypes.ReferenceExtinctionTable
 
 .. autoclass:: megaradrp.ntypes.ReferenceSpectrumTable
-
-

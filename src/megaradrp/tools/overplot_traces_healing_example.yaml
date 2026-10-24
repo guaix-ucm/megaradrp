@@ -6,7 +6,7 @@ resampling: 20
 poldeg: 5
 xstart: 6
 xstop: 4090
-user_points: 
+user_points:
   - [3500, 3817.0]
   - [4000, 3818.0]
 ---
@@ -18,7 +18,7 @@ resampling: 20
 poldeg: 5
 xstart: 6
 xstop: 4090
-user_points: 
+user_points:
   - [3500, 3823.2]
   - [4000, 3824.2]
 ---
@@ -30,7 +30,7 @@ resampling: 20
 poldeg: 5
 xstart: 6
 xstop: 4090
-user_points: 
+user_points:
   - [3500, 3835.0]
   - [4000, 3836.2]
 ---
@@ -56,7 +56,7 @@ resampling: 20
 poldeg: 5
 xstart: 6
 xstop: 4090
-user_points: 
+user_points:
   - [3500, 3878.1]
   - [4000, 3878.6]
 refit: False

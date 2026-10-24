@@ -1,13 +1,13 @@
 ########
 Overview
 ########
-      
-This guide is intended as an introductory overview of MEGARA Reduction Pipeline 
+
+This guide is intended as an introductory overview of MEGARA Reduction Pipeline
 packages and explains how to install and make use of its most important features.
 
 For detailed reference documentation of the functions and
 classes contained in the package, see the :ref:`reference`.
-    
+
 
 .. warning::
 
