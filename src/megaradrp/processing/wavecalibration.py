@@ -375,7 +375,8 @@ def resample_rss_flux(arr, solutionwl, npix, finalwcs, span=0, fill=0):
         idx = fibid - 1
 
         # small correction defined in master_wlcalib_XXX_XX-X.json
-        coeff = fibsol.solution.coeff
+        # applied to a copy, the solution is not modified
+        coeff = numpy.array(fibsol.solution.coeff, dtype=float)
         offset_wavelength = solutionwl.global_offset(fibid)
         coeff[0] -= offset_wavelength
 

@@ -107,15 +107,16 @@ def test_resample_rss_flux_offset(raw_rss):
     assert limits[0] == (1, (15, 415))
 
 
-@pytest.mark.xfail(reason="the global offset is subtracted in the solution, again in each call", strict=True)
 def test_resample_rss_flux_twice(raw_rss):
-    """Applying a solution twice gives the same result"""
+    """Applying a solution twice gives the same result, the solution is not modified (#349)"""
     solution = make_solution([1, 2, 3], COEFF, offset=3.0)
     target = SimpleWcs1D(crval=3990.0, crpix=1.0, cdelt=0.5).create_internal_wcs_()
     result1, limits1 = resample_rss_flux(raw_rss, solution, 500, target)
     result2, limits2 = resample_rss_flux(raw_rss, solution, 500, target)
     assert limits1 == limits2
     assert numpy.allclose(result1, result2)
+    for fibsol in solution.contents:
+        assert list(fibsol.solution.coeff) == COEFF
 
 
 def make_raw_rss(raw_rss):
