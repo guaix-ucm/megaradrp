@@ -1,4 +1,5 @@
 import functools
+import logging
 
 import numpy
 import pytest
@@ -6,7 +7,12 @@ import pytest
 import megaradrp.instrument.constants as cons
 from megaradrp.datamodel import create_default_fiber_header
 from megaradrp.instrument.focalplane import FocalPlaneConf
-from megaradrp.processing.centroid import calc_centroid, calc_centroid_brightest, find_brightest_spaxel
+from megaradrp.processing.centroid import (
+    calc_centroid,
+    calc_centroid_brightest,
+    find_brightest_spaxel,
+)
+from megaradrp.processing.extractobj import extract_star
 from megaradrp.testing.create_image import create_rss
 
 PLATESCALE = cons.GTC_FC_A_PLATESCALE.value
@@ -74,3 +80,18 @@ def test_calc_centroid_brightest(unit):
     centroid = calc_centroid_brightest(rss, (10, 90), 2)
     scale = PLATESCALE if unit == "arcsec" else 1.0
     assert numpy.allclose(centroid, (center.x / scale, center.y / scale))
+
+
+@pytest.mark.parametrize("unit", ["mm", "arcsec"])
+def test_extract_star_brightest(unit):
+    """The star far from the center is extracted with the centroid in the units of the fibers (#347)"""
+    hdrf = fiber_header(unit)
+    fp_conf = _fiber_header(unit)[1]
+    # fiber 115, about 7 arcsec from the center
+    rss, center = star_rss(hdrf, 115)
+    position = fp_conf.to_fiber_units(calc_centroid_brightest(rss, (10, 90), 2), unit="mm")
+    flux, colids, _, _ = extract_star(rss, position, 19, fp_conf, logger=logging.getLogger(__name__))
+
+    assert center.fibid - 1 in colids
+    total = rss[0].data.sum(axis=0)
+    assert flux[50] / total[50] > 0.95

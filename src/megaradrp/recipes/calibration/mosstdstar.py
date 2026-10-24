@@ -75,8 +75,9 @@ class MOSStandardRecipe(ImageRecipe):
 
     """
 
-    position = Requirement(Point2D, "Position of the reference object", optional=True)
-    # nrings = 1
+    position = Requirement(
+        Point2D, "Position of the reference object, in the units of the positions of the fibers", optional=True
+    )
     reference_spectrum = Requirement(ReferenceSpectrumTable, "Spectrum of reference star")
     reference_spectrum_velocity = Parameter(0.0, "Radial velocity of reference spectrum")
     reference_extinction = Requirement(ReferenceExtinctionTable, "Reference extinction")
@@ -145,11 +146,14 @@ class MOSStandardRecipe(ImageRecipe):
         # In MOS, only 1 ring around central point
         # If position is None, find the brightest spaxel
         # and use the centroid
+        fp_conf = FocalPlaneConf.from_img(final)
         if rinput.position is None:
             self.logger.info("finding centroid of brightest spaxel")
             extraction_region = [1000, 3000]
-            nrings = rinput.nrings
-            position = calc_centroid_brightest(final, extraction_region, nrings)
+            nrings = 1
+            # the centroid is in mm, extract_star uses the units of the fibers
+            position_mm = calc_centroid_brightest(final, extraction_region, nrings)
+            position = fp_conf.to_fiber_units(position_mm, unit="mm")
         else:
             position = rinput.position
         self.logger.info("central position is %s", position)
@@ -158,7 +162,6 @@ class MOSStandardRecipe(ImageRecipe):
         npoints = 7
         self.logger.debug("adding %d fibers", npoints)
 
-        fp_conf = FocalPlaneConf.from_img(final)
         spectra_pack = extract_star(final, position, npoints, fp_conf, logger=self.logger)
 
         spectrum, colids, wl_cover1, wl_cover2 = spectra_pack

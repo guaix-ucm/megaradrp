@@ -75,7 +75,9 @@ class LCBStandardRecipe(ImageRecipe):
 
     """
 
-    position = Requirement(Point2D, "Position of the reference object", optional=True)
+    position = Requirement(
+        Point2D, "Position of the reference object, in the units of the positions of the fibers", optional=True
+    )
     nrings = Parameter(3, "Number of rings to extract the star", validator=range_validator(minval=1))
     reference_spectrum = Requirement(ReferenceSpectrumTable, "Spectrum of reference star")
     reference_spectrum_velocity = Parameter(0.0, "Radial velocity (km/s) of reference spectrum")
@@ -146,11 +148,14 @@ class LCBStandardRecipe(ImageRecipe):
 
         # If position is None, find the brightest spaxel
         # and use the centroid
+        fp_conf = FocalPlaneConf.from_img(final)
         if rinput.position is None:
             self.logger.info("finding centroid of brightest spaxel")
             extraction_region = [1000, 3000]
             nrings = rinput.nrings
-            position = calc_centroid_brightest(final, extraction_region, nrings)
+            # the centroid is in mm, extract_star uses the units of the fibers
+            position_mm = calc_centroid_brightest(final, extraction_region, nrings)
+            position = fp_conf.to_fiber_units(position_mm, unit="mm")
         else:
             position = rinput.position
         self.logger.info("central position is %s", position)
@@ -159,7 +164,6 @@ class LCBStandardRecipe(ImageRecipe):
         npoints = 1 + 3 * rinput.nrings * (rinput.nrings + 1)
         self.logger.debug("adding %d fibers", npoints)
 
-        fp_conf = FocalPlaneConf.from_img(final)
         spectra_pack = extract_star(final, position, npoints, fp_conf, logger=self.logger)
 
         spectrum, colids, wl_cover1, wl_cover2 = spectra_pack

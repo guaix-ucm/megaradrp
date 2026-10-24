@@ -78,3 +78,31 @@ def test_lcb_units(caplog, capsys, funit, warns):
     assert conf.name == "LCB"
     assert ("is in mm, but the units of the fibers are arcsec" in caplog.text) == warns
     assert capsys.readouterr().out == ""
+
+
+@pytest.mark.parametrize("funit, factor", [("mm", 1.0), ("arcsec", 1.212)])
+def test_to_from_fiber_units(funit, factor):
+    """Conversion of positions in mm or arcsec to the units of the fibers"""
+    import numpy
+
+    from megaradrp.instrument.focalplane import FocalPlaneConf
+
+    conf = FocalPlaneConf("LCB")
+    conf.funit = funit
+    # 1.212 arcsec / mm, the plate scale of GTC
+    assert numpy.allclose(conf.to_fiber_units((2.0, -1.0), unit="mm"), (2.0 * factor, -1.0 * factor))
+    assert numpy.allclose(conf.to_fiber_units((1.212, 0.0), unit="arcsec"), (1.212 / 1.212 * factor, 0.0))
+    position = (0.5, 3.0)
+    for unit in ["mm", "arcsec"]:
+        back = conf.from_fiber_units(conf.to_fiber_units(position, unit=unit), unit=unit)
+        assert numpy.allclose(back, position)
+
+
+def test_default_fiber_units():
+    """The units of the fibers are arcsec by default, as in a header without FUNIT"""
+    from megaradrp.datamodel import create_default_fiber_header
+    from megaradrp.instrument.focalplane import FocalPlaneConf
+
+    hdr = create_default_fiber_header("LCB")
+    del hdr["FUNIT"]
+    assert FocalPlaneConf("LCB").funit == FocalPlaneConf.from_header(hdr).funit == "arcsec"

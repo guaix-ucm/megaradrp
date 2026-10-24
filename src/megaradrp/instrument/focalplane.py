@@ -15,11 +15,17 @@ import re
 import warnings
 
 import astropy.coordinates
+import astropy.units as u
+import numpy
 
+from .constants import GTC_FC_A_PLATESCALE
 from .ienums import TargetType, BundleType
 from megaradrp.processing.hexgrid import connected6
 
 _logger = logging.getLogger(__name__)
+
+# conversion between angles in the sky and lengths in the focal plane
+_PLATESCALE_EQUIVALENCY = u.plate_scale(GTC_FC_A_PLATESCALE)
 
 
 class FocalPlaneConf:
@@ -45,7 +51,49 @@ class FocalPlaneConf:
         self.nfibers = sum(bundle.nfibers for bundle in bundles.values())
         self.bundles = bundles
         self.fibers = {}
-        self.funit = "mm"
+        # units of the positions of the fibers, as in from_header
+        self.funit = "arcsec"
+
+    def _fiber_unit_scale(self, unit):
+        """Value of 1 `unit` in the units of the positions of the fibers"""
+        one = 1 * u.Unit(unit)
+        return one.to_value(u.Unit(self.funit), equivalencies=_PLATESCALE_EQUIVALENCY)
+
+    def to_fiber_units(self, position, unit="mm"):
+        """Convert a position to the units of the positions of the fibers
+
+        Parameters
+        ----------
+        position : array_like
+            Position (x, y) in `unit`
+        unit : str or astropy.units.Unit, optional
+            Units of `position`, a length in the focal plane (mm)
+            or an angle in the sky (arcsec)
+
+        Returns
+        -------
+        numpy.ndarray
+            Position (x, y) in the units of the fibers, `funit`
+        """
+        return numpy.asarray(position) * self._fiber_unit_scale(unit)
+
+    def from_fiber_units(self, position, unit="mm"):
+        """Convert a position in the units of the positions of the fibers to `unit`
+
+        Parameters
+        ----------
+        position : array_like
+            Position (x, y) in the units of the fibers, `funit`
+        unit : str or astropy.units.Unit, optional
+            Units of the result, a length in the focal plane (mm)
+            or an angle in the sky (arcsec)
+
+        Returns
+        -------
+        numpy.ndarray
+            Position (x, y) in `unit`
+        """
+        return numpy.asarray(position) / self._fiber_unit_scale(unit)
 
     def attach_fibers(self, fibers):
         bun_fib = {}
