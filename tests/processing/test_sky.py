@@ -96,3 +96,45 @@ def test_subtract_sky_invalid_fibers():
     final_img, _, _ = subtract_sky(rss)
     assert numpy.allclose(final_img[0].data[0, 10:50], 0.0)
     assert numpy.allclose(final_img[0].data[99, 10:50], SKY_LEVEL)
+
+
+def test_subtract_sky_coverage_of_the_fiber():
+    """Outside the coverage of a fiber, its values are 0 (#350)"""
+    rss = make_rss()
+    rss["WLMAP"].data[99] = 0
+    rss["WLMAP"].data[99, 20:40] = 1
+    rss[0].data[99] = 0
+    rss[0].data[99, 20:40] = SKY_LEVEL + 100.0
+
+    final_img, _, _ = subtract_sky(rss)
+    assert numpy.allclose(final_img[0].data[99, 20:40], 100.0)
+    assert numpy.all(final_img[0].data[99, :20] == 0)
+    assert numpy.all(final_img[0].data[99, 40:] == 0)
+
+
+def test_subtract_sky_without_sky(focal_plane):
+    """Where no sky fiber is covered, the sky is not subtracted"""
+    rss = make_rss()
+    for fibid in focal_plane.sky_fibers():
+        rss["WLMAP"].data[fibid - 1, 40:50] = 0
+        rss[0].data[fibid - 1, 40:50] = 0
+
+    final_img, _, _ = subtract_sky(rss)
+    assert numpy.allclose(final_img[0].data[0, 10:40], 0.0)
+    assert numpy.allclose(final_img[0].data[0, 40:50], SKY_LEVEL)
+
+
+def test_subtract_sky_rss_invalid_fibers_and_sky_coverage():
+    """The invalid fibers are not subtracted, nor where the sky RSS is not covered"""
+    rss = make_rss()
+    rss["FIBERS"].header["FIB100_V"] = False
+    sky = make_rss()
+    sky["WLMAP"].data[:, 40:50] = 0
+
+    final_img, img, sky_img = subtract_sky_rss(rss, sky)
+    assert img is rss
+    assert sky_img is sky
+    assert numpy.allclose(final_img[0].data[0, 10:40], 0.0)
+    assert numpy.allclose(final_img[0].data[0, 40:50], SKY_LEVEL)
+    assert numpy.allclose(final_img[0].data[99, 10:50], SKY_LEVEL)
+    assert numpy.all(final_img[0].data[:, :10] == 0)
