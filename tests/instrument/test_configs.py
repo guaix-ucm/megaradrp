@@ -1,5 +1,5 @@
 import pytest
-import numina.instrument.generic
+from numina.instrument.generic import InstrumentGeneric
 from megaradrp.loader import load_drp
 from megaradrp.testing.create_image import create_simple_frame
 
@@ -41,5 +41,5 @@ def test_loader1(conf, uuix):
 
     key, date_obs, keyname = drpm.select_profile(obs)
     ins = assembly_instrument(drpm.configurations, key, date_obs, by_key=keyname)
-    assert isinstance(ins, numina.instrument.generic.InstrumentGeneric)
+    assert isinstance(ins, InstrumentGeneric)
     assert str(ins.origin.uuid) == uuix

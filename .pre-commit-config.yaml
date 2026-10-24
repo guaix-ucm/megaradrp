@@ -2,9 +2,15 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
     hooks:
+      # the default headers of the fibers are FITS headers, blocks of
+      # cards of 80 characters without new lines, read with Header.fromfile
       - id: trailing-whitespace
+        exclude: ^src/megaradrp/instrument/configs/(lcb|mos)_default_header\.txt$
       - id: end-of-file-fixer
+        exclude: ^src/megaradrp/instrument/configs/(lcb|mos)_default_header\.txt$
+      # heal_traces reads files with several YAML documents
       - id: check-yaml
+        args: [--allow-multiple-documents]
   # Using this mirror lets us use mypyc-compiled black, which is about 2x faster
   - repo: https://github.com/psf/black-pre-commit-mirror
     rev: 26.5.1
