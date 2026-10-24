@@ -465,6 +465,7 @@ def generate_sensitivity(final, spectrum, star_interp, extinc_interp, wl_coverag
     sens.header["uuid"] = str(uuid.uuid1())
     sens.header["tunit"] = ("Jy", "Final units")
 
-    update_flux_limits(sens.header, pixlims, wcs=wcsl, ref=0)
+    # pixlims are 1-based
+    update_flux_limits(sens.header, pixlims, wcs=wcsl, ref=1)
 
     return sens

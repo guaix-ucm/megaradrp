@@ -219,9 +219,9 @@ def test_generate_sensitivity(focal_plane, sigma):
     assert sens.header["TUNIT"] == "Jy"
 
 
-@pytest.mark.xfail(reason="the 1-based limits are written with ref=0, one pixel too high", strict=True)
 @pytest.mark.parametrize("sigma", [0.0, 5.0])
 def test_generate_sensitivity_limits(focal_plane, sigma):
+    """The limits of the sensitivity are 1-based (#348)"""
     rss = make_rss(numpy.ones(623))
     spectrum = numpy.full(100, 1.0)
     sens = generate_sensitivity(rss, spectrum, flat_star, no_extinction, slice(10, 90), slice(5, 95), sigma=sigma)
@@ -230,7 +230,9 @@ def test_generate_sensitivity_limits(focal_plane, sigma):
     assert (hdr["PIXLIMM1"], hdr["PIXLIMM2"]) == (11, 90)
     assert (hdr["PIXLIMR1"], hdr["PIXLIMR2"]) == (6, 95)
     assert (hdr["PIXLIMF1"], hdr["PIXLIMF2"]) == (11 + 2 * sigma, 90 - 2 * sigma)
+    # wavelengths of the pixels, 4000 + 2 * (pixel - 1)
     assert hdr["WAVLIMM1"] == pytest.approx(4000.0 + 10 * 2.0)
+    assert hdr["WAVLIMR2"] == pytest.approx(4000.0 + 94 * 2.0)
 
 
 def test_generate_sensitivity_flux_calibration(focal_plane):
@@ -242,9 +244,10 @@ def test_generate_sensitivity_flux_calibration(focal_plane):
     sens = generate_sensitivity(rss, spectrum, flat_star, no_extinction, slice(10, 90), slice(5, 95), sigma=0.0)
 
     calibrated = FluxCalibration(fits.HDUList([sens]), datamodel=MegaraDataModel())(rss)
-    # the first and last pixels of the region with fibers are not checked, see
-    # test_generate_sensitivity_limits
-    assert numpy.allclose(calibrated[0].data[0, 6:94], star_jy)
+    # calibrated in the region with some fibers, 0 outside
+    assert numpy.allclose(calibrated[0].data[0, 5:95], star_jy)
+    assert numpy.all(calibrated[0].data[0, :5] == 0)
+    assert numpy.all(calibrated[0].data[0, 95:] == 0)
     assert calibrated[0].header["BUNIT"] == "Jy"
 
 
