@@ -1,8 +1,10 @@
 import pytest
 
+from astropy.io import fits
 import numpy
 
-from megaradrp.processing.fluxcalib import update_flux_limits, WAVLIM_KEYS, PIXLIM_KEYS
+from megaradrp.datamodel import MegaraDataModel
+from megaradrp.processing.fluxcalib import FluxCalibration, update_flux_limits, WAVLIM_KEYS, PIXLIM_KEYS
 from megaradrp.testing.create_wcs import generate_wcs
 
 
@@ -49,3 +51,48 @@ def test_update_flux_invalid():
     ref = 2
     with pytest.raises(ValueError):
         update_flux_limits(header, fluxlimits, ref=ref)
+
+
+def make_sensitivity(nwl=50):
+    sens = numpy.zeros(nwl, dtype="float32")
+    sens[5:45] = 4.0
+    hdu = fits.PrimaryHDU(sens)
+    hdr = hdu.header
+    hdr["UUID"] = "11111111-2222-3333-4444-555555555555"
+    hdr["TUNIT"] = "Jy"
+    # 1-based limits
+    for key, val in zip(PIXLIM_KEYS, [6, 45, 6, 45, 10, 40]):
+        hdr[key] = val
+    return fits.HDUList([hdu])
+
+
+def make_rss(nwl=50):
+    hdu = fits.PrimaryHDU(numpy.full((3, nwl), 40.0, dtype="float32"))
+    hdr = hdu.header
+    hdr["UUID"] = "410f6ea0-c3df-481c-9820-5cf9e0ed3d91"
+    hdr["EXPTIME"] = 2.0
+    hdr["CTYPE1"] = "AWAV"
+    hdr["CRPIX1"] = 1
+    hdr["CRVAL1"] = 4000.0
+    hdr["CDELT1"] = 2.0
+    hdr["CUNIT1"] = "Angstrom"
+    return fits.HDUList([hdu])
+
+
+def test_flux_calibration():
+    sens = make_sensitivity()
+    corrector = FluxCalibration(sens, datamodel=MegaraDataModel())
+    img = corrector(make_rss())
+    data = img[0].data
+    hdr = img[0].header
+
+    # counts / exptime / sensitivity, in the region with at least one fiber
+    assert numpy.allclose(data[:, 5:45], 40.0 / 2.0 / 4.0)
+    assert numpy.all(data[:, :5] == 0)
+    assert numpy.all(data[:, 45:] == 0)
+    assert hdr["BUNIT"] == "Jy"
+    assert hdr["NUM-FLUX"] == "11111111-2222-3333-4444-555555555555"
+    # the limits of the sensitivity, 1-based, and their wavelengths
+    for key, val in zip(PIXLIM_KEYS, [6, 45, 6, 45, 10, 40]):
+        assert hdr[key] == val
+        assert hdr[key.replace("PIX", "WAV")] == pytest.approx(4000.0 + (val - 1) * 2.0)
