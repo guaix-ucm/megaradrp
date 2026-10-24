@@ -6,4 +6,3 @@
 .. automodule:: megaradrp.datatype
     :members:
     :undoc-members:
-

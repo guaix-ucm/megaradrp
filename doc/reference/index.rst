@@ -34,7 +34,7 @@ Reference
    visualization
    simulation
 
-   
+
 Indices and tables
 ==================
 
@@ -42,4 +42,3 @@ Indices and tables
 * :ref:`modindex`
 * :ref:`search`
 * :ref:`glossary`
-

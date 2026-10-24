@@ -3,10 +3,10 @@
 MEGARA DRP
 ==========
 
-|zenodo| |docs| |pypi| 
+|zenodo| |docs| |pypi|
 
 
-This is Megara DRP, the data reduction pipeline for MEGARA, 
+This is Megara DRP, the data reduction pipeline for MEGARA,
 the optical Integral-Field Unit and Multi-Object Spectrograph
 designed for the Gran telescopio Canarias (GTC).
 
@@ -41,6 +41,6 @@ Maintainers: Sergio Pascual <sergiopr@fis.ucm.es>, Nicolás Cardiel <cardiel@ucm
 .. |docs| image:: https://readthedocs.org/projects/megaradrp/badge/?version=latest
    :target: https://readthedocs.org/projects/megaradrp/?badge=latest
    :alt: Documentation Status
- 
+
 .. |pypi| image:: https://badge.fury.io/py/megaradrp.svg
     :target: https://badge.fury.io/py/megaradrp

@@ -47,5 +47,3 @@ Recipe, inputs and results
 
 .. autoclass:: megaradrp.recipes.calibration.bias.BiasRecipe
       :members:
-
-

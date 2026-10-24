@@ -1,13 +1,13 @@
 MEGARA:
   insmode: MOS
   cover: UNSET
-MEGARA.Shutter: 
+MEGARA.Shutter:
   label: OPEN
-MEGARA.Wheel: 
+MEGARA.Wheel:
   label: VPH405_LR
-MEGARA.Cover: 
+MEGARA.Cover:
   label: UNSET
-MEGARA.Focus: 
+MEGARA.Focus:
   focus: 124.9
-ICM-MEGARA: 
+ICM-MEGARA:
   label: HALO1

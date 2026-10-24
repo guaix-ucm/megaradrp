@@ -1,7 +1,7 @@
 
 .. _glossary:
 
-Glossary 
+Glossary
 =========
 
 .. glossary::
@@ -19,4 +19,3 @@ Glossary
 
    DFP
     Data Factory Pipeline
-
