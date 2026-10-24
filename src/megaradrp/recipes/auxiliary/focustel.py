@@ -36,19 +36,27 @@ class FocusTelescopeRecipe(ImageRecipe):
     Notes
     -----
     Images provided in `obresult` are grouped by the value of their
-    FOCUST keyword. Groups of images are trimmed and corrected from overscan,
-    bad pixel mask (if `master_bpm` is not None), bias and dark current
-    (if `master_dark` is not None). Each group is then stacked using the median.
+    M2UZ keyword (the focus of the telescope). Groups of images are trimmed
+    and corrected from overscan, bad pixel mask (if `master_bpm` is not None),
+    bias and dark current (if `master_dark` is not None). Each group is then
+    stacked using the median.
 
     The result of the combination is saved as an intermediate result, named
     'focus2d-#focus.fits', with #focus being the value of the focus
-    of each group. Apertures are extracted in each combined image, and the
+    of each group. Apertures are extracted in each combined image, the
+    wavelength calibration is applied and the sky is subtracted, and the
     resulting RSS file is saved as an intermediate result, named
-    'focus1-#focus.fits'.
+    'focus1d-#focus.fits'.
 
-    For each image, the FWHM of the object at `position` is computed.
+    For each image, the width of the star is measured with the second order
+    moment in x of its flux distribution, around its centroid. The flux of
+    each fiber is its mean in the columns 1000 to 3000 (0-based), and the 37 fibers
+    nearest to the center of the LCB (the central fiber and three rings
+    around it) are used. The requirement `position` is not used. For a
+    Gaussian profile, the moment is the variance, the square of the FWHM
+    divided by 8 ln 2, so its minimum is at the focus of minimum FWHM.
 
-    Then, the FWHM  is fitted to a 2nd degree polynomial, and the focus
+    Then, the moments are fitted to a 2nd degree polynomial, and the focus
     corresponding to its minimum is obtained and returned in `focus_table`
 
     """
@@ -124,14 +132,14 @@ class FocusTelescopeRecipe(ImageRecipe):
 
                 self.save_intermediate_img(final, f"focus1d-{focus}.fits")
 
-                self.logger.info("find lines and compute FWHM")
-                star_rss_fwhm = self.run_on_image(final, coors)
-                all_images[focus] = star_rss_fwhm
+                self.logger.info("compute the second order moment of the star")
+                star_moment = self.run_on_image(final, coors)
+                all_images[focus] = star_moment
 
             except ValueError:
                 self.logger.info("focus %s cannot be processed", focus)
 
-        self.logger.info("fit FWHM of star")
+        self.logger.info("fit the second order moments of the star")
         final = self.reorder_and_fit(all_images)
         self.logger.info("best focus is %s", final)
 
@@ -139,13 +147,29 @@ class FocusTelescopeRecipe(ImageRecipe):
         return self.create_result(focus_table=final)
 
     def run_on_image(self, img, coors):
-        """Extract spectra, find peaks and compute FWHM."""
+        """Compute the second order moment in x of the star near the center of the LCB.
+
+        Parameters
+        ----------
+        img : astropy.io.fits.HDUList
+            RSS of the LCB
+        coors : tuple
+            Not used, the star is searched near the center of the LCB
+
+        Returns
+        -------
+        float
+            The second order moment in x of the flux of the 37 fibers
+            nearest to the center, in the units of the positions of
+            the fibers squared
+        """
 
         from scipy.spatial import KDTree
 
         fp_conf = FocalPlaneConf.from_img(img)
         self.logger.debug("LCB configuration is %s", fp_conf.conf_id)
         rssdata = img[0].data
+        # columns used to compute the flux of the fibers, both included
         cut1 = 1000
         cut2 = 3000
         points = [(0, 0)]  # Center of fiber 313
@@ -179,7 +203,7 @@ class FocusTelescopeRecipe(ImageRecipe):
                 coords.append((fiber.x, fiber.y))
 
             coords = numpy.asarray(coords)
-            flux_per_cell = rssdata[colids, cut1:cut2].mean(axis=1)
+            flux_per_cell = rssdata[colids, cut1 : cut2 + 1].mean(axis=1)
             flux_per_cell_total = flux_per_cell.sum()
             flux_per_cell_norm = flux_per_cell / flux_per_cell_total
             # centroid
@@ -196,7 +220,7 @@ class FocusTelescopeRecipe(ImageRecipe):
         return mc2[0, 0]
 
     def reorder_and_fit(self, all_images):
-        """Fit all the values of FWHM to a 2nd degree polynomial and return minimum."""
+        """Fit the second order moments to a 2nd degree polynomial and return the focus of its minimum."""
 
         # We are assuming there is only 1 star
         focii = sorted(all_images.keys())
