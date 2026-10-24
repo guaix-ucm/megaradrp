@@ -245,18 +245,21 @@ def calc_matrix_cols(model_map, datashape, processes=0):
     else:
         import multiprocessing as mp
 
-        pool = mp.Pool(processes=processes)
+        # the results are obtained inside the block, the pool
+        # is terminated at the end
+        with mp.Pool(processes=processes) as pool:
+            results = [
+                pool.apply_async(
+                    calc_matrix_adapt,
+                    args=(wshape, col, model, params_col[col], valid),
+                    kwds={"clip": 1e-6, "extra": 10},
+                )
+                for col in xcol
+            ]
 
-        results = [
-            pool.apply_async(
-                calc_matrix_adapt, args=(wshape, col, model, params_col[col], valid), kwds={"clip": 1e-6, "extra": 10}
-            )
-            for col in xcol
-        ]
-
-        for p in results:
-            col, wcol = p.get()
-            wcols[col] = wcol
+            for p in results:
+                col, wcol = p.get()
+                wcols[col] = wcol
 
     return wcols
 

@@ -194,8 +194,8 @@ def test_calc_matrix_cols_undefined_model():
 
 
 @pytest.mark.slow
-@pytest.mark.xfail(reason="the pool of processes is not closed, ResourceWarning", strict=True)
 def test_calc_matrix_cols_parallel():
+    """The matrices computed in a pool of processes, that is closed (#351)"""
     means = 20.0 + 6.0 * np.arange(6)
     fluxes = np.full((6, 8), 100.0)
     img = make_image(means, 1.6, fluxes)
