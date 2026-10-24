@@ -4,3 +4,6 @@
 
 # Format code with black
 88eaeafe640063cec8d1ebd63302606c2f0c41a7
+
+# Remove trailing whitespace and fix the end of the files
+af1f85113992faa13f51b87b8b2c067cabe65258
