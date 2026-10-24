@@ -170,9 +170,8 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
 
     def good_ids_mask(self, calibration):
 
-        # Bad fibers, join:
-        bad_fibers = calibration.missing_fibers
-        bad_fibers.extend(calibration.error_fitting)
+        # Bad fibers, join in a new list, the calibration is not modified
+        bad_fibers = list(calibration.missing_fibers) + list(calibration.error_fitting)
 
         bad_idxs = [fibid - 1 for fibid in bad_fibers]
 

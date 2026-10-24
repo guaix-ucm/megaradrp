@@ -60,9 +60,8 @@ def test_slitflat_recipe(monkeypatch, pixel_qe):
     assert numpy.allclose(result.reduced_image.open()[0].data, illumination * pixel_qe, rtol=1e-5)
 
 
-@pytest.mark.xfail(reason="the divisions by zero emit RuntimeWarning, there is no numpy.errstate", strict=True)
 def test_slitflat_recipe_zeros(monkeypatch, pixel_qe):
-    """The pixels without signal are 1, without warnings"""
+    """The pixels without signal are 1, without warnings (#360)"""
     data = 1000.0 * pixel_qe
     data[:, :40] = 0.0
     result, _ = run_recipe(monkeypatch, data)

@@ -63,7 +63,9 @@ class SlitFlatRecipe(MegaraBaseRecipe):
 
         self.save_intermediate_array(median1, "median_image1.fits")
 
-        qe1 = reduced[0].data / median1
+        # the pixels where the median is 0 become Inf/NaN, they are set to 1 below
+        with numpy.errstate(divide="ignore", invalid="ignore"):
+            qe1 = reduced[0].data / median1
 
         self.save_intermediate_array(qe1, "qe_filter1.fits")
 
@@ -73,7 +75,8 @@ class SlitFlatRecipe(MegaraBaseRecipe):
         median2 = median_filter(qe1, m_window2)
         self.save_intermediate_array(median2, "median_image2.fits")
 
-        qe2 = qe1 / median2
+        with numpy.errstate(divide="ignore", invalid="ignore"):
+            qe2 = qe1 / median2
         self.save_intermediate_array(qe2, "qe_filter2.fits")
 
         self.logger.debug("filtering Inf/NaN in result")

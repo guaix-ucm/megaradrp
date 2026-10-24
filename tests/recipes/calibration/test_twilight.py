@@ -42,8 +42,8 @@ def test_good_ids_mask():
     assert numpy.flatnonzero(~mask).tolist() == [4, 6, 7]
 
 
-@pytest.mark.xfail(reason="good_ids_mask adds error_fitting to the missing_fibers of the calibration", strict=True)
 def test_good_ids_mask_does_not_modify_the_calibration():
+    """The calibration is not modified (#360)"""
     calibration = make_wlcalib(missing=[5], error=[7, 8])
     TwilightFiberFlatRecipe().good_ids_mask(calibration)
     assert calibration.missing_fibers == [5]
