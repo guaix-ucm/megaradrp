@@ -14,6 +14,7 @@ import pathlib
 import types
 
 from astropy.io import fits
+import matplotlib.pyplot as plt
 import numpy
 import numpy.polynomial.polynomial as nppol
 import pytest
@@ -289,8 +290,11 @@ def test_arc_run_intermediate(run_arc, tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     recipe = ArcCalibrationRecipe(intermediate_results=True)
     monkeypatch.setattr(recipe, "generate_fwhm_image", lambda solutions: numpy.zeros((2, 2)))
+    before = plt.get_fignums()
     run_arc(recipe, store_pdf_with_refined_fits=1)
     names = {path.name for path in tmp_path.iterdir()}
     expected = {"wavecal_iter1.pdf", "wavecal_iter2.pdf", "wavecal_refine_iter1.pdf", "initial_master_wlcalib.json"}
     assert expected <= names
     assert {path.name for path in (tmp_path / "refined_wavecal").iterdir()} == {f"{fibid:03d}.pdf" for fibid in VALID}
+    # the figures are saved without pyplot
+    assert plt.get_fignums() == before

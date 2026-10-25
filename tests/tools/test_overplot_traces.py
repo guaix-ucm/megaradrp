@@ -1,6 +1,7 @@
 import json
 
 import astropy.io.fits as fits
+import matplotlib.pyplot
 import numpy
 import pytest
 from numina.util.jsonencoder import ExtEncoder
@@ -35,8 +36,11 @@ def files(tmp_path):
 
 def run_overplot(path, extra=()):
     args = [str(path / "image.fits"), str(path / "traces.json"), "--pdffile", str(path / "out.pdf")]
+    before = matplotlib.pyplot.get_fignums()
     overplot.main(args + list(extra))
     assert (path / "out.pdf").exists()
+    # the figure is saved without pyplot
+    assert matplotlib.pyplot.get_fignums() == before
 
 
 def plotted_traces(monkeypatch):

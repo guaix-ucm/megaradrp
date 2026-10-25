@@ -1,6 +1,7 @@
 import json
 
 import astropy.io.fits as fits
+import matplotlib.pyplot
 import numpy
 import pytest
 import yaml
@@ -59,8 +60,11 @@ def run_heal(files, operations=None, extra=()):
         healing = path / "healing.yaml"
         healing.write_text(yaml.safe_dump_all(operations))
         args += ["--healing", str(healing)]
+    before = matplotlib.pyplot.get_fignums()
     heal.main(args + list(extra))
     assert (path / "out.pdf").exists()
+    # the figure is saved without pyplot
+    assert matplotlib.pyplot.get_fignums() == before
     return json.loads((path / "updated.json").read_text())
 
 

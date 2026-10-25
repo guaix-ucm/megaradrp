@@ -189,12 +189,16 @@ def main(args=None):
         args_global_offset = [float(dum) for dum in args.global_offset]
 
     # read pdffile
+    # the figure saved in the PDF file is created without pyplot
     if args.pdffile is not None:
         from matplotlib.backends.backend_pdf import PdfPages
+        from matplotlib.figure import Figure
 
         pdf = PdfPages(args.pdffile)
+        fig = Figure()
     else:
         pdf = None
+        fig = None
 
     ax = ximshow_file(
         args.fits_file,
@@ -205,6 +209,7 @@ def main(args=None):
         args_geometry=args.geometry,
         pdf=pdf,
         show=False,
+        fig=fig,
     )
 
     # read and display traces from JSON file
@@ -550,7 +555,7 @@ def main(args=None):
                 json.dump(bigdict, outfile, indent=2)
 
     if pdf is not None:
-        pdf.savefig()
+        pdf.savefig(fig)
         pdf.close()
     else:
         pause_debugplot(12, pltshow=True, tight_layout=True)

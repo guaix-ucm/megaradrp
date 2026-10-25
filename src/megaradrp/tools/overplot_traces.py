@@ -130,12 +130,16 @@ def main(args=None):
     args_global_offset = Polynomial(args.global_offset)
 
     # read pdffile
+    # the figure saved in the PDF file is created without pyplot
     if args.pdffile is not None:
         from matplotlib.backends.backend_pdf import PdfPages
+        from matplotlib.figure import Figure
 
         pdf = PdfPages(args.pdffile)
+        fig = Figure()
     else:
         pdf = None
+        fig = None
 
     ax = ximshow_file(
         args.fits_file,
@@ -146,6 +150,7 @@ def main(args=None):
         args_geometry=args.geometry,
         pdf=pdf,
         show=False,
+        fig=fig,
     )
 
     # trace offsets for RAW images
@@ -222,7 +227,7 @@ def main(args=None):
             print(f"Warning ---> Missing fiber: {fibid_with_box[fibid - 1]}")
 
     if pdf is not None:
-        pdf.savefig()
+        pdf.savefig(fig)
         pdf.close()
     else:
         pause_debugplot(12, pltshow=True, tight_layout=True)

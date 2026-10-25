@@ -412,14 +412,15 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         # save PDF file with plots in working directory
         if self.intermediate_results:
-            from numina.array.display.matplotlib_qt import plt
             from matplotlib.backends.backend_pdf import PdfPages
+            from matplotlib.figure import Figure
 
             pdf = PdfPages("wavecal_iter1.pdf")
             for dumplot in zip(
                 [plot_npeaksfound, plot_crval1, plot_cdelt1],
                 ["number of peaks found", "linear CRVAL1 " + r"($\AA$)", "linear_CDELT1 " + r"($\AA$/pixel)"],
             ):
+                fig = Figure()
                 ximplotxy(
                     plot_tracenumber,
                     dumplot[0],
@@ -429,11 +430,12 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     marker=".",
                     color="C0",
                     show=False,
+                    fig=fig,
                 )
-                pdf.savefig()
-                plt.close()
+                pdf.savefig(fig)
             for ideg in range(poldeg_initial + 1):
                 dumplot = [coef[ideg] for coef in plot_coeff]
+                fig = Figure()
                 ximplotxy(
                     plot_tracenumber,
                     dumplot,
@@ -443,9 +445,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     marker=".",
                     color="C0",
                     show=False,
+                    fig=fig,
                 )
-                pdf.savefig()
-                plt.close()
+                pdf.savefig(fig)
             pdf.close()
 
         self.logger.info("Generating fwhm_image...")
@@ -519,9 +521,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         pdf=pdf,
                     )
                     if pdf is not None:
-                        from numina.array.display.matplotlib_qt import plt
-
-                        plt.close()
                         pdf.close()
                     if poly_refined != numpy.polynomial.Polynomial([0.0]):
                         npoints_eff = yres_summary["npoints"]
@@ -569,8 +568,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
             # save PDF file with plots in working directory
             if self.intermediate_results:
-                from numina.array.display.matplotlib_qt import plt
                 from matplotlib.backends.backend_pdf import PdfPages
+                from matplotlib.figure import Figure
 
                 pdf = PdfPages("wavecal_iter2.pdf")
                 for dumplot in zip(
@@ -582,6 +581,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         "linear_CDELT1 " + r"($\AA$/pixel)",
                     ],
                 ):
+                    fig = Figure()
                     ximplotxy(
                         plot_tracenumber,
                         dumplot[0],
@@ -591,11 +591,12 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         marker=".",
                         color="C0",
                         show=False,
+                        fig=fig,
                     )
-                    pdf.savefig()
-                    plt.close()
+                    pdf.savefig(fig)
                 for ideg in range(poldeg_refined + 1):
                     dumplot = [coef[ideg] for coef in plot_coeff]
+                    fig = Figure()
                     ximplotxy(
                         plot_tracenumber,
                         dumplot,
@@ -605,9 +606,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         marker=".",
                         color="C0",
                         show=False,
+                        fig=fig,
                     )
-                    pdf.savefig()
-                    plt.close()
+                    pdf.savefig(fig)
                 pdf.close()
         else:
             data_wlcalib = None
@@ -657,8 +658,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         """
 
         if self.intermediate_results:
-            from numina.array.display.matplotlib_qt import plt
             from matplotlib.backends.backend_pdf import PdfPages
+            from matplotlib.figure import Figure
 
             pdf = PdfPages("wavecal_refine_iter1.pdf")
             local_debugplot = 11
@@ -690,6 +691,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 times_sigma_reject=times_sigma_reject,
             )
             if pdf is not None:
+                fig = Figure()
                 polfit_residuals(
                     x=fibid,
                     y=coeff,
@@ -700,9 +702,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     title="Identifying bad fits",
                     show=False,
                     debugplot=local_debugplot,
+                    fig=fig,
                 )
-                pdf.savefig()
-                plt.close()
+                pdf.savefig(fig)
 
             if i == 0:
                 # initialize bad fits
@@ -718,6 +720,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         list_poly_vs_fiber = []
         for i in range(poldeg + 1):
             coeff = numpy.array([coeff[i] for coeff in list_coeffs])
+            fig = None if pdf is None else Figure()
             poly, yres = polfit_residuals(
                 x=fibid,
                 y=coeff,
@@ -728,10 +731,10 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 title="Computing filtered fits",
                 show=False,
                 debugplot=local_debugplot,
+                fig=fig,
             )
             if pdf is not None:
-                pdf.savefig()
-                plt.close()
+                pdf.savefig(fig)
             list_poly_vs_fiber.append(poly)
 
         self.logger.info("list_poly_vs_fiber:")
