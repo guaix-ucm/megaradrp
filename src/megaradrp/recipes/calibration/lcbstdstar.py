@@ -218,12 +218,13 @@ class LCBStandardRecipe(ImageRecipe):
         sens.data = spl(wl_aa.value)
 
         if self.intermediate_results:
-            import matplotlib.pyplot as plt
+            from matplotlib.figure import Figure
 
-            plt.plot(wl_aa, sens_raw.data, "b")
-            plt.plot(wl_aa, sens.data, "r")
-            plt.savefig("smoothed.png")
-            plt.close()
+            fig = Figure()
+            ax = fig.subplots()
+            ax.plot(wl_aa, sens_raw.data, "b")
+            ax.plot(wl_aa, sens.data, "r")
+            fig.savefig("smoothed.png")
 
         self.logger.info("end LCBStandardRecipe reduction")
 

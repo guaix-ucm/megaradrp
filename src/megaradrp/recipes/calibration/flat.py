@@ -164,17 +164,17 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         collapse_smooth_s[mask_noinfo] = 1.0
 
         if self.intermediate_results:
-            import matplotlib.pyplot as plt
+            from matplotlib.figure import Figure
 
             numpy.savetxt("collapse.txt", collapse)
             numpy.savetxt("mask_noinfo.txt", mask_noinfo)
-            fig, ax = plt.subplots()
+            fig = Figure()
+            ax = fig.subplots()
             ax.plot(xx, collapse, ".", label="collapsed")
             ax.plot(xx, collapse_smooth, "-", label=f"savgol{degree}")
             ax.plot(xx, collapse_smooth_s, "--", label=f"spline{degree_s}")
             ax.legend()
-            plt.savefig("collapsed_smooth.png")
-            plt.close()
+            fig.savefig("collapsed_smooth.png")
 
         # Divide each fiber in rss_wl by spectrum
         gmean = col_good_mean.mean()

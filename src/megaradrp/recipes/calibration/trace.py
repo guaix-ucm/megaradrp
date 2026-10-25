@@ -304,7 +304,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         debug_plot=0,
     ):
 
-        import matplotlib.pyplot as plt
+        from matplotlib.figure import Figure
 
         data = reduced[0].data
         if xmin_fit < 1 or xmax_fit > data.shape[1] or xmin_fit >= xmax_fit:
@@ -393,23 +393,25 @@ class TraceMapRecipe(MegaraBaseRecipe):
 
                     if debug_plot:
                         self.logger.debug("plotting x-y and x-z trace")
-                        plt.plot(xfit_all, yfit_all, ".", color="lightgray", label="all trace points")
-                        plt.plot(xfit, yfit, "C1.", label="fitted trace points")
-                        plt.plot(xfit, nppol.polyval(xfit, pfit), "C2-", label="fitted polynomial")
-                        plt.xlabel("detector column (from 0 to NAXIS1-1)")
-                        plt.ylabel("detector row (from 0 to NAXIS2-1)")
-                        plt.xlim(0, data.shape[1] - 1)
-                        plt.legend()
-                        plt.savefig(f"trace-xy-{dtrace.fibid:03d}.png")
-                        plt.close()
-                        plt.plot(xfit_all, zfit_all, ".", color="lightgray", label="all trace points")
-                        plt.plot(xfit, zfit, ".", color="C1", label="fitted trace points")
-                        plt.xlim(0, data.shape[1] - 1)
-                        plt.xlabel("detector column (from 0 to NAXIS1-1)")
-                        plt.ylabel("signal")
-                        plt.legend()
-                        plt.savefig(f"trace-xz-{dtrace.fibid:03d}.png")
-                        plt.close()
+                        fig = Figure()
+                        ax = fig.subplots()
+                        ax.plot(xfit_all, yfit_all, ".", color="lightgray", label="all trace points")
+                        ax.plot(xfit, yfit, "C1.", label="fitted trace points")
+                        ax.plot(xfit, nppol.polyval(xfit, pfit), "C2-", label="fitted polynomial")
+                        ax.set_xlabel("detector column (from 0 to NAXIS1-1)")
+                        ax.set_ylabel("detector row (from 0 to NAXIS2-1)")
+                        ax.set_xlim(0, data.shape[1] - 1)
+                        ax.legend()
+                        fig.savefig(f"trace-xy-{dtrace.fibid:03d}.png")
+                        fig = Figure()
+                        ax = fig.subplots()
+                        ax.plot(xfit_all, zfit_all, ".", color="lightgray", label="all trace points")
+                        ax.plot(xfit, zfit, ".", color="C1", label="fitted trace points")
+                        ax.set_xlim(0, data.shape[1] - 1)
+                        ax.set_xlabel("detector column (from 0 to NAXIS1-1)")
+                        ax.set_ylabel("signal")
+                        ax.legend()
+                        fig.savefig(f"trace-xz-{dtrace.fibid:03d}.png")
 
                     if extrapolate_traces:
                         start = 6
@@ -455,7 +457,7 @@ class FiberTraceInfo:
 
 def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, debug_plot=0):
 
-    import matplotlib.pyplot as plt
+    from matplotlib.figure import Figure
 
     _logger = logging.getLogger(__name__)
 
@@ -556,21 +558,21 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
             boxes_with_missing_fibers.append((box["name"], missing))
 
         if True or debug_plot:
-
-            plt.plot(numpy.arange(len(region)) + b1, region)
-            plt.plot(peaks_y[:, 1], region[ipeaks_int], "r.")
+            fig = Figure()
+            ax = fig.subplots()
+            ax.plot(numpy.arange(len(region)) + b1, region)
+            ax.plot(peaks_y[:, 1], region[ipeaks_int], "r.")
 
             for el in matched_peaks:
                 if el.mode == fibermatch.PeakFound.FOUND_PEAK:
-                    plt.axvline(el.pos, c="k", ls="--", lw=0.5)
+                    ax.axvline(el.pos, c="k", ls="--", lw=0.5)
                 if el.mode == fibermatch.PeakFound.FOUND_VALLEY:
-                    plt.axvline(el.pos, c="r", ls="-.", lw=0.5)
+                    ax.axvline(el.pos, c="r", ls="-.", lw=0.5)
 
-            plt.xlabel("pixel number - 1")
-            plt.ylabel("number of counts")
-            plt.title(f'pseudoslit box: {box["name"]}, id: {boxid}')
-            plt.savefig(f'cut_col{center}_{boxid:02d}_{box["name"]}.png')
-            plt.close()
+            ax.set_xlabel("pixel number - 1")
+            ax.set_ylabel("number of counts")
+            ax.set_title(f'pseudoslit box: {box["name"]}, id: {boxid}')
+            fig.savefig(f'cut_col{center}_{boxid:02d}_{box["name"]}.png')
 
         pos_solutions = fibermatch.complete_solutions(fiber_model, matched_peaks, borders, scale=measured_scale)
 
@@ -611,7 +613,7 @@ def refine_boxes_from_array(arr, expected, col, hwidth=3, nsearch=20, intermedia
     with a reference value
 
     """
-    import matplotlib.pyplot as plt
+    from matplotlib.figure import Figure
 
     # Cut freq in Fourier space
     cut_frec = 0.10
@@ -659,15 +661,15 @@ def refine_boxes_from_array(arr, expected, col, hwidth=3, nsearch=20, intermedia
 
     # auxiliary plot showing the cross-correlation work
     if intermediate_results:
-        fig, ax = plt.subplots(ncols=1, nrows=1)
+        fig = Figure()
+        ax = fig.subplots()
         ax.plot(lags, ycorr0, "o-")
         ax.set_xlim(-ioffset_max, ioffset_max)
         ax.set_xlabel("ioffset")
         ax.set_ylabel("peak of correlation function")
         ax.axvline(ioffset, linestyle=":", color="C1")
         ax.set_title(f"optimal initial offset: {ioffset}")
-        plt.savefig("offset_borders_cross.png")
-        plt.close()
+        fig.savefig("offset_borders_cross.png")
 
     # using the initial offset, refine the peak search around the new
     # expected location, looking for a maximum in +/- nsearch pixels
@@ -680,7 +682,8 @@ def refine_boxes_from_array(arr, expected, col, hwidth=3, nsearch=20, intermedia
 
     # auxiliary plot showing the initial and final frontier locations
     if intermediate_results:
-        fig, ax = plt.subplots(ncols=1, nrows=1)
+        fig = Figure()
+        ax = fig.subplots()
         ax.plot(smoothed, label=f"cross section at x={col}")
         ax.plot(xwave0, sp_comb_lines0, label="expected location of frontiers")
         for idum, item in enumerate(expected):
@@ -693,8 +696,7 @@ def refine_boxes_from_array(arr, expected, col, hwidth=3, nsearch=20, intermedia
         ax.set_title(f"optimal initial offset: {ioffset}")
         ax.set_xlabel("pixel number - 1")
         ax.set_ylabel("inverted normalized signal")
-        plt.savefig("frontiers_between_pseudoslits.png")
-        plt.close()
+        fig.savefig("frontiers_between_pseudoslits.png")
 
     return refined, col
 

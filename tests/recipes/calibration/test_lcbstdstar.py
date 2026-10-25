@@ -147,3 +147,15 @@ def test_lcb_standard_not_magnitudes(recipe):
 def test_lcb_standard_bad_method(recipe):
     with pytest.raises(ValueError):
         recipe.run(make_input(degrade_resolution_method="other"))
+
+
+def test_lcb_standard_intermediate(recipe, tmp_path, monkeypatch):
+    """The plot of the smoothed sensitivity is saved without pyplot"""
+    import matplotlib.pyplot as plt
+
+    monkeypatch.chdir(tmp_path)
+    recipe.intermediate_results = True
+    before = plt.get_fignums()
+    recipe.run(make_input())
+    assert (tmp_path / "smoothed.png").read_bytes()[:4] == b"\x89PNG"
+    assert plt.get_fignums() == before

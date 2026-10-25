@@ -150,3 +150,16 @@ def test_fiber_flat_recipe(monkeypatch, transmission):
     master = result.master_fiberflat.open()
     assert master[0].header["NUMTYPE"] == "MasterFiberFlat"
     assert master[0].data.shape == (623, NWL)
+
+
+def test_obtain_fiber_flat_intermediate(transmission, tmp_path, monkeypatch):
+    """The plot of the collapsed spectrum is saved without pyplot"""
+    import matplotlib.pyplot as plt
+
+    monkeypatch.chdir(tmp_path)
+    rss = flat_rss(transmission, numpy.ones(NWL))
+    before = plt.get_fignums()
+    FiberFlatRecipe(intermediate_results=True).obtain_fiber_flat(rss)
+    names = {path.name for path in tmp_path.iterdir()}
+    assert names == {"collapse.txt", "mask_noinfo.txt", "collapsed_smooth.png"}
+    assert plt.get_fignums() == before
