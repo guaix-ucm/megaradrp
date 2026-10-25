@@ -1,0 +1,76 @@
+#LR-R Nico's version
+# Some wavelengths were initially extracted from:
+# http://iraf.noao.edu/specatlas/thar_photron/thar_photron.html
+# but they were refined using:
+# http://physics.nist.gov/PhysRefData/ASD/lines_form.html
+#------------------------------------------------------------------------------
+6114.9232  1    537 # ArII from NIST
+6151.9927  0  10000 # ThI from NIST
+6162.1701  0   5200 # ThI from NIST
+6164.4794  0   5700 # ThI from NIST
+6169.8220  1  18000 # ThI from NIST
+6172.2775  1    407 # ArII from NIST
+6182.6216  1  38000 # ThI from NIST
+6188.1250  0   6000 # ThI from NIST
+6191.9052  0   5900 # ThI from NIST
+6198.2226  0   9300 # ThI from NIST
+6203.4924  0  16000 # ThI from NIST
+6207.2200  0   9300 # ThI from NIST
+6224.5271  0   7800 # ThI from NIST
+6234.8552  0   3100 # ThI from NIST
+6243.1199  0     89 # ArI from NIST
+6261.4181  0   8500 # ThI from NIST
+6274.1166  0   2000 # ThII from NIST
+6296.8720  0      7 # ArI from NIST
+6307.6570  0     15 # ArI from NIST
+6327.2776  0   6900 # ThI from NIST
+6342.8595  0  15000 # ThI from NIST
+6369.5750  0      7 # ArI from NIST
+6384.7170  0     20 # ArI from NIST
+6411.8990  0  11000 # ThI from NIST
+6416.3070  1     70 # ArI from NIST
+6457.2824  1  44000 # ThI from NIST
+6466.5520  0      0 # ArI from NIST
+6483.0825  0    120 # ArII from NIST
+6490.7370  0   5200 # ThI from NIST
+6512.3637  0   3900 # ThI from NIST
+6531.3417  1  17000 # ThI from NIST
+6538.0451  0     20 # ArII from NIST
+6554.1602  0   6500 # ThI from NIST
+6577.2144  0   5800 # ThI from NIST
+6583.9058  1  32000 # ThI from NIST
+6588.5395  1  26000 # ThI from NIST
+6591.4843  1  21000 # ThI from NIST
+6593.9390  0  12000 # ThI from NIST
+6604.8530  0     15 # ArI from NIST
+6643.6973  1    269 # ArII from NIST
+6662.2685  1  16000 # ThI from NIST
+6666.3587  0    117 # ArII from NIST
+6677.2820  1    100 # ArI from NIST
+6684.2924  1    204 # ArII from NIST
+6719.1994  0   1400 # ThI from NIST
+6727.4582  0   4400 # ThI from NIST
+6752.8340  1    150 # ArI from NIST
+6756.4527  1   9700 # ThI from NIST
+6766.6120  0     15 # ArI from NIST
+6778.3123  0   3800 # ThI from NIST
+6780.2880  0   3800 # ThI from NIST (weighted mean of two lines)
+6834.9245  1   9800 # ThI from NIST
+6861.2689  0    112 # ArII from NIST
+6871.2890  1    150 # ArI from NIST
+6911.2262  1  25000 # ThI from NIST
+6937.6640  1     50 # ArI from NIST
+6943.6105  1  14000 # ThI from NIST
+6965.4310  1  10000 # ArI from NIST
+6989.6552  1  31000 # ThI from NIST
+7018.5674  0   9800 # ThI from NIST
+7030.2510  1    150 # ArI from NIST
+7067.2180  1  10000 # ArI from NIST
+7107.4690  0     47 # ThI from NIST
+7125.8200  0     25 # ArI from NIST
+7147.0420  1   1000 # ArI from NIST
+7168.8950  1  30000 # ThI from NIST
+7206.980   1     70 # ArI from NIST
+7272.9360  1   2000 # ArI from NIST
+7311.7160  1     35 # ArI from NIST
+7316.005   1     25 # ArI from NIST
