@@ -9,6 +9,7 @@
 
 """Tests for the arc mode recipe module."""
 
+import logging
 import pathlib
 import types
 
@@ -46,6 +47,13 @@ def test_mode_arc_calibration_set0(drpmocker):
 
 
 # The wavelength calibration with a synthetic arc
+
+
+@pytest.fixture(autouse=True)
+def no_debug_plots(caplog):
+    """find_fxpeaks plots each spectrum with the level DEBUG, that numina run leaves set"""
+    caplog.set_level(logging.INFO, logger="numina.array.wavecalib")
+
 
 DATA = pathlib.Path(__file__).parent / "data"
 
