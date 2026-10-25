@@ -18,10 +18,12 @@ from megaradrp.processing.cube import (
     create_cube,
     create_cube_from_array,
     create_cube_from_rss,
+    hexspline3_coefficients,
     main,
     merge_wcs,
 )
 from megaradrp.processing.hexgrid import HA_HEX, hexgrid_extremes
+from megaradrp.processing.hexspline import HEXSPLINE3_LATTICE
 from megaradrp.processing.wavecalibration import header_add_barycentric_correction
 from megaradrp.processing.wcs import compute_pa_from_ipa
 from megaradrp.testing.create_header import create_sky_header2, create_spec_header2
@@ -86,10 +88,59 @@ def test_calc_matrix_from_fiberconf_units(focal_plane):
 
 def test_create_cube_raise():
     with pytest.raises(ValueError):
-        create_cube(None, None, 3)
+        create_cube(None, None, 4)
 
 
-@pytest.mark.parametrize("p", [1, pytest.param(2, marks=pytest.mark.slow)])
+def test_hexspline3_coefficients(focal_plane):
+    """The hex-spline interpolates the values in the fibers with 6 neighbors"""
+    r0l, _ = calc_matrix_from_fiberconf(focal_plane)
+    rng = np.random.default_rng(345)
+    zval = rng.normal(size=(r0l.shape[1], 2))
+    coeffs = hexspline3_coefficients(r0l, zval)
+    assert coeffs.shape == zval.shape
+
+    dist = cKDTree(r0l.T).sparse_distance_matrix(cKDTree(r0l.T), 1.5).toarray()
+    neighbors = (dist > 0).astype(float)
+    inside = neighbors.sum(axis=1) == 6
+    eta0, eta1 = HEXSPLINE3_LATTICE
+    values = eta0 * coeffs + eta1 * neighbors @ coeffs
+    assert inside.sum() > 400
+    assert np.allclose(values[inside], zval[inside])
+
+
+def test_hexspline3_coefficients_uniform(focal_plane):
+    """The coefficients of a uniform field are almost uniform, a bit smaller in the border"""
+    r0l, _ = calc_matrix_from_fiberconf(focal_plane)
+    coeffs = hexspline3_coefficients(r0l, np.ones(r0l.shape[1]))
+    assert coeffs.shape == (r0l.shape[1],)
+    assert np.allclose(coeffs, 1.0, atol=0.11)
+    assert math.isclose(coeffs.mean(), 1.0, rel_tol=0.01)
+
+
+def test_create_cube_quadratic(focal_plane):
+    """The quadratic interpolation of a source of the size of the PSF is better than the linear"""
+    r0l, _ = calc_matrix_from_fiberconf(focal_plane)
+    target_scale = 0.3 / HEX_SCALE
+    center = r0l.mean(axis=1)
+    sigma = 0.8
+
+    def gauss(x, y):
+        return np.exp(-((x - center[0]) ** 2 + (y - center[1]) ** 2) / (2 * sigma**2))
+
+    (i1min, i1max), (j1min, j1max) = hexgrid_extremes(r0l, target_scale)
+    yy, xx = np.mgrid[i1min : i1max + 1, j1min : j1max + 1] * target_scale
+    truth = gauss(xx, yy)
+    inside = truth > 0.05
+    zval = gauss(r0l[0], r0l[1])
+    rms = {}
+    for p in [2, 3]:
+        img = create_cube(r0l, zval, p, target_scale)[..., 0]
+        rms[p] = np.sqrt(np.mean((img[inside] - truth[inside]) ** 2))
+    assert rms[3] < 0.02
+    assert rms[3] < rms[2] / 2
+
+
+@pytest.mark.parametrize("p", [1, pytest.param(2, marks=pytest.mark.slow), pytest.param(3, marks=pytest.mark.slow)])
 def test_create_cube_from_array_shape(focal_plane, p):
     nwl = 3
     scale = 1.0
@@ -109,7 +160,7 @@ def test_create_cube_from_array_1d(focal_plane):
     assert np.allclose(cube, cube2d)
 
 
-@pytest.mark.parametrize("p", [1, pytest.param(2, marks=pytest.mark.slow)])
+@pytest.mark.parametrize("p", [1, pytest.param(2, marks=pytest.mark.slow), pytest.param(3, marks=pytest.mark.slow)])
 def test_create_cube_from_array_conserve_flux(focal_plane, p):
     """The flux is multiplied by the area of the pixel over the area of the fiber"""
     scale = 1.0
@@ -121,22 +172,26 @@ def test_create_cube_from_array_conserve_flux(focal_plane, p):
 
 
 @pytest.mark.parametrize(
-    "p, scale",
+    "p, scale, rel_tol",
     [
-        (1, 0.3),
-        (1, 0.5),
-        (1, 1.0),
-        (2, 0.3),
-        pytest.param(2, 0.5, marks=pytest.mark.slow),
-        pytest.param(2, 1.0, marks=pytest.mark.slow),
+        (1, 0.3, 0.02),
+        (1, 0.5, 0.02),
+        (1, 1.0, 0.02),
+        (2, 0.3, 0.02),
+        pytest.param(2, 0.5, 0.02, marks=pytest.mark.slow),
+        pytest.param(2, 1.0, 0.02, marks=pytest.mark.slow),
+        (3, 0.3, 0.02),
+        pytest.param(3, 0.5, 0.02, marks=pytest.mark.slow),
+        # the cube does not cover the hex-splines of the border
+        pytest.param(3, 1.0, 0.025, marks=pytest.mark.slow),
     ],
 )
-def test_create_cube_from_array_total_flux(focal_plane, p, scale):
+def test_create_cube_from_array_total_flux(focal_plane, p, scale, rel_tol):
     """The flux of the cube is the flux of the fibers (#343)"""
     rss = np.ones((623, 1))
     cube = create_cube_from_array(rss, focal_plane, p=p, target_scale_arcsec=scale)
     total = rss[connected_rows(focal_plane)].sum()
-    assert math.isclose(cube.sum(), total, rel_tol=0.02)
+    assert math.isclose(cube.sum(), total, rel_tol=rel_tol)
 
 
 @pytest.mark.parametrize(
@@ -148,6 +203,9 @@ def test_create_cube_from_array_total_flux(focal_plane, p, scale):
         pytest.param(2, 1, marks=pytest.mark.slow),
         (2, 311),
         pytest.param(2, 614, marks=pytest.mark.slow),
+        pytest.param(3, 1, marks=pytest.mark.slow),
+        (3, 311),
+        pytest.param(3, 614, marks=pytest.mark.slow),
     ],
 )
 def test_create_cube_from_array_fiber_position(focal_plane, p, fibid):
@@ -319,6 +377,7 @@ def rss_file(tmp_path, fiber_header):
     [
         [],
         pytest.param(["-m", "linear"], marks=pytest.mark.slow),
+        pytest.param(["-m", "quadratic"], marks=pytest.mark.slow),
         pytest.param(["-d"], marks=pytest.mark.slow),
         pytest.param(["--fix-missing"], marks=pytest.mark.slow),
     ],

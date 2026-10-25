@@ -17,10 +17,13 @@ the splines of the hexagonal grid:
     D. Van De Ville et al., 'Hex-Splines: A Novel Spline Family for
     Hexagonal Lattices', IEEE Transactions on Image Processing 13, 6 (2004)
 
-The values of the fibers are the coefficients of a hex-spline of order
-`p`, which is integrated over each pixel of the rectangular grid. The
-order 1 (the indicator function of the hexagon) gives a nearest neighbor
-interpolation; the order 2 gives a linear interpolation.
+The hex-spline of order `p` that interpolates the values of the fibers
+is integrated over each pixel of the rectangular grid. The order 1 (the
+indicator function of the hexagon) gives a nearest neighbor
+interpolation; the order 2 gives a linear interpolation. With these
+orders the coefficients of the hex-spline are the values of the fibers.
+The order 3 gives a quadratic interpolation, its coefficients are the
+solution of a linear system (:func:`hexspline3_coefficients`).
 
 The command line tool ``megaradrp-cube`` (:func:`main`) converts a RSS
 file in a cube file.
@@ -34,7 +37,9 @@ import astropy.units as u
 import astropy.wcs
 from numina.frame.utils import copy_img
 import numpy as np
-from scipy import signal
+from scipy import ndimage, signal, sparse
+from scipy.sparse.linalg import splu
+from scipy.spatial import cKDTree
 
 from megaradrp.instrument.focalplane import FocalPlaneConf
 
@@ -105,14 +110,64 @@ def calc_matrix_from_fiberconf(fpconf, refid=614):
     return r0l_1, ref
 
 
+def hexspline3_coefficients(r0l, zval):
+    """
+    Coefficients of the hex-spline of order 3 that interpolates values
+
+    The hex-spline of order 3 is not interpolating: its value in a point
+    of the grid is a weighted mean of the coefficients of the point and of
+    its 6 neighbors (:data:`megaradrp.processing.hexspline.HEXSPLINE3_LATTICE`).
+    The coefficients are the solution of this linear system.
+
+    The system includes the points of the grid next to the points in
+    `r0l` (:func:`megaradrp.processing.hexgrid.hexgrid_outer_points`),
+    with the mean of the values of their neighbors. Their coefficients
+    are discarded. Without them, the values outside `r0l` would be
+    zero, and the coefficients of the points of the border would be
+    too large.
+
+    Parameters
+    ----------
+    r0l : numpy.ndarray
+        Positions (x, y) of the points of the hexagonal grid, an array
+        of shape (2, npoints), in units of the distance between points
+    zval : numpy.ndarray
+        Values in the points, an array of shape (npoints,) or
+        (npoints, nwl)
+
+    Returns
+    -------
+    numpy.ndarray
+        Coefficients of the points of `r0l`, with the shape of `zval`
+
+    """
+    zval = np.asarray(zval, dtype=float)
+    outer, neighbors = hg.hexgrid_outer_points(r0l)
+    zouter = np.array([zval[nb].mean(axis=0) for nb in neighbors]).reshape((-1,) + zval.shape[1:])
+    pos = np.concatenate([r0l, outer], axis=1)
+    npos = pos.shape[1]
+    # the second neighbors are at sqrt(3), where the hex-spline is zero
+    pairs = cKDTree(pos.T).query_pairs(1.5, output_type="ndarray")
+    eta0, eta1 = hspline.HEXSPLINE3_LATTICE
+    rows = np.concatenate([np.arange(npos), pairs[:, 0], pairs[:, 1]])
+    cols = np.concatenate([np.arange(npos), pairs[:, 1], pairs[:, 0]])
+    vals = np.concatenate([np.full(npos, eta0), np.full(2 * len(pairs), eta1)])
+    matrix = sparse.csc_array((vals, (rows, cols)), shape=(npos, npos))
+    coeffs = splu(matrix).solve(np.concatenate([zval, zouter]))
+    return coeffs[: r0l.shape[1]]
+
+
 def create_cube(r0l, zval, p=1, target_scale=1.0):
     """
     Resample values in a hexagonal grid to a rectangular grid
 
-    Each pixel of the result is the integral over the pixel of the
-    hex-spline of order `p` whose coefficients are the values in the
-    hexagonal grid. For `p` = 2, the result is postfiltered with
-    :func:`scipy.signal.cspline2d`.
+    The result is the least-squares approximation, with B-splines of
+    degree `p` - 1 in the rectangular grid, of the hex-spline of order `p`
+    that interpolates the values in the hexagonal grid. The integral over
+    each pixel of the hex-spline is postfiltered with the inverse of the
+    B-spline of degree 2 `p` - 1, and the result is sampled with the
+    B-spline of degree `p` - 1. For `p` = 1 and `p` = 2 the samples
+    equal the coefficients of the B-spline.
 
     Parameters
     ----------
@@ -122,9 +177,9 @@ def create_cube(r0l, zval, p=1, target_scale=1.0):
     zval : numpy.ndarray
         Values in the points, an array of shape (npoints,) or
         (npoints, nwl), with the wavelength in the last axis
-    p : {1, 2}
+    p : {1, 2, 3}
         Order of the hex-spline, 1 for nearest neighbor interpolation,
-        2 for linear interpolation
+        2 for linear interpolation, 3 for quadratic interpolation
     target_scale : float, optional
         Size of the pixels of the rectangular grid, in units of the
         distance between points
@@ -140,15 +195,16 @@ def create_cube(r0l, zval, p=1, target_scale=1.0):
     Raises
     ------
     ValueError
-        If `p` > 2
+        If `p` > 3
 
     """
     # geometry
     # Interpolation method. Allowed values are:
     # P = 1 NN
     # P = 2 Linear
-    if p > 2:
-        raise ValueError("p > 2 not implemented")
+    # P = 3 Quadratic
+    if p > 3:
+        raise ValueError("p > 3 not implemented")
 
     rr1 = target_scale * np.array([[1.0, 0], [0, 1]])  # Unit scale
 
@@ -176,6 +232,8 @@ def create_cube(r0l, zval, p=1, target_scale=1.0):
     # For p = 1, prefilter coefficients with p = 1, coeff = 1
     # For p = 2, prefilter coefficients with p = 2, coeff = 1
     # No prefiltering in zval2 is required if p <= 2
+    if p == 3:
+        zval2 = hexspline3_coefficients(r0l, zval2)
 
     rbs = hspline.rescaling_kernel(p, scale=target_scale)
 
@@ -202,8 +260,17 @@ def create_cube(r0l, zval, p=1, target_scale=1.0):
             cpk[..., k] = signal.cspline2d(dk[..., k])
         # Linear samples equal to coefficients
         img = cpk
+    elif p == 3:
+        # Coefficients post filtering to n = 2 * p - 1 == 5
+        cpk = dk
+        for axis in (0, 1):
+            cpk = ndimage.spline_filter1d(cpk, order=5, axis=axis, mode="reflect")
+        # Samples of the quadratic B-spline
+        img = cpk
+        for axis in (0, 1):
+            img = ndimage.convolve1d(img, [1 / 8, 6 / 8, 1 / 8], axis=axis, mode="reflect")
     else:
-        raise ValueError("p > 2 not implemented")
+        raise ValueError("p > 3 not implemented")
 
     return img
 
@@ -222,8 +289,9 @@ def create_cube_from_array(rss_data, fiberconf, p=1, target_scale_arcsec=1.0, co
         a single wavelength
     fiberconf : megaradrp.instrument.focalplane.FocalPlaneConf
         Focal plane configuration, with the positions of the fibers
-    p : {1, 2}, optional
-        Order of the interpolation, 1 for nearest neighbor, 2 for linear
+    p : {1, 2, 3}, optional
+        Order of the interpolation, 1 for nearest neighbor, 2 for linear,
+        3 for quadratic
     target_scale_arcsec : float, optional
         Size of the pixels of the cube, in arcsec
     conserve_flux : bool, optional
@@ -275,8 +343,9 @@ def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
     ----------
     rss : astropy.io.fits.HDUList
         RSS of the LCB, with the extension FIBERS
-    p : {1, 2}, optional
-        Order of the interpolation, 1 for nearest neighbor, 2 for linear
+    p : {1, 2, 3}, optional
+        Order of the interpolation, 1 for nearest neighbor, 2 for linear,
+        3 for quadratic
     target_scale_arcsec : float, optional
         Size of the pixels of the cube, in arcsec
     conserve_flux : bool, optional
@@ -501,7 +570,7 @@ def main(args=None):
     parser = argparse.ArgumentParser(prog="convert_rss_cube")
     # positional parameters
 
-    methods = {"nn": 1, "linear": 2}
+    methods = {"nn": 1, "linear": 2, "quadratic": 3}
 
     parser.add_argument("rss", help="RSS file with fiber traces", type=str)
     parser.add_argument(
@@ -510,7 +579,7 @@ def main(args=None):
     parser.add_argument("-o", "--outfile", default="cube.fits", help="Name of the output cube file")
     parser.add_argument("-d", "--disable-scaling", action="store_true", help="Disable flux conservation")
     parser.add_argument(
-        "-m", "--method", action="store", choices=["nn", "linear"], default="nn", help="Method of interpolation"
+        "-m", "--method", action="store", choices=list(methods), default="nn", help="Method of interpolation"
     )
     parser.add_argument(
         "--wcs-pa-from-header", action="store_true", help="Use PA angle from header", dest="pa_from_header"

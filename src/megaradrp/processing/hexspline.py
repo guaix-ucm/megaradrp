@@ -24,6 +24,11 @@ from megaradrp.simulation.convolution import hex_c, setup_grid
 # Hexagon constants
 M_SQRT3 = math.sqrt(3)
 
+#: Values of the hexspline of order 3 in the origin and in the 6 nearest
+#: points of the hexagonal grid of unit spacing (Table I of Van De Ville
+#: et al. 2004). In the other points of the grid it is zero
+HEXSPLINE3_LATTICE = (7 / 12, 5 / 72)
+
 
 def hexspline1(xx, yy):
     """Hexspline of order p=1"""

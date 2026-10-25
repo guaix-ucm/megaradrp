@@ -16,6 +16,7 @@ van de Ville et al. IEEE Transactions on Image Processing 2004, 13, 6
 import math
 
 import numpy as np
+from scipy.spatial import cKDTree
 
 # Normalized hexagon geometry
 M_SQRT3 = math.sqrt(3)
@@ -23,6 +24,13 @@ H_HEX = 0.5
 R_HEX = 1 / M_SQRT3
 A_HEX = 0.5 * H_HEX * R_HEX
 HA_HEX = 6 * A_HEX  # detR0 == ha
+# Offsets (x, y) to the 6 neighbors of a point in the grid of unit spacing
+NEIGH_OFFSETS = np.array(
+    [
+        [0.0, M_SQRT3 / 2, M_SQRT3 / 2, 0.0, -M_SQRT3 / 2, -M_SQRT3 / 2],
+        [1.0, 0.5, -0.5, -1.0, -0.5, 0.5],
+    ]
+)
 
 
 def calc_matrix(nrow, ncol, grid_type=2):
@@ -134,6 +142,40 @@ def hexgrid_extremes(r0l, target_scale):
     j1max = int(math.ceil(x1max / target_scale - 0.5))
     i1max = int(math.ceil(y1max / target_scale - 0.5))
     return (i1min, i1max), (j1min, j1max)
+
+
+def hexgrid_outer_points(r0l):
+    """
+    Points of the hexagonal grid next to a set of points, but not in the set
+
+    These are the points around the border of the set, and the
+    points of the holes inside it.
+
+    Parameters
+    ----------
+    r0l : numpy.ndarray
+        Positions (x, y) of the points of the set, an array of shape
+        (2, npoints), in units of the distance between points
+
+    Returns
+    -------
+    outer : numpy.ndarray
+        Positions (x, y) of the outer points, an array of shape
+        (2, nouter)
+    neighbors : list of list of int
+        For each outer point, the indices in `r0l` of its neighbors
+
+    """
+    tree = cKDTree(r0l.T)
+    cand = (r0l[:, :, np.newaxis] + NEIGH_OFFSETS[:, np.newaxis, :]).reshape(2, -1)
+    dist, _ = tree.query(cand.T)
+    cand = cand[:, dist > 0.5]
+    # a point is a candidate once for each of its neighbors
+    groups = cKDTree(cand.T).query_ball_point(cand.T, 0.5)
+    keep = [idx for idx, group in enumerate(groups) if idx == min(group)]
+    outer = cand[:, keep]
+    neighbors = [list(nb) for nb in tree.query_ball_point(outer.T, 1.5)]
+    return outer, neighbors
 
 
 def connected6(i, j):

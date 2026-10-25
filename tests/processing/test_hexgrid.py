@@ -9,6 +9,7 @@ from megaradrp.processing.hexgrid import (
     calc_matrix,
     connected6,
     hexgrid_extremes,
+    hexgrid_outer_points,
     neigh6,
 )
 
@@ -63,6 +64,37 @@ def test_hexgrid_extremes_cover(target_scale):
     assert (j1max + 0.5) * target_scale >= r0l[0].max() + R_HEX
     assert (i1min - 0.5) * target_scale <= r0l[1].min() - H_HEX
     assert (i1max + 0.5) * target_scale >= r0l[1].max() + H_HEX
+
+
+def test_hexgrid_outer_points_one():
+    """The outer points of a point are its 6 neighbors"""
+    outer, neighbors = hexgrid_outer_points(np.array([[0.0], [0.0]]))
+    assert outer.shape == (2, 6)
+    assert np.allclose(np.hypot(outer[0], outer[1]), 1.0)
+    assert neighbors == [[0]] * 6
+
+
+def test_hexgrid_outer_points_lcb():
+    """The outer points of the LCB are a ring around it, without repeated points"""
+    r0l = np.array(calc_lcb_grid())
+    outer, neighbors = hexgrid_outer_points(r0l)
+    # the ring of a grid of 27 x 21 points
+    assert outer.shape == (2, 2 * 27 + 2 * 21 + 2)
+    dist = np.hypot(outer[0][:, np.newaxis] - outer[0], outer[1][:, np.newaxis] - outer[1])
+    np.fill_diagonal(dist, np.inf)
+    assert dist.min() > 0.99
+    for point, nb in zip(outer.T, neighbors):
+        assert 1 <= len(nb) <= 3
+        assert np.allclose(np.hypot(*(r0l[:, nb] - point[:, np.newaxis])), 1.0)
+
+
+def test_hexgrid_outer_points_hole():
+    """A missing point inside the grid is an outer point"""
+    r0l = calc_matrix(5, 5)
+    outer, neighbors = hexgrid_outer_points(np.delete(r0l, 12, axis=1))
+    inside = [idx for idx, nb in enumerate(neighbors) if len(nb) == 6]
+    assert len(inside) == 1
+    assert np.allclose(outer[:, inside[0]], r0l[:, 12])
 
 
 def test_neigh6_level1():

@@ -2,7 +2,11 @@ import pytest
 import numpy as np
 import math
 
-from megaradrp.processing.hexspline import rescaling_kernel, hexspline2
+from scipy import signal
+import scipy.interpolate as interp
+
+from megaradrp.processing.hexspline import HEXSPLINE3_LATTICE, hexspline1, hexspline2, rescaling_kernel
+from megaradrp.simulation.convolution import setup_grid
 
 
 # scales of the cubes with pixels of 0.3, 0.5 and 1 arcsec
@@ -52,3 +56,23 @@ def test_hexspline2():
 def test_rescaling_kernel_raise():
     with pytest.raises(ValueError):
         rescaling_kernel(4)
+
+
+def test_hexspline3_lattice():
+    """The values in the grid of the hexspline of order 3, tabulated by convolution"""
+    step = 0.005
+    xx, yy, xs, ys, _, _ = setup_grid(4.0, 4.0, step, step)
+    omega = math.sqrt(3) / 2
+    hex1 = hexspline1(xx, yy)
+    hex2 = signal.fftconvolve(hex1, hex1, mode="same") * step**2 / omega
+    hex3 = signal.fftconvolve(hex2, hex1, mode="same") * step**2 / omega
+    rbs = interp.RectBivariateSpline(xs, ys, hex3)
+    # (x, y) of the 6 neighbors
+    angles = np.radians([30, 90, 150, 210, 270, 330])
+    eta0, eta1 = HEXSPLINE3_LATTICE
+    assert math.isclose(eta0 + 6 * eta1, 1.0)
+    assert np.allclose(rbs.ev(0.0, 0.0), eta0, atol=1e-4)
+    assert np.allclose(rbs.ev(np.sin(angles), np.cos(angles)).mean(), eta1, atol=1e-4)
+    # zero in the second neighbors, in the border of the support
+    angles2 = np.radians([0, 60, 120, 180, 240, 300])
+    assert np.allclose(rbs.ev(math.sqrt(3) * np.sin(angles2), math.sqrt(3) * np.cos(angles2)), 0.0, atol=1e-4)
