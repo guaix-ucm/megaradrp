@@ -449,11 +449,10 @@ def sincH(x, y):
 
 
 def _bspline(x, n):
-    # wrapper for the bspline interface in scipy < 1.13
+    # B-spline of degree n, replaces scipy.signal.bspline, removed in scipy 1.13
     knots = np.arange(-(n + 1) / 2, (n + 3) / 2)
-    out = interp.BSpline.basis_element(knots)(x)
-    out[(x < knots[0]) | (x > knots[-1])] = 0.0
-    return out
+    # zero (nan without extrapolation) outside the support
+    return np.nan_to_num(interp.BSpline.basis_element(knots, extrapolate=False)(x))
 
 
 # Convolution, compute kernel
