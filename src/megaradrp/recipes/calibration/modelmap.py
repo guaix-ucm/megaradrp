@@ -299,7 +299,7 @@ def save_parameter_plots(g_col, plots, processes=1):
 def column_to_fit(data, calc_col, average=0):
     """The column of data fitted in calc_col"""
     if average > 0:
-        return data[:, calc_col - average : calc_col - average + 1].mean(axis=1)
+        return data[:, calc_col - average : calc_col + average + 1].mean(axis=1)
     else:
         return data[:, calc_col]
 

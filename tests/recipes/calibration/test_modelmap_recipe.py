@@ -131,7 +131,6 @@ def test_column_to_fit():
     assert numpy.all(column_to_fit(data, 5) == 5)
 
 
-@pytest.mark.xfail(reason="the average uses only the column calc_col - average", strict=True)
 def test_column_to_fit_average():
     """The column is averaged with the columns around it"""
     data = numpy.arange(10.0) ** 2 * numpy.ones((3, 1))
