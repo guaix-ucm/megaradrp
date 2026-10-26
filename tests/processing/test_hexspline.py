@@ -5,7 +5,14 @@ import math
 from scipy import signal
 import scipy.interpolate as interp
 
-from megaradrp.processing.hexspline import HEXSPLINE3_LATTICE, hexspline1, hexspline2, rescaling_kernel
+from megaradrp.processing.hexspline import (
+    HEXSPLINE3_LATTICE,
+    _bspline_grid,
+    _hexspline1_grid,
+    hexspline1,
+    hexspline2,
+    rescaling_kernel,
+)
 from megaradrp.simulation.convolution import setup_grid
 
 
@@ -76,3 +83,39 @@ def test_hexspline3_lattice():
     # zero in the second neighbors, in the border of the support
     angles2 = np.radians([0, 60, 120, 180, 240, 300])
     assert np.allclose(rbs.ev(math.sqrt(3) * np.sin(angles2), math.sqrt(3) * np.cos(angles2)), 0.0, atol=1e-4)
+
+
+@pytest.mark.parametrize(
+    "p, scale", [(1, 0.56), (1, 1.86), (2, 0.56), (2, 0.93), pytest.param(3, 0.56, marks=pytest.mark.slow)]
+)
+def test_rescaling_kernel_symmetric(p, scale):
+    """The kernel is symmetric in x and y (#372)"""
+    rbs = rescaling_kernel(p, scale=scale)
+    r = np.linspace(-1.5, 1.5, 301)
+    yy, xx = np.meshgrid(r, r, indexing="ij")
+    kernel = rbs.ev(yy, xx)
+    assert np.allclose(kernel, kernel[::-1], rtol=0, atol=1e-12 * kernel.max())
+    assert np.allclose(kernel, kernel[:, ::-1], rtol=0, atol=1e-12 * kernel.max())
+
+
+def test_hexspline1_grid_weights():
+    """The weight is 1/2 on the edges of the hexagon and 1/3 on its vertices"""
+    sqrt3 = math.sqrt(3)
+    x = np.array([0.0, 0.0, 0.1, 1 / sqrt3, 1 / (2 * sqrt3), -1 / (2 * sqrt3), 0.0, 0.6])
+    y = np.array([0.0, 0.5, -0.5, 0.0, 0.5, -0.5, 0.51, 0.0])
+    assert np.allclose(_hexspline1_grid(x, y), [1, 1 / 2, 1 / 2, 1 / 3, 1 / 3, 1 / 3, 0, 0])
+
+
+@pytest.mark.parametrize("step", [0.005, 0.01, 0.1])
+def test_hexspline1_grid_area(step):
+    """The area of the hexagon in a grid with points on its edges"""
+    n = round(1.0 / step)
+    xs = step * np.arange(-n, n + 1)
+    xx, yy = np.meshgrid(xs, xs)
+    area = _hexspline1_grid(xx, yy).sum() * step**2
+    assert area == pytest.approx(math.sqrt(3) / 2, rel=step)
+
+
+def test_bspline_grid_degree0():
+    """The box of degree 0 is 1/2 in its borders"""
+    assert np.allclose(_bspline_grid(np.array([-0.6, -0.5, 0.0, 0.5, 0.6]), 0), [0, 0.5, 1, 0.5, 0])

@@ -19,7 +19,7 @@ import scipy.interpolate as interp
 from scipy import signal
 import numpy as np
 
-from megaradrp.simulation.convolution import hex_c, setup_grid
+from megaradrp.simulation.convolution import hex_c
 
 # Hexagon constants
 M_SQRT3 = math.sqrt(3)
@@ -455,8 +455,44 @@ def _bspline(x, n):
     return np.nan_to_num(interp.BSpline.basis_element(knots, extrapolate=False)(x))
 
 
+def _weights_on_border(*distances, tol=1e-9):
+    """Weights of the points of a grid in a convex region
+
+    The region is the intersection of half planes, `distances` are the
+    distances of the points to their borders, positive inside. The weight
+    is 1 inside, 1/2 on a border and 1/3 on a vertex (on two borders), as
+    the indicator of the Voronoi cell in Van De Ville et al. 2004, eq. (2).
+    Then the sum of the weights times the area of the cell of the grid is
+    the area of the region also when its borders fall on the grid.
+    """
+    inside = np.logical_and.reduce([dist > tol for dist in distances])
+    border = [np.abs(dist) <= tol for dist in distances]
+    nborders = np.sum(border, axis=0)
+    not_outside = np.logical_and.reduce([dist >= -tol for dist in distances])
+    weights = np.zeros(np.shape(distances[0]))
+    weights[inside] = 1.0
+    weights[not_outside & (nborders == 1)] = 1 / 2
+    weights[not_outside & (nborders >= 2)] = 1 / 3
+    return weights
+
+
+def _hexspline1_grid(xx, yy):
+    """Hexspline of order 1 in the points of a grid, with weights on its edges"""
+    ax = np.abs(xx)
+    # the hexagon has horizontal edges at y = +-1/2 and
+    # vertices at x = +-1/sqrt(3)
+    return _weights_on_border(0.5 - np.abs(yy), 0.5 - (M_SQRT3 / 2 * ax + yy / 2), 0.5 - (M_SQRT3 / 2 * ax - yy / 2))
+
+
+def _bspline_grid(t, n):
+    """B-spline of degree n in the points of a grid, with weights on the borders of degree 0"""
+    if n > 0:
+        return _bspline(t, n)
+    return _weights_on_border(0.5 - np.abs(t))
+
+
 # Convolution, compute kernel
-def rescaling_kernel(p, scale=1):
+def rescaling_kernel(p: int, scale: float = 1) -> interp.RectBivariateSpline:
     """Rescaling kernel from hexgrid to rectangular grid
 
     The kernel is the convolution of the hexspline of order `p` with
@@ -492,9 +528,13 @@ def rescaling_kernel(p, scale=1):
     # of the step, so that the origin is a point of the grid, and
     # at least 1.5, the size used when it was fixed
     support = p / M_SQRT3 + p * scale / 2 + 10 * Dx
-    half_size = max(1.5, Dx * math.ceil(support / Dx))
-    xsize = ysize = 2 * half_size
-    xx, yy, xs, ys, xl, yl = setup_grid(xsize, ysize, Dx, Dy)
+    nhalf = max(round(1.5 / Dx), math.ceil(support / Dx))
+    # an exactly symmetric grid, the edges of the hexagon (y = +-1/2) and
+    # those of the B-spline of degree 0 (+-scale/2) can fall on its points,
+    # they have weights, so that the kernel is symmetric (#372)
+    xs = Dx * np.arange(-nhalf, nhalf + 1)
+    ys = Dy * np.arange(-nhalf, nhalf + 1)
+    xx, yy = np.meshgrid(xs, ys, indexing="xy")
 
     detR0 = M_SQRT3 / 2
     detR1 = scale * scale
@@ -502,9 +542,9 @@ def rescaling_kernel(p, scale=1):
     # index of bspline
     n = p - 1
 
-    rect_kernel = _bspline(xx / scale, n) * _bspline(yy / scale, n) / detR1
+    rect_kernel = _bspline_grid(xx / scale, n) * _bspline_grid(yy / scale, n) / detR1
 
-    hex1 = hexspline1(xx, yy)
+    hex1 = _hexspline1_grid(xx, yy)
 
     if p == 1:
         hex_kernel = hex1
