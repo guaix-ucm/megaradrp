@@ -22,13 +22,13 @@ from numina.array.wavecalib.crosscorrelation import convolve_comb_lines
 from numina.core import Result, Parameter
 from numina.frame.utils import copy_img
 import numina.types.qc as qc
+from numina.processing.combine import basic_processing_with_combination
 from scipy.ndimage import minimum_filter
 import scipy.signal
 from skimage.feature import peak_local_max
 from skimage.filters import threshold_otsu
 
 from megaradrp.processing.aperture import ApertureExtractor
-from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.products import TraceMap
 from megaradrp.products.tracemap import GeometricTrace
 from megaradrp.ntypes import ProcessedImage, ProcessedRSS

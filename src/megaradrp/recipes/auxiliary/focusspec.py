@@ -25,11 +25,11 @@ import numina.array.fwhm as fmod
 import numina.core.validator
 from numina.array.stats import robust_std as sigmaG
 from numina.array.peaks.peakdet import find_peaks_indexes, refine_peaks
+from numina.processing.combine import basic_processing_with_combination_frames
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.ntypes import FocusWavelength, ProcessedFrame
 import megaradrp.requirements as reqs
-from megaradrp.processing.combine import basic_processing_with_combination_frames
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.instrument import vph_thr_arc
 

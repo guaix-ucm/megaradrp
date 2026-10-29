@@ -14,11 +14,11 @@ from numina.array import combine
 from numina.core.dataholders import Result, Parameter, Requirement
 from numina.core.requirements import ObservationResultRequirement
 from numina.exceptions import RecipeError
+from numina.processing.combine import basic_processing_with_combination_frames
 
 from megaradrp.instrument.focalplane import FocalPlaneConf
 from megaradrp.recipes.scientific.base import ImageRecipe
 import megaradrp.requirements as reqs
-from megaradrp.processing.combine import basic_processing_with_combination_frames
 
 
 class FocusTelescopeRecipe(ImageRecipe):

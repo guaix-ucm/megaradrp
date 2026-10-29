@@ -9,8 +9,8 @@
 
 from numina.core import Result, Parameter
 from numina.array import combine
+from numina.processing.combine import basic_processing_with_combination
 
-from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.ntypes import MasterBias
 from megaradrp.requirements import MasterBPMRequirement

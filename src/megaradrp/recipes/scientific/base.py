@@ -14,10 +14,10 @@ from numina.core.requirements import ObservationResultRequirement
 from numina.util.flow import SerialFlow
 from numina.array import combine
 from numina.frame.utils import copy_img
+from numina.processing.combine import basic_processing_with_combination
 
 from megaradrp.core.recipe import MegaraBaseRecipe
 import megaradrp.requirements as reqs
-from megaradrp.processing.combine import basic_processing_with_combination
 
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.wavecalibration import WavelengthCalibrator

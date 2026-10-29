@@ -22,7 +22,7 @@ from megaradrp.ntypes import MasterTwilightFlat
 from megaradrp.ntypes import ProcessedRSS, ProcessedFrame
 
 # Flat 2D
-from megaradrp.processing.combine import basic_processing_with_combination
+from numina.processing.combine import basic_processing_with_combination
 from numina.array import combine
 
 # Create RSS

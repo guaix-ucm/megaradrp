@@ -7,58 +7,19 @@
 # License-Filename: LICENSE.txt
 #
 
-"""Combination routines"""
+"""Combination routines
 
-import contextlib
+The combination of frames with several reduction flows is in
+numina.processing.combine since numina 0.41. The functions of this
+module are deprecated and will be removed in megaradrp 0.24.
+"""
 
-from numina.array import combine
-from numina.processing.combine import combine_imgs
+import warnings
 
+import numina.processing.combine as _combine
 
-def basic_processing_with_combination(
-    rinput, reduction_flows, method=combine.mean, method_kwargs=None, errors=True, prolog=None
-):
-
-    if method.__name__ in ["mediancr", "meancrt", "meancr", "meancr2"]:
-        # Special case for combination using a cosmic ray mask
-        return basic_processing_with_combination_frames_crmasks(
-            rinput.obresult.frames, rinput.crmasks, reduction_flows, method=method, method_kwargs=method_kwargs
-        )
-    else:
-        # General case for other combination methods
-        return basic_processing_with_combination_frames(
-            rinput.obresult.frames,
-            reduction_flows,
-            method=method,
-            method_kwargs=method_kwargs,
-            errors=errors,
-            prolog=prolog,
-        )
-
-
-def basic_processing_with_combination_frames(
-    frames, reduction_flows, method=combine.mean, method_kwargs=None, errors=True, prolog=None
-):
-    """Perform basic reduction on set of DataFrames.
-
-    The reduction_flows are split in two parts.
-    First part is performed in individual images (overscan and trimming)
-    Then images are combined according to method and method_kwargs
-    The resulting image is then processed with the
-    second flow (bias, dark, gain and flat-fielding)
-    """
-    reduction_flow_ot, reduction_flow_1im = reduction_flows
-
-    with contextlib.ExitStack() as stack:
-        hduls = [stack.enter_context(dframe.open()) for dframe in frames]
-
-        hdul_ot = [reduction_flow_ot(hdul) for hdul in hduls]
-
-        hdu_combined = combine_imgs(hdul_ot, method=method, method_kwargs=method_kwargs, errors=errors, prolog=prolog)
-
-        result = reduction_flow_1im(hdu_combined)
-
-    return result
+# Functions moved to numina.processing.combine
+_MOVED = ("basic_processing_with_combination", "basic_processing_with_combination_frames")
 
 
 def basic_processing_with_combination_frames_crmasks(
@@ -66,42 +27,34 @@ def basic_processing_with_combination_frames_crmasks(
 ):
     """Perform basic reduction on set of DataFrames using a cosmic ray mask.
 
-    The reduction_flows are split in two parts:
-    1: overscan and trimming;
-    2: bias, dark, gain and flat-fielding
-
-    In this case the two parts are applied to the individual images.
-    After that, the images are combined using the requested cosmic ray mask.
-    First part is performed in individual images (overscan and trimming)
-    Then images are combined according to method and method_kwargs
-    The resulting image is then processed with the
-    second flow (bias, dark, gain and flat-fielding)
+    .. deprecated:: 0.23
+        Use numina.processing.combine.basic_processing_with_combination_frames
+        with the argument crmasks.
     """
+    warnings.warn(
+        "basic_processing_with_combination_frames_crmasks is deprecated, it will be removed in 0.24, "
+        "use numina.processing.combine.basic_processing_with_combination_frames with crmasks",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return _combine.basic_processing_with_combination_frames(
+        frames,
+        reduction_flows,
+        method=method,
+        method_kwargs=method_kwargs,
+        errors=errors,
+        prolog=prolog,
+        crmasks=crmasks,
+    )
 
-    reduction_flow_ot, reduction_flow_1im = reduction_flows
 
-    if crmasks is None:
-        raise ValueError(f"Cosmic ray masks are required for {method.__name__}")
-    crmasks = crmasks.open()
-
-    with contextlib.ExitStack() as stack:
-
-        hduls = [stack.enter_context(dframe.open()) for dframe in frames]
-
-        # apply overscan and trimming to individual images
-        hdul_ot = [reduction_flow_ot(hdul) for hdul in hduls]
-
-        # apply bias, dark, gain correction and flat-fielding to individual images
-        hdul_otbg = [reduction_flow_1im(hdul) for hdul in hdul_ot]
-
-        method_kwargs = method_kwargs or {}
-        if "dtype" not in method_kwargs:
-            method_kwargs["dtype"] = "float32"
-
-        result = combine_imgs(
-            hdul_otbg, method=method, method_kwargs=method_kwargs, errors=errors, prolog=prolog, crmasks=crmasks
+def __getattr__(name):
+    if name in _MOVED:
+        warnings.warn(
+            f"megaradrp.processing.combine.{name} is deprecated, it will be removed in 0.24, "
+            f"use numina.processing.combine.{name}",
+            DeprecationWarning,
+            stacklevel=2,
         )
-
-        result[0].header.add_history(f'Masks uuid:{crmasks[0].header["UUID"]}')
-
-    return result
+        return getattr(_combine, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

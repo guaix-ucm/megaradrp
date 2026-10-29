@@ -14,9 +14,9 @@ import numpy as np
 from numina.array import combine
 from numina.core import DataFrame
 from numina.core.requirements import ObservationResultRequirement
+from numina.processing.combine import basic_processing_with_combination
 
 from megaradrp.core.recipe import MegaraBaseRecipe
-from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.requirements import MasterBiasRequirement, MasterBPMRequirement
 from megaradrp.testing.common import make_obresult
 

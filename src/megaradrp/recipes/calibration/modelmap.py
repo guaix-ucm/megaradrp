@@ -19,6 +19,7 @@ from numina.core import Result, Parameter
 from numina.array import combine
 from numina.frame.utils import copy_img
 from numina.util.objimport import import_object
+from numina.processing.combine import basic_processing_with_combination
 
 from megaradrp.instrument.focalplane import FocalPlaneConf
 from megaradrp.products.modelmap import ModelMap
@@ -27,7 +28,6 @@ from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.modelmap import calc1d_model
 from megaradrp.processing.modeldesc import config
 from megaradrp.ntypes import ProcessedImage, ProcessedRSS
-from megaradrp.processing.combine import basic_processing_with_combination
 from megaradrp.core.recipe import MegaraBaseRecipe
 import megaradrp.requirements as reqs
 
