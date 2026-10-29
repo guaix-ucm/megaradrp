@@ -1,4 +1,6 @@
 import pytest
+from numina.core import ObservationResult
+from numina.instrument.assembly import configure_obresult
 from numina.instrument.generic import InstrumentGeneric
 from megaradrp.loader import load_drp
 from megaradrp.testing.create_image import create_simple_frame
@@ -31,15 +33,11 @@ from megaradrp.testing.create_image import create_simple_frame
     ],
 )
 def test_loader1(conf, uuix):
-    import numina.core
-    from numina.instrument.assembly import assembly_instrument
-
-    obs = numina.core.ObservationResult(instrument="MEGARA")
+    obs = ObservationResult(instrument="MEGARA")
     obs.frames.append(create_simple_frame(insconf=uuix))
-    drpm = load_drp()
-    obs.configuration = conf
+    obs.profile = conf
 
-    key, date_obs, keyname = drpm.select_profile(obs)
-    ins = assembly_instrument(drpm.configurations, key, date_obs, by_key=keyname)
+    ins = configure_obresult(obs, load_drp())
     assert isinstance(ins, InstrumentGeneric)
     assert str(ins.origin.uuid) == uuix
+    assert obs.profile == uuix

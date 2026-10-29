@@ -11,9 +11,10 @@
 
 import astropy.io.fits as fits
 from numina.core import DataFrame, ObservationResult
-import numina.instrument.assembly as asb
+from numina.instrument.assembly import configure_obresult
 
 from megaradrp.instrument.components.detector import MegaraDetector, MegaraDetectorSat, ReadParams
+from megaradrp.loader import load_drp
 
 # The instrument configuration of the test component, and a date where it is valid
 TEST_INSCONF = "4fd05b24-2ed9-457b-b563-a3c618bb1d4c"
@@ -71,17 +72,20 @@ def raw_header(vph="LR-U", insmode="MOS", insconf=TEST_INSCONF, date_obs=TEST_DA
 def make_obresult(mode, filenames=(), header=None):
     """An observation result of MEGARA with the images in filenames
 
-    The instrument configuration is that of INSCONF and DATE-OBS in the
-    header (raw_header() by default), configured with the header.
+    The instrument configuration is selected and configured as in numina
+    run, with the header (raw_header() by default) as the first image.
     """
     if header is None:
         header = raw_header()
+    # The images may not exist, the configuration is taken from the header
+    sample = ObservationResult(instrument="MEGARA")
+    sample.frames = [DataFrame(frame=fits.HDUList([fits.PrimaryHDU(header=header)]))]
+    configure_obresult(sample, load_drp())
+
     ob = ObservationResult()
     ob.instrument = "MEGARA"
     ob.mode = mode
-    store = asb.load_paths_store(["megaradrp.instrument.configs"])
-    insmodel = asb.assembly_instrument(store, header["INSCONF"], header["DATE-OBS"], by_key="uuid")
-    insmodel.configure_with_header(header)
-    ob.configuration = insmodel
+    ob.configuration = sample.configuration
+    ob.profile = sample.profile
     ob.frames = [DataFrame(filename=str(name)) for name in filenames]
     return ob
