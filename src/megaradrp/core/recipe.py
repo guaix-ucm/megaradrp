@@ -7,8 +7,6 @@
 # License-Filename: LICENSE.txt
 #
 
-import logging
-
 from numina.core import BaseRecipe
 from numina.core.recipeinout import RecipeInput, TagsChecker
 from numina.types.qc import QC
@@ -31,19 +29,15 @@ class MegaraRecipeInput(RecipeInput):
 class MegaraBaseRecipe(BaseRecipe):
     """Base class for all MEGARA Recipes
 
+    Each recipe logs with the logger of its module.
+
     Attributes
     ----------
-
     obresult : ObservationResult, requirement
-    logger :
-         recipe logger
-
     datamodel : MegaraDataModel
-
     """
 
     obresult = ObservationResultRequirement()
-    logger = logging.getLogger("numina.recipes.megara")
     datamodel = MegaraDataModel()
     RecipeInput = MegaraRecipeInput
 

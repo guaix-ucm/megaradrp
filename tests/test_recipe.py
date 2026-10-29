@@ -92,3 +92,11 @@ def test_run_qc():
     recipe = TagsRecipe()
     result = recipe.run_qc(None, types.SimpleNamespace(qc=QC.UNKNOWN))
     assert result.qc == QC.GOOD
+
+
+def test_recipe_logger():
+    """The recipes log with the logger of their module"""
+    from megaradrp.recipes.calibration.arc import ArcCalibrationRecipe
+
+    assert ArcCalibrationRecipe.logger.name == "megaradrp.recipes.calibration.arc"
+    assert TagsRecipe.logger.name == TagsRecipe.__module__
