@@ -29,7 +29,7 @@ dependencies = [
     "attrs",
     "jsonschema",
     "matplotlib",
-    "numina >= 0.40.0",
+    "numina >= 0.41.0",
     "numpy",
     "packaging",
     "pooch",

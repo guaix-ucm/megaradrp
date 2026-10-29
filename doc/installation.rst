@@ -6,7 +6,7 @@ The easiest way to install megaradrp is using `pip`, the default Python
 package manager, in a virtual environment or in a conda environment.
 
 
-megaradrp works with Python >= 3.10, and requires numina >= 0.40.
+megaradrp works with Python >= 3.11, and requires numina >= 0.41.
 
 
 ******************
