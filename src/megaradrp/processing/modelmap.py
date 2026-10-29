@@ -243,11 +243,11 @@ def calc_matrix_cols(model_map, datashape, processes=0):
             result = calc_matrix(wshape, model, params_col[col], valid, clip=1e-6, extra=10)
             wcols[col] = result
     else:
-        import multiprocessing as mp
+        from numina.util.parallel import logging_pool
 
         # the results are obtained inside the block, the pool
         # is terminated at the end
-        with mp.Pool(processes=processes) as pool:
+        with logging_pool(processes) as pool:
             results = [
                 pool.apply_async(
                     calc_matrix_adapt,

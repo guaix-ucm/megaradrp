@@ -1,3 +1,5 @@
+import logging
+
 import astropy.io.fits as fits
 import numpy
 import pytest
@@ -72,8 +74,11 @@ def run_recipe(monkeypatch, reduced):
 
 
 @pytest.mark.slow
-def test_modelmap(run_recipe):
+def test_modelmap(run_recipe, caplog):
+    caplog.set_level(logging.DEBUG, logger="megaradrp.recipes.calibration.modelmap")
     result = run_recipe(ModelMapRecipe())
+    # the messages of the processes of the pool reach this process
+    assert "computing in column 200" in caplog.text
     model_map = result.master_model
     assert model_map.total_fibers == 623
     assert model_map.missing_fibers == [623]

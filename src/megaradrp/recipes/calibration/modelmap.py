@@ -20,6 +20,7 @@ from numina.array import combine
 from numina.frame.utils import copy_img
 from numina.util.objimport import import_object
 from numina.processing.combine import basic_processing_with_combination
+from numina.util.parallel import logging_pool
 
 from megaradrp.instrument.focalplane import FocalPlaneConf
 from megaradrp.products.modelmap import ModelMap
@@ -292,7 +293,7 @@ def save_parameter_plots(g_col, plots, processes=1):
         plot_parameters(g_col, plots)
         return
     chunks = [plots[idx::processes] for idx in range(processes)]
-    with mp.Pool(processes) as pool:
+    with logging_pool(processes) as pool:
         pool.starmap(plot_parameters, [(g_col, chunk) for chunk in chunks if chunk])
 
 
@@ -308,9 +309,6 @@ def calc_parallel(model_desc, column, calc_col, tracemap, nloop=10):
     """Fit the profiles of the fibers in column, the column calc_col of the image"""
     valid_fibers = [f.fibid for f in tracemap.contents if f.valid]
     centers = np.array([f.polynomial(calc_col) for f in tracemap.contents if f.valid])
-    # with the start methods spawn and forkserver (the default since
-    # Python 3.14), the messages of the processes of the pool do not
-    # reach the handlers of the parent process
     _logger.debug("computing in column %d", calc_col)
 
     # Scale image value
@@ -327,8 +325,11 @@ def calc_parallel(model_desc, column, calc_col, tracemap, nloop=10):
 
 
 def fit_model(model_desc, data, tracemap, cols, processes=20, nloop=3, average=2):
-    """Fit the profiles of the fibers in the columns cols of data, in a pool of processes"""
-    with mp.Pool(processes) as pool:
+    """Fit the profiles of the fibers in the columns cols of data, in a pool of processes
+
+    The processes log through the loggers of this process.
+    """
+    with logging_pool(processes) as pool:
         # each process receives only its column, not the whole image
         results = [
             pool.apply_async(calc_parallel, args=(model_desc, column_to_fit(data, col, average), col, tracemap, nloop))
