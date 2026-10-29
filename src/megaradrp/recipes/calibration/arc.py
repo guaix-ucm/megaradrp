@@ -307,21 +307,21 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
                 row = rss[idx]
 
-                fxpeaks, sxpeaks = find_fxpeaks(
-                    sp=row,
-                    times_sigma_threshold=0.0,
-                    minimum_threshold=0,
-                    nwinwidth_initial=7,
-                    nwinwidth_refined=5,
-                    npix_avoid_border=6,
-                    nbrightlines=nlines,
-                    sigma_gaussian_filtering=0,
-                    minimum_gaussian_filtering=0,
-                )
-                self.logger.info("number of peaks (expected): %s", str(nlines))
-                self.logger.info("number of peaks (found)...: %d", len(fxpeaks))
-
                 try:
+                    # find_fxpeaks raises ValueError if there are no peaks
+                    fxpeaks, sxpeaks = find_fxpeaks(
+                        sp=row,
+                        times_sigma_threshold=0.0,
+                        minimum_threshold=0,
+                        nwinwidth_initial=7,
+                        nwinwidth_refined=5,
+                        npix_avoid_border=6,
+                        nbrightlines=nlines,
+                        sigma_gaussian_filtering=0,
+                        minimum_gaussian_filtering=0,
+                    )
+                    self.logger.info("number of peaks (expected): %s", str(nlines))
+                    self.logger.info("number of peaks (found)...: %d", len(fxpeaks))
 
                     # use channels (pixels from 1 to naxis1)
                     xchannel = fxpeaks + 1.0
