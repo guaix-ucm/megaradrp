@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2025 Universidad Complutense de Madrid
+# Copyright 2011-2026 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -10,11 +10,22 @@
 import logging
 
 from numina.core import BaseRecipe
+from numina.core.recipeinout import RecipeInput, TagsChecker
 from numina.types.qc import QC
 from numina.core.requirements import ObservationResultRequirement
 
 import megaradrp.core.correctors as cor
 from megaradrp.datamodel import MegaraDataModel
+
+
+class MegaraRecipeInput(RecipeInput):
+    """Input of the MEGARA recipes
+
+    The tags of the products of the input must match those of the
+    observation result.
+    """
+
+    __checkers__ = [TagsChecker()]
 
 
 class MegaraBaseRecipe(BaseRecipe):
@@ -34,59 +45,7 @@ class MegaraBaseRecipe(BaseRecipe):
     obresult = ObservationResultRequirement()
     logger = logging.getLogger("numina.recipes.megara")
     datamodel = MegaraDataModel()
-
-    def validate_input(self, recipe_input):
-        """Validate the input of the recipe.
-
-        First, the validation of numina: the raw images of the observation
-        result with the schemas of MEGARA, the validator of the observing
-        mode and the other requirements with their types. Then, the tags of
-        the requirements must be compatible with those of the observation
-        result.
-        """
-
-        import numina.types.multitype
-
-        super().validate_input(recipe_input)
-
-        # Find reference tags
-        ref_tags = {}
-        for key, val in recipe_input.attrs().items():
-            if key == "obresult":
-                ref_tags = val.tags
-                break
-
-        # check all the rest against reference tags
-        stored = recipe_input.stored()
-        attrs = recipe_input.attrs()
-        val_results = []
-        for key, val in attrs.items():
-            if val is None:
-                continue
-            # If we evaluate query_expr with ref_tags and the tags from the object
-            # The result must be true
-            req = stored[key]
-            rtype = req.type
-            # TODO: develop a method to select images that are valid
-            # for different filters or insmodes; perhaps a ANY keyword
-            tags = rtype.extract_tags(val)
-            # FIXME: this should be handled by the type, not with a special case
-            if isinstance(rtype, numina.types.multitype.MultiType):
-                # get query from first node
-                query_expr = rtype.node_type[0].query_expr
-            else:
-                query_expr = rtype.query_expr
-
-            q2 = query_expr.fill_placeholders(**ref_tags)
-            self.logger.debug("type %s with tags %s, expr %s", rtype, tags, q2)
-            is_valid = q2.eval(**tags)
-            if not is_valid:
-                val_results.append((key, q2, tags, ref_tags))
-        msg = "invalid {} with expression {} and tags {} and obs_tags {}"
-        for key, q2, tags, ref_tags in val_results:
-            self.logger.error(msg.format(key, q2, tags, ref_tags))
-        if val_results:
-            raise ValueError("Validation error", val_results)
+    RecipeInput = MegaraRecipeInput
 
     def run_qc(self, recipe_input, recipe_result):
         """Run Quality Control checks."""

@@ -2,11 +2,12 @@ import types
 
 import pytest
 from numina.core import BaseRecipe
+from numina.core.recipeinout import TagsChecker
 from numina.exceptions import ValidationError
 from numina.types.qc import QC
 
 import megaradrp.requirements as reqs
-from megaradrp.core.recipe import MegaraBaseRecipe
+from megaradrp.core.recipe import MegaraBaseRecipe, MegaraRecipeInput
 from megaradrp.testing.common import make_obresult, raw_header
 from megaradrp.testing.create_tracemap import create_test_tracemap2
 
@@ -55,20 +56,26 @@ def test_validate_input(obresult):
 @pytest.mark.parametrize(
     "traces_vph, apertures_vph, invalid",
     [
-        ("LR-B", "LR-R", ["master_traces"]),
-        ("LR-R", "LR-B", ["master_apertures"]),
-        ("LR-B", "LR-B", ["master_traces", "master_apertures"]),
+        ("LR-B", "LR-R", "master_traces"),
+        ("LR-R", "LR-B", "master_apertures"),
+        # the first one is reported
+        ("LR-B", "LR-B", "master_traces"),
     ],
 )
-def test_validate_input_invalid_tags(obresult, caplog, traces_vph, apertures_vph, invalid):
+def test_validate_input_invalid_tags(obresult, traces_vph, apertures_vph, invalid):
     recipe = TagsRecipe()
     rinput = recipe.create_input(
         obresult=obresult, master_traces=make_tracemap(traces_vph), master_apertures=make_tracemap(apertures_vph)
     )
-    with pytest.raises(ValueError, match="Validation error") as excinfo:
+    msg = f"requirement {invalid}: the value of {invalid} has vph=LR-B, the observing block has vph=LR-R"
+    with pytest.raises(ValidationError, match=msg):
         recipe.validate_input(rinput)
-    assert [key for key, *_ in excinfo.value.args[1]] == invalid
-    assert f"invalid {invalid[0]} with expression" in caplog.text
+
+
+def test_recipes_check_tags():
+    """The inputs of the recipes check the tags of their products"""
+    assert issubclass(TagsRecipe.RecipeInput, MegaraRecipeInput)
+    assert any(isinstance(checker, TagsChecker) for checker in TagsRecipe.RecipeInput.__checkers__)
 
 
 def test_validate_input_types(obresult):
