@@ -51,6 +51,21 @@ def test_get_corrector_missing(key, getter, corrector_class):
     assert isinstance(corrector, IdNode)
 
 
+def test_get_corrector_bpm_window():
+    """The bad pixels are interpolated along the rows"""
+    rinput = types.SimpleNamespace(master_bpm=calibration(0.0))
+    corrector = cor.get_corrector_bpm(rinput, {}, None, MegaraDataModel())
+    assert (corrector.hwin, corrector.wwin) == (0, 3)
+
+
+def test_get_corrector_super_deprecated():
+    rinput = types.SimpleNamespace(master_bias=calibration())
+    with pytest.warns(DeprecationWarning, match="use numina.processing.getters.load_corrector"):
+        corrector = cor.get_corrector_super(rinput, {}, "master_bias", proc.BiasCorrector, MegaraDataModel())
+    assert isinstance(corrector, proc.BiasCorrector)
+    assert corrector.calibid == UUID
+
+
 def test_get_corrector_slit_flat_applied():
     """The image is divided by the slit flat"""
     rinput = types.SimpleNamespace(master_slitflat=calibration(2.0))
