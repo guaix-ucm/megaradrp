@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2025 Universidad Complutense de Madrid
+# Copyright 2016-2026 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -32,6 +32,10 @@ import json
 import jsonschema
 
 from numina.exceptions import ValidationError
+from numina.schemas import convert_headers, definition_validator, validate_schema
+
+# Available from this module as before, they are in numina.schemas since numina 0.41
+from numina.schemas import convert_header, relevant_error  # noqa: F401
 
 from megaradrp.datatype import MegaraDataType
 
@@ -148,34 +152,6 @@ def validate_keyword_any_value(header, key, any_expected):
         raise ValidationError(msg)
 
 
-def convert_headers(hdulist):
-    """Convert the headers of `hdulist` to a list of dictionaries, see :func:`convert_header`"""
-    headers = [convert_header(hdu.header) for hdu in hdulist]
-    return headers
-
-
-def convert_header(header):
-    """Convert a FITS header to a dictionary that can be validated with a JSON schema.
-
-    The dictionary has the keys "values" and "comments", with the values
-    and comments of each keyword, and "ordering", the list of keywords.
-    """
-    hdu_v = {}
-    hdu_c = {}
-    hdu_o = []
-    hdu_repr = {"values": hdu_v, "comments": hdu_c, "ordering": hdu_o}
-
-    for card in header.cards:
-        key = card.keyword
-        value = card.value
-        comment = card.comment
-        hdu_v[key] = value
-        hdu_c[key] = comment
-        hdu_o.append(key)
-
-    return hdu_repr
-
-
 def check_null(obj, level=None):
     """A checker that accepts every object"""
     return True
@@ -184,60 +160,6 @@ def check_null(obj, level=None):
 def check_invalid(obj, level=None):
     """A checker that rejects every object"""
     raise ValidationError
-
-
-def _leaf_errors(error):
-    if error.context:
-        for sub_error in error.context:
-            yield from _leaf_errors(sub_error)
-    else:
-        yield error
-
-
-def relevant_error(error):
-    """The most relevant leaf error of a schema error
-
-    In an error of anyOf or oneOf, the relevant alternative is the
-    one that fails deepest in the instance, with fewer errors.
-    """
-    if not error.context:
-        return error
-    alternatives = {}
-    for sub_error in error.context:
-        alternatives.setdefault(sub_error.relative_schema_path[0], []).extend(_leaf_errors(sub_error))
-    leaves = min(alternatives.values(), key=lambda errors: (-max(len(e.absolute_path) for e in errors), len(errors)))
-    return max(leaves, key=lambda e: len(e.absolute_path))
-
-
-def validate_schema(validator, instance, hdu=None):
-    """Validate `instance` with `validator`, raise ValidationError with a short message
-
-    The message names the HDU and the keyword, for example
-    "HDU 0, keyword EXPTIME: ...", using the most relevant error,
-    see :func:`relevant_error`. `hdu` is the index of the HDU when
-    `instance` are the values of its header.
-
-    Raises
-    ------
-    numina.exceptions.ValidationError
-        If `instance` is not valid.
-    """
-    error = jsonschema.exceptions.best_match(validator.iter_errors(instance))
-    if error is None:
-        return
-    error = relevant_error(error)
-    path = list(error.absolute_path)
-    if hdu is not None:
-        path = [hdu, "values"] + path
-    if len(path) >= 3 and path[1] == "values":
-        where = f"HDU {path[0]}, keyword {path[2]}: "
-    elif len(path) == 2 and path[1] == "values":
-        where = f"HDU {path[0]}: "
-    elif path:
-        where = "/".join(str(part) for part in path) + ": "
-    else:
-        where = ""
-    raise ValidationError(where + error.message)
 
 
 class Checker:
@@ -312,16 +234,6 @@ class BaseChecker(ImageChecker):
 
     def __init__(self, validator):
         super(BaseChecker, self).__init__(validator)
-
-
-def definition_validator(validator, name):
-    """Validator of the definition `name` of the schema of `validator`
-
-    The other definitions are included, so that the references
-    of the definition can be resolved.
-    """
-    schema = {"$ref": f"#/definitions/{name}", "definitions": validator.schema["definitions"]}
-    return type(validator)(schema)
 
 
 class ExtChecker(BaseChecker):
