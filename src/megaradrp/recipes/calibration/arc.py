@@ -21,11 +21,11 @@ from numina.core.requirements import ObservationResultRequirement
 from numina.array.display.polfit_residuals import polfit_residuals
 from numina.array.display.polfit_residuals import polfit_residuals_with_sigma_rejection
 from numina.array.display.ximplotxy import ximplotxy
-from numina.array.wavecalib.__main__ import find_fxpeaks
 from numina.array.wavecalib.arccalibration import arccalibration_direct
 from numina.array.wavecalib.arccalibration import fit_list_of_wvfeatures
 from numina.array.wavecalib.arccalibration import gen_triplets_master
 from numina.array.wavecalib.arccalibration import refine_arccalibration
+from numina.array.wavecalib.core import find_fxpeaks
 from numina.array.wavecalib.solutionarc import CrLinear
 from numina.array.wavecalib.solutionarc import SolutionArcCalibration
 from numina.core.validator import range_validator
