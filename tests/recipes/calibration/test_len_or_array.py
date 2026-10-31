@@ -1,7 +1,9 @@
 from contextlib import nullcontext as does_not_raise
 
 import pytest
+from packaging.version import Version
 
+import numina
 from numina.core.dataholders import Requirement
 import numina.core
 import numina.dal.stored
@@ -33,7 +35,12 @@ class TestDal:
         pytest.param(
             [1.0],
             pytest.raises(ValidationError),
-            marks=pytest.mark.xfail(reason="numina error"),
+            marks=pytest.mark.xfail(
+                Version(numina.__version__).release < (0, 41, 2),
+                reason="IndexError in MultiType.validate, fixed after numina 0.41.1 (numina#269)",
+                raises=IndexError,
+                strict=True,
+            ),
         ),
     ],
 )
