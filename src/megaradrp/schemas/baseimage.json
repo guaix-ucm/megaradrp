@@ -117,13 +117,7 @@
         "OSFILTER":  {"type": "string",
           "enum": ["BLUE", "RED", " RED"]
         },
-        "COVER":  {
-          "description": "Integer in the commissioning images",
-          "anyOf": [
-            {"type": "string", "enum": ["STOPPED", "BOTH_OPEN"]},
-            {"type": "integer"}
-          ]
-        },
+        "COVER":  {"type": "string", "enum": ["STOPPED", "BOTH_OPEN"]},
         "LAMPI1S":  {"type": "integer",
           "enum": [0,1]
         },
@@ -159,8 +153,8 @@
         "UUID":  {"$ref":  "#/definitions/uuid"},
         "BLCKUUID": {"$ref":  "#/definitions/uuid"}
       },
-      "required": ["OBSMODE", "DATE-OBS", "INSTRUME", "INSCONF", "EXPTIME",
-        "VPH"]
+      "required": ["OBSMODE", "DATE-OBS", "INSTRUME", "INSCONF", "UUID",
+        "EXPTIME", "VPH"]
     },
     "raw_hdu_values": {
       "type": "object",

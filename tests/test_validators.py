@@ -25,6 +25,7 @@ def primary_cards(**kwargs):
         "OBSMODE": "MegaraSuccess",
         "DATE-OBS": "2017-08-31T12:00:00.00",
         "INSCONF": "ca3558e3-e50d-4bbc-86bd-da50a0998a48",
+        "UUID": "410f6ea0-c3df-481c-9820-5cf9e0ed3d91",
         "INSMODE": "LCB",
         "VPH": "HR-R",
         "EXPTIME": 10.0,
@@ -148,7 +149,10 @@ def test_check_lamps_missing_keyword():
     [
         ({"INSTRUME": None}, "HDU 0: 'INSTRUME' is a required property"),
         ({"COVER": "CLOSED"}, "HDU 0, keyword COVER: "),
+        ({"COVER": 3}, "HDU 0, keyword COVER: 3 is not of type 'string'"),
         ({"VPH": 3}, "HDU 0, keyword VPH: 3 is not of type 'string'"),
+        ({"UUID": None}, "HDU 0: 'UUID' is a required property"),
+        ({"UUID": "1"}, "HDU 0, keyword UUID: "),
     ],
 )
 def test_check_full_schema(cards, msg):
@@ -158,19 +162,10 @@ def test_check_full_schema(cards, msg):
         checker(create_hdulist(primary_cards(**cards), fibers_cards()))
 
 
-@pytest.mark.parametrize("cover", ["STOPPED", "BOTH_OPEN", 3])
+@pytest.mark.parametrize("cover", ["STOPPED", "BOTH_OPEN"])
 def test_check_cover(cover):
-    """COVER is an integer in the commissioning images"""
     checker = ExtChecker(check_as_datatype.validator_image, [])
     assert checker(create_hdulist(primary_cards(COVER=cover), fibers_cards()))
-
-
-def test_check_without_uuid():
-    """UUID is optional, the commissioning images do not have it"""
-    checker = ExtChecker(check_as_datatype.validator_image, [])
-    assert checker(create_hdulist(primary_cards(UUID=None), fibers_cards()))
-    with pytest.raises(ValidationError, match="HDU 0, keyword UUID: "):
-        checker(create_hdulist(primary_cards(UUID="1"), fibers_cards()))
 
 
 def test_check_fibers_insmode():

@@ -87,16 +87,11 @@ image of the observing mode:
 In every case, the headers of the image are validated with the JSON
 schema ``baseimage.json``, in the package :mod:`megaradrp.schemas`. The
 schema describes the keywords of the primary header (``OBSMODE``,
-``DATE-OBS``, ``INSTRUME``, ``INSCONF``, ``EXPTIME`` and ``VPH`` are
-required), the size of the raw images (4196 x 4212 pixels) and the
+``DATE-OBS``, ``INSTRUME``, ``INSCONF``, ``UUID``, ``EXPTIME`` and ``VPH``
+are required), the size of the raw images (4196 x 4212 pixels) and the
 ``FIBERS`` extension. The ``FIBERS`` extension must have the keywords of
 every bundle and fiber of the instrument mode (``INSMODE``), that must be
 the same as in the primary header.
-
-Some images of the commissioning of MEGARA, in 2017, do not follow the
-current headers: they lack ``UUID``, or have an integer ``COVER``. The
-schema accepts them for now, see
-`issue #340 <https://github.com/guaix-ucm/megaradrp/issues/340>`_.
 
 Observation results
 ===================
