@@ -8,16 +8,18 @@
 #
 """Generate the calibration data tree structure.
 
-The calibration data is stored in ZIP file available at Zenodo, which is
-downloaded and extracted to the base path. The ZIP file contains a directory
-named "guaix-ucm-megaradrp-calibrations-40fb7c (or something similar, depending
-on the version), which is stripped from the paths of the extracted files when
-moving them to the base calibration path. The ZIP file is then removed,
-and the now empty extracted directory is also removed.
+The calibration data is a dataset declared by megaradrp in drp.yaml,
+stored in a ZIP file available at Zenodo. The ZIP file is downloaded to
+the cache of numina, its hash is checked, and its files are installed in
+the directory MEGARA under the base path, as ``numina inittree MEGARA``
+does (see :mod:`numina.user.inittree`): the directory at the top of the
+ZIP file is removed from the paths, the hidden files are skipped, the
+files that already exist with the same contents are left as they are,
+and if some file exists with other contents, nothing is installed
+unless --overwrite is given.
 
-The code detects the name of the extracted directory by looking
-for the first file in the extracted directory and extracting the
-directory name from it.
+The tree of directories for the products of the reductions is created
+too, and ``calibsdir`` is set to the base path in .numina.cfg.
 """
 
 import argparse
@@ -26,11 +28,7 @@ from datetime import datetime
 import getpass
 import logging
 from pathlib import Path
-import pooch
-import shutil
 import sys
-import tempfile
-import zipfile
 
 from rich.logging import RichHandler
 from rich_argparse import RichHelpFormatter
@@ -143,96 +141,29 @@ def init_tree(base_path=None, dry_run=False, logger=None):
                             path.mkdir(parents=True, exist_ok=True)
 
 
-def move_files_strip_fixed(files, base_path, to_strip=None, overwrite=False, dry_run=False, logger=None):
-    """Move files to the base path, stripping a fixed part of the path.
+def declared_dataset(url=None):
+    """The dataset of calibrations declared by megaradrp in drp.yaml
 
-    Parameters
-    ----------
-    files : list of str or Path
-        List of file paths to move.
-    base_path : str or Path
-        Base path where the files will be moved to.
-    to_strip : str, optional
-        Fixed part of the path to strip from the file paths.
-        If None, no stripping is done.
-    overwrite : bool, optional
-        If True, overwrite existing files when moving.
-        If False, abort if any existing files are found.
-    dry_run : bool, optional
-        If True, do not actually move files, only print what would be done.
-    logger : logging.Logger, optional
-        Logger to use for logging messages. If None, a default logger will be used.
+    If `url` is None, the last dataset declared. Otherwise, the dataset
+    with that URL, or None if megaradrp does not declare it.
     """
-    if logger is None:
-        logger = logging.getLogger(__name__)
+    from megaradrp.loader import load_drp
 
-    if to_strip is None:
-        raise ValueError("to_strip must be provided.")
-
-    logger.info(f"Moving files to base path: '{base_path}'")
-    logger.info(f"Stripping fixed part of the path: '{to_strip}'")
-
-    for f in files:
-        if dry_run:
-            if f[-1] == "/":
-                # directory
-                continue
-            if "calibration_data.zip" in f:
-                # ignore the ZIP file itself
-                continue
-            if ".gitattributes" in f:
-                # ignore .gitattributes file, which is not part of the calibration data
-                continue
-            f = Path(f)
-        else:
-            f = Path(f)
-            # ignore directories, we only want to move files
-            if f.is_dir():
-                continue
-            # ignore the ZIP file itself
-            if f.name == "calibration_data.zip":
-                continue
-            # ignore .gitattributes file, which is not part of the calibration data
-            if f.name == ".gitattributes":
-                continue
-        # use as_posix to ensure we have a consistent string representation of the path
-        rel_text = f.as_posix()
-        marker = to_strip.lstrip("./")  # normaliza el comienzo
-        # search for the marker in the path
-        pos = rel_text.find(marker)
-        if pos == -1:
-            # the file is not under the uncompressed directory, we can ignore it
-            continue
-        # replace only the first occurrence of the marker in the path
-        if dry_run:
-            dest = base_path.as_posix() + rel_text.replace(marker, "", 1)
-        else:
-            dest = rel_text.replace(marker, "", 1)
-        # insert "MEGARA" as the top-level directory under the base path
-        dest = dest.replace(base_path.as_posix(), f"{base_path.as_posix()}/MEGARA", 1)
-        if not dry_run:
-            # ensure the destination directory exists
-            dest = Path(dest)
-            dest.parent.mkdir(parents=True, exist_ok=True)
-        logger.debug(f"Moving: '{f}'  ->  '{dest}'")
-        # if destination file already exists, do not overwrite it
-        if not dry_run:
-            if dest.exists():
-                if not overwrite:
-                    logger.warning(f"Destination file already exists, aborting: {dest}")
-                    logger.warning("Use the --overwrite option to overwrite existing files.")
-                    raise SystemExit(1)
-                else:
-                    logger.warning(f"Destination file already exists, overwriting: {dest}")
-            try:
-                f.replace(dest)
-            except OSError:
-                shutil.copy2(f, dest)
-                f.unlink()
+    datasets = load_drp().calibrations
+    if url is None:
+        return datasets[-1]
+    for dataset in datasets:
+        if dataset["url"] == url:
+            return dataset
+    return None
 
 
-def install_calibration_data(url, base_path, overwrite, dry_run=False, logger=None):
+def install_calibration_data(url, base_path, overwrite, dry_run=False, logger=None, known_hash=None):
     """Install the calibration data from the given URL.
+
+    The ZIP file is downloaded to the cache of numina, and it is not
+    downloaded again. Its files are installed in the directory MEGARA
+    under `base_path`, see :func:`numina.user.inittree.plan_install`.
 
     Parameters
     ----------
@@ -241,16 +172,31 @@ def install_calibration_data(url, base_path, overwrite, dry_run=False, logger=No
     base_path : str or Path
         Base path where the calibration data will be installed.
     overwrite : bool
-        If True, overwrite existing files when moving extracted files.
-        If False, abort if any existing files are found.
+        If True, replace the existing files that have other contents.
+        If False, nothing is installed if any such file is found.
     dry_run : bool, optional
-        If True, donwload the ZIP file in a temporary location to
-        extract the list of files that would be extracted, but do not actually
-        create directories or move files. This is useful to check what would be done
-        without making any changes to the file system.
+        If True, download the ZIP file and print what would be done,
+        without installing any file.
     logger : logging.Logger, optional
         Logger to use for logging messages. If None, a default logger will be used.
+    known_hash : str, optional
+        Hash of the ZIP file, as "md5:value". If None, the hash of the
+        dataset declared by megaradrp with this URL is used, and if there
+        is no such dataset, the hash is not checked.
+
+    Returns
+    -------
+    numina.user.inittree.InstallPlan
+        The files that are new, unchanged and with other contents.
+
+    Raises
+    ------
+    SystemExit
+        If some file exists with other contents and `overwrite` is False.
     """
+    from numina.user.inittree import extract, plan_install
+    from numina.util.download import download_file
+
     if logger is None:
         logger = logging.getLogger(__name__)
 
@@ -259,88 +205,47 @@ def install_calibration_data(url, base_path, overwrite, dry_run=False, logger=No
     if isinstance(base_path, str):
         base_path = Path(base_path)
 
-    local_zip_filename = "calibration_data.zip"
-    logger.info(f"Downloading and installing calibration data from: {url}")
-    if dry_run:
-        logger.debug("Dry run mode: downloading ZIP file to temporary location.")
-        # download the ZIP file but do not extract it, since we only want to get
-        # the list of files that would be extracted, without actually creating
-        # directories or moving files. Note that the ZIP file is downloaded to
-        # a temporary location, and it is removed after leaving the with block,
-        # so it does not affect the file system.
-        with tempfile.TemporaryDirectory() as tmpdir:
-            zip_path = pooch.retrieve(
-                url=url,
-                known_hash="md5:3d98803089d4822ee00ed03a4dbba229",
-                fname=local_zip_filename,
-                path=tmpdir,
-                progressbar=True,
-            )
-            # get the list of files that would be extracted from the ZIP file
-            files = zipfile.ZipFile(zip_path, "r").namelist()
-    else:
-        # download and extract the ZIP file to the base path
-        files = pooch.retrieve(
-            url=url,
-            known_hash="md5:3d98803089d4822ee00ed03a4dbba229",
-            fname=local_zip_filename,
-            path=base_path,
-            progressbar=True,
-            processor=pooch.Unzip(extract_dir="."),
-        )
+    if known_hash is None:
+        dataset = declared_dataset(url)
+        if dataset is None:
+            logger.warning(f"The URL is not a dataset declared by megaradrp, its hash is not checked: {url}")
+        else:
+            known_hash = dataset["known_hash"]
 
-    # the extracted files appear under a directory named
-    # "guaix-ucm-megaradrp-calibrations-40fb7c2"
-    # (or something similar, depending on the version),
-    # so we need to strip that part of the path when moving the files
-    # to the base path. First, we need to find the actual name of the
-    # extracted directory, which we can do by looking for the first file in the list
-    # that contains the expected marker in its path.
-    dir_to_strip = None
-    for f in files:
-        p = Path(f).resolve()
-        for part in p.parts:
-            if part.startswith("guaix-ucm-megaradrp-calibrations-"):
-                dir_to_strip = part + "/"  # add the trailing slash to ensure we match only the directory name
-                break
-    if dir_to_strip is None:
-        raise ValueError("Could not find the expected marker in the extracted files.")
-    else:
-        logger.info(f"Found directory to strip: '{dir_to_strip}'")
+    logger.info(f"Downloading calibration data from: {url}")
+    zip_path = download_file(url, known_hash=known_hash)
 
-    # now we can move the files to the base path,
-    # stripping the fixed part of the path
-    move_files_strip_fixed(
-        files, base_path=base_path, to_strip=dir_to_strip, overwrite=overwrite, dry_run=dry_run, logger=logger
+    # for historical reasons, the files are installed under "MEGARA"
+    destination = base_path / "MEGARA"
+    plan = plan_install(zip_path, destination)
+    logger.info(
+        f"{len(plan.new)} new files, {len(plan.unchanged)} unchanged, "
+        f"{len(plan.conflicts)} with other contents, in {destination}"
     )
+    for _, target in plan.conflicts:
+        logger.warning(f"File with other contents: {target}")
+    if plan.conflicts and not overwrite:
+        logger.warning("Nothing was installed. Use the --overwrite option to replace these files.")
+        raise SystemExit(1)
 
-    # remove the now empty extracted directory
-    extracted_dir = base_path / dir_to_strip
-    if extracted_dir.is_dir():
-        logger.info(f"Removing extracted directory: {extracted_dir}")
-        shutil.rmtree(extracted_dir)
-    else:
-        if dry_run:
-            logger.info(f"Removing extracted directory: {extracted_dir} (dry run, not actually removing)")
-        else:
-            logger.warning(f"Expected extracted directory not found: {extracted_dir}")
+    if dry_run:
+        logger.info(f"Dry run: {len(plan.new) + len(plan.conflicts)} files would be installed in {destination}")
+        return plan
 
-    # remove the downloaded zip file
-    # (this is also valid for the dry run, since in that case
-    #  the ZIP file is downloaded to a temporary location)
-    zip_path = base_path / local_zip_filename
-    if zip_path.is_file():
-        logger.info(f"Removing downloaded zip file: {zip_path}")
-        zip_path.unlink()
-    else:
-        if dry_run:
-            logger.info(f"Removing downloaded zip file: {zip_path} (dry run, not actually removing)")
-        else:
-            logger.warning(f"Expected zip file not found: {zip_path}")
+    extract(zip_path, plan.new + plan.conflicts)
+    logger.info(f"Installed {len(plan.new) + len(plan.conflicts)} files in {destination}")
+    return plan
 
 
-def ensure_numina_cfg(dry_run=False, logger=None):
+def ensure_numina_cfg(dry_run=False, logger=None, base_path="calibrations", dataset=None):
     """Ensure that the .numina.cfg file exists and contains the necessary configuration.
+
+    The section ``[tool.megara.inittree]`` records the version of
+    megaradrp, the user and the date, and ``calibsdir`` in ``[tool.run]``
+    is set to `base_path`. If `dataset` is given, the dataset installed
+    is recorded in ``[tool.inittree.MEGARA]``, as numina inittree does
+    (see :func:`numina.user.inittree.update_config`), so that numina run
+    warns if it is not the last dataset declared by megaradrp.
 
     Parameters
     ----------
@@ -348,7 +253,15 @@ def ensure_numina_cfg(dry_run=False, logger=None):
         If True, do not actually write to the file. Only print what would be done.
     logger : logging.Logger, optional
         Logger to use for logging messages. If None, a default logger will be used.
+    base_path : str or Path, optional
+        Base path of the calibration data, the value of ``calibsdir``.
+    dataset : dict, optional
+        The dataset installed, with its name, url and known_hash.
     """
+    from numina.user.inittree import update_config
+
+    from megaradrp.loader import load_drp
+
     if logger is None:
         logger = logging.getLogger(__name__)
 
@@ -359,30 +272,37 @@ def ensure_numina_cfg(dry_run=False, logger=None):
     if dry_run:
         if not cfg_path.exists():
             logger.info(f"Creating new configuration file: {cfg_path.resolve()}")
+        logger.info(f"calibsdir would be set to {base_path} in {cfg_path.resolve()}")
+        return
+
+    if cfg_path.exists():
+        config.read(cfg_path)
     else:
-        if cfg_path.exists():
-            config.read(cfg_path)
-        else:
-            logger.info(f"Creating new configuration file: {cfg_path.resolve()}")
+        logger.info(f"Creating new configuration file: {cfg_path.resolve()}")
 
-        # insert section with information
-        if "tool.megara.inittree" not in config:
-            config["tool.megara.inittree"] = {}
-        config["tool.megara.inittree"]["description"] = "Auto-generated configuration file for calibration data."
-        config["tool.megara.inittree"]["megaradrp-version"] = __version__
-        config["tool.megara.inittree"]["username"] = getpass.getuser()
-        config["tool.megara.inittree"]["creation-date"] = datetime.now().isoformat(timespec="seconds")
+    # insert section with information
+    if "tool.megara.inittree" not in config:
+        config["tool.megara.inittree"] = {}
+    config["tool.megara.inittree"]["description"] = "Auto-generated configuration file for calibration data."
+    config["tool.megara.inittree"]["megaradrp-version"] = __version__
+    config["tool.megara.inittree"]["username"] = getpass.getuser()
+    config["tool.megara.inittree"]["creation-date"] = datetime.now().isoformat(timespec="seconds")
 
-        # ensure the [tool.run] section exists
-        if "tool.run" not in config:
-            config["tool.run"] = {}
+    # ensure the [tool.run] section exists
+    if "tool.run" not in config:
+        config["tool.run"] = {}
 
+    if dataset is None:
         # set calibrations directory
-        config["tool.run"]["calibsdir"] = "calibrations"
+        config["tool.run"]["calibsdir"] = str(base_path)
 
-        # write the updated configuration back to the .numina.cfg file
-        with cfg_path.open("w") as f:
-            config.write(f)
+    # write the updated configuration back to the .numina.cfg file
+    with cfg_path.open("w") as f:
+        config.write(f)
+
+    if dataset is not None:
+        # set calibrations directory and record the dataset
+        update_config(cfg_path, base_path, load_drp(), dataset)
 
     logger.info(f"Configuration file updated: {cfg_path.resolve()}")
 
@@ -403,9 +323,9 @@ def main(args=None):
     )
     parser.add_argument(
         "--zip-url",
-        help="URL of the calibration data ZIP file to download.",
+        help="URL of the calibration data ZIP file to download (default: the last dataset declared by megaradrp).",
         type=str,
-        default="https://zenodo.org/records/18623771/files/guaix-ucm/megaradrp-calibrations-2026.2.zip",
+        default=None,
     )
     parser.add_argument(
         "--overwrite", action="store_true", help="If set, overwrite existing files when moving extracted files."
@@ -443,17 +363,25 @@ def main(args=None):
     # create the directory tree structure
     init_tree(base_path=args.base_path, dry_run=args.dry_run, logger=logger)
 
-    # download and install the calibration data
+    # download and install the calibration data, by default the last
+    # dataset declared by megaradrp in drp.yaml
+    if args.zip_url is None:
+        dataset = declared_dataset()
+    else:
+        dataset = declared_dataset(args.zip_url)
+        if dataset is None:
+            dataset = {"name": Path(args.zip_url).stem, "url": args.zip_url, "known_hash": ""}
     install_calibration_data(
-        url=args.zip_url,
+        url=dataset["url"],
         base_path=args.base_path,
         overwrite=args.overwrite,
         dry_run=args.dry_run,
         logger=logger,
+        known_hash=dataset["known_hash"] or None,
     )
 
     # ensure the .numina.cfg file exists and contains the necessary configuration
-    ensure_numina_cfg(dry_run=args.dry_run, logger=logger)
+    ensure_numina_cfg(dry_run=args.dry_run, logger=logger, base_path=args.base_path, dataset=dataset)
 
     # goodbye message
     logger.info(f"Calibration data tree structure created under base path: {args.base_path}")
