@@ -13,6 +13,10 @@ calibrations:
   description: Calibrations of MEGARA, release 2026.2
   url: https://zenodo.org/records/18623771/files/guaix-ucm/megaradrp-calibrations-2026.2.zip
   known_hash: md5:3d98803089d4822ee00ed03a4dbba229
+- name: megaradrp-calibrations-2026.11
+  description: Calibrations of MEGARA, release 2026.11, self-describing files
+  url: https://zenodo.org/records/23894019/files/guaix-ucm/megaradrp-calibrations-2026.11.zip
+  known_hash: md5:a430a6fcb80f3e6dae7419fb4622012f
 modes:
 - name: Success
   summary: A mode where the recipe successes

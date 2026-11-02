@@ -108,6 +108,41 @@ The file is validated with the schema ``control-schema.json`` of numina
 (:mod:`numina.schemas`).
 
 
+**************************
+Calibration data of MEGARA
+**************************
+
+The catalogs of arc lines, the atmospheric extinction and the bad pixel
+masks are distributed in the dataset `megaradrp-calibrations
+<https://doi.org/10.5281/zenodo.2233591>`_, declared by megaradrp. It is
+installed in the directory of calibrations (``calibsdir``) with::
+
+  $ megaradrp-inittree
+
+or with ``numina inittree MEGARA``. Both install the last dataset declared
+by megaradrp, and set ``calibsdir`` in the file ``.numina.cfg`` of the
+current directory. :program:`megaradrp-inittree` also creates the tree of
+directories for the products of the reductions.
+
+Since the dataset 2026.11, each file describes itself (its type,
+format, profile and tags are in its header), and numina selects the
+files by these metadata, whatever their directory. The catalogs and the
+extinction table are valid for all the profiles, the bad pixel masks
+depend on the profile. This dataset requires numina 0.42 or later.
+
+To change from the dataset 2026.2 to 2026.11, install the new dataset in
+a new directory (``--base-path``): the files of the previous dataset would
+remain in the old directory. :program:`numina run` warns when the dataset
+installed in ``calibsdir`` is not the last one declared by megaradrp.
+
+The files of the dataset are selected before the files found by their
+path in the tree of directories. To use another catalog of lines, give
+it in the requirements of the observation result, in the requirements
+file, or in the command line::
+
+  $ numina run obsresult.yaml --parameter-lines_catalog=my_catalog.ecsv
+
+
 ********************
 Running the pipeline
 ********************

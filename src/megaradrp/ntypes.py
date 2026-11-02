@@ -176,7 +176,14 @@ class SkyRSS(ProcessedRSS):
 
 
 class ReferenceExtinctionTable(DataProductMixin, ArrayType):
-    """Atmospheric Extinction."""
+    """Atmospheric Extinction.
+
+    The array has two columns, wavelength and extinction. In the ECSV
+    files with envelope (format 2) they are read by name.
+    """
+
+    #: Columns of the array read from a file in format 2
+    ecsv_columns = ("wavelength", "extinction")
 
     def validate(self, obj):
         if obj is None:
