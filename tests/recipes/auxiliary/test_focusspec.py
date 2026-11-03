@@ -131,16 +131,32 @@ def test_focusspec_vph_without_limit(run_recipe, no_image, caplog):
     assert numpy.allclose(result.focus_table[:, 2], BEST_FOCUS, atol=0.05)
 
 
-def test_focusspec_one_focus(run_recipe):
-    with pytest.raises(RecipeError, match="only 1 different focus"):
-        run_recipe(foci=[1.0])
+@pytest.mark.parametrize("foci", [[1.0], [1.0, 2.0]])
+def test_focusspec_few_foci(run_recipe, foci):
+    """The fit of a parabola needs 3 foci"""
+    with pytest.raises(RecipeError, match=f"only {len(foci)} different focus, at least 3 are needed"):
+        run_recipe(foci=foci)
 
 
-@pytest.mark.xfail(reason="the foci that cannot be processed are used in the fit", strict=True)
-def test_focusspec_focus_not_processed(run_recipe, no_image):
-    """The foci that cannot be processed are ignored"""
-    result = run_recipe(failed=[5.0], nfibers=300)
+@pytest.mark.parametrize("failed", [[5.0], [1.0, 5.0]])
+def test_focusspec_focus_not_processed(run_recipe, no_image, caplog, failed):
+    """The foci that cannot be processed are ignored (#365)"""
+    result = run_recipe(failed=failed, nfibers=300)
     assert numpy.allclose(result.focus_table[:, 2], BEST_FOCUS, atol=0.05)
+    assert sorted(result.focus_wavelength) == [focus for focus in FOCI if focus not in failed]
+    assert "focus 5.0 cannot be processed" in caplog.text
+
+
+def test_focusspec_few_foci_processed(run_recipe, no_image):
+    with pytest.raises(RecipeError, match="only 2 foci could be processed, at least 3 are needed"):
+        run_recipe(failed=[1.0, 2.0, 3.0], nfibers=300)
+
+
+def test_focusspec_no_lines(run_recipe, no_image, monkeypatch):
+    """Without lines in all the foci there is no focus table (#365)"""
+    monkeypatch.setattr(FocusSpectrographRecipe, "filter_lines", lambda self, measures: {})
+    with pytest.raises(RecipeError, match="there are no lines measured in all the foci"):
+        run_recipe(nfibers=300)
 
 
 def test_focusspec_wlcalib_fibers(run_recipe, no_image, caplog):
@@ -161,6 +177,26 @@ def test_reorder_and_fit():
     final = recipe.reorder_and_fit(line_fibers, FOCI)
     expected = [[10.0, 20.0, BEST_FOCUS], [30.0, 40.0, 2.0], [50.0, 60.0, 4.0]]
     assert numpy.allclose(final, expected)
+
+
+def test_reorder_and_fit_no_minimum(caplog):
+    """The groups of lines whose FWHM has a maximum or is a straight line are removed (#365)"""
+    recipe = FocusSpectrographRecipe()
+    line_fibers = {
+        1: {
+            0: {"basedata": {"coordinates": (10.0, 20.0)}, "centers": [fwhm(f) for f in FOCI]},
+            1: {"basedata": {"coordinates": (30.0, 40.0)}, "centers": [10.0 - (f - 2.0) ** 2 for f in FOCI]},
+            2: {"basedata": {"coordinates": (50.0, 60.0)}, "centers": [1.0 + f for f in FOCI]},
+        },
+    }
+    final = recipe.reorder_and_fit(line_fibers, FOCI)
+    assert numpy.allclose(final, [[10.0, 20.0, BEST_FOCUS]])
+    assert "2 groups of lines have no minimum of the FWHM" in caplog.text
+
+
+def test_reorder_and_fit_empty():
+    final = FocusSpectrographRecipe().reorder_and_fit({}, FOCI)
+    assert final.shape == (0, 3)
 
 
 def test_filter_lines():

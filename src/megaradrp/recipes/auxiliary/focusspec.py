@@ -1,5 +1,5 @@
 #
-# Copyright 2016-2025 Universidad Complutense de Madrid
+# Copyright 2016-2026 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -32,6 +32,9 @@ from megaradrp.ntypes import FocusWavelength, ProcessedFrame
 import megaradrp.requirements as reqs
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.instrument import vph_thr_arc
+
+# the FWHM is fitted to a 2nd degree polynomial
+MIN_FOCI = 3
 
 
 class FocusSpectrographRecipe(MegaraBaseRecipe):
@@ -66,7 +69,9 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
 
     Then, for each line matched in the series of images, its FWHM
     is fitted to a 2nd degree polynomial, and the focus corresponding
-    to its minimum is obtained.
+    to its minimum is obtained. The foci whose images cannot be processed
+    are skipped, at least 3 foci are needed. The lines whose FWHM has no
+    minimum are removed.
 
     The recipe returns:
 
@@ -144,8 +149,8 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                 self.logger.debug("image %s in group %s", img, focus_val)
                 image_groups[focus_val].append(frame)
 
-        if len(image_groups) < 2:
-            raise RecipeError(f"We have only {len(image_groups)} different focus")
+        if len(image_groups) < MIN_FOCI:
+            raise RecipeError(f"We have only {len(image_groups)} different focus, at least {MIN_FOCI} are needed")
 
         # Loop only over fibers with WL calibration
         valid_traces = [fibsol.fibid for fibsol in rinput.master_wlcalib.contents]
@@ -175,7 +180,10 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                 ever[focus] = lines_rss_fwhm
 
             except ValueError:
-                self.logger.info("focus %s cannot be processed", focus)
+                self.logger.warning("focus %s cannot be processed", focus)
+
+        if len(ever) < MIN_FOCI:
+            raise RecipeError(f"only {len(ever)} foci could be processed, at least {MIN_FOCI} are needed")
 
         self.logger.info("pair lines in images")
         line_fibers = self.filter_lines(ever)
@@ -183,7 +191,10 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         focus_wavelength = self.generate_focus_wl(ever, rinput.master_wlcalib)
 
         self.logger.info("fit FWHM of lines")
-        final = self.reorder_and_fit(line_fibers, sorted(image_groups.keys()))
+        # only the foci processed
+        final = self.reorder_and_fit(line_fibers, sorted(ever))
+        if len(final) == 0:
+            raise RecipeError("there are no lines measured in all the foci with a minimum of the FWHM")
 
         focus_median = numpy.median(final[:, 2])
         self.logger.info("median focus value is %5.2f", focus_median)
@@ -379,7 +390,12 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
         return line_fibers
 
     def reorder_and_fit(self, line_fibers, focii):
-        """Fit all the values of FWHM to a 2nd degree polynomial and return minimum."""
+        """Fit all the values of FWHM to a 2nd degree polynomial and return minimum.
+
+        Returns an array with a row (x, y, best focus) for each group of
+        lines. The groups whose fit has no minimum (a maximum or a straight
+        line) are not included.
+        """
 
         ll = sum(len(value) for key, value in line_fibers.items())
         self.logger.debug("there are %d groups of lines to fit", ll)
@@ -393,14 +409,19 @@ class FocusSpectrographRecipe(MegaraBaseRecipe):
                 final[lu, :2] = line_fibers[i][j]["basedata"]["coordinates"]
                 lu += 1
 
-        self.logger.debug("line widths are %s", ally)
-        try:
-            res = numpy.polyfit(focii, ally, deg=2)
-            self.logger.debug("fitting to deg 2 polynomial, done")
-            best = -res[1] / (2 * res[0])
-            final[:, 2] = best
-        except ValueError as error:
-            self.logger.warning("Error in fitting: %s", error)
-            final[:, 2] = 0.0
+        if ll == 0:
+            return final
 
-        return final
+        self.logger.debug("line widths are %s", ally)
+        res = numpy.polyfit(focii, ally, deg=2)
+        self.logger.debug("fitting to deg 2 polynomial, done")
+        # the vertex is a minimum only if the parabola opens upwards, with
+        # a curvature in the range of foci larger than the rounding errors
+        # (a straight line has a curvature of either sign near 0)
+        span = max(focii) - min(focii)
+        has_minimum = res[0] * span**2 > 1e-8 * numpy.abs(ally).max(axis=0)
+        nbad = ll - numpy.count_nonzero(has_minimum)
+        if nbad:
+            self.logger.warning("%d groups of lines have no minimum of the FWHM, they are removed", nbad)
+        final[has_minimum, 2] = -res[1, has_minimum] / (2 * res[0, has_minimum])
+        return final[has_minimum]
