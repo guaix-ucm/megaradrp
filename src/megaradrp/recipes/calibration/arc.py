@@ -373,14 +373,14 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     plot_coeff.append(solution_wv.coeff)
 
                     trace_pol = trace.polynomial
-                    # Update feature with measurements of Y coord in original
-                    # image
-                    # Peak and FWHM in RSS
                     for feature in solution_wv.features:
-                        # Compute Y
-                        feature.ypos = trace_pol(feature.xpos)
-                        # FIXME: check here FITS vs PYTHON coordinates, etc
-                        peak_int = int(feature.xpos)
+                        # xpos is the channel of the line, 1-based, in the
+                        # RSS, that is flipped: the column of the detector,
+                        # 0-based, is naxis1 - xpos. Y in the detector, with
+                        # the trace
+                        feature.ypos = trace_pol(naxis1 - feature.xpos)
+                        # Peak and FWHM in the pixel of the RSS nearest to the line
+                        peak_int = int(round(feature.xpos - 1))
                         try:
                             peak, fwhm = self.calc_fwhm_of_line(row, peak_int, lwidth=20)
                         except Exception as error:
@@ -451,7 +451,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             pdf.close()
 
         self.logger.info("Generating fwhm_image...")
-        image = self.generate_fwhm_image(initial_data_wlcalib.contents)
+        image = self.generate_fwhm_image(initial_data_wlcalib.contents, naxis1=naxis1)
         fwhm_image = fits.PrimaryHDU(image)
         fwhm_hdulist = fits.HDUList([fwhm_image])
 
@@ -522,7 +522,12 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     )
                     if pdf is not None:
                         pdf.close()
-                    if poly_refined != numpy.polynomial.Polynomial([0.0]):
+                    # a polynomial fitted with more lines than coefficients,
+                    # otherwise the residuals do not measure the fit
+                    if (
+                        poly_refined != numpy.polynomial.Polynomial([0.0])
+                        and yres_summary["npoints"] > poldeg_refined + 1
+                    ):
                         npoints_eff = yres_summary["npoints"]
                         residual_std = yres_summary["robust_std"]
                         # compute approximate linear values
@@ -617,7 +622,14 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         return initial_data_wlcalib, data_wlcalib, fwhm_hdulist
 
-    def generate_fwhm_image(self, solutions):
+    def generate_fwhm_image(self, solutions, naxis1=4096, naxis2=4112):
+        """Image of the FWHM of the lines, in the pixels of the detector
+
+        Each pixel has the FWHM of the nearest line. The lines are those
+        of the fibers multiple of 10, their columns in the detector are
+        naxis1 - xpos (the RSS is flipped). The image has the shape of
+        the detector, (naxis2, naxis1).
+        """
         from scipy.spatial import cKDTree
 
         # Each 10 fibers. Comment this to iterate over all fibers instead.
@@ -632,21 +644,21 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         final = []
         for fibercalib in aux:
             for feature in fibercalib.solution.features:
-                final.append([feature.xpos, feature.ypos, feature.fwhm])
+                final.append([naxis1 - feature.xpos, feature.ypos, feature.fwhm])
         final = numpy.asarray(final)
 
         voronoi_points = numpy.array(final[:, [0, 1]])
 
         # Cartesian product of X, Y
-        x = numpy.arange(2048 * 2)
-        y = numpy.arange(2056 * 2)
+        x = numpy.arange(naxis1)
+        y = numpy.arange(naxis2)
         test_points = numpy.transpose([numpy.tile(x, len(y)), numpy.repeat(y, len(x))])
 
         voronoi_kdtree = cKDTree(voronoi_points)
 
         test_point_dist, test_point_regions = voronoi_kdtree.query(test_points, k=1)
-        final_image = test_point_regions.reshape((4112, 4096)).astype("float32")
-        final_image[:, :] = final[final_image[:, :].astype("int16"), 2]
+        # the FWHM of the nearest line
+        final_image = final[test_point_regions.reshape((naxis2, naxis1)), 2].astype("float32")
         return final_image
 
     def model_coeff_vs_fiber(self, data_wlcalib, poldeg, times_sigma_reject=5):

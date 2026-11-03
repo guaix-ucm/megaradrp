@@ -93,11 +93,11 @@ def thar():
     return catalog, arc_rss(catalog)
 
 
-def make_tracemap(valid=VALID):
+def make_tracemap(valid=VALID, slope=0.0):
     tracemap = TraceMap(instrument="MEGARA")
     tracemap.total_fibers = 623
     for fibid in range(1, 624):
-        fitparms = [10.0 + 6.5 * fibid, 0.0] if fibid in valid else []
+        fitparms = [10.0 + 6.5 * fibid, slope] if fibid in valid else []
         tracemap.contents.append(GeometricTrace(fibid, 1, 1, 4096, fitparms=fitparms))
     return tracemap
 
@@ -106,7 +106,7 @@ def make_tracemap(valid=VALID):
 def recipe(monkeypatch):
     """The recipe, the image of the FWHM is slow to compute"""
     recipe = ArcCalibrationRecipe()
-    monkeypatch.setattr(recipe, "generate_fwhm_image", lambda solutions: numpy.zeros((2, 2)))
+    monkeypatch.setattr(recipe, "generate_fwhm_image", lambda solutions, **kwds: numpy.zeros((2, 2)))
     return recipe
 
 
@@ -133,15 +133,51 @@ def test_calibrate_wl(thne, recipe):
     assert fwhm_image[0].data.shape == (2, 2)
 
 
-@pytest.mark.xfail(reason="the FWHM is measured around the 1-based channel of the line", strict=True)
 def test_calibrate_wl_fwhm(thne, recipe):
-    """The FWHM of the lines is measured"""
+    """The FWHM of the lines is measured in their pixel of the RSS (#367)"""
     catalog, rss = thne
     initial, _, _ = recipe.calibrate_wl(rss, catalog, [3], make_tracemap([10]), [0])
     features = [feature for feature in initial.contents[0].solution.features if 100 < feature.xpos < 4000]
     # the FWHM is measured around the pixel of the peak, it is overestimated up to 0.2
     # pixels when the line is in the border of a pixel
     assert numpy.median([feature.fwhm for feature in features]) == pytest.approx(1.5 * 2.3548, abs=0.15)
+
+
+def test_calibrate_wl_ypos(thne, recipe):
+    """The y of the lines is that of the trace in their column of the detector, the RSS is flipped (#367)"""
+    catalog, rss = thne
+    initial, _, _ = recipe.calibrate_wl(rss, catalog, [3], make_tracemap([10], slope=0.001), [0])
+    for feature in initial.contents[0].solution.features:
+        column = 4096 - feature.xpos
+        assert feature.ypos == pytest.approx(10.0 + 6.5 * 10 + 0.001 * column)
+
+
+@pytest.mark.parametrize("npoints", [3, 4])
+def test_calibrate_wl_refined_few_lines(thar, recipe, monkeypatch, npoints):
+    """A refined solution fitted with no more lines than coefficients is an error (#367)"""
+    catalog, rss = thar
+
+    def refine_arccalibration(sp, poly_initial, **kwds):
+        return poly_initial, {"npoints": npoints, "robust_std": 0.0}
+
+    monkeypatch.setattr(arcmod, "refine_arccalibration", refine_arccalibration)
+    _, refined, _ = recipe.calibrate_wl(rss, catalog, [3, 3], make_tracemap(), [30])
+    assert refined.contents == []
+    assert refined.error_fitting == VALID
+
+
+def test_calibrate_wl_refined_enough_lines(thar, recipe, monkeypatch):
+    """A refined solution fitted with more lines than coefficients is accepted"""
+    catalog, rss = thar
+
+    def refine_arccalibration(sp, poly_initial, **kwds):
+        return poly_initial, {"npoints": 5, "robust_std": 0.1}
+
+    monkeypatch.setattr(arcmod, "refine_arccalibration", refine_arccalibration)
+    _, refined, _ = recipe.calibrate_wl(rss, catalog, [3, 3], make_tracemap(), [30])
+    assert [fiber.fibid for fiber in refined.contents] == VALID
+    assert refined.error_fitting == []
+    assert all(fiber.solution.npoints_eff == 5 for fiber in refined.contents)
 
 
 def test_calibrate_wl_old_format(thne, recipe):
@@ -192,21 +228,38 @@ def test_model_coeff_vs_fiber_degree():
 
 @pytest.mark.slow
 def test_generate_fwhm_image():
-    """The FWHM of the nearest line, of the fibers multiple of 10"""
+    """The FWHM of the nearest line in the detector, of the fibers multiple of 10 (#367)"""
     solutions = []
+    # channels of the lines in the RSS, that is flipped
     for fibid, (xpos, ypos, fwhm) in [
-        (10, (100.0, 200.0, 3.0)),
-        (11, (3000.0, 3000.0, 9.0)),
-        (20, (3000.0, 4000.0, 4.0)),
+        (10, (100.0, 2000.0, 3.0)),
+        (11, (3000.0, 2000.0, 9.0)),
+        (20, (4000.0, 2000.0, 4.0)),
     ]:
         sol = SolutionArcCalibration([], [6000.0, 0.3], 0.0, CrLinear(0, 0, 0, 0, 0))
         sol.features = [types.SimpleNamespace(xpos=xpos, ypos=ypos, fwhm=fwhm)]
         solutions.append(FiberSolutionArcCalibration(fibid, sol))
     image = ArcCalibrationRecipe().generate_fwhm_image(solutions)
     assert image.shape == (4112, 4096)
-    assert image[0, 0] == 3.0
-    assert image[3000, 3000] == 4.0
+    assert image.dtype == numpy.float32
+    # the line of channel 100 is in the column 3996 of the detector
+    assert image[2000, 3996] == 3.0
+    assert image[2000, 96] == 4.0
     assert set(numpy.unique(image)) == {3.0, 4.0}
+
+
+def test_generate_fwhm_image_shape():
+    """The image has the shape of the detector given"""
+    sol = SolutionArcCalibration([], [6000.0, 0.3], 0.0, CrLinear(0, 0, 0, 0, 0))
+    sol.features = [
+        types.SimpleNamespace(xpos=10.0, ypos=20.0, fwhm=3.0),
+        types.SimpleNamespace(xpos=190.0, ypos=20.0, fwhm=4.0),
+    ]
+    image = ArcCalibrationRecipe().generate_fwhm_image([FiberSolutionArcCalibration(10, sol)], naxis1=200, naxis2=50)
+    assert image.shape == (50, 200)
+    # channel 10 is the column 190 of the detector
+    assert image[20, 190] == 3.0
+    assert image[20, 10] == 4.0
 
 
 class Extractor(Node):
@@ -282,7 +335,7 @@ def test_arc_run_intermediate(run_arc, tmp_path, monkeypatch):
     """The plots of the calibration are saved"""
     monkeypatch.chdir(tmp_path)
     recipe = ArcCalibrationRecipe(intermediate_results=True)
-    monkeypatch.setattr(recipe, "generate_fwhm_image", lambda solutions: numpy.zeros((2, 2)))
+    monkeypatch.setattr(recipe, "generate_fwhm_image", lambda solutions, **kwds: numpy.zeros((2, 2)))
     before = plt.get_fignums()
     run_arc(recipe, store_pdf_with_refined_fits=1)
     names = {path.name for path in tmp_path.iterdir()}
