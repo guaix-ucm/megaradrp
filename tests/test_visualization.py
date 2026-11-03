@@ -65,12 +65,15 @@ def test_is_inside():
     assert not vis.is_inside((10, 20), [[0, 9], [0, 20]])
 
 
-def wcs_wl(coordinate_type, cunit=None):
+def wcs_wl(coordinate_type, header="AWAV"):
+    """The WCS of the RSS of MEGARA (header "AWAV"), without CUNIT1, or before megaradrp 0.9 (CTYPE1 WAVELENGTH)"""
     if coordinate_type == "wcs":
         hdr = rss_add_wcs(fits.Header(), 4000.0, 0.5, 1.0)
-        if cunit is None:
+        if header == "no-cunit":
             del hdr["CUNIT1"]
-        return WCS(hdr)
+        elif header == "WAVELENGTH":
+            hdr["CTYPE1"] = "WAVELENGTH"
+        return vis.spectral_wcs(hdr)
     return WCS(naxis=2)
 
 
@@ -90,16 +93,36 @@ def test_extract_zval(rssdata, coordinate_type, column, region):
     zval = vis.extract_zval(rssdata, wcs, coordinate_type, column=column, average_region=region)
     assert numpy.all(zval == [20, 1020, 2020])
     zval = vis.extract_zval(rssdata, wcs, coordinate_type, average_region=region)
-    # columns 10 to 29
-    assert numpy.all(zval == [19.5, 1019.5, 2019.5])
+    # columns 10 to 30, the limits are included
+    assert numpy.all(zval == [20, 1020, 2020])
 
 
-@pytest.mark.xfail(reason="astropy converts the wavelengths in Angstrom to meters", strict=True)
-def test_extract_zval_angstrom(rssdata):
-    """The wavelengths are in the units of the header"""
-    wcs = wcs_wl("wcs", cunit="Angstrom")
+@pytest.mark.parametrize("header", ["AWAV", "no-cunit", "WAVELENGTH"])
+def test_extract_zval_angstrom(rssdata, header):
+    """The wavelengths are in Angstrom, astropy converts those of the WCS to meters (#363)"""
+    wcs = wcs_wl("wcs", header)
+    zval = vis.extract_zval(rssdata, wcs, "wcs", column=4010.0)
+    assert numpy.all(zval == [20, 1020, 2020])
     zval = vis.extract_zval(rssdata, wcs, "wcs", average_region=[4005.0, 4015.0])
-    assert numpy.all(zval == [19.5, 1019.5, 2019.5])
+    assert numpy.all(zval == [20, 1020, 2020])
+
+
+def test_extract_zval_unit(rssdata):
+    wcs = wcs_wl("wcs")
+    zval = vis.extract_zval(rssdata, wcs, "wcs", column=401.0, unit="nm")
+    assert numpy.all(zval == [20, 1020, 2020])
+
+
+def test_extract_zval_column(rssdata):
+    """The column is enough, without region (#363)"""
+    zval = vis.extract_zval(rssdata, wcs_wl("pixel"), "pixel", column=21)
+    assert numpy.all(zval == [20, 1020, 2020])
+
+
+@pytest.mark.parametrize("wl, pixel", [(4010.0, 20), (4010.2, 20), (4010.3, 21), (4009.8, 20)])
+def test_transform_to_pixel_nearest(wl, pixel):
+    """The index of the nearest pixel"""
+    assert list(vis.transform_to_pixel(wcs_wl("wcs"), [wl], unit="Angstrom")) == [pixel]
 
 
 def test_extract_zval_continuum(rssdata):
@@ -116,7 +139,7 @@ def test_extract_zval_1d():
 @pytest.mark.parametrize(
     "data, kwargs, message",
     [
-        (numpy.zeros((3, 100)), {}, "are None"),
+        (numpy.zeros((3, 100)), {"continuum_region": [1, 2]}, "are None"),
         (numpy.zeros((2, 3, 100)), {"average_region": [1, 2]}, "1D or 2D"),
         (numpy.zeros((3, 100)), {"average_region": [11, 200]}, "region to average is outside image"),
         (numpy.zeros((3, 100)), {"column": 101, "average_region": [1, 2]}, "column is outside image"),
@@ -231,9 +254,8 @@ def test_main_display_fibid(tmp_path, monkeypatch):
     assert len(calls) == 2 * 623
 
 
-@pytest.mark.xfail(reason="the labels are the 0-based index of all the fibers, not the fibid", strict=True)
 def test_main_display_fibid_labels(tmp_path, monkeypatch, fp_conf):
-    """Each spaxel has the label of its fibid"""
+    """Each spaxel has the label of its fibid and its name (#363)"""
     calls = []
     text_path = vis.TextPath
 
@@ -247,3 +269,23 @@ def test_main_display_fibid_labels(tmp_path, monkeypatch, fp_conf):
     skyfibers = set(fp_conf.sky_fibers())
     expected = [f"{fibid:03d}" for fibid in range(1, 624) if fibid not in skyfibers]
     assert calls[::2] == expected
+    names = {fiber.fibid: fiber.name for fiber in fp_conf.fibers.values()}
+    assert calls[1::2] == [names[int(fibid)] for fibid in expected]
+
+
+def test_main_wcs_coordinates(tmp_path):
+    """The regions in Angstrom, the RSS has CUNIT1 (#363)"""
+    fname = lcb_rss(tmp_path)
+    vis.main(["--plot-sky", "--coordinate-type", "wcs", "--average-region", "4500", "4510.5", str(fname)])
+    assert numpy.all(displayed_values() == numpy.arange(1, 624))
+    vis.main(["--plot-sky", "--coordinate-type", "wcs", "--column", "5999.5", str(fname)])
+    assert numpy.all(displayed_values() == numpy.arange(1, 624))
+
+
+@pytest.mark.parametrize("args", [[], ["--contour", "--contour-image", "contour.fits", "--column", "4500"]])
+def test_main_wcs_coordinates_required(tmp_path, args, capsys):
+    """The default regions are in pixels, with wcs the region is required"""
+    fname = lcb_rss(tmp_path)
+    with pytest.raises(SystemExit):
+        vis.main(["--coordinate-type", "wcs"] + args + [str(fname)])
+    assert "--coordinate-type wcs requires" in capsys.readouterr().err

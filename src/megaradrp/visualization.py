@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2025 Universidad Complutense de Madrid
+# Copyright 2017-2026 Universidad Complutense de Madrid
 #
 # This file is part of Megara DRP
 #
@@ -19,12 +19,16 @@ import matplotlib.transforms as mtransforms
 from matplotlib.textpath import TextPath
 from matplotlib.patches import PathPatch
 
+import astropy.units as u
 import numpy as np
+from astropy.wcs import WCS
 
 import megaradrp.instrument.constants as cons
 import megaradrp.processing.fixrss as fixrss
 
 M_SQRT3 = math.sqrt(3)
+# region of the RSS averaged by default, in pixels
+DEFAULT_REGION = [1000, 3000]
 M_1_SQRT3 = 1 / M_SQRT3
 
 
@@ -147,11 +151,32 @@ def hexplot(
     return collection
 
 
-def transform_to_pixel(wcs, coords, ref=0):
+def spectral_wcs(header):
+    """The WCS of a RSS, reading the wavelengths in Angstrom if CUNIT1 is missing
+
+    astropy converts the wavelengths of a spectral axis (CTYPE1 AWAV or
+    WAVE) to meters. Without CUNIT1 it takes them as meters, but the
+    RSS of MEGARA give them in Angstrom.
+    """
+    if "CUNIT1" not in header:
+        header = header.copy()
+        header["CUNIT1"] = "Angstrom"
+    return WCS(header)
+
+
+def transform_to_pixel(wcs, coords, ref=0, unit=None):
+    """The index of the nearest pixels of the first axis
+
+    The coordinates are in `unit`, they are converted to the units of
+    the WCS. Without `unit` they are in the units of the WCS.
+    """
     # We need only the WL axis
+    coords = np.asarray(coords, dtype="float")
+    if unit is not None:
+        coords = (coords * u.Unit(unit)).to_value(wcs.wcs.cunit[0])
     coords_m = [coords, np.zeros_like(coords)]
     r = wcs.wcs_world2pix(np.transpose(coords_m), ref)
-    first_col = r[:, 0].astype("int")
+    first_col = np.floor(r[:, 0] + 0.5).astype("int")
     return first_col
 
 
@@ -173,18 +198,19 @@ def is_inside_1d(shape1d, coords):
     return True
 
 
-def extract_region(wcs_wl, region, rssdata):
-    cut1, cut2 = transform_to_pixel(wcs_wl, region)
+def extract_region(wcs_wl, region, rssdata, unit=None):
+    """The mean of the columns of the region, both limits included"""
+    cut1, cut2 = transform_to_pixel(wcs_wl, region, unit=unit)
 
     if is_inside_1d(rssdata.shape[1], [cut1, cut2]):
-        z = rssdata[:, cut1:cut2].mean(axis=1)
+        z = rssdata[:, cut1 : cut2 + 1].mean(axis=1)
         return z
     else:
         raise ValueError("region to average is outside image")
 
 
-def extract_column(wcs_wl, col, rssdata):
-    (cut,) = transform_to_pixel(wcs_wl, [col])
+def extract_column(wcs_wl, col, rssdata, unit=None):
+    (cut,) = transform_to_pixel(wcs_wl, [col], unit=unit)
 
     if is_inside_1d(rssdata.shape[1], [cut]):
         # cut1, cut2 = args.average_region
@@ -194,10 +220,19 @@ def extract_column(wcs_wl, col, rssdata):
         raise ValueError("column is outside image")
 
 
-def extract_zval(rssdata, wcs_wl, coordinate_type, column=None, average_region=None, continuum_region=None):
+def extract_zval(rssdata, wcs_wl, coordinate_type, column=None, average_region=None, continuum_region=None, unit=u.AA):
+    """The value of each fiber, in a column or averaged in a region
 
-    if continuum_region is None and average_region is None:
-        raise ValueError("continuum_region and average_region are None")
+    The coordinates are pixels (1-based) or, with coordinate_type "wcs",
+    wavelengths in `unit`. The continuum, averaged in continuum_region,
+    is subtracted.
+    """
+
+    if column is None and average_region is None:
+        raise ValueError("column and average_region are None")
+
+    if coordinate_type != "wcs":
+        unit = None
 
     if rssdata.ndim == 1:
         # data is 1d
@@ -207,14 +242,14 @@ def extract_zval(rssdata, wcs_wl, coordinate_type, column=None, average_region=N
         print("world coordinates in", coordinate_type)
         if column is not None:
             print("use column", column)
-            zval = extract_column(wcs_wl, column, rssdata)
+            zval = extract_column(wcs_wl, column, rssdata, unit=unit)
         else:
             print("compute average in", average_region)
-            zval = extract_region(wcs_wl, average_region, rssdata)
+            zval = extract_region(wcs_wl, average_region, rssdata, unit=unit)
         # Subtract continuum
         if continuum_region:
             print("compute continuum in", continuum_region)
-            z0 = extract_region(wcs_wl, continuum_region, rssdata)
+            z0 = extract_region(wcs_wl, continuum_region, rssdata, unit=unit)
             zval -= z0
     else:
         raise ValueError("image must be 1D or 2D")
@@ -229,9 +264,7 @@ def main(argv=None):
 
     import matplotlib.pyplot as plt
     import astropy.io.fits as fits
-    from astropy.wcs import WCS
     from astropy.visualization.mpl_normalize import simple_norm
-    import astropy.units as u
 
     import megaradrp.datamodel as dm
     from megaradrp.instrument.focalplane import FocalPlaneConf
@@ -248,15 +281,21 @@ def main(argv=None):
     )
     parser.add_argument("--fix-missing", action="store_true", help="Interpolate missing fibers")
     parser.add_argument(
-        "--average-region", nargs=2, default=[1000, 3000], type=int, help="Region of the RSS averaged on display"
+        "--average-region",
+        nargs=2,
+        type=float,
+        help=f"Region of the RSS averaged on display (default is the pixels {DEFAULT_REGION})",
     )
     parser.add_argument("--extname", "-e", default="PRIMARY", help="Name of the extension used")
-    parser.add_argument("--column", "-c", type=int, help="Column of the RSS on display")
+    parser.add_argument("--column", "-c", type=float, help="Column of the RSS on display")
     parser.add_argument(
-        "--continuum-region", nargs=2, type=int, help="Region of the RSS used for continuum subtraction"
+        "--continuum-region", nargs=2, type=float, help="Region of the RSS used for continuum subtraction"
     )
     parser.add_argument(
-        "--coordinate-type", choices=["pixel", "wcs"], default="pixel", help="Types of coordinates used"
+        "--coordinate-type",
+        choices=["pixel", "wcs"],
+        default="pixel",
+        help="Types of coordinates used: pixels, 1-based, or wavelengths in Angstrom",
     )
     parser.add_argument("--colormap", type=plt.get_cmap, help="Name of a valid matplotlib colormap")
     parser.add_argument("--plot-sky", "--display-sky", action="store_true", help="Display SKY bundles")
@@ -288,14 +327,13 @@ def main(argv=None):
     group_c.add_argument("--contour-levels", help="Contour levels")
     group_c.add_argument("--contour", action="store_true", help="Draw contours")
     group_c.add_argument("--contour-image", help="Image for computing contours")
-    group_c.add_argument("--contour-image-column", type=int, help="Column of image used for contouring")
+    group_c.add_argument("--contour-image-column", type=float, help="Column of image used for contouring")
     group_c.add_argument("--contour-image-save", help="Save image used for contouring")
     group_c.add_argument(
         "--contour-image-region",
         nargs=2,
-        default=[1000, 3000],
-        type=int,
-        help="Region of the image used for contouring",
+        type=float,
+        help=f"Region of the image used for contouring (default is the pixels {DEFAULT_REGION})",
     )
     group_c.add_argument(
         "--contour-is-density", action="store_true", help="The data is a magnitude that does not require scaling"
@@ -304,6 +342,16 @@ def main(argv=None):
     parser.add_argument("rss", metavar="RSS", nargs="+", help="RSS images to process")
 
     args = parser.parse_args(args=argv)
+
+    # the default regions are in pixels
+    if args.column is None and args.average_region is None:
+        if args.coordinate_type == "wcs":
+            parser.error("--coordinate-type wcs requires --column or --average-region")
+        args.average_region = DEFAULT_REGION
+    if args.contour_image is not None and args.contour_image_column is None and args.contour_image_region is None:
+        if args.coordinate_type == "wcs":
+            parser.error("--coordinate-type wcs requires --contour-image-column or --contour-image-region")
+        args.contour_image_region = DEFAULT_REGION
 
     for fname in args.rss:
         with fits.open(fname) as img:
@@ -325,8 +373,8 @@ def main(argv=None):
 
             x0 = np.empty((fp_conf.nfibers,))
             y0 = np.empty((fp_conf.nfibers,))
-            num = {}
-            names = {}
+            num = np.zeros((fp_conf.nfibers,), dtype="int")
+            names = np.empty((fp_conf.nfibers,), dtype="object")
             # Key is fibid
             for _, fiber in sorted(fp_conf.fibers.items()):
                 idx = fiber.fibid - 1
@@ -338,7 +386,7 @@ def main(argv=None):
             extname = args.extname
             if args.coordinate_type == "wcs":
                 # read WCS from extname
-                wcs_wl = WCS(img[extname].header)
+                wcs_wl = spectral_wcs(img[extname].header)
             else:
                 wcs_wl = WCS(naxis=len(img[extname].shape))
 
@@ -390,9 +438,9 @@ def main(argv=None):
             col = hexplot(ax, x, y, zdisp, scale=scale, cmap=args.colormap, norm=norm)
             if args.display_fibid:
                 # Plot spaxel labels
-                for xx, yy, fid in zip(x, y, num):
+                for xx, yy, fid, name in zip(x, y, num[plot_mask], names[plot_mask]):
                     tp1 = TextPath((xx - 0.05, yy + 0.16), f"{fid:03d}", size=0.045)
-                    tp2 = TextPath((xx - 0.05, yy - 0.18), f"{names[fid]}", size=0.045)
+                    tp2 = TextPath((xx - 0.05, yy - 0.18), f"{name}", size=0.045)
                     ax.add_patch(PathPatch(tp1, zorder=2, lw=0, fc="black"))
                     ax.add_patch(PathPatch(tp2, zorder=2, lw=0, fc="black"))
 
@@ -412,7 +460,7 @@ def main(argv=None):
 
                         if args.coordinate_type == "wcs":
                             # read WCS from extname
-                            wcs_wl_c = WCS(hdu_con[extname].header)
+                            wcs_wl_c = spectral_wcs(hdu_con[extname].header)
                         else:
                             wcs_wl_c = WCS(naxis=len(hdu_con[extname].shape))
 
