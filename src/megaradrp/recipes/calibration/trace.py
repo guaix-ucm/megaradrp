@@ -508,19 +508,26 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         lowt = numpy.min(mincol[bb1 : bb2 + 1])
         _logger.debug("conservative background in box is %f", lowt)
 
+        startid = lastid + 1
+        fiber_model = fibermatch.generate_box_model(nfibers, start=startid, missing_relids=mfibers, skip_fibids=sfibers)
+
+        lastid = fiber_model[-1].fibid
+        _logger.debug("fibids %s - %s", startid, lastid)
+
         # Find exactly the number of peaks expected
         _logger.debug("find %d peaks (max)", nfibers_max)
         ipeaks_int = peak_local_max(
             region, min_distance=3, threshold_abs=lowt, threshold_rel=threshold, num_peaks=nfibers_max
-        ).squeeze()
+        )[:, 0]
 
         npeaks = len(ipeaks_int)
         total_peaks += npeaks
 
         if npeaks == 0:
-            # skip everything, go to next box
+            # no fiber found in this box, go to next box
             boxes_with_missing_fibers.append((box["name"], nfibers))
             _logger.debug("no peaks detected, go to next box")
+            fiber_traces.extend(FiberTraceInfo(el.fibid, boxid) for el in fiber_model)
             continue
 
         # We always want the result sorted. The order changes in different versions
@@ -535,18 +542,6 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         peaks_y[:, 0] = ipeaks_int + b1
         peaks_y[:, 1] = ipeaks_float + b1
         peaks_y[:, 2] = region[ipeaks_int]
-        peak1 = peaks_y[0, 0]
-        peak2 = peaks_y[-1, 0]
-        border1 = peak1 - b1  # distance from left border to first peak
-        border2 = b2 - peak2  # distance from last peak to right border
-        delta_ioffset = int((border1 - border2) / 2)
-        ioffset += delta_ioffset  # new offset to recenter next fiber block
-
-        startid = lastid + 1
-        fiber_model = fibermatch.generate_box_model(nfibers, start=startid, missing_relids=mfibers, skip_fibids=sfibers)
-
-        lastid = fiber_model[-1].fibid
-        _logger.debug("fibids %s - %s", startid, lastid)
 
         matched_peaks = fibermatch.count_peaks(peaks_y[:, 1], tol=tol, distance=measured_scale)
         # Count FOUND_PEAK elements
@@ -557,7 +552,18 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         if missing != 0:
             boxes_with_missing_fibers.append((box["name"], missing))
 
-        if True or debug_plot:
+        if nmatched == nfibers_max:
+            # Recenter the next fiber block only from a box with all its fibers:
+            # in a box with missing fibers at one end, the distances to the borders
+            # are not symmetric
+            border1 = peaks_y[0, 0] - b1  # distance from left border to first peak
+            border2 = b2 - peaks_y[-1, 0]  # distance from last peak to right border
+            delta_ioffset = int((border1 - border2) / 2)
+            ioffset += delta_ioffset  # new offset to recenter next fiber block
+        else:
+            _logger.debug("box with missing fibers, offset for borders not updated")
+
+        if debug_plot:
             fig = Figure()
             ax = fig.subplots()
             ax.plot(numpy.arange(len(region)) + b1, region)
