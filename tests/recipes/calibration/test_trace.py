@@ -4,7 +4,12 @@ import matplotlib.pyplot as plt
 import numpy
 import pytest
 
-from megaradrp.recipes.calibration.trace import init_traces, refine_boxes_from_array
+from megaradrp.recipes.calibration.trace import (
+    box_contrast,
+    init_traces,
+    refine_boxes_from_array,
+    select_reference_column,
+)
 
 
 def test_refine_boxes_from_array(tmp_path, monkeypatch):
@@ -80,3 +85,37 @@ def test_init_traces_missing_fiber_inside_box(tmp_path, monkeypatch):
     for fibid, pos in zip(range(1, 11), FIBERS_A):
         if fibid != 4:
             assert found[fibid] == pytest.approx(pos, abs=0.1)
+
+
+def _defocused_image(ncols=4096, nrows=200):
+    """Two boxes of fibers; the fibers of the second box widen towards the red"""
+    y = numpy.arange(nrows)[:, numpy.newaxis]
+    x = numpy.arange(ncols)[numpy.newaxis, :]
+    image = numpy.full((nrows, ncols), 100.0)
+    for pos in FIBERS_A:
+        image += 10000.0 * numpy.exp(-0.5 * ((y - pos) / 1.5) ** 2)
+    sigma = 1.5 + 2.5 * numpy.clip((x - 600.0) / 2000.0, 0, 1)
+    for pos in FIBERS_B:
+        image += 10000.0 * numpy.exp(-0.5 * ((y - pos) / sigma) ** 2)
+    return image
+
+
+def test_box_contrast():
+    """The contrast of a box is lower for defocused fibers"""
+    image = _defocused_image()
+    blue = box_contrast(image[:, 400], BORDERS)
+    red = box_contrast(image[:, 3500], BORDERS)
+    assert blue[0] > 0.6
+    assert blue[1] == pytest.approx(blue[0])
+    assert red[0] == pytest.approx(blue[0])
+    assert red[1] < 0.1
+
+
+def test_select_reference_column():
+    """The selected column is where the defocused box is still sharp"""
+    image = _defocused_image()
+    candidates = range(400, 3700, 100)
+    best, scores = select_reference_column(image, BORDERS, candidates, hw=5)
+    assert best <= 600
+    assert len(scores) == len(candidates)
+    assert max(scores) == scores[list(candidates).index(best)]

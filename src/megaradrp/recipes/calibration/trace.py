@@ -23,7 +23,7 @@ from numina.core import Result, Parameter
 from numina.frame.utils import copy_img
 import numina.types.qc as qc
 from numina.processing.combine import basic_processing_with_combination
-from scipy.ndimage import minimum_filter
+from scipy.ndimage import maximum_filter1d, minimum_filter, minimum_filter1d
 import scipy.signal
 from skimage.feature import peak_local_max
 from skimage.filters import threshold_otsu
@@ -106,6 +106,9 @@ class TraceMapRecipe(MegaraBaseRecipe):
     )
     relative_threshold = Parameter(0.3, "Threshold for peak detection")
     reference_column = Parameter(2000, "Column used to search for peaks")
+    auto_reference_column = Parameter(
+        True, "Search for peaks in the column where the weakest pseudoslit box has the most contrast"
+    )
     reference_column_hw = Parameter(5, "Half-width (w = 2 * hw + 1) of the region used to search for peaks ")
     debug_plot = Parameter(0, "Save intermediate tracing plots")
 
@@ -209,6 +212,18 @@ class TraceMapRecipe(MegaraBaseRecipe):
         box_borders, _ = refine_boxes_from_image(
             reduced, box_borders0, cstart, intermediate_results=self.intermediate_results
         )
+        if rinput.auto_reference_column:
+            hw = rinput.reference_column_hw
+            ncols = reduced[0].shape[1]
+            candidates = range(400, ncols - 400 + 1, 100)
+            cstart, scores = select_reference_column(reduced[0].data, box_borders, candidates, hw=hw)
+            self.logger.info("reference column with the most contrast is %d", cstart)
+            self.logger.debug(
+                "contrast of the weakest box in columns %s: %s", list(candidates), numpy.round(scores, 2).tolist()
+            )
+            box_borders, _ = refine_boxes_from_image(
+                reduced, box_borders0, cstart, intermediate_results=self.intermediate_results
+            )
         self.logger.debug(f"refined boxes computed in column {cstart}")
         self.logger.debug("refined boxes: %s", numpy.asarray(box_borders).tolist())
 
@@ -451,6 +466,39 @@ class TraceMapRecipe(MegaraBaseRecipe):
                 self.logger.info("traces completed with the shape of the neighbouring traces: %s", changed)
 
         return contents, error_fitting, missing_fibers
+
+
+def box_contrast(column, box_borders, margin=9, window=7):
+    """Contrast of the fibers in each pseudoslit box of a column of the image
+
+    The contrast is the median over the box of (max - min) / max in windows of
+    `window` pixels, about the distance between fibers, leaving `margin`
+    pixels at the borders of the box.
+    """
+    peaks = maximum_filter1d(column, window)
+    valleys = minimum_filter1d(column, window)
+    with numpy.errstate(invalid="ignore", divide="ignore"):
+        depth = (peaks - valleys) / peaks
+    result = []
+    for b1, b2 in zip(box_borders[:-1], box_borders[1:]):
+        region = depth[int(b1) + margin : int(b2) - margin]
+        region = region[numpy.isfinite(region)]
+        result.append(numpy.median(region) if region.size else 0.0)
+    return numpy.array(result)
+
+
+def select_reference_column(image, box_borders, candidates, hw=5):
+    """The column where the pseudoslit box with the least contrast has the most
+
+    The column cuts are averaged over 2 * hw + 1 columns. Returns the selected
+    column and the contrast of the weakest box in each candidate column.
+    """
+    scores = []
+    for col in candidates:
+        column = image[:, col - hw : col + hw + 1].mean(axis=1)
+        scores.append(float(numpy.min(box_contrast(column, box_borders))))
+    best = list(candidates)[int(numpy.argmax(scores))]
+    return best, scores
 
 
 def estimate_background(image, center, hs, boxref):
