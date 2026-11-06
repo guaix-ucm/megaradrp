@@ -36,6 +36,7 @@ from megaradrp.core.recipe import MegaraBaseRecipe
 import megaradrp.requirements as reqs
 import megaradrp.products
 import megaradrp.processing.fibermatch as fibermatch
+from megaradrp.processing.traceshape import complete_traces
 from megaradrp.instrument import vph_thr
 from megaradrp.instrument.focalplane import FocalPlaneConf
 
@@ -100,6 +101,9 @@ class TraceMapRecipe(MegaraBaseRecipe):
     xmin_fit = Parameter(1, "Minimum column to fit traces (from 1 to NAXIS1)")
     xmax_fit = Parameter(4096, "Maximum column to fit traces (from 1 to NAXIS1)")
     extrapolate_traces = Parameter(False, "Extrapolate traces to the borders of the image")
+    complete_traces = Parameter(
+        True, "Correct and complete the traces with the shape of the traces of the neighbouring fibers"
+    )
     relative_threshold = Parameter(0.3, "Threshold for peak detection")
     reference_column = Parameter(2000, "Column used to search for peaks")
     reference_column_hw = Parameter(5, "Half-width (w = 2 * hw + 1) of the region used to search for peaks ")
@@ -264,6 +268,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
             xmin_fit=rinput.xmin_fit,
             xmax_fit=rinput.xmax_fit,
             extrapolate_traces=rinput.extrapolate_traces,
+            complete=rinput.complete_traces,
             debug_plot=debug_plot,
         )
         self.logger.info("END search traces")
@@ -298,6 +303,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         xmin_fit=1,
         xmax_fit=4096,
         extrapolate_traces=False,
+        complete=True,
         step=2,
         hs=3,
         tol=1.5,
@@ -344,6 +350,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
         contents = []
         error_fitting = []
         missing_fibers = []
+        # traced points of each fiber, used to complete the traces
+        points = {}
         self.logger.info("trace peaks from references")
         for dtrace in central_peaks:
             # FIXME, for traces, the background must be local
@@ -389,6 +397,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
                     else:
                         self.logger.debug(f"fit polynomial with degree {poldeg=}")
                         pfit = nppol.polyfit(xfit, yfit, deg=poldeg)
+                        points[dtrace.fibid] = (xfit, yfit)
                         self.logger.debug(f"polynomial is {pfit=}")
 
                     if debug_plot:
@@ -433,6 +442,13 @@ class TraceMapRecipe(MegaraBaseRecipe):
                 fibid=dtrace.fibid, boxid=dtrace.boxid, start=int(start), stop=int(stop), fitparms=pfit.tolist()
             )
             contents.append(this_trace)
+
+        if complete:
+            xx_start, xx_end = tracing_limits(data.shape[1], cstart, step, hs)
+            xlimits = (max(xx_start, xmin_fit - 1), min(xx_end, xmax_fit - 1))
+            changed = complete_traces(contents, points, xlimits, cstart, poldeg)
+            if changed:
+                self.logger.info("traces completed with the shape of the neighbouring traces: %s", changed)
 
         return contents, error_fitting, missing_fibers
 
