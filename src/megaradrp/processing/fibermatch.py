@@ -69,56 +69,66 @@ def generate_box_model(nfibers, start=1, missing_relids=None, skip_fibids=None):
 
 
 def count_peaks(peaks, tol=1.2, distance=6.0, start=1, max_scale_jump=3):
-    """Count the peaks and valleys of an array"""
+    """Count the peaks and valleys of an array
 
-    expected_distance = distance
+    The peaks are expected every `distance` pixels. A peak at k times
+    `distance` from the previous one (within k times `tol`) leaves k - 1
+    valleys, missing peaks, before it. A peak closer than expected to the
+    previous one is skipped. The counting stops when the next peak is
+    `max_scale_jump` or more times `distance` away.
 
-    scale = 1
-    pidx = 0
-    pid = start
+    Parameters
+    ----------
+    peaks : array_like
+        Sorted positions of the peaks
+    tol : float
+        Tolerance in the distance between consecutive peaks
+    distance : float
+        Expected distance between consecutive peaks
+    start : int
+        Count of the first peak
+    max_scale_jump : int
+        Distance, in units of `distance`, at which the counting stops
+
+    Returns
+    -------
+    list of PeakMatch
+        The peaks and the valleys between them. The `idx` of a peak
+        is its index in `peaks`.
+    """
 
     if len(peaks) == 0:
         raise ValueError("no peaks to count")
 
-    p1, rest = peaks[0], peaks[1:]
-    # pref = p1
-
-    values = [PeakMatch(pid, p1, PeakFound.FOUND_PEAK, 0)]
-
-    while len(rest) > 0:
-        # print(f'im peak: {p1:.2f}, next peak should be around: {p1 + scale * expected_distance:.2f}')
-        p2 = rest[0]
-        dist = abs(p1 - p2)
-        last_info = values[-1]
-        while True:
-            sed = scale * expected_distance
-            # print(f'next peak is: {p2:.2f}, distance from p1 is {dist:.2f}')
-            # print('expected distance is:', sed)
+    pid = start
+    values = [PeakMatch(pid, peaks[0], PeakFound.FOUND_PEAK, 0)]
+    valleys = []
+    p1 = peaks[0]
+    scale = 1
+    idx = 1
+    while idx < len(peaks):
+        p2 = peaks[idx]
+        dist = p2 - p1
+        sed = scale * distance
+        if abs(dist - sed) < scale * tol:
+            # the next peak, after scale - 1 valleys
+            values.extend(valleys)
+            valleys = []
             pid += 1
-
-            if abs(dist - sed) < scale * tol:
-                # print(f'p2 is within expected distance with tol {tol}')
-                # print(f'p2 is next peak, with scale', scale)
-                pidx += 1
-                values.append(PeakMatch(pid, p2, PeakFound.FOUND_PEAK, pidx))
-                scale = 1
-
-                p1, rest = rest[0], rest[1:]
-                break
-            else:
-                # print('p2 is not within expected distance with tol:', tol)
-                pex = p1 + sed
-                pidx += 1
-                values.append(PeakMatch(pid, pex, PeakFound.FOUND_VALLEY, None))
-                scale += 1
-                # print('increase scale to:', scale)
-                # Skip this peak
-                rest = rest[1:]
-                if scale > max_scale_jump:
-                    # print('moving too far away')
-                    _logger.warning("peak %s not found within expected distance from peak %s", pid, last_info.count)
-                    # end process
-                    rest = rest[-1:]
+            values.append(PeakMatch(pid, p2, PeakFound.FOUND_PEAK, idx))
+            p1 = p2
+            scale = 1
+            idx += 1
+        elif dist < sed:
+            # closer than expected, skip this peak
+            idx += 1
+        else:
+            # further than expected, a valley before this peak
+            pid += 1
+            valleys.append(PeakMatch(pid, p1 + sed, PeakFound.FOUND_VALLEY, None))
+            scale += 1
+            if scale > max_scale_jump:
+                _logger.warning("peak %s not found within expected distance from peak %s", pid, values[-1].count)
                 break
     return values
 
