@@ -124,6 +124,106 @@ def interpolate_windows(data, skip, coverage, nside=5):
         block[ok] = line[ok]
 
 
+# Flags of a fiber in the fiber flat that make it invalid
+INVALID_FLAT_FLAGS = frozenset(["broken"])
+
+
+def flag_fibers(flat, coverage, faint, good, col1, col2, skip=None, max_dev=0.3, min_frac=0.02, nneigh=5, width=51):
+    """Quality flags of the fibers in a fiber flat
+
+    - "faint": the fiber is fainter than the limit of the average spectrum
+      (informational)
+    - "deviant": the shape of the flat of the fiber differs by more than
+      `max_dev` from the median shape of its `nneigh` neighbors at each side
+      on the pseudo-slit, in more than `min_frac` of its pixels with coverage,
+      after a median filter of `width` pixels (informational: in the
+      commissioning data these are steep features of the spectrum with small
+      differences in the wavelength calibration, and traces off-center where
+      the signal is weak; both are also in the science spectra)
+    - "broken": the level of the fiber is not positive, or the flat has non
+      finite values where the fiber has coverage (the fiber is invalid)
+
+    The shape of each fiber is its flat divided by its median in the columns
+    `col1:col2`.
+
+    Parameters
+    ----------
+    flat : numpy.ndarray
+        The fiber flat, shape (nfibers, npix)
+    coverage : numpy.ndarray
+        Boolean array, the pixels with coverage
+    faint : numpy.ndarray
+        Boolean array of the fibers fainter than the limit
+    good : numpy.ndarray
+        Boolean array of the fibers not marked invalid before
+    skip : numpy.ndarray, optional
+        Boolean array of the pixels interpolated in the absorption windows
+
+    Returns
+    -------
+    dict
+        fibid: list of flags, for the fibers with flags
+    """
+    import warnings
+
+    from scipy.ndimage import median_filter
+
+    nfibers = flat.shape[0]
+    use = coverage.copy()
+    if skip is not None:
+        use &= ~skip[numpy.newaxis, :]
+    checked = good & coverage.any(axis=1)
+    level = numpy.median(flat[:, col1:col2], axis=1)
+    finite = numpy.all(numpy.isfinite(flat) | ~coverage, axis=1)
+    broken = checked & ~((level > 0) & finite)
+    shaped = checked & ~broken
+    shape = numpy.full(flat.shape, numpy.nan)
+    shape[shaped] = numpy.where(coverage[shaped], flat[shaped] / level[shaped, numpy.newaxis], numpy.nan)
+
+    flags = {}
+    for idx in numpy.flatnonzero(checked):
+        fiber_flags = []
+        if faint[idx]:
+            fiber_flags.append("faint")
+        if broken[idx]:
+            fiber_flags.append("broken")
+        else:
+            neigh = [j for j in range(max(0, idx - nneigh), min(nfibers, idx + nneigh + 1)) if j != idx and shaped[j]]
+            if neigh:
+                with warnings.catch_warnings():
+                    # pixels without coverage in all the neighbors
+                    warnings.simplefilter("ignore", RuntimeWarning)
+                    ratio = shape[idx] / numpy.nanmedian(shape[neigh], axis=0)
+                pixels = use[idx] & numpy.isfinite(ratio)
+                ratio = median_filter(numpy.where(numpy.isfinite(ratio), ratio, 1.0), width)
+                if pixels.any() and numpy.mean(numpy.abs(ratio[pixels] - 1) > max_dev) > min_frac:
+                    fiber_flags.append("deviant")
+        if fiber_flags:
+            flags[int(idx) + 1] = fiber_flags
+    return flags
+
+
+def check_qc_fiberflat(fibers_hdr, nfibers=None):
+    """Global quality of the fiber flat
+
+    GOOD if no fiber is invalid by the checks of the fiber flat, PARTIAL if some
+    are, BAD if more than 5 % of the fibers are.
+    """
+    from numina.types.qc import QC
+
+    if nfibers is None:
+        nfibers = fibers_hdr.get("NFIBERS", 623)
+    invalid = 0
+    for key, value in fibers_hdr.items():
+        if key.endswith("QF") and not INVALID_FLAT_FLAGS.isdisjoint(str(value).split(",")):
+            invalid += 1
+    if invalid > 0.05 * nfibers:
+        return QC.BAD
+    if invalid > 0:
+        return QC.PARTIAL
+    return QC.GOOD
+
+
 def _smoothing_window_check(val):
     """Check 'smoothing_window'"""
     # raise ValueError("something")
@@ -333,7 +433,30 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         self.logger.warning("Copy all extensions for the moment")
         rss_wl2 = fits.HDUList([hdu.copy() for hdu in rss_wl])
         rss_wl2[0].data = data2
+
+        # quality flags of the fibers
+        flags = flag_fibers(data2, wlmap, lit & ~valid_mask, good_idxs_mask, col1, col2, skip)
+        fibers_hdr = rss_wl2["FIBERS"].header
+        for fibid, fiber_flags in sorted(flags.items()):
+            fibers_hdr[f"FIB{fibid:03d}QF"] = (",".join(fiber_flags), "Quality flags of the fiber flat")
+            if not INVALID_FLAT_FLAGS.isdisjoint(fiber_flags):
+                fibers_hdr[f"FIB{fibid:03d}_V"] = (False, "Fiber is invalid")
+        deviant = [fibid for fibid, fiber_flags in flags.items() if "deviant" in fiber_flags]
+        if deviant:
+            self.logger.info("fibers with a flat different from their neighbors: %s", deviant)
+        broken = [fibid for fibid, fiber_flags in flags.items() if "broken" in fiber_flags]
+        if broken:
+            self.logger.warning("fibers with a broken fiber flat, marked invalid: %s", broken)
         return rss_wl2
+
+    def run_qc(self, recipe_input, recipe_result):
+        """Quality of the fiber flat, from the flags of the fibers"""
+        self.logger.info("start fiber flat recipe QC")
+        with recipe_result.master_fiberflat.open() as hdul:
+            recipe_result.qc = check_qc_fiberflat(hdul["FIBERS"].header)
+        self.logger.info("Result QC is %s", recipe_result.qc)
+        self.logger.info("end fiber flat recipe QC")
+        return recipe_result
 
     def run(self, rinput):
         """Execute the recipe.

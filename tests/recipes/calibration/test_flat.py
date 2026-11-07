@@ -4,6 +4,7 @@ from astropy.io import fits
 import numpy
 import pytest
 import numina.exceptions
+from numina.types.qc import QC
 from numina.util.node import Node
 
 import megaradrp.recipes.calibration.flat as flat
@@ -12,6 +13,8 @@ from megaradrp.recipes.calibration.flat import (
     FiberFlatRecipe,
     _smoothing_window_check,
     absorption_windows,
+    check_qc_fiberflat,
+    flag_fibers,
     interpolate_windows,
 )
 from megaradrp.testing.create_image import create_rss
@@ -266,3 +269,74 @@ def test_obtain_fiber_flat_edge_falls(transmission):
     # only where at least 5 % of the fibers have coverage
     enough = covered.sum(axis=0) >= 0.05 * 623
     assert numpy.allclose(ratio[:, enough][covered[:, enough]], 1.0, atol=0.02)
+
+
+def test_obtain_fiber_flat_flags(transmission):
+    """Faint and deviant fibers are flagged and stay valid, a fiber without flux is marked invalid"""
+    x = numpy.arange(NWL)
+    lamp = 1.0 + 0.5 * numpy.exp(-(((x - 2000) / 800.0) ** 2))
+    rss = flat_rss(transmission, lamp)
+    rss[0].data[100] *= 0.1
+    # the response of the fiber 201 falls to the blue and to the red
+    rss[0].data[200] *= numpy.exp(-(((x - 2000) / 1200.0) ** 2))
+    rss[0].data[300] = 0.0
+    result = FiberFlatRecipe().obtain_fiber_flat(rss)
+    hdr = result["FIBERS"].header
+    assert hdr["FIB101QF"] == "faint"
+    assert hdr.get("FIB101_V", True)
+    assert hdr["FIB201QF"] == "deviant"
+    assert hdr.get("FIB201_V", True)
+    assert hdr["FIB301QF"] == "broken"
+    assert not hdr["FIB301_V"]
+    assert "FIB050QF" not in hdr
+    assert check_qc_fiberflat(hdr) == QC.PARTIAL
+
+
+def test_flag_fibers():
+    flat = numpy.ones((12, 400))
+    coverage = numpy.ones_like(flat, dtype=bool)
+    faint = numpy.zeros(12, dtype=bool)
+    faint[1] = True
+    good = numpy.ones(12, dtype=bool)
+    good[11] = False
+    # same shape as the neighbors, other level
+    flat[1] = 0.5
+    # a step of 50 % in 100 pixels
+    flat[5, 300:] = 1.5
+    # no flux
+    flat[8] = 0.0
+    # invalid fibers are not checked
+    flat[11] = 7.0
+    flat[11, 300:] = 0
+    flags = flag_fibers(flat, coverage, faint, good, 10, 20)
+    assert flags == {2: ["faint"], 6: ["deviant"], 9: ["broken"]}
+    # a step of 20 % is the color of the fiber
+    flat[5, 300:] = 1.2
+    assert flag_fibers(flat, coverage, faint, good, 10, 20) == {2: ["faint"], 9: ["broken"]}
+    # the deviant pixels inside the windows are not counted
+    flat[5, 300:] = 1.5
+    skip = numpy.zeros(400, dtype=bool)
+    skip[290:] = True
+    assert flag_fibers(flat, coverage, faint, good, 10, 20, skip=skip) == {2: ["faint"], 9: ["broken"]}
+    # non finite values with coverage
+    flat[3, 50] = numpy.nan
+    assert flag_fibers(flat, coverage, faint, good, 10, 20, skip=skip)[4] == ["broken"]
+
+
+@pytest.mark.parametrize("ninvalid, qc", [(0, QC.GOOD), (3, QC.PARTIAL), (40, QC.BAD)])
+def test_check_qc_fiberflat(ninvalid, qc):
+    hdr = create_default_fiber_header("LCB")
+    hdr["FIB300QF"] = "faint"
+    hdr["FIB301QF"] = "deviant"
+    for fibid in range(1, ninvalid + 1):
+        hdr[f"FIB{fibid:03d}QF"] = "faint,broken"
+    assert check_qc_fiberflat(hdr) == qc
+
+
+def test_fiber_flat_run_qc(transmission):
+    rss = flat_rss(transmission, numpy.ones(NWL))
+    rss["FIBERS"].header["FIB010QF"] = "broken"
+    recipe = FiberFlatRecipe()
+    result = recipe.create_result(master_fiberflat=rss, reduced_image=rss, reduced_rss=rss)
+    result = recipe.run_qc(None, result)
+    assert result.qc == QC.PARTIAL
