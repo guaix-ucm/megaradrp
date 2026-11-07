@@ -16,13 +16,28 @@ from .structured import BaseStructuredCalibration
 from .aperture import GeometricAperture
 from .traces import to_ds9_reg as to_ds9_reg_function
 
+# Flags of a trace that make it invalid
+INVALID_TRACE_FLAGS = frozenset(["crossing", "not_completed"])
+
 
 class GeometricTrace(GeometricAperture):
-    """Representation of fiber trace on the image"""
+    """Representation of fiber trace on the image
 
-    def __init__(self, fibid, boxid, start, stop, fitparms=None):
+    `flags` are the results of the quality checks of the trace:
+
+    - "weak": the fiber is much fainter than its neighbours in the reference column
+    - "truncated": the trace does not cover the expected range
+    - "completed": the trace was completed or corrected with the shape of the neighbouring traces
+    - "not_completed": the trace is truncated and could not be completed
+    - "crossing": the trace crosses the trace of a neighbouring fiber
+
+    A trace without polynomial, or with a flag in INVALID_TRACE_FLAGS, is not valid.
+    """
+
+    def __init__(self, fibid, boxid, start, stop, fitparms=None, flags=None):
         super(GeometricTrace, self).__init__(fibid, boxid, start, stop)
         self.fitparms = fitparms if fitparms is not None else []
+        self.flags = list(flags) if flags is not None else []
         self.polynomial = None
         # Update polynomial
         self._set_polynomial(fitparms)
@@ -32,10 +47,14 @@ class GeometricTrace(GeometricAperture):
         return self.is_valid()
 
     def is_valid(self):
-        if self.fitparms:
-            return True
-        else:
+        if not self.fitparms:
             return False
+        return INVALID_TRACE_FLAGS.isdisjoint(self.flags)
+
+    def add_flag(self, flag):
+        """Add a quality flag to the trace, once"""
+        if flag not in self.flags:
+            self.flags.append(flag)
 
     def __getstate__(self):
         state = super(GeometricTrace, self).__getstate__()
@@ -44,7 +63,8 @@ class GeometricTrace(GeometricAperture):
 
     def __setstate__(self, state):
         super(GeometricTrace, self).__setstate__(state)
-
+        # traces saved before the quality flags
+        self.flags = list(state.get("flags", []))
         self._set_polynomial(state["fitparms"])
 
     def _set_polynomial(self, fitparms):

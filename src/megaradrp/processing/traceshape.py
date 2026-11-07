@@ -84,8 +84,16 @@ class TraceShapeModel:
         return numpy.interp(x, self.xgrid, values)
 
 
-def _crossing_traces(ids, ys):
-    """Fibers whose trace comes closer than half the usual distance to the next fiber"""
+def crossing_traces(ids, ys):
+    """Fibers whose trace comes closer than half the usual distance to the next fiber
+
+    Parameters
+    ----------
+    ids : list of int
+        Sorted fibids
+    ys : dict
+        Positions of the trace of each fiber in a common set of columns
+    """
     crossing = set()
     for a, b in zip(ids[:-1], ids[1:]):
         if b == a + 1:
@@ -146,7 +154,7 @@ def complete_traces(
     if not ids:
         return []
     ys = {f: traces[index[f]].polynomial(xgrid) for f in ids}
-    crossing = _crossing_traces(ids, ys)
+    crossing = crossing_traces(ids, ys)
 
     def is_complete(fibid):
         x = points[fibid][0]
@@ -184,7 +192,12 @@ def complete_traces(
         yfit = numpy.concatenate([yg, y0 + offset + model.shape(y0, xgrid[outside])])
         pfit = nppol.polyfit(xfit, yfit, poldeg)
         traces[index[fibid]] = GeometricTrace(
-            fibid=trace.fibid, boxid=trace.boxid, start=int(xstart), stop=int(xend), fitparms=pfit.tolist()
+            fibid=trace.fibid,
+            boxid=trace.boxid,
+            start=int(xstart),
+            stop=int(xend),
+            fitparms=pfit.tolist(),
+            flags=trace.flags + ["completed"],
         )
         changed.append(fibid)
         _logger.debug(

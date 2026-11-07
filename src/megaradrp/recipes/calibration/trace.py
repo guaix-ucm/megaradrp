@@ -10,7 +10,6 @@
 """Fiber tracing Recipe."""
 
 import logging
-import warnings
 
 import numpy
 import numpy.polynomial.polynomial as nppol
@@ -128,7 +127,11 @@ class TraceMapRecipe(MegaraBaseRecipe):
         return recipe_result
 
     def check_qc_tracemap(self, tracemap):
-        # check full range in all fibers
+        """Global quality of the traces, from the fibers not found and the flags of the traces
+
+        GOOD if every expected fiber is traced and valid, PARTIAL if some are not,
+        BAD if more than 5 % of the fibers are not.
+        """
         if tracemap.tags["insmode"] == "LCB":
             nfibers = 623
             ignored_ids = [623]
@@ -136,28 +139,26 @@ class TraceMapRecipe(MegaraBaseRecipe):
             nfibers = 644
             ignored_ids = [635]
 
-        cost_ids = nfibers * [0]
-
-        start_min, end_max = tracemap.expected_range
-
+        lost = sorted(set(tracemap.error_fitting) - set(ignored_ids))
+        invalid = sorted(
+            t.fibid for t in tracemap.contents if t.fitparms and not t.valid and t.fibid not in ignored_ids
+        )
+        counts = {}
         for trace in tracemap.contents:
-            idx = trace.fibid - 1
-            if trace.fibid in ignored_ids:
-                continue
-            if trace.start > start_min:
-                cost_ids[idx] += 1
-                msg = f"In fiber {trace.fibid}, trace start > {start_min}"
-                warnings.warn(msg)
-            if trace.stop < end_max:
-                cost_ids[idx] += 1
-                msg = f"In fiber {trace.fibid}, trace end < {end_max}"
-                warnings.warn(msg)
+            for flag in trace.flags:
+                counts.setdefault(flag, []).append(trace.fibid)
 
-        total = sum(cost_ids)
+        if lost:
+            self.logger.warning("fibers not found: %s", lost)
+        if invalid:
+            self.logger.warning("invalid traces: %s", invalid)
+        for flag, fibids in sorted(counts.items()):
+            self.logger.info("traces with flag %r: %d %s", flag, len(fibids), fibids)
 
-        if total > 300:
+        nbad = len(lost) + len(invalid)
+        if nbad > 0.05 * nfibers:
             tracemap.quality_control = qc.QC.BAD
-        elif total > 0:
+        elif nbad > 0:
             tracemap.quality_control = qc.QC.PARTIAL
         else:
             tracemap.quality_control = qc.QC.GOOD
@@ -458,14 +459,75 @@ class TraceMapRecipe(MegaraBaseRecipe):
             )
             contents.append(this_trace)
 
+        xx_start, xx_end = tracing_limits(data.shape[1], cstart, step, hs)
+        xlimits = (max(xx_start, xmin_fit - 1), min(xx_end, xmax_fit - 1))
         if complete:
-            xx_start, xx_end = tracing_limits(data.shape[1], cstart, step, hs)
-            xlimits = (max(xx_start, xmin_fit - 1), min(xx_end, xmax_fit - 1))
             changed = complete_traces(contents, points, xlimits, cstart, poldeg)
             if changed:
                 self.logger.info("traces completed with the shape of the neighbouring traces: %s", changed)
 
+        peak_values = {dtrace.fibid: dtrace.start[2] for dtrace in central_peaks if dtrace.start is not None}
+        flag_traces(contents, peak_values, xlimits, completed=complete)
+
         return contents, error_fitting, missing_fibers
+
+
+def flag_traces(traces, peak_values, xlimits, completed=True, weak_ratio=0.3, nneigh=5, tol=20):
+    """Add the quality flags to the traces
+
+    - "weak": the peak in the reference column is below `weak_ratio` times the
+      median of the peaks of the `nneigh` fibers at each side
+    - "truncated": the trace starts or stops more than `tol` pixels inside `xlimits`
+    - "not_completed": truncated, after trying to complete the traces (`completed`)
+    - "crossing": in the range covered by both, the trace comes closer to the trace
+      of the next fiber than half the usual distance between consecutive fibers;
+      only valid traces are compared
+
+    Parameters
+    ----------
+    traces : list of GeometricTrace
+    peak_values : dict
+        Value of the peak of each fiber in the reference column, fibid: value
+    xlimits : tuple of int
+        First and last columns of a complete trace
+    completed : bool
+        The traces have been completed with the shape of the neighbouring traces
+    """
+    ids = sorted(peak_values)
+    values = numpy.array([peak_values[f] for f in ids])
+    by_id = {t.fibid: t for t in traces}
+    for k, fibid in enumerate(ids):
+        lo, hi = max(0, k - nneigh), min(len(ids), k + nneigh + 1)
+        neighbours = numpy.delete(values[lo:hi], k - lo)
+        if fibid in by_id and neighbours.size and values[k] < weak_ratio * numpy.median(neighbours):
+            by_id[fibid].add_flag("weak")
+
+    xstart, xend = xlimits
+    for trace in traces:
+        if not trace.fitparms:
+            continue
+        if trace.start > xstart + tol or trace.stop < xend - tol:
+            trace.add_flag("truncated")
+            if completed:
+                trace.add_flag("not_completed")
+
+    valid = sorted(((t.fibid, t) for t in traces if t.valid), key=lambda item: item[0])
+    pairs = []
+    for (fa, ta), (fb, tb) in zip(valid[:-1], valid[1:]):
+        if fb != fa + 1:
+            continue
+        x1, x2 = max(ta.start, tb.start), min(ta.stop, tb.stop)
+        if x2 <= x1:
+            continue
+        xx = numpy.linspace(x1, x2, 100)
+        pairs.append((ta, tb, tb.polynomial(xx) - ta.polynomial(xx)))
+    if pairs:
+        # the usual distance between consecutive fibers
+        spacing = numpy.median([numpy.median(sep) for _, _, sep in pairs])
+        for ta, tb, sep in pairs:
+            if sep.min() < 0.5 * spacing:
+                ta.add_flag("crossing")
+                tb.add_flag("crossing")
 
 
 def box_contrast(column, box_borders, margin=9, window=7):

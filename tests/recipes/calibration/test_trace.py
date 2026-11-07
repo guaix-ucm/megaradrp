@@ -6,6 +6,7 @@ import pytest
 
 from megaradrp.recipes.calibration.trace import (
     box_contrast,
+    flag_traces,
     init_traces,
     refine_boxes_from_array,
     select_reference_column,
@@ -119,3 +120,40 @@ def test_select_reference_column():
     assert best <= 600
     assert len(scores) == len(candidates)
     assert max(scores) == scores[list(candidates).index(best)]
+
+
+def _trace(fibid, y0, start=6, stop=4090, slope=0.0):
+    from megaradrp.products.tracemap import GeometricTrace
+
+    return GeometricTrace(fibid=fibid, boxid=0, start=start, stop=stop, fitparms=[y0, slope])
+
+
+def test_flag_traces():
+    """Weak, truncated and crossing traces are flagged; truncated ones are invalid after completion"""
+    traces = [_trace(f, 100.0 + 6 * f) for f in range(1, 21)]
+    # fiber 5 is weak
+    peaks = {f: 1000.0 for f in range(1, 21)}
+    peaks[5] = 100.0
+    # fiber 10 stops at 2500
+    traces[9] = _trace(10, 160.0, stop=2500)
+    # fiber 15 crosses fiber 16
+    traces[14] = _trace(15, 190.0, slope=0.01)
+    flag_traces(traces, peaks, (6, 4090), completed=True)
+    flags = {t.fibid: t.flags for t in traces}
+    assert flags[5] == ["weak"]
+    assert flags[10] == ["truncated", "not_completed"]
+    assert flags[15] == ["crossing"]
+    assert flags[16] == ["crossing"]
+    assert sum(1 for f in flags.values() if f) == 4
+    assert traces[4].valid
+    assert not traces[9].valid
+    assert not traces[14].valid
+
+
+def test_flag_traces_without_completion():
+    """Without completion, a truncated trace is only flagged"""
+    traces = [_trace(f, 100.0 + 6 * f) for f in range(1, 21)]
+    traces[9] = _trace(10, 160.0, stop=2500)
+    flag_traces(traces, {f: 1000.0 for f in range(1, 21)}, (6, 4090), completed=False)
+    assert traces[9].flags == ["truncated"]
+    assert traces[9].valid

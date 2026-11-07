@@ -54,6 +54,7 @@ def test_getstate_geotrace(state):
     # Expected result
     if "fitparms" not in state:
         state["fitparms"] = []
+    state.setdefault("flags", [])
 
     newstate = mm.__getstate__()
 
@@ -149,3 +150,29 @@ def test_query_ds9(tmpdir, tracemap_data):
     with p.open("w") as ds9reg:
         tracemap_data.to_ds9_reg(ds9reg)
     assert True
+
+
+def test_geotrace_flags():
+    """The flags are kept in the state, and some of them make the trace invalid"""
+    mm = tm.GeometricTrace(fibid=10, boxid=1, start=6, stop=4090, fitparms=[100.0, 0.01])
+    assert mm.flags == []
+    assert mm.valid
+    mm.add_flag("completed")
+    mm.add_flag("completed")
+    assert mm.flags == ["completed"]
+    assert mm.valid
+    mm.add_flag("crossing")
+    assert not mm.valid
+    state = mm.__getstate__()
+    assert state["flags"] == ["completed", "crossing"]
+    new = tm.GeometricTrace(**state)
+    assert new.flags == ["completed", "crossing"]
+    assert not new.valid
+
+
+def test_setstate_geotrace_without_flags():
+    """Traces saved before the flags have no flags"""
+    new = tm.GeometricTrace.__new__(tm.GeometricTrace)
+    new.__setstate__({"fibid": 1, "boxid": 0, "start": 6, "stop": 4090, "fitparms": [1.0]})
+    assert new.flags == []
+    assert new.valid
