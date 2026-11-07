@@ -8,7 +8,12 @@ from numina.util.node import Node
 
 import megaradrp.recipes.calibration.flat as flat
 from megaradrp.datamodel import create_default_fiber_header
-from megaradrp.recipes.calibration.flat import FiberFlatRecipe, _smoothing_window_check
+from megaradrp.recipes.calibration.flat import (
+    FiberFlatRecipe,
+    _smoothing_window_check,
+    absorption_windows,
+    interpolate_windows,
+)
 from megaradrp.testing.create_image import create_rss
 
 NWL = 4300
@@ -140,6 +145,7 @@ def test_fiber_flat_recipe(monkeypatch, transmission):
         extraction_offset=[0.5],
         smoothing_window=31,
         smoothing_knot_step=150.0,
+        skip_absorption_windows=True,
     )
     result = recipe.run(rinput)
 
@@ -199,3 +205,44 @@ def test_obtain_fiber_flat_legacy_spline(transmission):
     result = FiberFlatRecipe().obtain_fiber_flat(rss, knot_step=0)
     valid, expected = expected_flat(transmission)
     assert numpy.allclose(result[0].data, expected[:, numpy.newaxis], rtol=1e-4)
+
+
+def test_absorption_windows():
+    """The windows of each resolution class include the O2 A band and the Na D lines"""
+    for resolution in ("LR", "MR", "HR"):
+        windows = absorption_windows(resolution)
+        assert any(w1 <= 7600 <= w2 for w1, w2 in windows)
+        assert any(w1 <= 5890 <= w2 for w1, w2 in windows)
+        assert all(w1 < w2 for w1, w2 in windows)
+    assert absorption_windows("XX") == []
+
+
+def test_interpolate_windows():
+    """The skipped pixels are a straight line between both sides; pixels without coverage are not used"""
+    x = numpy.arange(100, dtype=float)
+    data = numpy.vstack([1.0 + 0.01 * x, 2.0 + 0.0 * x])
+    data[:, 40:50] = 10.0
+    skip = numpy.zeros(100, dtype=bool)
+    skip[40:50] = True
+    coverage = numpy.ones_like(data, dtype=bool)
+    interpolate_windows(data, skip, coverage)
+    assert numpy.allclose(data[0, 40:50], 1.0 + 0.01 * x[40:50], atol=0.01)
+    assert numpy.allclose(data[1, 40:50], 2.0)
+
+
+def test_obtain_fiber_flat_skip_windows(transmission):
+    """An absorption common to all the fibers, inside a window, is not in the fiber flat"""
+    x = numpy.arange(NWL)
+    lamp = 1.0 + 0.5 * numpy.exp(-(((x - 2000) / 800.0) ** 2))
+    lamp *= 1 - 0.03 * numpy.exp(-0.5 * ((x - 3000) / 2.0) ** 2)
+    rss = flat_rss(transmission, lamp)
+    rss[0].header["CRVAL1"] = 7000.0
+    rss[0].header["CDELT1"] = 0.4
+    rss[0].header["CRPIX1"] = 1.0
+    wl_line = 7000.0 + 0.4 * 3000
+    valid, expected = expected_flat(transmission)
+    result = FiberFlatRecipe().obtain_fiber_flat(rss, skip_windows=[(wl_line - 5, wl_line + 5)])
+    assert numpy.allclose(result[0].data, expected[:, numpy.newaxis], rtol=2e-3)
+    # without the window, the line stays in the flat
+    result = FiberFlatRecipe().obtain_fiber_flat(rss)
+    assert numpy.min(result[0].data[:, 3000] / expected) < 0.98

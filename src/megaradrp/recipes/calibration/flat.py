@@ -30,6 +30,71 @@ from megaradrp.processing.wavecalibration import WavelengthCalibrator
 from megaradrp.processing.fiberflat import Splitter, FlipLR
 
 
+def absorption_windows(resolution):
+    """Windows of the absorptions in the light of the calibration lamps (air, Angstrom)
+
+    The windows are computed for each resolution class ("LR", "MR", "HR") by
+    tools/flat_absorption_windows.py: O2 and H2O lines along the path of the
+    calibration light, and the Na D lines of the lamp.
+    """
+    import pkgutil
+
+    from astropy.table import Table
+
+    data = pkgutil.get_data("megaradrp.instrument.configs", "flat_absorption_windows.ecsv")
+    table = Table.read(data.decode("utf8"), format="ascii.ecsv")
+    sel = table["resolution"] == resolution
+    return [(float(a), float(b)) for a, b in zip(table["wl_min"][sel], table["wl_max"][sel])]
+
+
+def interpolate_windows(data, skip, coverage, nside=5):
+    """Replace the pixels in `skip` with a straight line between both sides, in each row
+
+    Each side is the median of the `nside` closest pixels outside `skip` with
+    coverage. If one side is missing, its value is the other side.
+
+    Parameters
+    ----------
+    data : numpy.ndarray
+        Array of shape (nrows, npix), changed in place
+    skip : numpy.ndarray
+        Boolean array of shape (npix,), the pixels to replace
+    coverage : numpy.ndarray
+        Boolean array of shape (nrows, npix), the pixels with data
+    """
+    npix = data.shape[1]
+    edges = numpy.flatnonzero(numpy.diff(numpy.r_[0, skip.astype(int), 0]))
+    for a, b in zip(edges[::2], edges[1::2]):
+        left = numpy.arange(max(0, a - 3 * nside), a)
+        right = numpy.arange(b, min(npix, b + 3 * nside))
+        left = left[~skip[left]][-nside:]
+        right = right[~skip[right]][:nside]
+        sides = []
+        for idx in (left, right):
+            if idx.size:
+                with numpy.errstate(all="ignore"):
+                    sides.append(numpy.nanmedian(numpy.where(coverage[:, idx], data[:, idx], numpy.nan), axis=1))
+            else:
+                sides.append(None)
+        vleft, vright = sides
+        if vleft is None and vright is None:
+            continue
+        if vleft is None:
+            vleft = vright
+        if vright is None:
+            vright = vleft
+        vleft = numpy.where(numpy.isfinite(vleft), vleft, vright)
+        vright = numpy.where(numpy.isfinite(vright), vright, vleft)
+        # the sides are placed at the centre of their pixels
+        xl = numpy.median(left) if left.size else a - 1
+        xr = numpy.median(right) if right.size else b
+        frac = (numpy.arange(a, b) - xl) / max(xr - xl, 1)
+        line = vleft[:, numpy.newaxis] + (vright - vleft)[:, numpy.newaxis] * frac[numpy.newaxis, :]
+        ok = numpy.isfinite(line)
+        block = data[:, a:b]
+        block[ok] = line[ok]
+
+
 def _smoothing_window_check(val):
     """Check 'smoothing_window'"""
     # raise ValueError("something")
@@ -89,6 +154,9 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     master_slitflat = reqs.MasterSlitFlatRequirement()
     master_apertures = reqs.MasterAperturesRequirement(alias="master_traces")
     smoothing_window = Parameter(31, "Window for smoothing (must be odd)", validator=_smoothing_window_check)
+    skip_absorption_windows = Parameter(
+        True, "Skip the windows of the absorptions of the calibration light (air and Na D), interpolating across them"
+    )
     smoothing_knot_step = Parameter(
         150.0, "Distance in Angstrom between the knots of the spline that smooths the average spectrum of the fibers"
     )
@@ -114,7 +182,16 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         return final_image
 
     def obtain_fiber_flat(
-        self, rss_wl, col1=1900, col2=2100, window=31, degree=3, knot_step=150.0, min_level=0.3, min_coverage=0.2
+        self,
+        rss_wl,
+        col1=1900,
+        col2=2100,
+        window=31,
+        degree=3,
+        knot_step=150.0,
+        min_level=0.3,
+        min_coverage=0.2,
+        skip_windows=None,
     ):
         """Divide each fiber by the smoothed average spectrum of the fibers
 
@@ -130,6 +207,11 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         largest number of fibers have coverage; beyond, the spline keeps its
         value at the border. With `knot_step` <= 0, the average spectrum is
         smoothed with a spline of degree 5 with the default smoothing factor.
+
+        `skip_windows` are wavelength intervals (Angstrom) with absorptions in
+        the light of the calibration lamp: they are left out of the fit of the
+        spline, and in the fiber flat of each fiber they are replaced by a
+        straight line between both sides.
 
         A Savitzky-Golay filter (`window`, `degree`) of the average spectrum is
         only plotted in the intermediate results.
@@ -170,11 +252,18 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         collapse_smooth[mask_noinfo] = 1.0
 
         xx = numpy.arange(collapse.shape[0])
+        skip = numpy.zeros(collapse.shape[0], dtype=bool)
+        if skip_windows:
+            hdr = rss_wl[0].header
+            wl = hdr.get("CRVAL1", 0.0) + hdr.get("CDELT1", 1.0) * (xx + 1 - hdr.get("CRPIX1", 1.0))
+            for w1, w2 in skip_windows:
+                skip |= (wl >= w1) & (wl <= w2)
+            self.logger.info("skipping %d pixels in %d absorption windows", skip.sum(), len(skip_windows))
         collapse_smooth_s = numpy.ones_like(collapse)
         if knot_step > 0:
             cdelt = abs(rss_wl[0].header.get("CDELT1", 1.0))
             coverage = mm / max(mm.max(), 1)
-            fit = coverage >= min_coverage
+            fit = (coverage >= min_coverage) & ~skip
             x_fit = xx[fit]
             nknots = max(int((x_fit[-1] - x_fit[0]) * cdelt / knot_step), 1)
             knots = numpy.linspace(x_fit[0], x_fit[-1], nknots + 1)[1:-1]
@@ -203,6 +292,8 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         gmean = valid_level.mean()
         data1 = rss_wl[0].data / collapse_smooth_s
         data1 /= gmean
+        if skip.any():
+            interpolate_windows(data1, skip, wlmap)
         # Fill values with ones to avoid NaNs
         data2 = numpy.where(wlmap, data1, 1.0)
 
@@ -245,7 +336,15 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
         # Obtain flat field
         self.logger.info("Normalize flat field")
-        rss_wl2 = self.obtain_fiber_flat(rss_wl, window=rinput.smoothing_window, knot_step=rinput.smoothing_knot_step)
+        skip_windows = None
+        if rinput.skip_absorption_windows:
+            resolution = str(rss_wl[0].header.get("VPH", ""))[:2]
+            skip_windows = absorption_windows(resolution)
+            if not skip_windows:
+                self.logger.info("no absorption windows for VPH %s", rss_wl[0].header.get("VPH"))
+        rss_wl2 = self.obtain_fiber_flat(
+            rss_wl, window=rinput.smoothing_window, knot_step=rinput.smoothing_knot_step, skip_windows=skip_windows
+        )
         rss_wl2[0].header = self.set_product_headers(rss_wl2[0].header)
         result = self.create_result(master_fiberflat=rss_wl2, reduced_image=flat2d, reduced_rss=rss_base)
         return result
