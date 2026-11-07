@@ -89,6 +89,9 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     master_slitflat = reqs.MasterSlitFlatRequirement()
     master_apertures = reqs.MasterAperturesRequirement(alias="master_traces")
     smoothing_window = Parameter(31, "Window for smoothing (must be odd)", validator=_smoothing_window_check)
+    smoothing_knot_step = Parameter(
+        150.0, "Distance in Angstrom between the knots of the spline that smooths the average spectrum of the fibers"
+    )
     extraction_offset = Parameter([0.0], "Offset traces for extraction", accept_scalar=True)
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
 
@@ -110,58 +113,78 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         self.set_base_headers(hdr)
         return final_image
 
-    def obtain_fiber_flat(self, rss_wl, col1=1900, col2=2100, window=31, degree=3):
+    def obtain_fiber_flat(
+        self, rss_wl, col1=1900, col2=2100, window=31, degree=3, knot_step=150.0, min_level=0.3, min_coverage=0.2
+    ):
+        """Divide each fiber by the smoothed average spectrum of the fibers
+
+        Each valid fiber is normalized by its median in the columns `col1:col2`.
+        The fibers fainter than `min_level` times the median of the fibers are
+        left out. In each wavelength, the average spectrum is the mean of the
+        normalized fibers with coverage (WLMAP), divided by the number of those
+        fibers.
+
+        The average spectrum is smoothed with a cubic spline with knots every
+        `knot_step` Angstrom, fitted with weights proportional to the number of
+        fibers with coverage, and only where at least `min_coverage` times the
+        largest number of fibers have coverage; beyond, the spline keeps its
+        value at the border. With `knot_step` <= 0, the average spectrum is
+        smoothed with a spline of degree 5 with the default smoothing factor.
+
+        A Savitzky-Golay filter (`window`, `degree`) of the average spectrum is
+        only plotted in the intermediate results.
+        """
         from scipy.signal import savgol_filter
-        from scipy.interpolate import UnivariateSpline
+        from scipy.interpolate import LSQUnivariateSpline, UnivariateSpline
 
         # Bad fibers
         fp_conf = FocalPlaneConf.from_img(rss_wl)
-        bad_fibers = fp_conf.invalid_fibers()
-        bad_idxs = [fibid - 1 for fibid in bad_fibers]
-        # print(bad_idxs)
-
         good_idxs_mask = numpy.ones((fp_conf.nfibers,), dtype="bool")
-        good_idxs_mask[bad_idxs] = False
-
-        # Collapse all fiber spectrum
-        xcol = slice(col1, col2)
+        good_idxs_mask[[fibid - 1 for fibid in fp_conf.invalid_fibers()]] = False
 
         data0 = rss_wl[0].data
-
-        col_mean = data0[:, xcol].mean(axis=1)
-        # Filter positive values and valid fibers
-        col_mean_pos = col_mean > 0
-        valid_mask = col_mean_pos & good_idxs_mask
-
-        col_good_mean = col_mean[valid_mask]
-
-        data_good = data0[valid_mask] / col_good_mean[:, numpy.newaxis]
-        data_good[numpy.isnan(data_good)] = 0.0
-
         # This extension was created by WLcalibrator
-        wlmap = rss_wl["WLMAP"].data
-        mm = numpy.sum(wlmap, axis=0)
-        # The information is also in the keywords
-        # FIBxxxS1, FIBxxxS2
-        # skip 0 in divisions
+        wlmap = rss_wl["WLMAP"].data > 0
+
+        # Level of each fiber
+        level = numpy.median(data0[:, col1:col2], axis=1)
+        lit = good_idxs_mask & (level > 0)
+        ref_level = numpy.median(level[lit]) if lit.any() else 0.0
+        valid_mask = lit & (level > min_level * ref_level)
+        faint = numpy.flatnonzero(lit & ~valid_mask) + 1
+        if faint.size:
+            self.logger.warning("fibers too faint for the average spectrum: %s", faint.tolist())
+
+        valid_level = level[valid_mask]
+        covered = wlmap[valid_mask]
+        with numpy.errstate(invalid="ignore", divide="ignore"):
+            data_good = numpy.where(covered, data0[valid_mask] / valid_level[:, numpy.newaxis], 0.0)
+        data_good[~numpy.isfinite(data_good)] = 0.0
+
+        # number of fibers in the average of each wavelength
+        mm = covered.sum(axis=0)
         mask_noinfo = mm < 1
-        mm[mask_noinfo] = 1
-        # Filter collapse to smooth it
-        collapse = numpy.sum(data_good, axis=0) / mm
+        collapse = numpy.where(mask_noinfo, 1.0, data_good.sum(axis=0) / numpy.maximum(mm, 1))
         # Smoothing works bad very near the border (overshooting)
         collapse_smooth = savgol_filter(collapse, window, degree)
         collapse_smooth[mask_noinfo] = 1.0
 
         xx = numpy.arange(collapse.shape[0])
-        xx_v = xx[~mask_noinfo]
-        collapse_v = collapse[~mask_noinfo]
-
-        # Spline degree (3 or 5)
-        degree_s = 5
-        interpol_univ = UnivariateSpline(xx_v, collapse_v, k=degree_s)
-        collapse_smooth_s = collapse_smooth.copy()
-        collapse_smooth_s[~mask_noinfo] = interpol_univ(xx_v)
-        collapse_smooth_s[mask_noinfo] = 1.0
+        collapse_smooth_s = numpy.ones_like(collapse)
+        if knot_step > 0:
+            cdelt = abs(rss_wl[0].header.get("CDELT1", 1.0))
+            coverage = mm / max(mm.max(), 1)
+            fit = coverage >= min_coverage
+            x_fit = xx[fit]
+            nknots = max(int((x_fit[-1] - x_fit[0]) * cdelt / knot_step), 1)
+            knots = numpy.linspace(x_fit[0], x_fit[-1], nknots + 1)[1:-1]
+            self.logger.debug("average spectrum smoothed with %d interior knots", len(knots))
+            spline = LSQUnivariateSpline(x_fit, collapse[fit], knots, w=coverage[fit], k=3, ext=3)
+            spline_label = f"spline, knots every {knot_step:g} A"
+        else:
+            spline = UnivariateSpline(xx[~mask_noinfo], collapse[~mask_noinfo], k=5)
+            spline_label = "spline5"
+        collapse_smooth_s[~mask_noinfo] = spline(xx[~mask_noinfo])
 
         if self.intermediate_results:
             from matplotlib.figure import Figure
@@ -172,16 +195,16 @@ class FiberFlatRecipe(MegaraBaseRecipe):
             ax = fig.subplots()
             ax.plot(xx, collapse, ".", label="collapsed")
             ax.plot(xx, collapse_smooth, "-", label=f"savgol{degree}")
-            ax.plot(xx, collapse_smooth_s, "--", label=f"spline{degree_s}")
+            ax.plot(xx, collapse_smooth_s, "--", label=spline_label)
             ax.legend()
             fig.savefig("collapsed_smooth.png")
 
         # Divide each fiber in rss_wl by spectrum
-        gmean = col_good_mean.mean()
+        gmean = valid_level.mean()
         data1 = rss_wl[0].data / collapse_smooth_s
         data1 /= gmean
         # Fill values with ones to avoid NaNs
-        data2 = numpy.where(wlmap > 0, data1, 1.0)
+        data2 = numpy.where(wlmap, data1, 1.0)
 
         self.logger.warning("Copy all extensions for the moment")
         rss_wl2 = fits.HDUList([hdu.copy() for hdu in rss_wl])
@@ -222,7 +245,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
         # Obtain flat field
         self.logger.info("Normalize flat field")
-        rss_wl2 = self.obtain_fiber_flat(rss_wl, window=rinput.smoothing_window)
+        rss_wl2 = self.obtain_fiber_flat(rss_wl, window=rinput.smoothing_window, knot_step=rinput.smoothing_knot_step)
         rss_wl2[0].header = self.set_product_headers(rss_wl2[0].header)
         result = self.create_result(master_fiberflat=rss_wl2, reduced_image=flat2d, reduced_rss=rss_base)
         return result

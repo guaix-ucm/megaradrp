@@ -55,7 +55,6 @@ def test_obtain_fiber_flat_no_coverage(transmission):
     assert numpy.all(result[0].data[5, :100] == 1.0)
 
 
-@pytest.mark.xfail(reason="the average spectrum is divided by the coverage of all the fibers", strict=True)
 def test_obtain_fiber_flat_invalid_fibers(transmission):
     """The invalid fibers do not change the normalization"""
     invalid = list(range(1, 31))
@@ -65,7 +64,6 @@ def test_obtain_fiber_flat_invalid_fibers(transmission):
     assert numpy.allclose(result[0].data[valid], expected[valid, numpy.newaxis], rtol=1e-3)
 
 
-@pytest.mark.xfail(reason="the spline with the default smoothing does not follow the spectrum of the lamp", strict=True)
 def test_obtain_fiber_flat_lamp_shape(transmission):
     """The spectrum of the lamp is removed"""
     x = numpy.arange(NWL)
@@ -137,7 +135,11 @@ def test_fiber_flat_recipe(monkeypatch, transmission):
     monkeypatch.setattr(flat, "WavelengthCalibrator", Calibrator)
 
     rinput = types.SimpleNamespace(
-        master_apertures="traces", master_wlcalib="wlcalib", extraction_offset=[0.5], smoothing_window=31
+        master_apertures="traces",
+        master_wlcalib="wlcalib",
+        extraction_offset=[0.5],
+        smoothing_window=31,
+        smoothing_knot_step=150.0,
     )
     result = recipe.run(rinput)
 
@@ -163,3 +165,37 @@ def test_obtain_fiber_flat_intermediate(transmission, tmp_path, monkeypatch):
     names = {path.name for path in tmp_path.iterdir()}
     assert names == {"collapse.txt", "mask_noinfo.txt", "collapsed_smooth.png"}
     assert plt.get_fignums() == before
+
+
+def test_obtain_fiber_flat_faint_fiber(transmission):
+    """A fiber much fainter than the others, with a wrong spectrum, does not change the flat of the others"""
+    x = numpy.arange(NWL)
+    lamp = 1.0 + 0.5 * numpy.exp(-(((x - 2000) / 800.0) ** 2))
+    rss = flat_rss(transmission, lamp)
+    rss[0].data[100] = 0.05 * (1 + (x > 3000) * 50.0)
+    result = FiberFlatRecipe().obtain_fiber_flat(rss)
+    valid, expected = expected_flat(transmission, invalid=[101])
+    others = [idx for idx in valid if idx != 100]
+    assert numpy.allclose(result[0].data[others], expected[others, numpy.newaxis], rtol=1e-2)
+
+
+def test_obtain_fiber_flat_partial_coverage(transmission):
+    """Near the borders only some fibers have coverage, the average is divided by the fibers used"""
+    x = numpy.arange(NWL)
+    lamp = 1.0 + 0.5 * numpy.exp(-(((x - 2000) / 800.0) ** 2))
+    rss = flat_rss(transmission, lamp)
+    # the first 300 fibers start 100 pixels later
+    rss["WLMAP"].data[:300, :100] = 0
+    rss[0].data[:300, :100] = 0
+    result = FiberFlatRecipe().obtain_fiber_flat(rss)
+    valid, expected = expected_flat(transmission)
+    assert numpy.allclose(result[0].data[300:, :100], expected[300:, numpy.newaxis], rtol=1e-2)
+    assert numpy.all(result[0].data[:300, :100] == 1.0)
+
+
+def test_obtain_fiber_flat_legacy_spline(transmission):
+    """With knot_step <= 0, the spline of degree 5 with the default smoothing is used"""
+    rss = flat_rss(transmission, numpy.ones(NWL))
+    result = FiberFlatRecipe().obtain_fiber_flat(rss, knot_step=0)
+    valid, expected = expected_flat(transmission)
+    assert numpy.allclose(result[0].data, expected[:, numpy.newaxis], rtol=1e-4)
