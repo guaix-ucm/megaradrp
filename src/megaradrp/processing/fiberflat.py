@@ -61,12 +61,31 @@ class CommonFlatCorrector(Corrector):
 
 
 class FiberFlatCorrector(CommonFlatCorrector):
-    """A Node that corrects from fiber flat."""
+    """A Node that corrects from fiber flat.
+
+    The fibers invalid in the fiber flat are marked invalid in the corrected image.
+    """
 
     def __init__(self, fiberflat, datamodel=None, dtype="float32"):
         calibid = datamodel.get_imgid(fiberflat)
         super(FiberFlatCorrector, self).__init__(flatdata=fiberflat, datamodel=datamodel, calibid=calibid, dtype=dtype)
         self.flattag = "fiberflat"
+        self.invalid_fibers = []
+        if isinstance(fiberflat, fits.HDUList) and "FIBERS" in fiberflat:
+            hdr = fiberflat["FIBERS"].header
+            self.invalid_fibers = sorted(
+                int(key[3:6])
+                for key, value in hdr.items()
+                if key.startswith("FIB") and key.endswith("_V") and value is False
+            )
+
+    def run(self, img):
+        img = super(FiberFlatCorrector, self).run(img)
+        if self.invalid_fibers and "FIBERS" in img:
+            hdr = img["FIBERS"].header
+            for fibid in self.invalid_fibers:
+                hdr[f"FIB{fibid:03d}_V"] = (False, "Fiber is invalid")
+        return img
 
     def header_update(self, hdr, imgid):
         hdr["NUM-FIBF"] = self.calibid

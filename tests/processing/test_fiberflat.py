@@ -51,6 +51,23 @@ def test_fiber_flat_corrector():
     assert "Fiber flat correction 410f6ea0-c3df-481c-9820-5cf9e0ed3d91" in img[0].header["HISTORY"]
 
 
+def test_fiber_flat_corrector_invalid_fibers():
+    """The fibers invalid in the fiber flat are invalid in the corrected image"""
+    from megaradrp.datamodel import create_default_fiber_header
+
+    flat = fits.HDUList([fits.PrimaryHDU(make_flat()), fits.ImageHDU(name="FIBERS")])
+    flat[0].header["UUID"] = "11111111-2222-3333-4444-555555555555"
+    flat["FIBERS"].header = create_default_fiber_header("LCB")
+    flat["FIBERS"].header["FIB003_V"] = False
+    flat["FIBERS"].header["FIB003QF"] = "broken"
+    img = make_img()
+    img.append(fits.ImageHDU(name="FIBERS"))
+    img["FIBERS"].header = create_default_fiber_header("LCB")
+    img = FiberFlatCorrector(flat, datamodel=MegaraDataModel())(img)
+    assert img["FIBERS"].header["FIB003_V"] is False
+    assert "FIB004_V" not in img["FIBERS"].header
+
+
 def test_splitter():
     splitter = Splitter()
     img = make_img()

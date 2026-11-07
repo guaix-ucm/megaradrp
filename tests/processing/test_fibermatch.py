@@ -89,3 +89,59 @@ def test_count_peaks():
     result = count_peaks(PEAKS, tol=1.2, distance=6.0)
 
     assert result == expected
+
+
+def _modes(result):
+    return [(m.count, m.mode, m.idx) for m in result]
+
+
+def test_count_peaks_missing_peak():
+    """A missing peak leaves a valley and the following peaks are counted"""
+    peaks = [0.0, 6.0, 12.0, 24.0, 30.0, 36.0]
+    result = count_peaks(peaks, tol=1.5, distance=6.0)
+    assert _modes(result) == [
+        (1, PeakFound.FOUND_PEAK, 0),
+        (2, PeakFound.FOUND_PEAK, 1),
+        (3, PeakFound.FOUND_PEAK, 2),
+        (4, PeakFound.FOUND_VALLEY, None),
+        (5, PeakFound.FOUND_PEAK, 3),
+        (6, PeakFound.FOUND_PEAK, 4),
+        (7, PeakFound.FOUND_PEAK, 5),
+    ]
+    assert result[3].pos == 18.0
+
+
+def test_count_peaks_two_missing_peaks():
+    """Two consecutive missing peaks leave two valleys"""
+    peaks = [0.0, 6.0, 24.0, 30.0]
+    result = count_peaks(peaks, tol=1.5, distance=6.0)
+    assert [m.mode for m in result] == [
+        PeakFound.FOUND_PEAK,
+        PeakFound.FOUND_PEAK,
+        PeakFound.FOUND_VALLEY,
+        PeakFound.FOUND_VALLEY,
+        PeakFound.FOUND_PEAK,
+        PeakFound.FOUND_PEAK,
+    ]
+    assert [m.pos for m in result if m.mode == PeakFound.FOUND_VALLEY] == [12.0, 18.0]
+    assert [m.idx for m in result if m.mode == PeakFound.FOUND_PEAK] == [0, 1, 2, 3]
+
+
+def test_count_peaks_spurious_peak():
+    """A peak closer than expected is skipped"""
+    peaks = [0.0, 6.0, 9.5, 12.0, 18.0, 24.0]
+    result = count_peaks(peaks, tol=1.5, distance=6.0)
+    assert all(m.mode == PeakFound.FOUND_PEAK for m in result)
+    assert [m.pos for m in result] == [0.0, 6.0, 12.0, 18.0, 24.0]
+    assert [m.idx for m in result] == [0, 1, 3, 4, 5]
+
+
+def test_count_peaks_too_far():
+    """The counting stops at a peak too far away, without trailing valleys"""
+    peaks = [0.0, 6.0, 12.0, 40.0, 46.0]
+    result = count_peaks(peaks, tol=1.5, distance=6.0, max_scale_jump=3)
+    assert _modes(result) == [
+        (1, PeakFound.FOUND_PEAK, 0),
+        (2, PeakFound.FOUND_PEAK, 1),
+        (3, PeakFound.FOUND_PEAK, 2),
+    ]

@@ -119,6 +119,35 @@ def test_resample_rss_flux_twice(raw_rss):
         assert list(fibsol.solution.coeff) == COEFF
 
 
+def test_resample_rss_flux_invalid(raw_rss):
+    """A fiber with an invalid solution is not resampled"""
+    solution = make_solution([1, 2, 3], COEFF)
+    solution.contents[1].add_flag("deviant")
+    target = SimpleWcs1D(crval=3990.0, crpix=1.0, cdelt=0.5).create_internal_wcs_()
+    result, limits = resample_rss_flux(raw_rss, solution, 500, target)
+    assert [fibid for fibid, _ in limits] == [1, 3]
+    assert numpy.all(result[1] == 0)
+    assert numpy.allclose(result[[0, 2]].sum(axis=1), raw_rss[[0, 2]].sum(axis=1))
+
+
+def test_calibrate_wl_rss_invalid(raw_rss):
+    """A fiber with an invalid solution has no coverage and is marked invalid"""
+    rss = make_raw_rss(raw_rss)
+    solution = make_solution([1, 2, 3], COEFF)
+    solution.uuid = "11111111-2222-3333-4444-555555555555"
+    solution.contents[1].add_flag("high_residual")
+    target = SimpleWcs1D(crval=3990.0, crpix=1.0, cdelt=0.5)
+    result = calibrate_wl_rss(rss, solution, 500, target)
+    fibers = result["FIBERS"].header
+    wlmap = result["WLMAP"].data
+    assert wlmap[1].sum() == 0
+    assert wlmap[0].sum() == wlmap[2].sum() == 401
+    assert numpy.all(result[0].data[1] == 0)
+    assert fibers["FIB002_V"] is False
+    assert "FIB002W1" not in fibers
+    assert "FIB001_V" not in fibers
+
+
 def make_raw_rss(raw_rss):
     data = numpy.zeros((623, 200), dtype="float32")
     data[:3] = raw_rss

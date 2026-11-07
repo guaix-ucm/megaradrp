@@ -206,6 +206,11 @@ def calibrate_wl_rss(rss, solutionwl, npix, targetwcs, dtype="float32", span=0, 
         key = "FIB%03d_V" % fibid
         fibers_ext_headers[key] = False
 
+    # fibers whose solution did not pass the quality checks
+    for fibid in solutionwl.invalid_fibers():
+        key = "FIB%03d_V" % fibid
+        fibers_ext_headers[key] = False
+
     rss_map = fits.ImageHDU(data=map_data, name="WLMAP")
 
     rss.append(rss_map)
@@ -341,6 +346,9 @@ def resample_rss_flux(arr, solutionwl, npix, finalwcs, span=0, fill=0):
         A resample array
     limits: a list of tuples
         Contains the fiberid and a pair with the first and last valid pixel (0-based)
+
+    The fibers with an invalid solution are not resampled: their rows are 0
+    and they are not in `limits`.
     """
 
     nfibers = arr.shape[0]
@@ -370,6 +378,11 @@ def resample_rss_flux(arr, solutionwl, npix, finalwcs, span=0, fill=0):
     limits = []
 
     for fibsol in solutionwl.contents:
+
+        if not fibsol.valid:
+            # a solution that did not pass the quality checks: the fiber
+            # is left empty, as a fiber without solution
+            continue
 
         fibid = fibsol.fibid
         idx = fibid - 1

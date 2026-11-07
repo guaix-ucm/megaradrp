@@ -4,11 +4,19 @@ from astropy.io import fits
 import numpy
 import pytest
 import numina.exceptions
+from numina.types.qc import QC
 from numina.util.node import Node
 
 import megaradrp.recipes.calibration.flat as flat
 from megaradrp.datamodel import create_default_fiber_header
-from megaradrp.recipes.calibration.flat import FiberFlatRecipe, _smoothing_window_check
+from megaradrp.recipes.calibration.flat import (
+    FiberFlatRecipe,
+    _smoothing_window_check,
+    absorption_windows,
+    check_qc_fiberflat,
+    flag_fibers,
+    interpolate_windows,
+)
 from megaradrp.testing.create_image import create_rss
 
 NWL = 4300
@@ -55,7 +63,6 @@ def test_obtain_fiber_flat_no_coverage(transmission):
     assert numpy.all(result[0].data[5, :100] == 1.0)
 
 
-@pytest.mark.xfail(reason="the average spectrum is divided by the coverage of all the fibers", strict=True)
 def test_obtain_fiber_flat_invalid_fibers(transmission):
     """The invalid fibers do not change the normalization"""
     invalid = list(range(1, 31))
@@ -65,7 +72,6 @@ def test_obtain_fiber_flat_invalid_fibers(transmission):
     assert numpy.allclose(result[0].data[valid], expected[valid, numpy.newaxis], rtol=1e-3)
 
 
-@pytest.mark.xfail(reason="the spline with the default smoothing does not follow the spectrum of the lamp", strict=True)
 def test_obtain_fiber_flat_lamp_shape(transmission):
     """The spectrum of the lamp is removed"""
     x = numpy.arange(NWL)
@@ -137,7 +143,12 @@ def test_fiber_flat_recipe(monkeypatch, transmission):
     monkeypatch.setattr(flat, "WavelengthCalibrator", Calibrator)
 
     rinput = types.SimpleNamespace(
-        master_apertures="traces", master_wlcalib="wlcalib", extraction_offset=[0.5], smoothing_window=31
+        master_apertures="traces",
+        master_wlcalib="wlcalib",
+        extraction_offset=[0.5],
+        smoothing_window=31,
+        smoothing_knot_step=150.0,
+        skip_absorption_windows=True,
     )
     result = recipe.run(rinput)
 
@@ -163,3 +174,169 @@ def test_obtain_fiber_flat_intermediate(transmission, tmp_path, monkeypatch):
     names = {path.name for path in tmp_path.iterdir()}
     assert names == {"collapse.txt", "mask_noinfo.txt", "collapsed_smooth.png"}
     assert plt.get_fignums() == before
+
+
+def test_obtain_fiber_flat_faint_fiber(transmission):
+    """A fiber much fainter than the others, with a wrong spectrum, does not change the flat of the others"""
+    x = numpy.arange(NWL)
+    lamp = 1.0 + 0.5 * numpy.exp(-(((x - 2000) / 800.0) ** 2))
+    rss = flat_rss(transmission, lamp)
+    rss[0].data[100] = 0.05 * (1 + (x > 3000) * 50.0)
+    result = FiberFlatRecipe().obtain_fiber_flat(rss)
+    valid, expected = expected_flat(transmission, invalid=[101])
+    others = [idx for idx in valid if idx != 100]
+    assert numpy.allclose(result[0].data[others], expected[others, numpy.newaxis], rtol=1e-2)
+
+
+def test_obtain_fiber_flat_partial_coverage(transmission):
+    """Near the borders only some fibers have coverage, the average is divided by the fibers used"""
+    x = numpy.arange(NWL)
+    lamp = 1.0 + 0.5 * numpy.exp(-(((x - 2000) / 800.0) ** 2))
+    rss = flat_rss(transmission, lamp)
+    # the first 300 fibers start 100 pixels later
+    rss["WLMAP"].data[:300, :100] = 0
+    rss[0].data[:300, :100] = 0
+    result = FiberFlatRecipe().obtain_fiber_flat(rss)
+    valid, expected = expected_flat(transmission)
+    assert numpy.allclose(result[0].data[300:, :100], expected[300:, numpy.newaxis], rtol=1e-2)
+    assert numpy.all(result[0].data[:300, :100] == 1.0)
+
+
+def test_obtain_fiber_flat_legacy_spline(transmission):
+    """With knot_step <= 0, the spline of degree 5 with the default smoothing is used"""
+    rss = flat_rss(transmission, numpy.ones(NWL))
+    result = FiberFlatRecipe().obtain_fiber_flat(rss, knot_step=0)
+    valid, expected = expected_flat(transmission)
+    assert numpy.allclose(result[0].data, expected[:, numpy.newaxis], rtol=1e-4)
+
+
+def test_absorption_windows():
+    """The windows of each resolution class include the O2 A band and the Na D lines"""
+    for resolution in ("LR", "MR", "HR"):
+        windows = absorption_windows(resolution)
+        assert any(w1 <= 7600 <= w2 for w1, w2 in windows)
+        assert any(w1 <= 5890 <= w2 for w1, w2 in windows)
+        assert all(w1 < w2 for w1, w2 in windows)
+    assert absorption_windows("XX") == []
+
+
+def test_interpolate_windows():
+    """The skipped pixels are a straight line between both sides; pixels without coverage are not used"""
+    x = numpy.arange(100, dtype=float)
+    data = numpy.vstack([1.0 + 0.01 * x, 2.0 + 0.0 * x])
+    data[:, 40:50] = 10.0
+    skip = numpy.zeros(100, dtype=bool)
+    skip[40:50] = True
+    coverage = numpy.ones_like(data, dtype=bool)
+    interpolate_windows(data, skip, coverage)
+    assert numpy.allclose(data[0, 40:50], 1.0 + 0.01 * x[40:50], atol=0.01)
+    assert numpy.allclose(data[1, 40:50], 2.0)
+
+
+def test_obtain_fiber_flat_skip_windows(transmission):
+    """An absorption common to all the fibers, inside a window, is not in the fiber flat"""
+    x = numpy.arange(NWL)
+    lamp = 1.0 + 0.5 * numpy.exp(-(((x - 2000) / 800.0) ** 2))
+    lamp *= 1 - 0.03 * numpy.exp(-0.5 * ((x - 3000) / 2.0) ** 2)
+    rss = flat_rss(transmission, lamp)
+    rss[0].header["CRVAL1"] = 7000.0
+    rss[0].header["CDELT1"] = 0.4
+    rss[0].header["CRPIX1"] = 1.0
+    wl_line = 7000.0 + 0.4 * 3000
+    valid, expected = expected_flat(transmission)
+    result = FiberFlatRecipe().obtain_fiber_flat(rss, skip_windows=[(wl_line - 5, wl_line + 5)])
+    assert numpy.allclose(result[0].data, expected[:, numpy.newaxis], rtol=2e-3)
+    # without the window, the line stays in the flat
+    result = FiberFlatRecipe().obtain_fiber_flat(rss)
+    assert numpy.min(result[0].data[:, 3000] / expected) < 0.98
+
+
+def test_obtain_fiber_flat_edge_falls(transmission):
+    """The spectrum falls in the zone of partial coverage: the smoothing follows it"""
+    x = numpy.arange(NWL)
+    lamp = 1.0 - 0.4 * numpy.exp(-x / 40.0)
+    rss = flat_rss(transmission, lamp)
+    # each group of fibers starts later, from 0 to 150 pixels
+    starts = (numpy.arange(623) % 16) * 10
+    for idx, start in enumerate(starts):
+        rss["WLMAP"].data[idx, :start] = 0
+        rss[0].data[idx, :start] = 0
+    result = FiberFlatRecipe().obtain_fiber_flat(rss)
+    valid, expected = expected_flat(transmission)
+    flat = result[0].data
+    covered = rss["WLMAP"].data[:, :160] > 0
+    ratio = flat[:, :160] / expected[:, numpy.newaxis]
+    # only where at least 5 % of the fibers have coverage
+    enough = covered.sum(axis=0) >= 0.05 * 623
+    assert numpy.allclose(ratio[:, enough][covered[:, enough]], 1.0, atol=0.02)
+
+
+def test_obtain_fiber_flat_flags(transmission):
+    """Faint and deviant fibers are flagged and stay valid, a fiber without flux is marked invalid"""
+    x = numpy.arange(NWL)
+    lamp = 1.0 + 0.5 * numpy.exp(-(((x - 2000) / 800.0) ** 2))
+    rss = flat_rss(transmission, lamp)
+    rss[0].data[100] *= 0.1
+    # the response of the fiber 201 falls to the blue and to the red
+    rss[0].data[200] *= numpy.exp(-(((x - 2000) / 1200.0) ** 2))
+    rss[0].data[300] = 0.0
+    result = FiberFlatRecipe().obtain_fiber_flat(rss)
+    hdr = result["FIBERS"].header
+    assert hdr["FIB101QF"] == "faint"
+    assert hdr.get("FIB101_V", True)
+    assert hdr["FIB201QF"] == "deviant"
+    assert hdr.get("FIB201_V", True)
+    assert hdr["FIB301QF"] == "broken"
+    assert not hdr["FIB301_V"]
+    assert "FIB050QF" not in hdr
+    assert check_qc_fiberflat(hdr) == QC.PARTIAL
+
+
+def test_flag_fibers():
+    flat = numpy.ones((12, 400))
+    coverage = numpy.ones_like(flat, dtype=bool)
+    faint = numpy.zeros(12, dtype=bool)
+    faint[1] = True
+    good = numpy.ones(12, dtype=bool)
+    good[11] = False
+    # same shape as the neighbors, other level
+    flat[1] = 0.5
+    # a step of 50 % in 100 pixels
+    flat[5, 300:] = 1.5
+    # no flux
+    flat[8] = 0.0
+    # invalid fibers are not checked
+    flat[11] = 7.0
+    flat[11, 300:] = 0
+    flags = flag_fibers(flat, coverage, faint, good, 10, 20)
+    assert flags == {2: ["faint"], 6: ["deviant"], 9: ["broken"]}
+    # a step of 20 % is the color of the fiber
+    flat[5, 300:] = 1.2
+    assert flag_fibers(flat, coverage, faint, good, 10, 20) == {2: ["faint"], 9: ["broken"]}
+    # the deviant pixels inside the windows are not counted
+    flat[5, 300:] = 1.5
+    skip = numpy.zeros(400, dtype=bool)
+    skip[290:] = True
+    assert flag_fibers(flat, coverage, faint, good, 10, 20, skip=skip) == {2: ["faint"], 9: ["broken"]}
+    # non finite values with coverage
+    flat[3, 50] = numpy.nan
+    assert flag_fibers(flat, coverage, faint, good, 10, 20, skip=skip)[4] == ["broken"]
+
+
+@pytest.mark.parametrize("ninvalid, qc", [(0, QC.GOOD), (3, QC.PARTIAL), (40, QC.BAD)])
+def test_check_qc_fiberflat(ninvalid, qc):
+    hdr = create_default_fiber_header("LCB")
+    hdr["FIB300QF"] = "faint"
+    hdr["FIB301QF"] = "deviant"
+    for fibid in range(1, ninvalid + 1):
+        hdr[f"FIB{fibid:03d}QF"] = "faint,broken"
+    assert check_qc_fiberflat(hdr) == qc
+
+
+def test_fiber_flat_run_qc(transmission):
+    rss = flat_rss(transmission, numpy.ones(NWL))
+    rss["FIBERS"].header["FIB010QF"] = "broken"
+    recipe = FiberFlatRecipe()
+    result = recipe.create_result(master_fiberflat=rss, reduced_image=rss, reduced_rss=rss)
+    result = recipe.run_qc(None, result)
+    assert result.qc == QC.PARTIAL

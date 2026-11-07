@@ -10,7 +10,6 @@
 """Fiber tracing Recipe."""
 
 import logging
-import warnings
 
 import numpy
 import numpy.polynomial.polynomial as nppol
@@ -23,7 +22,7 @@ from numina.core import Result, Parameter
 from numina.frame.utils import copy_img
 import numina.types.qc as qc
 from numina.processing.combine import basic_processing_with_combination
-from scipy.ndimage import minimum_filter
+from scipy.ndimage import maximum_filter1d, minimum_filter, minimum_filter1d
 import scipy.signal
 from skimage.feature import peak_local_max
 from skimage.filters import threshold_otsu
@@ -36,6 +35,7 @@ from megaradrp.core.recipe import MegaraBaseRecipe
 import megaradrp.requirements as reqs
 import megaradrp.products
 import megaradrp.processing.fibermatch as fibermatch
+from megaradrp.processing.traceshape import complete_traces
 from megaradrp.instrument import vph_thr
 from megaradrp.instrument.focalplane import FocalPlaneConf
 
@@ -100,8 +100,14 @@ class TraceMapRecipe(MegaraBaseRecipe):
     xmin_fit = Parameter(1, "Minimum column to fit traces (from 1 to NAXIS1)")
     xmax_fit = Parameter(4096, "Maximum column to fit traces (from 1 to NAXIS1)")
     extrapolate_traces = Parameter(False, "Extrapolate traces to the borders of the image")
+    complete_traces = Parameter(
+        True, "Correct and complete the traces with the shape of the traces of the neighbouring fibers"
+    )
     relative_threshold = Parameter(0.3, "Threshold for peak detection")
     reference_column = Parameter(2000, "Column used to search for peaks")
+    auto_reference_column = Parameter(
+        True, "Search for peaks in the column where the weakest pseudoslit box has the most contrast"
+    )
     reference_column_hw = Parameter(5, "Half-width (w = 2 * hw + 1) of the region used to search for peaks ")
     debug_plot = Parameter(0, "Save intermediate tracing plots")
 
@@ -121,7 +127,11 @@ class TraceMapRecipe(MegaraBaseRecipe):
         return recipe_result
 
     def check_qc_tracemap(self, tracemap):
-        # check full range in all fibers
+        """Global quality of the traces, from the fibers not found and the flags of the traces
+
+        GOOD if every expected fiber is traced and valid, PARTIAL if some are not,
+        BAD if more than 5 % of the fibers are not.
+        """
         if tracemap.tags["insmode"] == "LCB":
             nfibers = 623
             ignored_ids = [623]
@@ -129,28 +139,26 @@ class TraceMapRecipe(MegaraBaseRecipe):
             nfibers = 644
             ignored_ids = [635]
 
-        cost_ids = nfibers * [0]
-
-        start_min, end_max = tracemap.expected_range
-
+        lost = sorted(set(tracemap.error_fitting) - set(ignored_ids))
+        invalid = sorted(
+            t.fibid for t in tracemap.contents if t.fitparms and not t.valid and t.fibid not in ignored_ids
+        )
+        counts = {}
         for trace in tracemap.contents:
-            idx = trace.fibid - 1
-            if trace.fibid in ignored_ids:
-                continue
-            if trace.start > start_min:
-                cost_ids[idx] += 1
-                msg = f"In fiber {trace.fibid}, trace start > {start_min}"
-                warnings.warn(msg)
-            if trace.stop < end_max:
-                cost_ids[idx] += 1
-                msg = f"In fiber {trace.fibid}, trace end < {end_max}"
-                warnings.warn(msg)
+            for flag in trace.flags:
+                counts.setdefault(flag, []).append(trace.fibid)
 
-        total = sum(cost_ids)
+        if lost:
+            self.logger.warning("fibers not found: %s", lost)
+        if invalid:
+            self.logger.warning("invalid traces: %s", invalid)
+        for flag, fibids in sorted(counts.items()):
+            self.logger.info("traces with flag %r: %d %s", flag, len(fibids), fibids)
 
-        if total > 300:
+        nbad = len(lost) + len(invalid)
+        if nbad > 0.05 * nfibers:
             tracemap.quality_control = qc.QC.BAD
-        elif total > 0:
+        elif nbad > 0:
             tracemap.quality_control = qc.QC.PARTIAL
         else:
             tracemap.quality_control = qc.QC.GOOD
@@ -205,6 +213,18 @@ class TraceMapRecipe(MegaraBaseRecipe):
         box_borders, _ = refine_boxes_from_image(
             reduced, box_borders0, cstart, intermediate_results=self.intermediate_results
         )
+        if rinput.auto_reference_column:
+            hw = rinput.reference_column_hw
+            ncols = reduced[0].shape[1]
+            candidates = range(400, ncols - 400 + 1, 100)
+            cstart, scores = select_reference_column(reduced[0].data, box_borders, candidates, hw=hw)
+            self.logger.info("reference column with the most contrast is %d", cstart)
+            self.logger.debug(
+                "contrast of the weakest box in columns %s: %s", list(candidates), numpy.round(scores, 2).tolist()
+            )
+            box_borders, _ = refine_boxes_from_image(
+                reduced, box_borders0, cstart, intermediate_results=self.intermediate_results
+            )
         self.logger.debug(f"refined boxes computed in column {cstart}")
         self.logger.debug("refined boxes: %s", numpy.asarray(box_borders).tolist())
 
@@ -264,6 +284,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
             xmin_fit=rinput.xmin_fit,
             xmax_fit=rinput.xmax_fit,
             extrapolate_traces=rinput.extrapolate_traces,
+            complete=rinput.complete_traces,
             debug_plot=debug_plot,
         )
         self.logger.info("END search traces")
@@ -298,6 +319,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         xmin_fit=1,
         xmax_fit=4096,
         extrapolate_traces=False,
+        complete=True,
         step=2,
         hs=3,
         tol=1.5,
@@ -344,6 +366,8 @@ class TraceMapRecipe(MegaraBaseRecipe):
         contents = []
         error_fitting = []
         missing_fibers = []
+        # traced points of each fiber, used to complete the traces
+        points = {}
         self.logger.info("trace peaks from references")
         for dtrace in central_peaks:
             # FIXME, for traces, the background must be local
@@ -389,6 +413,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
                     else:
                         self.logger.debug(f"fit polynomial with degree {poldeg=}")
                         pfit = nppol.polyfit(xfit, yfit, deg=poldeg)
+                        points[dtrace.fibid] = (xfit, yfit)
                         self.logger.debug(f"polynomial is {pfit=}")
 
                     if debug_plot:
@@ -434,7 +459,108 @@ class TraceMapRecipe(MegaraBaseRecipe):
             )
             contents.append(this_trace)
 
+        xx_start, xx_end = tracing_limits(data.shape[1], cstart, step, hs)
+        xlimits = (max(xx_start, xmin_fit - 1), min(xx_end, xmax_fit - 1))
+        if complete:
+            changed = complete_traces(contents, points, xlimits, cstart, poldeg)
+            if changed:
+                self.logger.info("traces completed with the shape of the neighbouring traces: %s", changed)
+
+        peak_values = {dtrace.fibid: dtrace.start[2] for dtrace in central_peaks if dtrace.start is not None}
+        flag_traces(contents, peak_values, xlimits, completed=complete)
+
         return contents, error_fitting, missing_fibers
+
+
+def flag_traces(traces, peak_values, xlimits, completed=True, weak_ratio=0.3, nneigh=5, tol=20):
+    """Add the quality flags to the traces
+
+    - "weak": the peak in the reference column is below `weak_ratio` times the
+      median of the peaks of the `nneigh` fibers at each side
+    - "truncated": the trace starts or stops more than `tol` pixels inside `xlimits`
+    - "not_completed": truncated, after trying to complete the traces (`completed`)
+    - "crossing": in the range covered by both, the trace comes closer to the trace
+      of the next fiber than half the usual distance between consecutive fibers;
+      only valid traces are compared
+
+    Parameters
+    ----------
+    traces : list of GeometricTrace
+    peak_values : dict
+        Value of the peak of each fiber in the reference column, fibid: value
+    xlimits : tuple of int
+        First and last columns of a complete trace
+    completed : bool
+        The traces have been completed with the shape of the neighbouring traces
+    """
+    ids = sorted(peak_values)
+    values = numpy.array([peak_values[f] for f in ids])
+    by_id = {t.fibid: t for t in traces}
+    for k, fibid in enumerate(ids):
+        lo, hi = max(0, k - nneigh), min(len(ids), k + nneigh + 1)
+        neighbours = numpy.delete(values[lo:hi], k - lo)
+        if fibid in by_id and neighbours.size and values[k] < weak_ratio * numpy.median(neighbours):
+            by_id[fibid].add_flag("weak")
+
+    xstart, xend = xlimits
+    for trace in traces:
+        if not trace.fitparms:
+            continue
+        if trace.start > xstart + tol or trace.stop < xend - tol:
+            trace.add_flag("truncated")
+            if completed:
+                trace.add_flag("not_completed")
+
+    valid = sorted(((t.fibid, t) for t in traces if t.valid), key=lambda item: item[0])
+    pairs = []
+    for (fa, ta), (fb, tb) in zip(valid[:-1], valid[1:]):
+        if fb != fa + 1:
+            continue
+        x1, x2 = max(ta.start, tb.start), min(ta.stop, tb.stop)
+        if x2 <= x1:
+            continue
+        xx = numpy.linspace(x1, x2, 100)
+        pairs.append((ta, tb, tb.polynomial(xx) - ta.polynomial(xx)))
+    if pairs:
+        # the usual distance between consecutive fibers
+        spacing = numpy.median([numpy.median(sep) for _, _, sep in pairs])
+        for ta, tb, sep in pairs:
+            if sep.min() < 0.5 * spacing:
+                ta.add_flag("crossing")
+                tb.add_flag("crossing")
+
+
+def box_contrast(column, box_borders, margin=9, window=7):
+    """Contrast of the fibers in each pseudoslit box of a column of the image
+
+    The contrast is the median over the box of (max - min) / max in windows of
+    `window` pixels, about the distance between fibers, leaving `margin`
+    pixels at the borders of the box.
+    """
+    peaks = maximum_filter1d(column, window)
+    valleys = minimum_filter1d(column, window)
+    with numpy.errstate(invalid="ignore", divide="ignore"):
+        depth = (peaks - valleys) / peaks
+    result = []
+    for b1, b2 in zip(box_borders[:-1], box_borders[1:]):
+        region = depth[int(b1) + margin : int(b2) - margin]
+        region = region[numpy.isfinite(region)]
+        result.append(numpy.median(region) if region.size else 0.0)
+    return numpy.array(result)
+
+
+def select_reference_column(image, box_borders, candidates, hw=5):
+    """The column where the pseudoslit box with the least contrast has the most
+
+    The column cuts are averaged over 2 * hw + 1 columns. Returns the selected
+    column and the contrast of the weakest box in each candidate column.
+    """
+    scores = []
+    for col in candidates:
+        column = image[:, col - hw : col + hw + 1].mean(axis=1)
+        scores.append(float(numpy.min(box_contrast(column, box_borders))))
+    best = list(candidates)[int(numpy.argmax(scores))]
+    return best, scores
 
 
 def estimate_background(image, center, hs, boxref):
@@ -508,19 +634,26 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         lowt = numpy.min(mincol[bb1 : bb2 + 1])
         _logger.debug("conservative background in box is %f", lowt)
 
+        startid = lastid + 1
+        fiber_model = fibermatch.generate_box_model(nfibers, start=startid, missing_relids=mfibers, skip_fibids=sfibers)
+
+        lastid = fiber_model[-1].fibid
+        _logger.debug("fibids %s - %s", startid, lastid)
+
         # Find exactly the number of peaks expected
         _logger.debug("find %d peaks (max)", nfibers_max)
         ipeaks_int = peak_local_max(
             region, min_distance=3, threshold_abs=lowt, threshold_rel=threshold, num_peaks=nfibers_max
-        ).squeeze()
+        )[:, 0]
 
         npeaks = len(ipeaks_int)
         total_peaks += npeaks
 
         if npeaks == 0:
-            # skip everything, go to next box
+            # no fiber found in this box, go to next box
             boxes_with_missing_fibers.append((box["name"], nfibers))
             _logger.debug("no peaks detected, go to next box")
+            fiber_traces.extend(FiberTraceInfo(el.fibid, boxid) for el in fiber_model)
             continue
 
         # We always want the result sorted. The order changes in different versions
@@ -535,18 +668,6 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         peaks_y[:, 0] = ipeaks_int + b1
         peaks_y[:, 1] = ipeaks_float + b1
         peaks_y[:, 2] = region[ipeaks_int]
-        peak1 = peaks_y[0, 0]
-        peak2 = peaks_y[-1, 0]
-        border1 = peak1 - b1  # distance from left border to first peak
-        border2 = b2 - peak2  # distance from last peak to right border
-        delta_ioffset = int((border1 - border2) / 2)
-        ioffset += delta_ioffset  # new offset to recenter next fiber block
-
-        startid = lastid + 1
-        fiber_model = fibermatch.generate_box_model(nfibers, start=startid, missing_relids=mfibers, skip_fibids=sfibers)
-
-        lastid = fiber_model[-1].fibid
-        _logger.debug("fibids %s - %s", startid, lastid)
 
         matched_peaks = fibermatch.count_peaks(peaks_y[:, 1], tol=tol, distance=measured_scale)
         # Count FOUND_PEAK elements
@@ -557,7 +678,18 @@ def init_traces(image, center, hs, boxes, box_borders, tol=1.5, threshold=0.37, 
         if missing != 0:
             boxes_with_missing_fibers.append((box["name"], missing))
 
-        if True or debug_plot:
+        if nmatched == nfibers_max:
+            # Recenter the next fiber block only from a box with all its fibers:
+            # in a box with missing fibers at one end, the distances to the borders
+            # are not symmetric
+            border1 = peaks_y[0, 0] - b1  # distance from left border to first peak
+            border2 = b2 - peaks_y[-1, 0]  # distance from last peak to right border
+            delta_ioffset = int((border1 - border2) / 2)
+            ioffset += delta_ioffset  # new offset to recenter next fiber block
+        else:
+            _logger.debug("box with missing fibers, offset for borders not updated")
+
+        if debug_plot:
             fig = Figure()
             ax = fig.subplots()
             ax.plot(numpy.arange(len(region)) + b1, region)

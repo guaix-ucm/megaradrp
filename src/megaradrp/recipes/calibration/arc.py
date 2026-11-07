@@ -35,6 +35,7 @@ from numina.processing.combine import basic_processing_with_combination
 
 from megaradrp.ntypes import ProcessedFrame, ProcessedRSS
 from megaradrp.processing.aperture import ApertureExtractor
+from megaradrp.processing.arcqc import check_qc_wlcalib, flag_solutions
 from megaradrp.processing.fiberflat import Splitter, FlipLR
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import WavelengthCalibration
@@ -128,6 +129,17 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
     master_wlcalib = Result(WavelengthCalibration)
     fwhm_image = Result(DataFrameType)
 
+    def run_qc(self, recipe_input, recipe_result):
+        """Quality of the wavelength calibration, from the flags of the solutions"""
+        self.logger.info("start arc recipe QC")
+        wlcalib = recipe_result.master_wlcalib
+        insmode = wlcalib.tags.get("insmode", "LCB")
+        nfibers, ignored_ids = (623, [623]) if insmode == "LCB" else (644, [635])
+        recipe_result.qc = check_qc_wlcalib(wlcalib, nfibers, ignored_ids, logger=self.logger)
+        self.logger.info("Result QC is %s", recipe_result.qc)
+        self.logger.info("end arc recipe QC")
+        return recipe_result
+
     def run(self, rinput):
         """Execute the recipe.
 
@@ -204,7 +216,9 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
 
         self.logger.info("end arc calibration recipe")
 
+        naxis1 = reduced_rss[0].shape[1]
         if data_wlcalib is None:
+            flag_solutions(initial_data_wlcalib, naxis1, refined=False)
             return self.create_result(
                 reduced_image=reduced2d,
                 reduced_rss=reduced_rss,
@@ -215,6 +229,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             # copy metadata from initial_master_wlcalib to master_wlcalib
             data_wlcalib.tags = deepcopy(initial_data_wlcalib.tags)
             data_wlcalib.meta_info = deepcopy(initial_data_wlcalib.meta_info)
+            flag_solutions(data_wlcalib, naxis1, refined=True)
             return self.create_result(
                 reduced_image=reduced2d, reduced_rss=reduced_rss, master_wlcalib=data_wlcalib, fwhm_image=fwhm_image
             )
