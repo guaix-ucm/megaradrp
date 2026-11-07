@@ -206,6 +206,11 @@ def calibrate_wl_rss(rss, solutionwl, npix, targetwcs, dtype="float32", span=0, 
         key = "FIB%03d_V" % fibid
         fibers_ext_headers[key] = False
 
+    # fibers whose solution did not pass the quality checks
+    for fibid in solutionwl.invalid_fibers():
+        key = "FIB%03d_V" % fibid
+        fibers_ext_headers[key] = False
+
     rss_map = fits.ImageHDU(data=map_data, name="WLMAP")
 
     rss.append(rss_map)
