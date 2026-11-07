@@ -246,3 +246,23 @@ def test_obtain_fiber_flat_skip_windows(transmission):
     # without the window, the line stays in the flat
     result = FiberFlatRecipe().obtain_fiber_flat(rss)
     assert numpy.min(result[0].data[:, 3000] / expected) < 0.98
+
+
+def test_obtain_fiber_flat_edge_falls(transmission):
+    """The spectrum falls in the zone of partial coverage: the smoothing follows it"""
+    x = numpy.arange(NWL)
+    lamp = 1.0 - 0.4 * numpy.exp(-x / 40.0)
+    rss = flat_rss(transmission, lamp)
+    # each group of fibers starts later, from 0 to 150 pixels
+    starts = (numpy.arange(623) % 16) * 10
+    for idx, start in enumerate(starts):
+        rss["WLMAP"].data[idx, :start] = 0
+        rss[0].data[idx, :start] = 0
+    result = FiberFlatRecipe().obtain_fiber_flat(rss)
+    valid, expected = expected_flat(transmission)
+    flat = result[0].data
+    covered = rss["WLMAP"].data[:, :160] > 0
+    ratio = flat[:, :160] / expected[:, numpy.newaxis]
+    # only where at least 5 % of the fibers have coverage
+    enough = covered.sum(axis=0) >= 0.05 * 623
+    assert numpy.allclose(ratio[:, enough][covered[:, enough]], 1.0, atol=0.02)
