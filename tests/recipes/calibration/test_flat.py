@@ -11,6 +11,7 @@ import megaradrp.recipes.calibration.flat as flat
 from megaradrp.datamodel import create_default_fiber_header
 from megaradrp.recipes.calibration.flat import (
     FiberFlatRecipe,
+    _flat_knots,
     _smoothing_window_check,
     absorption_windows,
     check_qc_fiberflat,
@@ -251,24 +252,40 @@ def test_obtain_fiber_flat_skip_windows(transmission):
     assert numpy.min(result[0].data[:, 3000] / expected) < 0.98
 
 
-def test_obtain_fiber_flat_edge_falls(transmission):
-    """The spectrum falls in the zone of partial coverage: the smoothing follows it"""
+def test_flat_knots():
+    """The knots are equally spaced, not farther than the step, and need 10 fitted pixels since the previous one"""
+    x_fit = numpy.arange(100, 1100)
+    knots = _flat_knots(x_fit, 300)
+    assert numpy.allclose(knots, [349.75, 599.5, 849.25])
+    # a gap without fitted pixels removes the knot after it
+    x_fit = numpy.r_[numpy.arange(100, 340), numpy.arange(598, 1100)]
+    assert len(_flat_knots(x_fit, 300)) == 2
+
+
+def test_obtain_fiber_flat_edge_extrapolated(transmission):
+    """In the zone of partial coverage the smoothing is continued in a straight line
+
+    The fibers that reach the border are 5 % fainter there than the others: their
+    fiber flat keeps it, it is not absorbed by the average of the few fibers there.
+    """
     x = numpy.arange(NWL)
-    lamp = 1.0 - 0.4 * numpy.exp(-x / 40.0)
+    lamp = 1.0 + 0.2 * x / NWL
     rss = flat_rss(transmission, lamp)
     # each group of fibers starts later, from 0 to 150 pixels
     starts = (numpy.arange(623) % 16) * 10
+    response = 1.0 - 0.05 * numpy.exp(-x / 100.0)
     for idx, start in enumerate(starts):
         rss["WLMAP"].data[idx, :start] = 0
         rss[0].data[idx, :start] = 0
+        if start == 0:
+            rss[0].data[idx] *= response
     result = FiberFlatRecipe().obtain_fiber_flat(rss)
     valid, expected = expected_flat(transmission)
-    flat = result[0].data
-    covered = rss["WLMAP"].data[:, :160] > 0
-    ratio = flat[:, :160] / expected[:, numpy.newaxis]
-    # only where at least 5 % of the fibers have coverage
-    enough = covered.sum(axis=0) >= 0.05 * 623
-    assert numpy.allclose(ratio[:, enough][covered[:, enough]], 1.0, atol=0.02)
+    ratio = result[0].data[:, :150] / expected[:, numpy.newaxis]
+    early = starts == 0
+    assert numpy.allclose(ratio[early], response[:150], atol=5e-3)
+    covered = rss["WLMAP"].data[~early, :150] > 0
+    assert numpy.allclose(ratio[~early][covered], 1.0, atol=5e-3)
 
 
 def test_obtain_fiber_flat_flags(transmission):

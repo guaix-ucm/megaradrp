@@ -47,33 +47,37 @@ def absorption_windows(resolution):
     return [(float(a), float(b)) for a, b in zip(table["wl_min"][sel], table["wl_max"][sel])]
 
 
-def _flat_knots(x_fit, x_full, step, edge_step, min_points=10):
+def _flat_knots(x_fit, step, min_points=10):
     """Interior knots of the spline of the average spectrum
 
-    Every `step` pixels in the range `x_full` where all the fibers have coverage,
-    every `edge_step` pixels from its ends to the ends of `x_fit`. A knot with
-    less than `min_points` pixels of `x_fit` since the previous one is removed.
+    Equally spaced between the ends of `x_fit`, not farther than `step`
+    pixels. A knot with less than `min_points` pixels of `x_fit` since the
+    previous one is removed.
     """
     first, last = x_fit[0], x_fit[-1]
-    if x_full.size:
-        lo, hi = max(x_full[0], first), min(x_full[-1], last)
-    else:
-        lo, hi = first, last
-    nknots = max(int(numpy.ceil((hi - lo) / step)), 1)
-    knots = list(numpy.linspace(lo, hi, nknots + 1)[1:-1])
-    if edge_step > 0 and x_full.size:
-        knots += list(numpy.arange(lo, first, -edge_step))
-        knots += list(numpy.arange(hi, last, edge_step))
+    nknots = max(int(numpy.ceil((last - first) / step)), 1)
+    knots = numpy.linspace(first, last, nknots + 1)[1:-1]
     kept, prev = [], first
-    for knot in sorted(set(knots)):
-        if knot <= first or knot >= last:
-            continue
+    for knot in knots:
         if numpy.count_nonzero((x_fit > prev) & (x_fit <= knot)) >= min_points:
             kept.append(knot)
             prev = knot
     while kept and numpy.count_nonzero(x_fit > kept[-1]) < min_points:
         kept.pop()
     return kept
+
+
+def _extend_linear(spline, x, first, last):
+    """Evaluate `spline` in `x`, continued beyond [first, last] with straight lines
+
+    Each line has the value and the slope of the spline at the border.
+    """
+    out = spline(x)
+    deriv = spline.derivative()
+    for border, side in ((first, x < first), (last, x > last)):
+        if numpy.any(side):
+            out[side] = spline(border) + deriv(border) * (x[side] - border)
+    return out
 
 
 def interpolate_windows(data, skip, coverage, nside=5):
@@ -319,9 +323,8 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         degree=3,
         knot_step=150.0,
         min_level=0.3,
-        min_coverage=0.05,
+        full_coverage=0.99,
         skip_windows=None,
-        edge_knot_step=20,
     ):
         """Divide each fiber by the smoothed average spectrum of the fibers
 
@@ -332,15 +335,14 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         fibers.
 
         The average spectrum is smoothed with a cubic spline with knots every
-        `knot_step` Angstrom where all the fibers have coverage, and every
-        `edge_knot_step` pixels near the borders, where only some fibers have
-        coverage and the spectrum falls; a knot with less than 10 fitted pixels
-        since the previous one is removed. The spline is fitted with weights
-        proportional to the number of fibers with coverage, and only where at
-        least `min_coverage` times the largest number of fibers have coverage;
-        beyond, the spline keeps its value at the border. With `knot_step` <= 0,
-        the average spectrum is smoothed with a spline of degree 5 with the
-        default smoothing factor.
+        `knot_step` Angstrom, fitted only where all the fibers have coverage
+        (at least `full_coverage` times the largest number of fibers); a knot
+        with less than 10 fitted pixels since the previous one is removed.
+        Near the borders only some fibers have coverage, and their average
+        changes with the fibers that enter it, so the spline is continued
+        there with a straight line with its value and slope at the border.
+        With `knot_step` <= 0, the average spectrum is smoothed with a spline
+        of degree 5 with the default smoothing factor.
 
         `skip_windows` are wavelength intervals (Angstrom) with absorptions in
         the light of the calibration lamp: they are left out of the fit of the
@@ -397,16 +399,19 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         if knot_step > 0:
             cdelt = abs(rss_wl[0].header.get("CDELT1", 1.0))
             coverage = mm / max(mm.max(), 1)
-            fit = (coverage >= min_coverage) & ~skip
+            fit = (coverage >= full_coverage) & ~skip
             x_fit = xx[fit]
-            knots = _flat_knots(x_fit, numpy.flatnonzero(coverage >= 0.99), knot_step / cdelt, edge_knot_step)
-            self.logger.debug("average spectrum smoothed with %d interior knots", len(knots))
-            spline = LSQUnivariateSpline(x_fit, collapse[fit], knots, w=coverage[fit], k=3, ext=3)
+            knots = _flat_knots(x_fit, knot_step / cdelt)
+            self.logger.debug(
+                "average spectrum smoothed with %d interior knots in pixels %d-%d", len(knots), x_fit[0], x_fit[-1]
+            )
+            spline = LSQUnivariateSpline(x_fit, collapse[fit], knots, k=3)
+            collapse_smooth_s[~mask_noinfo] = _extend_linear(spline, xx[~mask_noinfo], x_fit[0], x_fit[-1])
             spline_label = f"spline, knots every {knot_step:g} A"
         else:
             spline = UnivariateSpline(xx[~mask_noinfo], collapse[~mask_noinfo], k=5)
             spline_label = "spline5"
-        collapse_smooth_s[~mask_noinfo] = spline(xx[~mask_noinfo])
+            collapse_smooth_s[~mask_noinfo] = spline(xx[~mask_noinfo])
 
         if self.intermediate_results:
             from matplotlib.figure import Figure
