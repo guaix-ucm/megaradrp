@@ -132,6 +132,149 @@ def interpolate_windows(data, skip, coverage, nside=5):
 INVALID_FLAT_FLAGS = frozenset(["broken"])
 
 
+def _trace_polynomials(tracemap):
+    """(fibid, position) of the valid traces of a TraceMap or a ModelMap, with its global offset
+
+    The position is a function giving the row of the centre of the fiber for
+    each column: the polynomial of a TraceMap, or the spline of the centre
+    of the profiles of a ModelMap.
+    """
+    out = []
+    for trace in tracemap.contents:
+        if not trace.valid:
+            continue
+        try:
+            centre = trace.polynomial
+        except (KeyError, TypeError):
+            # a fiber of a ModelMap without model
+            continue
+        offset = float(tracemap.global_offset(centre(tracemap.ref_column)))
+
+        def position(x, centre=centre, offset=offset):
+            return centre(x) + offset
+
+        out.append((trace.fibid, position))
+    return out
+
+
+def find_zero_order(image, traces, threshold=0.02, min_fwhm=5.0, max_fwhm=40.0, width=151, nbins=10):
+    """Find the zero order of the VPH in a 2D flat image
+
+    The zero order is diffuse light added at a fixed range of columns, also
+    between the fibers. In each row midway between neighbouring traces the
+    image is divided by the level of the fibers next to it; the median over
+    groups of those rows, minus its running median along the columns
+    (`width` pixels), keeps the narrow excess. A band is accepted if its
+    peak is above `threshold` (fraction of the level of the fibers) and its
+    FWHM is between `min_fwhm` and `max_fwhm` pixels. Weaker bands (1-2 %
+    in some gratings) are left: interpolating across them would also remove
+    the real structure of the flat there, such as the etalon of the BLUE
+    order sorting filter, by about as much.
+
+    Parameters
+    ----------
+    image : numpy.ndarray
+        2D image of the flat, before the extraction
+    traces : list of (int, callable)
+        Fiber id and position (row) of each valid trace as a function of the column
+
+    Returns
+    -------
+    list of dict
+        For each band: `center`, a numpy Polynomial giving its column as a
+        function of the row; `fwhm` in pixels; `amplitude`, the peak excess
+        between the fibers relative to the level of the fibers; `rows`, the
+        range of rows where it was measured.
+    """
+    from scipy.ndimage import median_filter
+    from scipy.signal import find_peaks, peak_widths
+
+    nrows, ncols = image.shape
+    xx = numpy.arange(ncols)
+    if len(traces) < 2:
+        return []
+    ypos = numpy.array([poly(xx) for _, poly in traces])
+    order = numpy.argsort(ypos[:, ncols // 2])
+    ypos = ypos[order]
+    gaps = numpy.diff(ypos[:, ncols // 2])
+    near = gaps < 1.5 * numpy.median(gaps)
+    mid = numpy.rint(0.5 * (ypos[:-1] + ypos[1:])[near]).astype(int)
+    lo_rows = numpy.rint(ypos[:-1][near]).astype(int)
+    hi_rows = numpy.rint(ypos[1:][near]).astype(int)
+    for rows in (mid, lo_rows, hi_rows):
+        numpy.clip(rows, 0, nrows - 1, out=rows)
+    valleys = image[mid, xx]
+    centre = slice(ncols // 2 - 100, ncols // 2 + 100)
+    level = 0.5 * (
+        numpy.median(image[lo_rows, xx][:, centre], axis=1) + numpy.median(image[hi_rows, xx][:, centre], axis=1)
+    )
+    use = level > 0.3 * numpy.median(level)
+    if numpy.count_nonzero(use) < nbins:
+        return []
+    valleys = valleys[use] / level[use, numpy.newaxis]
+    row_of = mid[use, ncols // 2]
+    groups = numpy.array_split(numpy.arange(valleys.shape[0]), nbins)
+    excess = []
+    for group in groups:
+        prof = numpy.median(valleys[group], axis=0)
+        excess.append(prof - median_filter(prof, size=width, mode="nearest"))
+    excess = numpy.array(excess)
+    total = numpy.median(excess, axis=0)
+    total[: width // 2] = 0
+    total[-(width // 2) :] = 0
+    peaks, _ = find_peaks(total, height=threshold, width=(min_fwhm, max_fwhm))
+    bands = []
+    for peak in peaks:
+        fwhm = float(peak_widths(total, [peak], rel_height=0.5)[0][0])
+        half = int(numpy.ceil(2 * fwhm))
+        window = numpy.arange(max(peak - half, 0), min(peak + half + 1, ncols))
+        rows, cols = [], []
+        for group, prof in zip(groups, excess):
+            part = numpy.clip(prof[window], 0, None)
+            part = numpy.where(part > 0.5 * part.max(), part, 0)
+            if part.sum() > 0:
+                rows.append(numpy.median(row_of[group]))
+                cols.append(numpy.sum(window * part) / part.sum())
+        deg = min(2, len(rows) - 1)
+        center = numpy.polynomial.Polynomial.fit(rows, cols, deg)
+        bands.append(
+            {
+                "center": center,
+                "fwhm": fwhm,
+                "amplitude": float(total[peak]),
+                "rows": (float(min(rows)), float(max(rows))),
+            }
+        )
+    return bands
+
+
+def remove_zero_order(rss, traces, bands, scale=1.5, nside=5):
+    """Interpolate each fiber of an extracted RSS across the columns of the zero order
+
+    `rss` is the extracted RSS before the flip and the wavelength calibration
+    (row fibid - 1, detector columns), changed in place. In each fiber the
+    columns within `scale` times the FWHM of the centre of each band, at the
+    row of the fiber, are replaced by a straight line between the medians of
+    the `nside` pixels at each side.
+    """
+    ncols = rss.shape[1]
+    for band in bands:
+        half = scale * band["fwhm"]
+        col0 = band["center"](numpy.mean(band["rows"]))
+        for fibid, poly in traces:
+            col = band["center"](poly(col0))
+            a = max(int(numpy.floor(col - half)), 0)
+            b = min(int(numpy.ceil(col + half)) + 1, ncols)
+            if a <= 0 or b >= ncols:
+                continue
+            row = rss[fibid - 1]
+            left = numpy.median(row[max(a - nside, 0) : a])
+            right = numpy.median(row[b : b + nside])
+            xl = a - (nside + 1) / 2
+            xr = b + (nside - 1) / 2
+            row[a:b] = left + (right - left) * (numpy.arange(a, b) - xl) / (xr - xl)
+
+
 def flag_fibers(flat, coverage, faint, good, col1, col2, skip=None, max_dev=0.3, min_frac=0.02, nneigh=5, width=51):
     """Quality flags of the fibers in a fiber flat
 
@@ -292,6 +435,9 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     )
     smoothing_knot_step = Parameter(
         150.0, "Distance in Angstrom between the knots of the spline that smooths the average spectrum of the fibers"
+    )
+    remove_zero_order = Parameter(
+        True, "Find the zero order of the VPH (diffuse light at fixed columns) and interpolate each fiber across it"
     )
     extraction_offset = Parameter([0.0], "Offset traces for extraction", accept_scalar=True)
     master_wlcalib = reqs.WavelengthCalibrationRequirement()
@@ -489,6 +635,20 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         img = calibrator_aper(img)
         img = splitter2(img)
         rss_base = splitter2.out  # Copy before el calibration
+        zero_order = []
+        if rinput.remove_zero_order:
+            traces = _trace_polynomials(rinput.master_apertures)
+            zero_order = find_zero_order(flat2d[0].data, traces)
+            for band in zero_order:
+                cols = band["center"](numpy.array(band["rows"]))
+                self.logger.info(
+                    "zero order of the VPH at columns %.0f-%.0f, FWHM %.1f px, %.1f %% of the fibers between them",
+                    cols.min(),
+                    cols.max(),
+                    band["fwhm"],
+                    100 * band["amplitude"],
+                )
+            remove_zero_order(img[0].data, traces, zero_order)
         self.logger.debug("Flip RSS left-rigtht, before WL calibration")
         img = flipcor.run(img)
         # Calibrate in WL
@@ -507,6 +667,12 @@ class FiberFlatRecipe(MegaraBaseRecipe):
             rss_wl, window=rinput.smoothing_window, knot_step=rinput.smoothing_knot_step, skip_windows=skip_windows
         )
         rss_wl2[0].header = self.set_product_headers(rss_wl2[0].header)
+        for band in zero_order:
+            cols = band["center"](numpy.array(band["rows"]))
+            rss_wl2[0].header["history"] = (
+                f"Zero order of the VPH interpolated at columns {cols.min():.0f}-{cols.max():.0f} "
+                f"(FWHM {band['fwhm']:.1f} px)"
+            )
         result = self.create_result(master_fiberflat=rss_wl2, reduced_image=flat2d, reduced_rss=rss_base)
         return result
 

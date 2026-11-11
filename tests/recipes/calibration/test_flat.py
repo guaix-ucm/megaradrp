@@ -12,11 +12,14 @@ from megaradrp.datamodel import create_default_fiber_header
 from megaradrp.recipes.calibration.flat import (
     FiberFlatRecipe,
     _flat_knots,
+    _trace_polynomials,
     _smoothing_window_check,
     absorption_windows,
     check_qc_fiberflat,
+    find_zero_order,
     flag_fibers,
     interpolate_windows,
+    remove_zero_order,
 )
 from megaradrp.testing.create_image import create_rss
 
@@ -150,6 +153,7 @@ def test_fiber_flat_recipe(monkeypatch, transmission):
         smoothing_window=31,
         smoothing_knot_step=150.0,
         skip_absorption_windows=True,
+        remove_zero_order=False,
     )
     result = recipe.run(rinput)
 
@@ -357,3 +361,81 @@ def test_fiber_flat_run_qc(transmission):
     result = recipe.create_result(master_fiberflat=rss, reduced_image=rss, reduced_rss=rss)
     result = recipe.run_qc(None, result)
     assert result.qc == QC.PARTIAL
+
+
+def zero_order_image(amplitude, nfib=50, ncols=800):
+    """2D flat with fibers every 7 rows, slightly tilted, and a diffuse band at column ~400"""
+    nrows = 20 + 7 * nfib
+    yy, xx = numpy.mgrid[0:nrows, 0:ncols].astype(float)
+    traces = [(k + 1, numpy.polynomial.Polynomial([15.0 + 7 * k, 0.002])) for k in range(nfib)]
+    spectrum = 1000.0 * (1 + 0.3 * xx / ncols)
+    image = numpy.zeros((nrows, ncols))
+    for _, poly in traces:
+        image += spectrum * numpy.exp(-0.5 * ((yy - poly(xx)) / 1.2) ** 2)
+    centre = 400 + 0.01 * (yy - nrows / 2)
+    band = amplitude * 1000.0 * numpy.exp(-0.5 * ((xx - centre) / (14 / 2.3548)) ** 2)
+    return image + band, traces, nrows
+
+
+def test_find_zero_order():
+    """A diffuse band at fixed columns, also between the fibers, is found with its centre and width"""
+    image, traces, nrows = zero_order_image(0.1)
+    bands = find_zero_order(image, traces)
+    assert len(bands) == 1
+    band = bands[0]
+    assert abs(band["center"](nrows / 2) - 400) < 1
+    assert abs(band["center"](nrows / 2 + 100) - 401) < 1
+    assert 12 < band["fwhm"] < 16
+    assert 0.07 < band["amplitude"] < 0.13
+    # without the band, or with a band below the threshold, nothing is found
+    assert find_zero_order(zero_order_image(0.0)[0], traces) == []
+    assert find_zero_order(zero_order_image(0.01)[0], traces) == []
+
+
+def test_remove_zero_order():
+    """Each fiber is interpolated across the band, at the column of the band in its row"""
+    ncols = 800
+    xx = numpy.arange(ncols)
+    traces = [(k + 1, numpy.polynomial.Polynomial([15.0 + 7 * k, 0.002])) for k in range(50)]
+    band = {"center": numpy.polynomial.Polynomial([400.0 - 1.85, 0.01]), "fwhm": 14.0, "rows": (15.0, 358.0)}
+    spectrum = 1000.0 * (1 + 0.3 * xx / ncols)
+    rss = numpy.zeros((623, ncols))
+    for fibid, poly in traces:
+        col = band["center"](poly(400.0))
+        rss[fibid - 1] = spectrum * (1 + 0.3 * numpy.exp(-0.5 * ((xx - col) / (14 / 2.3548)) ** 2))
+    remove_zero_order(rss, traces, [band])
+    ratio = rss[:50] / spectrum
+    assert numpy.allclose(ratio, 1.0, atol=3e-3)
+    # the rows without traces are not changed
+    assert numpy.all(rss[50:] == 0)
+
+
+def test_trace_polynomials():
+    """The valid traces, with the global offset of the TraceMap"""
+    import numpy.polynomial.polynomial as nppol
+    from megaradrp.products.tracemap import GeometricTrace, TraceMap
+
+    tracemap = TraceMap()
+    tracemap.contents = [
+        GeometricTrace(fibid=1, boxid=1, start=6, stop=4090, fitparms=[100.0, 0.01]),
+        GeometricTrace(fibid=2, boxid=1, start=6, stop=4090, fitparms=[]),
+    ]
+    tracemap.global_offset = numpy.polynomial.Polynomial([0.5])
+    traces = _trace_polynomials(tracemap)
+    assert [fibid for fibid, _ in traces] == [1]
+    assert numpy.isclose(traces[0][1](1000.0), nppol.polyval(1000.0, [100.0, 0.01]) + 0.5)
+
+
+def test_trace_polynomials_modelmap():
+    """With a ModelMap, the centre of the profiles; fibers without model are left out"""
+    from megaradrp.products.modelmap import GeometricModel, ModelMap
+
+    modelmap = ModelMap()
+    centre = numpy.polynomial.Polynomial([200.0, 0.02])
+    modelmap.contents = [
+        GeometricModel(fibid=3, boxid=1, start=6, stop=4090, model={"params": {"mean": centre}}),
+        GeometricModel(fibid=4, boxid=1, start=6, stop=4090, model={}),
+    ]
+    traces = _trace_polynomials(modelmap)
+    assert [fibid for fibid, _ in traces] == [3]
+    assert numpy.isclose(traces[0][1](1000.0), 220.0)
