@@ -363,8 +363,11 @@ def test_fiber_flat_run_qc(transmission):
     assert result.qc == QC.PARTIAL
 
 
-def zero_order_image(amplitude, nfib=50, ncols=800):
-    """2D flat with fibers every 7 rows, slightly tilted, and a diffuse band at column ~400"""
+def zero_order_image(amplitude, nfib=50, ncols=800, tilt=0.01, falloff=0.0):
+    """2D flat with fibers every 7 rows, slightly tilted, and a diffuse band at column ~400
+
+    The band moves `tilt` columns per row; its amplitude falls by `falloff` at the ends of the slit.
+    """
     nrows = 20 + 7 * nfib
     yy, xx = numpy.mgrid[0:nrows, 0:ncols].astype(float)
     traces = [(k + 1, numpy.polynomial.Polynomial([15.0 + 7 * k, 0.002])) for k in range(nfib)]
@@ -372,8 +375,9 @@ def zero_order_image(amplitude, nfib=50, ncols=800):
     image = numpy.zeros((nrows, ncols))
     for _, poly in traces:
         image += spectrum * numpy.exp(-0.5 * ((yy - poly(xx)) / 1.2) ** 2)
-    centre = 400 + 0.01 * (yy - nrows / 2)
-    band = amplitude * 1000.0 * numpy.exp(-0.5 * ((xx - centre) / (14 / 2.3548)) ** 2)
+    centre = 400 + tilt * (yy - nrows / 2)
+    profile = 1 - falloff * ((yy - nrows / 2) / (nrows / 2)) ** 2
+    band = amplitude * 1000.0 * profile * numpy.exp(-0.5 * ((xx - centre) / (14 / 2.3548)) ** 2)
     return image + band, traces, nrows
 
 
@@ -390,6 +394,21 @@ def test_find_zero_order():
     # without the band, or with a band below the threshold, nothing is found
     assert find_zero_order(zero_order_image(0.0)[0], traces) == []
     assert find_zero_order(zero_order_image(0.01)[0], traces) == []
+
+
+def test_find_zero_order_tilted():
+    """The centre is a straight line, also when the band is weak at the ends of the slit
+
+    Next to the top of the band, where it is weakest, a broad bump of other light must not pull the centre.
+    """
+    image, traces, nrows = zero_order_image(0.06, tilt=0.05, falloff=0.9)
+    yy, xx = numpy.mgrid[0 : image.shape[0], 0 : image.shape[1]].astype(float)
+    bump = 20.0 * numpy.exp(-0.5 * ((xx - 365) / (60 / 2.3548)) ** 2)
+    image += numpy.where(yy > nrows - 45, bump, 0.0)
+    bands = find_zero_order(image, traces)
+    assert len(bands) == 1
+    for row in (40.0, nrows / 2, nrows - 40.0):
+        assert abs(bands[0]["center"](row) - (400 + 0.05 * (row - nrows / 2))) < 1.0
 
 
 def test_remove_zero_order():

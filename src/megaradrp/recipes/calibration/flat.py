@@ -171,6 +171,12 @@ def find_zero_order(image, traces, threshold=0.02, min_fwhm=5.0, max_fwhm=40.0, 
     the real structure of the flat there, such as the etalon of the BLUE
     order sorting filter, by about as much.
 
+    The band is slightly tilted. Its centre is a straight line in the row,
+    fitted to the centres of Gaussians fitted in each group of rows within
+    +-3 FWHM of the peak; groups where the fit fails, the band is weaker
+    than half the threshold or its FWHM is far from that of the band, and
+    outliers of the line (3 sigma), are left out.
+
     Parameters
     ----------
     image : numpy.ndarray
@@ -181,13 +187,17 @@ def find_zero_order(image, traces, threshold=0.02, min_fwhm=5.0, max_fwhm=40.0, 
     Returns
     -------
     list of dict
-        For each band: `center`, a numpy Polynomial giving its column as a
-        function of the row; `fwhm` in pixels; `amplitude`, the peak excess
+        For each band: `center`, a numpy Polynomial of degree 1 giving its
+        column as a function of the row; `fwhm` in pixels; `amplitude`, the peak excess
         between the fibers relative to the level of the fibers; `rows`, the
         range of rows where it was measured.
     """
     from scipy.ndimage import median_filter
+    from scipy.optimize import curve_fit
     from scipy.signal import find_peaks, peak_widths
+
+    def gauss(x, amp, centre, sigma, base):
+        return amp * numpy.exp(-0.5 * ((x - centre) / sigma) ** 2) + base
 
     nrows, ncols = image.shape
     xx = numpy.arange(ncols)
@@ -226,17 +236,43 @@ def find_zero_order(image, traces, threshold=0.02, min_fwhm=5.0, max_fwhm=40.0, 
     bands = []
     for peak in peaks:
         fwhm = float(peak_widths(total, [peak], rel_height=0.5)[0][0])
-        half = int(numpy.ceil(2 * fwhm))
+        half = int(numpy.ceil(3 * fwhm))
         window = numpy.arange(max(peak - half, 0), min(peak + half + 1, ncols))
+        sigma0 = fwhm / 2.3548
         rows, cols = [], []
         for group, prof in zip(groups, excess):
-            part = numpy.clip(prof[window], 0, None)
-            part = numpy.where(part > 0.5 * part.max(), part, 0)
-            if part.sum() > 0:
+            seg = prof[window]
+            try:
+                (amp, centre, sigma, _), _ = curve_fit(
+                    gauss, window, seg, p0=(max(seg.max(), threshold), window[numpy.argmax(seg)], sigma0, 0.0)
+                )
+            except (RuntimeError, ValueError):
+                continue
+            fwhm_group = 2.3548 * abs(sigma)
+            good = amp > 0.5 * threshold and min_fwhm <= fwhm_group <= max_fwhm and 0.5 < fwhm_group / fwhm < 1.6
+            if good and window[0] < centre < window[-1]:
                 rows.append(numpy.median(row_of[group]))
-                cols.append(numpy.sum(window * part) / part.sum())
-        deg = min(2, len(rows) - 1)
-        center = numpy.polynomial.Polynomial.fit(rows, cols, deg)
+                cols.append(centre)
+        rows, cols = numpy.array(rows), numpy.array(cols)
+        keep = numpy.ones(rows.size, dtype=bool)
+        if rows.size >= 3:
+            for _ in range(3):
+                line = numpy.polynomial.Polynomial.fit(rows[keep], cols[keep], 1)
+                resid = cols - line(rows)
+                scatter = max(1.4826 * numpy.median(numpy.abs(resid[keep])), 0.5)
+                new_keep = numpy.abs(resid) < 3 * scatter
+                if new_keep.sum() < 3 or numpy.array_equal(new_keep, keep):
+                    break
+                keep = new_keep
+            center = numpy.polynomial.Polynomial.fit(rows[keep], cols[keep], 1)
+        elif rows.size:
+            center = numpy.polynomial.Polynomial([numpy.median(cols)])
+            keep = numpy.ones(rows.size, dtype=bool)
+        else:
+            center = numpy.polynomial.Polynomial([float(peak)])
+            rows = numpy.array([numpy.median(row_of)])
+            keep = numpy.ones(1, dtype=bool)
+        rows = rows[keep]
         bands.append(
             {
                 "center": center,
