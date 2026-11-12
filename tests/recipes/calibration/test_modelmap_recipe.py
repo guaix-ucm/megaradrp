@@ -117,7 +117,7 @@ def test_modelmap_processes(run_recipe, monkeypatch):
     """With processes=0, the number of processes depends on the CPUs"""
     used = []
 
-    def fit_model(model_obj, data, tracemap, cols, processes):
+    def fit_model(model_obj, data, tracemap, cols, processes, fit_kwargs=None):
         used.append(processes)
         raise RuntimeError("stop")
 

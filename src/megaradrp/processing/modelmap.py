@@ -34,8 +34,34 @@ def calc1d_model(
     lateral=2,
     reject=3,
     nloop=1,
+    fit_background=False,
+    width_limits=None,
+    smooth_widths=0,
 ) -> dict:
-    """Fit a sum of profiles along a 1D column vector"""
+    """Fit a sum of profiles along a 1D column vector
+
+    Each fiber is fitted together with its `lateral` neighbours at each side,
+    after removing the profiles of the fibers up to `reject` positions away,
+    in `nloop` loops over the fibers in random order.
+
+    Parameters
+    ----------
+    fit_background : bool
+        Fit a constant background in each local fit, instead of a background
+        fixed at zero. Where the profiles overlap, as in defocused zones of
+        the detector, the light between the fibers otherwise goes into the
+        widths and amplitudes of the profiles.
+    width_limits : tuple of float, optional
+        Absolute limits of the width (stddev) of the profiles. Without them,
+        the width is bounded around its current value in each loop, so the
+        bounds move from loop to loop.
+    smooth_widths : int
+        If positive, after the loops the width of each fiber is replaced by
+        a smooth value from the fibers around it on the slit (see
+        smooth_profile_widths), and a last loop fits the amplitudes with
+        those widths fixed. Neighbouring fibers that overlap otherwise trade
+        light, alternating wide and narrow profiles.
+    """
 
     nfib = len(centers)
     if nfib != len(valid):
@@ -60,7 +86,11 @@ def calc1d_model(
     # total fits is 2 * lateral + 1
     total = reject + lateral
     npix = 6
-    for il in range(nloop):
+    loops = nloop + (1 if smooth_widths > 0 else 0)
+    for il in range(loops):
+        fixed_width = smooth_widths > 0 and il == loops - 1
+        if fixed_width:
+            smooth_profile_widths(current, valid, smooth_widths)
         # print('loop', il, datetime.datetime.now())
         # permutation of the valid fibers
         permutated_fibers = numpy.random.permutation(valid)
@@ -102,7 +132,7 @@ def calc1d_model(
             # We add profiles to a constant value of zero
 
             model = Const1D(amplitude=0.0)
-            model.amplitude.fixed = True
+            model.amplitude.fixed = not fit_background
 
             # For each fiber to be fitted
             for fib_id in fit_ids:
@@ -112,6 +142,10 @@ def calc1d_model(
                 p_fixed = model_desc.params_fixed(permutated_fibers, fib_id, col)
                 # Bounded parameters
                 p_bounds = model_desc.params_bounds(permutated_fibers, fib_id, col)
+                if width_limits is not None:
+                    p_bounds = dict(p_bounds, stddev=tuple(width_limits))
+                if fixed_width:
+                    p_fixed = dict(p_fixed, stddev=True)
                 # The values of the parameters in a tuple
                 args = tuple(permutated_fibers[name] for name in model_cls.param_names)
                 # The model for this fiber
@@ -137,6 +171,26 @@ def calc1d_model(
                     current[fibid][name] = fvalue[name]
 
     return current
+
+
+def smooth_profile_widths(current, valid, half):
+    """Replace the width of each fiber by a smooth value from the fibers around it on the slit
+
+    The width of each fiber is first averaged with that of the next one,
+    which removes an alternation of wide and narrow profiles, and then the
+    median of 2 * half + 1 of those averages around each fiber is taken.
+    `current` maps fiber ids to the parameters of their profiles, changed in
+    place.
+    """
+    order = sorted(valid)
+    widths = numpy.array([current[fibid]["stddev"] for fibid in order], dtype=float)
+    if widths.size < 2:
+        return
+    pairs = 0.5 * (widths[:-1] + widths[1:])
+    # one value per fiber: the average with the next fiber, the last one with the previous
+    pairs = numpy.append(pairs, pairs[-1])
+    for k, fibid in enumerate(order):
+        current[fibid]["stddev"] = float(numpy.median(pairs[max(k - half, 0) : k + half + 1]))
 
 
 def calc_matrix(wshape, model, params, valid, clip=1.0e-6, extra=10):
