@@ -3,7 +3,13 @@ import math
 import numpy as np
 import numpy.polynomial.polynomial as nppol
 import pytest
-from megaradrp.processing.modelmap import aper_extract, calc1d_model, calc_matrix, calc_matrix_cols
+from megaradrp.processing.modelmap import (
+    aper_extract,
+    calc1d_model,
+    calc_matrix,
+    calc_matrix_cols,
+    smooth_profile_widths,
+)
 from megaradrp.products.modelmap import GeometricModel, ModelMap
 from megaradrp.processing.modeldesc.moffat import MoffatModelDescription
 from megaradrp.processing.modeldesc.gaussbox import GaussBoxModelDescription
@@ -124,6 +130,45 @@ def test_calc1d_model_gaussbox():
     assert np.allclose(amplitude, amplitudes, rtol=1e-3)
     # the centers are fixed
     assert np.allclose([result[fibid]["mean"] for fibid in valid], centers)
+
+
+def test_smooth_profile_widths():
+    """An alternation of wide and narrow profiles is removed, an outlier does not spread"""
+    widths = [1.0, 3.0, 1.0, 3.0, 1.0, 3.0, 1.0, 3.0, 1.0, 3.0, 9.0, 2.0, 2.0, 2.0, 2.0]
+    current = {fibid: {"stddev": w} for fibid, w in enumerate(widths, 1)}
+    smooth_profile_widths(current, list(current), 2)
+    smoothed = np.array([current[fibid]["stddev"] for fibid in sorted(current)])
+    assert np.allclose(smoothed[:8], 2.0)
+    assert smoothed.max() < 6.0
+    assert np.allclose(smoothed[-2:], 2.0)
+
+
+def test_calc1d_model_overlap_background():
+    """Overlapping profiles on a background: the background term and the smoothed widths recover the widths
+
+    The extraction with the ModelMap uses the centres and the widths; the amplitudes are fitted again.
+    """
+    np.random.seed(2)
+    valid = list(range(101, 131))
+    centers = 6.33 * np.array(valid, dtype=float)
+    amplitudes = 100.0 * (1 + 0.1 * np.sin(np.arange(len(valid))))
+    column = gaussbox_column(centers, amplitudes, 2.4) + 30.0
+    model_desc = GaussBoxModelDescription(sigma=1.53)
+    inner = valid[5:-5]
+
+    def fit(**kwargs):
+        result = calc1d_model(model_desc, column, centers, valid, 2000, lateral=2, nloop=3, **kwargs)
+        stddev = np.array([result[f]["stddev"] for f in inner])
+        amp = np.array([result[f]["amplitude"] for f in inner])
+        return stddev, np.max(np.abs(amp / amplitudes[5:-5] - 1))
+
+    stddev, amp_new = fit(fit_background=True, width_limits=(0.8, 3.5), smooth_widths=2)
+    assert np.all(np.abs(stddev / 2.4 - 1) < 0.07)
+    assert np.ptp(stddev) < 0.15
+    # the previous fit, without background, puts it in the widths and the amplitudes
+    stddev_old, amp_old = fit()
+    assert np.ptp(stddev_old) > 0.5
+    assert amp_old > 5 * amp_new
 
 
 def test_calc1d_model_shape():
