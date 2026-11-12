@@ -27,7 +27,7 @@ from numina.array import combine
 # Create RSS
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.wavecalibration import WavelengthCalibrator
-from megaradrp.processing.fiberflat import Splitter, FlipLR
+from megaradrp.processing.fiberflat import ZERO_ORDER_MASK_EXTNAME, FlipLR, Splitter
 
 
 def absorption_windows(resolution):
@@ -130,6 +130,15 @@ def interpolate_windows(data, skip, coverage, nside=5):
 
 # Flags of a fiber in the fiber flat that make it invalid
 INVALID_FLAT_FLAGS = frozenset(["broken"])
+
+
+# Zero order of the VPH: bits of the mask (extension ZERO_ORDER_MASK_EXTNAME of the master fiber flat)
+ZERO_ORDER_INTERPOLATED = 1
+ZERO_ORDER_WEAK = 2
+# bands above this level (fraction of the level of the fibers) are interpolated in the flat,
+# weaker bands down to ZERO_ORDER_MASK_LEVEL are only marked in the mask
+ZERO_ORDER_INTERPOLATE_LEVEL = 0.02
+ZERO_ORDER_MASK_LEVEL = 0.01
 
 
 def _trace_polynomials(tracemap):
@@ -311,6 +320,77 @@ def remove_zero_order(rss, traces, bands, scale=1.5, nside=5):
             row[a:b] = left + (right - left) * (numpy.arange(a, b) - xl) / (xr - xl)
 
 
+def _wavelength_solutions(wlcalib):
+    """Coefficients (pixel 1-based of the flipped RSS -> wavelength) of the valid fibers, with the global offset"""
+    out = {}
+    for fibsol in wlcalib.contents:
+        if not fibsol.valid:
+            continue
+        coeff = numpy.array(fibsol.solution.coeff, dtype=float)
+        coeff[0] -= wlcalib.global_offset(fibsol.fibid)
+        out[fibsol.fibid] = coeff
+    return out
+
+
+def zero_order_mask(shape, header, ncols, traces, bands, solutions, scale=1.5):
+    """Mask of the zero order of the VPH in a wavelength calibrated RSS
+
+    For each band and fiber, the columns of the detector within `scale`
+    times the FWHM of the centre of the band at the row of the fiber (the
+    window that remove_zero_order interpolates) are converted to wavelength
+    with the solution of the fiber; the RSS is flipped before the
+    calibration, so column x is pixel ncols - x of the solution. The pixels
+    of the RSS that overlap that range get the bit of the band:
+    ZERO_ORDER_INTERPOLATED if its amplitude reaches
+    ZERO_ORDER_INTERPOLATE_LEVEL, ZERO_ORDER_WEAK otherwise.
+
+    Parameters
+    ----------
+    shape : tuple
+        Shape of the calibrated RSS (fibers, pixels)
+    header : astropy.io.fits.Header
+        Header with the linear wavelength WCS of the RSS (CRVAL1, CDELT1, CRPIX1)
+    ncols : int
+        Number of columns of the detector
+    traces : list of (int, callable)
+        Fiber id and position (row) of each trace as a function of the column
+    bands : list of dict
+        Bands found by find_zero_order
+    solutions : dict
+        Fiber id -> polynomial coefficients, 1-based pixel of the flipped RSS -> wavelength
+
+    Returns
+    -------
+    numpy.ndarray
+        uint8 array of `shape`
+    """
+    from numpy.polynomial.polynomial import polyval
+
+    mask = numpy.zeros(shape, dtype="uint8")
+    npix = shape[1]
+    crval = header.get("CRVAL1", 0.0)
+    cdelt = header.get("CDELT1", 1.0)
+    crpix = header.get("CRPIX1", 1.0)
+    wl = crval + cdelt * (numpy.arange(npix) + 1 - crpix)
+    half_pix = 0.5 * abs(cdelt)
+    for band in bands:
+        bit = ZERO_ORDER_INTERPOLATED if band["amplitude"] >= ZERO_ORDER_INTERPOLATE_LEVEL else ZERO_ORDER_WEAK
+        half = scale * band["fwhm"]
+        col0 = band["center"](numpy.mean(band["rows"]))
+        for fibid, pos in traces:
+            coeff = solutions.get(fibid)
+            if coeff is None or fibid > shape[0]:
+                continue
+            col = band["center"](pos(col0))
+            a = max(int(numpy.floor(col - half)), 0)
+            b = min(int(numpy.ceil(col + half)), ncols - 1)
+            # borders of the window in 1-based pixels of the flipped RSS
+            w1, w2 = sorted(polyval(numpy.array([ncols - b - 0.5, ncols - a + 0.5]), coeff))
+            inside = (wl + half_pix > w1) & (wl - half_pix < w2)
+            mask[fibid - 1, inside] |= bit
+    return mask
+
+
 def flag_fibers(flat, coverage, faint, good, col1, col2, skip=None, max_dev=0.3, min_frac=0.02, nneigh=5, width=51):
     """Quality flags of the fibers in a fiber flat
 
@@ -454,6 +534,14 @@ class FiberFlatRecipe(MegaraBaseRecipe):
     version (using a Savitzky-Golay filter) of the average of the valid fibers.
     Finally, all the pixels with information are fiiled with ones. This RSS
     image is returned in the field `master_fiberflat` of the recipe result.
+
+    The zero order of the VPH, diffuse light at a fixed range of columns, is
+    found in the 2D image. The bands above 2 % of the level of the fibers are
+    interpolated in each fiber before the wavelength calibration. The
+    extension ZOMASK of `master_fiberflat` marks, for each fiber, the pixels
+    of the zero order: bit 1, interpolated in the flat; bit 2, weak (1-2 %),
+    not interpolated. The fiber flat correction adds this mask to the images
+    it corrects, because their zero order is not corrected.
 
     """
 
@@ -672,19 +760,23 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         img = splitter2(img)
         rss_base = splitter2.out  # Copy before el calibration
         zero_order = []
+        traces = []
         if rinput.remove_zero_order:
             traces = _trace_polynomials(rinput.master_apertures)
-            zero_order = find_zero_order(flat2d[0].data, traces)
+            zero_order = find_zero_order(flat2d[0].data, traces, threshold=ZERO_ORDER_MASK_LEVEL)
             for band in zero_order:
                 cols = band["center"](numpy.array(band["rows"]))
                 self.logger.info(
-                    "zero order of the VPH at columns %.0f-%.0f, FWHM %.1f px, %.1f %% of the fibers between them",
+                    "zero order of the VPH at columns %.0f-%.0f, FWHM %.1f px, %.1f %% of the fibers between them, %s",
                     cols.min(),
                     cols.max(),
                     band["fwhm"],
                     100 * band["amplitude"],
+                    "interpolated" if band["amplitude"] >= ZERO_ORDER_INTERPOLATE_LEVEL else "only in the mask",
                 )
-            remove_zero_order(img[0].data, traces, zero_order)
+            strong = [band for band in zero_order if band["amplitude"] >= ZERO_ORDER_INTERPOLATE_LEVEL]
+            remove_zero_order(img[0].data, traces, strong)
+        ncols = img[0].data.shape[1]
         self.logger.debug("Flip RSS left-rigtht, before WL calibration")
         img = flipcor.run(img)
         # Calibrate in WL
@@ -705,10 +797,16 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         rss_wl2[0].header = self.set_product_headers(rss_wl2[0].header)
         for band in zero_order:
             cols = band["center"](numpy.array(band["rows"]))
+            what = "interpolated" if band["amplitude"] >= ZERO_ORDER_INTERPOLATE_LEVEL else "weak, not interpolated,"
             rss_wl2[0].header["history"] = (
-                f"Zero order of the VPH interpolated at columns {cols.min():.0f}-{cols.max():.0f} "
+                f"Zero order of the VPH {what} at columns {cols.min():.0f}-{cols.max():.0f} "
                 f"(FWHM {band['fwhm']:.1f} px)"
             )
+        mask = numpy.zeros(rss_wl2[0].data.shape, dtype="uint8")
+        if zero_order:
+            solutions = _wavelength_solutions(rinput.master_wlcalib)
+            mask = zero_order_mask(mask.shape, rss_wl[0].header, ncols, traces, zero_order, solutions)
+        rss_wl2.append(self.zero_order_mask_hdu(mask))
         result = self.create_result(master_fiberflat=rss_wl2, reduced_image=flat2d, reduced_rss=rss_base)
         return result
 
@@ -717,3 +815,12 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         hdr = self.set_base_headers(hdr)
         hdr["NUMTYPE"] = ("MasterFiberFlat", "Product type")
         return hdr
+
+    @staticmethod
+    def zero_order_mask_hdu(mask):
+        """Extension with the mask of the zero order of the VPH"""
+        hdu = fits.ImageHDU(mask, name=ZERO_ORDER_MASK_EXTNAME)
+        hdu.header["BIT1"] = ("ZEROINT", "Zero order of the VPH, interpolated in the fiber flat")
+        hdu.header["BIT2"] = ("ZEROWEAK", "Zero order of the VPH, weak, not interpolated")
+        hdu.header["COMMENT"] = "Pixels of each fiber where the zero order of the VPH adds light"
+        return hdu

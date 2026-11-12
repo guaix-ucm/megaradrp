@@ -20,6 +20,7 @@ from megaradrp.recipes.calibration.flat import (
     flag_fibers,
     interpolate_windows,
     remove_zero_order,
+    zero_order_mask,
 )
 from megaradrp.testing.create_image import create_rss
 
@@ -166,6 +167,10 @@ def test_fiber_flat_recipe(monkeypatch, transmission):
     master = result.master_fiberflat.open()
     assert master[0].header["NUMTYPE"] == "MasterFiberFlat"
     assert master[0].data.shape == (623, NWL)
+    # the zero order mask is always there, empty without zero order
+    assert master["ZOMASK"].data.dtype == numpy.uint8
+    assert master["ZOMASK"].data.shape == (623, NWL)
+    assert not master["ZOMASK"].data.any()
 
 
 def test_obtain_fiber_flat_intermediate(transmission, tmp_path, monkeypatch):
@@ -458,3 +463,26 @@ def test_trace_polynomials_modelmap():
     traces = _trace_polynomials(modelmap)
     assert [fibid for fibid, _ in traces] == [3]
     assert numpy.isclose(traces[0][1](1000.0), 220.0)
+
+
+def test_zero_order_mask():
+    """The window of each fiber, converted to wavelength in the flipped RSS, with the bit of each band"""
+    ncols, npix = 800, 1000
+    header = fits.Header({"CRVAL1": 7000.0, "CDELT1": 0.4, "CRPIX1": 1.0})
+    traces = [(k + 1, numpy.polynomial.Polynomial([15.0 + 7 * k])) for k in range(10)]
+    # wavelength of the 1-based pixel p of the flipped RSS
+    solutions = {fibid: numpy.array([7000.0 - 0.4, 0.4]) for fibid, _ in traces}
+    strong = {"center": numpy.polynomial.Polynomial([400.0]), "fwhm": 10.0, "amplitude": 0.05, "rows": (15.0, 78.0)}
+    weak = {"center": numpy.polynomial.Polynomial([200.0]), "fwhm": 10.0, "amplitude": 0.015, "rows": (15.0, 78.0)}
+    mask = zero_order_mask((623, npix), header, ncols, traces, [strong, weak], solutions)
+    assert mask.dtype == numpy.uint8
+    wl = 7000.0 + 0.4 * numpy.arange(npix)
+    # columns 385-415 of the detector are pixels 385.5-415.5 of the flipped RSS (1-based borders)
+    w1, w2 = 7000.0 + 0.4 * (ncols - 415 - 0.5 - 1), 7000.0 + 0.4 * (ncols - 385 + 0.5 - 1)
+    expected = (wl + 0.2 > w1) & (wl - 0.2 < w2)
+    assert numpy.array_equal(mask[0] & 1 > 0, expected)
+    # the weak band, columns 185-215, has the bit 2
+    w1, w2 = 7000.0 + 0.4 * (ncols - 215 - 0.5 - 1), 7000.0 + 0.4 * (ncols - 185 + 0.5 - 1)
+    assert numpy.array_equal(mask[0] & 2 > 0, (wl + 0.2 > w1) & (wl - 0.2 < w2))
+    # fibers without trace or solution are not masked
+    assert not mask[10:].any()

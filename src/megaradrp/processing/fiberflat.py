@@ -21,6 +21,9 @@ from numina.frame.utils import copy_img
 
 _logger = logging.getLogger(__name__)
 
+# name of the extension with the mask of the zero order of the VPH, written by the fiber flat recipe
+ZERO_ORDER_MASK_EXTNAME = "ZOMASK"
+
 
 class CommonFlatCorrector(Corrector):
     """A Node that corrects from fiber flat."""
@@ -64,6 +67,8 @@ class FiberFlatCorrector(CommonFlatCorrector):
     """A Node that corrects from fiber flat.
 
     The fibers invalid in the fiber flat are marked invalid in the corrected image.
+    The mask of the zero order of the VPH of the fiber flat (extension ZOMASK) is
+    added to the corrected image, or combined with OR with the one it already has.
     """
 
     def __init__(self, fiberflat, datamodel=None, dtype="float32"):
@@ -78,6 +83,9 @@ class FiberFlatCorrector(CommonFlatCorrector):
                 for key, value in hdr.items()
                 if key.startswith("FIB") and key.endswith("_V") and value is False
             )
+        self.zero_order_mask = None
+        if isinstance(fiberflat, fits.HDUList) and ZERO_ORDER_MASK_EXTNAME in fiberflat:
+            self.zero_order_mask = fiberflat[ZERO_ORDER_MASK_EXTNAME].copy()
 
     def run(self, img):
         img = super(FiberFlatCorrector, self).run(img)
@@ -85,6 +93,18 @@ class FiberFlatCorrector(CommonFlatCorrector):
             hdr = img["FIBERS"].header
             for fibid in self.invalid_fibers:
                 hdr[f"FIB{fibid:03d}_V"] = (False, "Fiber is invalid")
+        if self.zero_order_mask is not None:
+            mask = self.zero_order_mask.data
+            if mask.shape != img["primary"].data.shape:
+                _logger.warning(
+                    "zero order mask of the fiber flat %s does not match the image %s",
+                    mask.shape,
+                    img["primary"].data.shape,
+                )
+            elif ZERO_ORDER_MASK_EXTNAME in img:
+                img[ZERO_ORDER_MASK_EXTNAME].data = img[ZERO_ORDER_MASK_EXTNAME].data | mask
+            else:
+                img.append(self.zero_order_mask.copy())
         return img
 
     def header_update(self, hdr, imgid):
