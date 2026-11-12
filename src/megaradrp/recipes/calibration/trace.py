@@ -400,7 +400,10 @@ class TraceMapRecipe(MegaraBaseRecipe):
                     xfit_all = mm[:, 0]
                     yfit_all = mm[:, 1]
                     zfit_all = mm[:, 2]
-                    iok = numpy.argwhere((xfit_all >= (xmin_fit - 1)) & (xfit_all <= (xmax_fit - 1)))
+                    # the tracer of numina < 0.42 can return points with NaN position
+                    iok = numpy.argwhere(
+                        (xfit_all >= (xmin_fit - 1)) & (xfit_all <= (xmax_fit - 1)) & numpy.isfinite(yfit_all)
+                    )
                     iok = iok.flatten()
                     xfit = xfit_all[iok]
                     yfit = yfit_all[iok]

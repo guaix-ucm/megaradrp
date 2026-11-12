@@ -9,6 +9,8 @@
 
 """Products of the Megara Pipeline"""
 
+import math
+
 import numpy.polynomial.polynomial as nppol
 
 from megaradrp.datatype import MegaraDataType
@@ -31,7 +33,8 @@ class GeometricTrace(GeometricAperture):
     - "not_completed": the trace is truncated and could not be completed
     - "crossing": the trace crosses the trace of a neighbouring fiber
 
-    A trace without polynomial, or with a flag in INVALID_TRACE_FLAGS, is not valid.
+    A trace without polynomial, with coefficients that are not finite, or with a flag
+    in INVALID_TRACE_FLAGS, is not valid.
     """
 
     def __init__(self, fibid, boxid, start, stop, fitparms=None, flags=None):
@@ -47,7 +50,7 @@ class GeometricTrace(GeometricAperture):
         return self.is_valid()
 
     def is_valid(self):
-        if not self.fitparms:
+        if not self.fitparms or not all(math.isfinite(c) for c in self.fitparms):
             return False
         return INVALID_TRACE_FLAGS.isdisjoint(self.flags)
 

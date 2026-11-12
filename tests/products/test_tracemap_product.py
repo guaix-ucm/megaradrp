@@ -176,3 +176,12 @@ def test_setstate_geotrace_without_flags():
     new.__setstate__({"fibid": 1, "boxid": 0, "start": 6, "stop": 4090, "fitparms": [1.0]})
     assert new.flags == []
     assert new.valid
+
+
+def test_geotrace_non_finite_is_not_valid():
+    """A trace with coefficients that are not finite is not valid, also when loaded"""
+    mm = tm.GeometricTrace(fibid=10, boxid=1, start=6, stop=4090, fitparms=[float("nan")] * 6)
+    assert not mm.valid
+    new = tm.GeometricTrace.__new__(tm.GeometricTrace)
+    new.__setstate__({"fibid": 1, "boxid": 0, "start": 6, "stop": 4090, "fitparms": [100.0, float("inf")]})
+    assert not new.valid

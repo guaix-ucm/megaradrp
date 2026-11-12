@@ -157,3 +157,30 @@ def test_flag_traces_without_completion():
     flag_traces(traces, {f: 1000.0 for f in range(1, 21)}, (6, 4090), completed=False)
     assert traces[9].flags == ["truncated"]
     assert traces[9].valid
+
+
+def test_search_traces_skips_non_finite_points(monkeypatch):
+    """A point of the tracer with NaN position does not make the polynomial NaN"""
+    import astropy.io.fits as fits
+
+    import megaradrp.recipes.calibration.trace as trace_mod
+
+    real_trace = trace_mod.trace_func
+
+    def trace_with_nan(*args, **kwargs):
+        # numina < 0.42 can end a trace with a point with NaN position
+        mm = real_trace(*args, **kwargs)
+        return numpy.vstack([mm, [mm[-1, 0] + 2, numpy.nan, numpy.nan]])
+
+    monkeypatch.setattr(trace_mod, "trace_func", trace_with_nan)
+    image = _column_image(FIBERS_A + FIBERS_B, ncols=400)
+    reduced = fits.HDUList([fits.PrimaryHDU(image)])
+    recipe = trace_mod.TraceMapRecipe()
+    contents, error_fitting, missing = recipe.search_traces(
+        reduced, BOXES, BORDERS, cstart=200, poldeg=3, xmax_fit=400, complete=False
+    )
+    assert error_fitting == [] and missing == []
+    assert len(contents) == 20
+    for trace, pos in zip(contents, FIBERS_A + FIBERS_B):
+        assert trace.valid
+        assert trace.polynomial(200) == pytest.approx(pos, abs=0.1)
