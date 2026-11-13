@@ -8,9 +8,6 @@ import yaml
 
 import megaradrp.tools.heal_traces as heal
 
-# heal_traces does not close the file of the traces (#362)
-pytestmark = pytest.mark.filterwarnings("ignore::pytest.PytestUnraisableExceptionWarning")
-
 INSCONF = "ca3558e3-e50d-4bbc-86bd-da50a0998a48"
 
 # the traces are horizontal, in row 10 + 3 * fibid, 0-based
@@ -102,7 +99,6 @@ def test_heal_global_offset_both(files):
         run_heal(files, extra=["--global_offset", "2.0"])
 
 
-@pytest.mark.xfail(reason="the global offset of the file is applied twice", strict=True)
 def test_heal_global_offset_file(files):
     """The global offset of the file is applied only once"""
     path, image, traces = files
@@ -289,7 +285,6 @@ def test_heal_fit_through_user_points_refit(files, capsys):
     assert "refitting...OK!" in capsys.readouterr().out
 
 
-@pytest.mark.xfail(reason="refit_trace fits the peak in a window centered in the previous row", strict=True)
 def test_refit_trace(tmp_path):
     """The peak of a ridge in an integer row is found"""
     data = numpy.zeros((200, 400))
@@ -300,9 +295,6 @@ def test_refit_trace(tmp_path):
     assert numpy.allclose(coeff, [100.0, 0.0], atol=0.01)
 
 
-@pytest.mark.xfail(
-    reason="refit_trace fits the peaks of the 0-based column j in x = j + 1 (and the window)", strict=True
-)
 def test_refit_trace_inclined(tmp_path):
     """The refitted trace is in the same coordinates than the traces, x is 0-based"""
     yy = numpy.arange(200)[:, numpy.newaxis]
@@ -315,6 +307,44 @@ def test_refit_trace_inclined(tmp_path):
         hdul.writeto(tmp_path / "refit.fits")
     coeff = heal.refit_trace(tmp_path / "refit.fits", [20.0, 0.4], 10, 390, 1)
     assert numpy.allclose(coeff, [20.0, 0.4], atol=0.05)
+
+
+@pytest.mark.parametrize("sigma", [1.2, 2.0])
+@pytest.mark.parametrize("row", [100.0, 100.3, 100.5, 100.8])
+@pytest.mark.parametrize("dy", [-3, 0, 2])
+def test_refit_trace_subpixel(tmp_path, sigma, row, dy):
+    """The peak of a gaussian ridge is found without bias, also if the initial trace is displaced"""
+    yy = numpy.arange(200)[:, numpy.newaxis]
+    data = 1000 * numpy.exp(-0.5 * ((yy - row) / sigma) ** 2) * numpy.ones((1, 400))
+    with fits.HDUList([fits.PrimaryHDU(data)]) as hdul:
+        hdul.writeto(tmp_path / "refit.fits")
+    coeff = heal.refit_trace(tmp_path / "refit.fits", [row + dy, 0.0], 10, 390, 1)
+    assert numpy.allclose(coeff, [row, 0.0], atol=0.05)
+
+
+def test_refit_trace_no_peaks(tmp_path):
+    """Without a local maximum inside the window, the trace cannot be refitted"""
+    with fits.HDUList([fits.PrimaryHDU(numpy.zeros((200, 400)))]) as hdul:
+        hdul.writeto(tmp_path / "refit.fits")
+    with pytest.raises(ValueError, match="Insufficient number of peaks"):
+        heal.refit_trace(tmp_path / "refit.fits", [100.0, 0.0], 10, 390, 1)
+
+
+@pytest.mark.parametrize("xmin, xmax, x0", [(5, 15, 5), (0, 0, 0)])
+def test_plot_trace_image_coordinates(xmin, xmax, x0):
+    """The traces (0-based) are plotted in image coordinates, with origin (1,1)"""
+    from matplotlib.figure import Figure
+
+    ax = Figure().subplots()
+    ax.set_ylim(0, 3000)
+    heal.plot_trace(ax, [10.0, 0.5], xmin, xmax, True, "label", colour="blue")
+    xp, yp = ax.get_lines()[0].get_data()
+    assert xp[0] == x0 + 1
+    assert yp[0] == 10.0 + 0.5 * x0 + 1
+    text = ax.texts[0]
+    xmid = (xp[0] + xp[-1]) / 2
+    assert text.get_position()[0] == xmid
+    assert text.get_position()[1] == pytest.approx(10.0 + 0.5 * (xmid - 1) + 1, abs=0.5)
 
 
 def test_heal_extrapolation_through_user_points(files):
@@ -429,6 +459,14 @@ def test_heal_renumber_up(files):
         # fibers 1-21 are in box 8b, 22-42 in box 7b
         ({"fibid_ini": 20, "fibid_end": 23, "fibid_shift": 1}, "different fiber boxes"),
         ({"fibid_ini": 23, "fibid_end": 25, "fibid_shift": 2}, "must be -1 or 1"),
+        # the target fiber is outside the box or the valid range
+        ({"fibid_ini": 22, "fibid_end": 25, "fibid_shift": -1}, "fibid=21 is not in the same fiber box"),
+        ({"fibid_ini": 18, "fibid_end": 21, "fibid_shift": 1}, "fibid=22 is not in the same fiber box"),
+        ({"fibid_ini": 1, "fibid_end": 3, "fibid_shift": -1}, "fibid=0 outside valid range"),
+        ({"fibid_ini": 620, "fibid_end": 623, "fibid_shift": 1}, "fibid=624 outside valid range"),
+        # fibid_ini or fibid_end outside the valid range
+        ({"fibid_ini": 0, "fibid_end": 3, "fibid_shift": 1}, "fibid number outside valid range"),
+        ({"fibid_ini": 620, "fibid_end": 624, "fibid_shift": -1}, "fibid number outside valid range"),
     ],
 )
 def test_heal_renumber_errors(files, operation, message):
@@ -437,7 +475,6 @@ def test_heal_renumber_errors(files, operation, message):
         run_heal(files, [operation])
 
 
-@pytest.mark.xfail(reason="the box is compared with label[4:], that depends on the digits of fibid", strict=True)
 def test_heal_renumber_digits(files):
     """Fibers 5 to 15 are in the same box"""
     operation = dict(description="renumber_fibids_within_box", fibid_ini=5, fibid_end=15, fibid_shift=1)

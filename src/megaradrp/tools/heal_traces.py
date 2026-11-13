@@ -60,25 +60,25 @@ def assign_boxes_to_fibers(pseudo_slit_config, insmode):
 
 
 def plot_trace(ax, coeff, xmin, xmax, fibids, fiblabel, colour):
+    # the traces use 0-based (array) coordinates, whereas the image is
+    # displayed in image coordinates, with origin (1,1)
     if xmin == xmax == 0:
         num = 4096
-        xp = np.linspace(start=1, stop=4096, num=num)
+        xp = np.linspace(start=0, stop=4095, num=num)
     else:
         num = int(float(xmax - xmin + 1) + 0.5)
         xp = np.linspace(start=xmin, stop=xmax, num=num)
     ypol = Polynomial(coeff)
     yp = ypol(xp)
-    ax.plot(xp, yp + 1, color=colour, linestyle="dotted")
+    ax.plot(xp + 1, yp + 1, color=colour, linestyle="dotted")
     if fibids:
-        if xmin == xmax == 0:
-            xmidpoint = 2048
-        else:
-            xmidpoint = (xmin + xmax) / 2
+        xmidpoint = (xp[0] + xp[-1]) / 2 + 1
+        ymidpoint = yp[int(num / 2)] + 1
         ymin, ymax = ax.get_ylim()
-        if ymin < yp[int(num / 2)] < ymax:
+        if ymin < ymidpoint < ymax:
             ax.text(
                 xmidpoint,
-                yp[int(num / 2)],
+                ymidpoint,
                 fiblabel,
                 fontsize=6,
                 bbox=dict(
@@ -94,33 +94,73 @@ def plot_trace(ax, coeff, xmin, xmax, fibids, fiblabel, colour):
 
 
 def refit_trace(filename, coeff, xmin, xmax, poldeg, ysemiwindow=4):
+    """Refit a trace to the peaks of the spectrum in the image
+
+    Parameters
+    ----------
+    filename : str or path-like
+        FITS image containing the spectra (primary HDU).
+    coeff : array-like
+        Coefficients of the initial polynomial of the trace, in 0-based
+        (array) coordinates: row as a function of column.
+    xmin, xmax : int
+        First and last column (0-based, both included) to refit.
+    poldeg : int
+        Degree of the refitted polynomial.
+    ysemiwindow : int, optional
+        Semi-width (pixels) of the window, centered in the row predicted
+        by the initial trace, where the peak is searched in each column.
+
+    Returns
+    -------
+    coef : numpy.ndarray
+        Coefficients of the refitted polynomial, in 0-based coordinates.
+
+    Raises
+    ------
+    ValueError
+        If the number of columns with a valid peak is insufficient to
+        fit the polynomial.
+
+    Notes
+    -----
+    In each column, the brightest pixel of the window is located and the
+    peak is refined with a parabola through that pixel and its two
+    neighbours. Columns in which the brightest pixel lies on the border
+    of the window (no local maximum inside it) are skipped. The
+    polynomial is fitted to the peaks with 3-sigma rejection.
+
+    """
     with fits.open(filename) as hdul:
         data = hdul[0].data
     naxis2, naxis1 = data.shape
     ypol = Polynomial(coeff)
     xfit = []
     yfit = []
-    xdum = np.arange(2 * ysemiwindow + 1)
-    # fit peak at each column
-    for j in range(int(xmin) - 1, int(xmax)):
+    # find the peak at each column; xmin, xmax, the polynomial and the fitted
+    # points use 0-based (array) coordinates, as the traces in the JSON file
+    for j in range(int(xmin), int(xmax) + 1):
         ypredicted = int(ypol(j) + 0.5)
-        imin = ypredicted - ysemiwindow - 1
-        imax = ypredicted + ysemiwindow - 1
+        # window centered in the predicted row
+        imin = ypredicted - ysemiwindow
+        imax = ypredicted + ysemiwindow
         if imin >= 0 and imax < naxis2:
-            poly2 = Polynomial.fit(xdum, data[imin : (imax + 1), j], 2)
-            poly2 = Polynomial.cast(poly2)
-            coeff2 = poly2.coef
-            if len(coeff2) == 3:
-                if coeff2[2] != 0:
-                    refined_peak = -coeff2[1] / (2 * coeff2[2]) + imin
+            ipeak = imin + int(np.argmax(data[imin : (imax + 1), j]))
+            if imin < ipeak < imax:
+                # parabola through the maximum and its neighbours; since
+                # ipeak is the maximum, denom <= 0 and |offset| <= 0.5
+                ya, yb, yc = data[(ipeak - 1) : (ipeak + 2), j].astype(float)
+                denom = ya - 2 * yb + yc
+                if denom < 0:
+                    refined_peak = ipeak + 0.5 * (ya - yc) / denom
                 else:
-                    refined_peak = ypredicted
-            else:
-                refined_peak = ypredicted
-            xfit.append(j + 1)
-            yfit.append(refined_peak)
+                    refined_peak = float(ipeak)
+                xfit.append(j)
+                yfit.append(refined_peak)
     xfit = np.array(xfit)
     yfit = np.array(yfit)
+    if len(xfit) <= poldeg:
+        raise ValueError("Insufficient number of peaks to refit the trace")
     newpoly, residum, rejectdum = polfit_residuals_with_sigma_rejection(xfit, yfit, poldeg, times_sigma_reject=3.0)
     return newpoly.coef
 
@@ -173,7 +213,8 @@ def main(args=None):
     parser.add_argument("--z1z2", help="tuple z1,z2, minmax or None (use zscale)")
     parser.add_argument("--bbox", help="bounding box tuple: nc1,nc2,ns1,ns2")
     parser.add_argument("--keystitle", help="tuple of FITS keywords.format: " + "key1,key2,...keyn.'format'")
-    parser.add_argument("--geometry", help="tuple x,y,dx,dy", default="0,0,640,480")
+    parser.add_argument("--geometry", help="tuple x,y,dx,dy", default="1024,648,0,0")
+    parser.add_argument("--cmap", help="colormap name", default="hot")
     parser.add_argument("--pdffile", help="ouput PDF file name", type=str)
     parser.add_argument("--echo", help="Display full command line", action="store_true")
 
@@ -207,13 +248,15 @@ def main(args=None):
         args_bbox=args.bbox,
         args_keystitle=args.keystitle,
         args_geometry=args.geometry,
+        args_cmap=args.cmap,
         pdf=pdf,
         show=False,
         fig=fig,
     )
 
     # read and display traces from JSON file
-    bigdict = json.loads(open(args.traces_file).read())
+    with open(args.traces_file) as fstream:
+        bigdict = json.load(fstream)
 
     # Load metadata from the traces
     meta_info = bigdict["meta_info"]
@@ -268,6 +311,9 @@ def main(args=None):
             plot_trace(ax, coeff, start, stop, args.fibids, fiblabel, colour="blue")
         else:
             print("Warning ---> Missing fiber:", fibid_with_box[fibid - 1])
+    # the global offset is already included in the coefficients of the
+    # traces; reset it to avoid applying it twice during the extraction
+    bigdict["global_offset"] = [0.0]
 
     # if present, read healing JSON file
     if args.healing is not None:
@@ -506,13 +552,29 @@ def main(args=None):
                     fibid_end = operation["fibid_end"]
                     if fibid_ini > fibid_end:
                         raise ValueError(f"{fibid_ini=} > {fibid_end=}")
-                    box_ini = fibid_with_box[fibid_ini - 1][4:]
-                    box_end = fibid_with_box[fibid_end - 1][4:]
+                    if fibid_ini < 1 or fibid_end > total_fibers:
+                        raise ValueError("fibid number outside valid range")
+                    # the label is f"{fibid}  [{box}]": take the last field,
+                    # independent of the number of digits of fibid
+                    box_ini = fibid_with_box[fibid_ini - 1].split()[-1]
+                    box_end = fibid_with_box[fibid_end - 1].split()[-1]
                     if box_ini != box_end:
                         print(f"ERROR: box_ini={box_ini}, box_end={box_end}")
                         raise ValueError("fibid_ini and fibid_end correspond to different fiber boxes")
                     fibid_shift = operation["fibid_shift"]
                     if fibid_shift in [-1, 1]:
+                        # the trace at one end of the range is moved to a
+                        # fiber outside the range, that must be in the same box
+                        if fibid_shift == -1:
+                            fibid_target = fibid_ini - 1
+                        else:
+                            fibid_target = fibid_end + 1
+                        if fibid_target < 1 or fibid_target > total_fibers:
+                            raise ValueError(f"target fibid={fibid_target} outside valid range")
+                        box_target = fibid_with_box[fibid_target - 1].split()[-1]
+                        if box_target != box_ini:
+                            print(f"ERROR: box_ini={box_ini}, box_target={box_target}")
+                            raise ValueError(f"target fibid={fibid_target} is not in the same fiber box")
                         if fibid_shift == -1:
                             i_start = fibid_ini
                             i_stop = fibid_end + 1

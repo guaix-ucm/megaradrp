@@ -111,7 +111,8 @@ def main(args=None):
     parser.add_argument("--z1z2", help="tuple z1,z2, minmax or None (use zscale)")
     parser.add_argument("--bbox", help="bounding box tuple: nc1,nc2,ns1,ns2")
     parser.add_argument("--keystitle", help="tuple of FITS keywords.format: " + "key1,key2,...keyn.'format'")
-    parser.add_argument("--geometry", help="tuple x,y,dx,dy", default="640,480,0,0")
+    parser.add_argument("--geometry", help="tuple x,y,dx,dy", default="1024,648,0,0")
+    parser.add_argument("--cmap", help="colormap name", default="hot")
     parser.add_argument("--pdffile", help="ouput PDF file name")
     parser.add_argument("--echo", help="Display full command line", action="store_true")
 
@@ -148,6 +149,7 @@ def main(args=None):
         args_bbox=args.bbox,
         args_keystitle=args.keystitle,
         args_geometry=args.geometry,
+        args_cmap=args.cmap,
         pdf=pdf,
         show=False,
         fig=fig,
