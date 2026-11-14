@@ -71,6 +71,15 @@ class ModelMapRecipe(MegaraBaseRecipe):
     the number of cores minus 2 if the number of cores is greater or equal to 4,
     one process otherwise.
 
+    Each fiber is fitted with its neighbours. By default (`fit_background`)
+    a constant background is fitted in each local fit, the width of the
+    profiles is kept within `width_limits`, and before a last fit the width
+    of each fiber is replaced by the running median of `smooth_widths` fibers
+    at each side: where the profiles overlap, neighbouring fibers otherwise
+    trade light and their widths alternate. Setting `fit_background` to
+    false, `width_limits` to [] and `smooth_widths` to 0 gives the previous
+    fit.
+
     After the columns are fitted, the profiles (central position and sigma)
     are interpolated to all columns using splines. The coefficientes of the
     splines are stored in the final `master_traces` object.
@@ -94,6 +103,13 @@ class ModelMapRecipe(MegaraBaseRecipe):
     master_traces = reqs.MasterTraceMapRequirement()
     processes = Parameter(0, "Number of processes used for fitting")
     debug_plot = Parameter(0, "Save intermediate tracing plots")
+    fit_background = Parameter(True, "Fit a constant background in each local fit of the profiles")
+    width_limits = Parameter(
+        [0.8, 3.5], "Absolute limits of the width (stddev) of the profiles; [] to bound it around its current value"
+    )
+    smooth_widths = Parameter(
+        2, "Half size, in fibers, of the running median of the widths before the last fit; 0 not to smooth"
+    )
     # Results
     reduced_image = Result(ProcessedImage)
     reduced_rss = Result(ProcessedRSS)
@@ -179,7 +195,13 @@ class ModelMapRecipe(MegaraBaseRecipe):
         model_obj = model_class(**model_kwargs)
 
         # Perform fitting with multiprocessing
-        results_get = fit_model(model_obj, data, tracemap, cols, processes=processes)
+        fit_kwargs = {
+            "fit_background": rinput.fit_background,
+            "width_limits": tuple(rinput.width_limits) if rinput.width_limits else None,
+            "smooth_widths": rinput.smooth_widths,
+        }
+        self.logger.info("fit options: %s", fit_kwargs)
+        results_get = fit_model(model_obj, data, tracemap, cols, processes=processes, fit_kwargs=fit_kwargs)
 
         self.logger.info("perform model fitting end")
 
@@ -305,7 +327,7 @@ def column_to_fit(data, calc_col, average=0):
         return data[:, calc_col]
 
 
-def calc_parallel(model_desc, column, calc_col, tracemap, nloop=10):
+def calc_parallel(model_desc, column, calc_col, tracemap, nloop=10, fit_kwargs=None):
     """Fit the profiles of the fibers in column, the column calc_col of the image"""
     valid_fibers = [f.fibid for f in tracemap.contents if f.valid]
     centers = np.array([f.polynomial(calc_col) for f in tracemap.contents if f.valid])
@@ -315,7 +337,9 @@ def calc_parallel(model_desc, column, calc_col, tracemap, nloop=10):
     scale = column.max()
     column_norm = column / scale
 
-    final = calc1d_model(model_desc, column_norm, centers, valid_fibers, calc_col, lateral=2, nloop=nloop)
+    final = calc1d_model(
+        model_desc, column_norm, centers, valid_fibers, calc_col, lateral=2, nloop=nloop, **(fit_kwargs or {})
+    )
 
     # TODO: we may need a function to perform scaling in general
     for idx, params in final.items():
@@ -324,7 +348,7 @@ def calc_parallel(model_desc, column, calc_col, tracemap, nloop=10):
     return calc_col, final
 
 
-def fit_model(model_desc, data, tracemap, cols, processes=20, nloop=3, average=2):
+def fit_model(model_desc, data, tracemap, cols, processes=20, nloop=3, average=2, fit_kwargs=None):
     """Fit the profiles of the fibers in the columns cols of data, in a pool of processes
 
     The processes log through the loggers of this process.
@@ -332,7 +356,9 @@ def fit_model(model_desc, data, tracemap, cols, processes=20, nloop=3, average=2
     with logging_pool(processes) as pool:
         # each process receives only its column, not the whole image
         results = [
-            pool.apply_async(calc_parallel, args=(model_desc, column_to_fit(data, col, average), col, tracemap, nloop))
+            pool.apply_async(
+                calc_parallel, args=(model_desc, column_to_fit(data, col, average), col, tracemap, nloop, fit_kwargs)
+            )
             for col in cols
         ]
         results_get = [p.get() for p in results]
