@@ -117,7 +117,7 @@ def test_process_flat2d(monkeypatch):
 
 
 def test_fiber_flat_recipe(monkeypatch, transmission):
-    """The recipe returns the 2D image and the RSS before the flip and the wavelength calibration"""
+    """The recipe returns the 2D image and the RSS flipped and calibrated in wavelength, as saved"""
     calls = []
     img2d = fits.HDUList([fits.PrimaryHDU(numpy.full((10, 10), 7.0))])
     raw_rss = flat_rss(transmission, numpy.ones(NWL))
@@ -162,8 +162,10 @@ def test_fiber_flat_recipe(monkeypatch, transmission):
     # the wavelength calibration receives the flipped RSS
     assert calls == [("extractor", "traces", [0.5]), ("calibrator", "wlcalib"), ("calibrate", 3.0)]
     assert numpy.allclose(result.reduced_image.open()[0].data, 7.0)
-    # the reduced RSS is the copy before the flip
-    assert numpy.allclose(result.reduced_rss.open()[0].data[:, :10], 3.0)
+    # the reduced RSS is the one saved, flipped and calibrated in wavelength
+    reduced_rss = result.reduced_rss.open()[0].data
+    assert numpy.allclose(reduced_rss[:, -10:], 3.0)
+    assert numpy.allclose(reduced_rss[:, :-10], transmission[:, numpy.newaxis])
     master = result.master_fiberflat.open()
     assert master[0].header["NUMTYPE"] == "MasterFiberFlat"
     assert master[0].data.shape == (623, NWL)

@@ -750,15 +750,12 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         self.save_intermediate_img(img, "reduced_image.fits")
         splitter1 = Splitter()
         calibrator_aper = ApertureExtractor(rinput.master_apertures, self.datamodel, offset=rinput.extraction_offset)
-        splitter2 = Splitter()
         calibrator_wl = WavelengthCalibrator(rinput.master_wlcalib, self.datamodel)
         flipcor = FlipLR()
 
         img = splitter1(img)
         flat2d = splitter1.out  # Copy before extraction
         img = calibrator_aper(img)
-        img = splitter2(img)
-        rss_base = splitter2.out  # Copy before el calibration
         zero_order = []
         traces = []
         if rinput.remove_zero_order:
@@ -807,7 +804,7 @@ class FiberFlatRecipe(MegaraBaseRecipe):
             solutions = _wavelength_solutions(rinput.master_wlcalib)
             mask = zero_order_mask(mask.shape, rss_wl[0].header, ncols, traces, zero_order, solutions)
         rss_wl2.append(self.zero_order_mask_hdu(mask))
-        result = self.create_result(master_fiberflat=rss_wl2, reduced_image=flat2d, reduced_rss=rss_base)
+        result = self.create_result(master_fiberflat=rss_wl2, reduced_image=flat2d, reduced_rss=rss_wl)
         return result
 
     def set_product_headers(self, hdr):
