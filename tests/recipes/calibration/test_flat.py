@@ -169,10 +169,61 @@ def test_fiber_flat_recipe(monkeypatch, transmission):
     master = result.master_fiberflat.open()
     assert master[0].header["NUMTYPE"] == "MasterFiberFlat"
     assert master[0].data.shape == (623, NWL)
-    # the zero order mask is always there, empty without zero order
-    assert master["ZOMASK"].data.dtype == numpy.uint8
-    assert master["ZOMASK"].data.shape == (623, NWL)
-    assert not master["ZOMASK"].data.any()
+    # the mask is always there, empty without zero order and absorption windows
+    assert master["FLATMASK"].data.dtype == numpy.uint8
+    assert master["FLATMASK"].data.shape == (623, NWL)
+    assert not master["FLATMASK"].data.any()
+    assert "ZOMASK" not in master
+
+
+def test_fiber_flat_recipe_absorption_mask(monkeypatch, transmission):
+    """The absorption windows interpolated in the flat are marked in FLATMASK, where the fibers have coverage"""
+    raw_rss = flat_rss(transmission, numpy.ones(NWL))
+    raw_rss[0].header["VPH"] = "LR-Z"
+    raw_rss[0].header["CRVAL1"] = 7000.0
+    raw_rss[0].header["CDELT1"] = 0.4
+    raw_rss[0].header["CRPIX1"] = 1.0
+    # fiber 5 without coverage in the window
+    raw_rss["WLMAP"].data[4, 900:1100] = 0
+
+    class Extractor(Node):
+        def __init__(self, tracemap, datamodel, offset):
+            super().__init__()
+
+        def run(self, img):
+            return raw_rss
+
+    class Calibrator(Node):
+        def __init__(self, wlcalib, datamodel):
+            super().__init__()
+
+        def run(self, img):
+            return img
+
+    recipe = FiberFlatRecipe()
+    windows = []
+    monkeypatch.setattr(recipe, "process_flat2d", lambda rinput: fits.HDUList([fits.PrimaryHDU(numpy.ones((10, 10)))]))
+    monkeypatch.setattr(recipe, "save_intermediate_img", lambda img, name: None)
+    monkeypatch.setattr(flat, "ApertureExtractor", Extractor)
+    monkeypatch.setattr(flat, "WavelengthCalibrator", Calibrator)
+    monkeypatch.setattr(flat, "absorption_windows", lambda resolution: windows.append(resolution) or [(7400.0, 7410.0)])
+    rinput = types.SimpleNamespace(
+        master_apertures="traces",
+        master_wlcalib="wlcalib",
+        extraction_offset=[0.0],
+        smoothing_window=31,
+        smoothing_knot_step=150.0,
+        skip_absorption_windows=True,
+        remove_zero_order=False,
+    )
+    mask = recipe.run(rinput).master_fiberflat.open()["FLATMASK"].data
+    assert windows == ["LR"]
+    # 7400-7410 A are the pixels 1000-1025 (0-based)
+    inside = numpy.zeros(NWL, dtype=bool)
+    inside[1000:1026] = True
+    assert numpy.all(mask[:, ~inside] == 0)
+    assert numpy.all(mask[[0, 3, 5, 622]][:, inside] == 4)
+    assert not mask[4].any()
 
 
 def test_obtain_fiber_flat_intermediate(transmission, tmp_path, monkeypatch):

@@ -9,6 +9,8 @@
 
 """Fiber flat calibration Recipe for Megara"""
 
+import warnings
+
 import numpy
 from astropy.io import fits
 from numina.core import Result, Parameter
@@ -27,7 +29,14 @@ from numina.array import combine
 # Create RSS
 from megaradrp.processing.aperture import ApertureExtractor
 from megaradrp.processing.wavecalibration import WavelengthCalibrator
-from megaradrp.processing.fiberflat import ZERO_ORDER_MASK_EXTNAME, FlipLR, Splitter
+from megaradrp.processing.fiberflat import (
+    FLAT_MASK_ABSORPTION,
+    FLAT_MASK_ZERO_ORDER,
+    FLAT_MASK_ZERO_ORDER_WEAK,
+    FlipLR,
+    Splitter,
+    flat_mask_hdu,
+)
 
 
 def absorption_windows(resolution):
@@ -80,6 +89,20 @@ def _extend_linear(spline, x, first, last):
     return out
 
 
+def window_pixels(header, npix, windows):
+    """Boolean array of the pixels of a wavelength calibrated RSS inside the wavelength `windows`
+
+    The wavelength of each pixel is computed with the linear WCS of `header`
+    (CRVAL1, CDELT1, CRPIX1).
+    """
+    xx = numpy.arange(npix)
+    wl = header.get("CRVAL1", 0.0) + header.get("CDELT1", 1.0) * (xx + 1 - header.get("CRPIX1", 1.0))
+    inside = numpy.zeros(npix, dtype=bool)
+    for w1, w2 in windows or []:
+        inside |= (wl >= w1) & (wl <= w2)
+    return inside
+
+
 def interpolate_windows(data, skip, coverage, nside=5):
     """Replace the pixels in `skip` with a straight line between both sides, in each row
 
@@ -105,7 +128,9 @@ def interpolate_windows(data, skip, coverage, nside=5):
         sides = []
         for idx in (left, right):
             if idx.size:
-                with numpy.errstate(all="ignore"):
+                # a row without coverage at this side gives NaN, replaced below by the other side
+                with numpy.errstate(all="ignore"), warnings.catch_warnings():
+                    warnings.simplefilter("ignore", RuntimeWarning)
                     sides.append(numpy.nanmedian(numpy.where(coverage[:, idx], data[:, idx], numpy.nan), axis=1))
             else:
                 sides.append(None)
@@ -132,9 +157,9 @@ def interpolate_windows(data, skip, coverage, nside=5):
 INVALID_FLAT_FLAGS = frozenset(["broken"])
 
 
-# Zero order of the VPH: bits of the mask (extension ZERO_ORDER_MASK_EXTNAME of the master fiber flat)
-ZERO_ORDER_INTERPOLATED = 1
-ZERO_ORDER_WEAK = 2
+# Zero order of the VPH: bits of the mask of the master fiber flat (extension FLATMASK)
+ZERO_ORDER_INTERPOLATED = FLAT_MASK_ZERO_ORDER
+ZERO_ORDER_WEAK = FLAT_MASK_ZERO_ORDER_WEAK
 # bands above this level (fraction of the level of the fibers) are interpolated in the flat,
 # weaker bands down to ZERO_ORDER_MASK_LEVEL are only marked in the mask
 ZERO_ORDER_INTERPOLATE_LEVEL = 0.02
@@ -537,11 +562,21 @@ class FiberFlatRecipe(MegaraBaseRecipe):
 
     The zero order of the VPH, diffuse light at a fixed range of columns, is
     found in the 2D image. The bands above 2 % of the level of the fibers are
-    interpolated in each fiber before the wavelength calibration. The
-    extension ZOMASK of `master_fiberflat` marks, for each fiber, the pixels
-    of the zero order: bit 1, interpolated in the flat; bit 2, weak (1-2 %),
-    not interpolated. The fiber flat correction adds this mask to the images
-    it corrects, because their zero order is not corrected.
+    interpolated in each fiber before the wavelength calibration.
+
+    The extension FLATMASK of `master_fiberflat` marks, for each fiber, the
+    pixels where the fiber flat is interpolated or does not correct the light:
+
+    - value 1 (BIT1): zero order of the VPH, interpolated in the flat;
+    - value 2 (BIT2): zero order of the VPH, weak (1-2 %), not interpolated;
+    - value 4 (BIT3): absorption windows of the calibration light
+      (`skip_absorption_windows`), interpolated in the flat.
+
+    The fiber flat correction adds this mask to the images it corrects: their
+    zero order is not corrected, and in the absorption windows they are
+    corrected with the interpolated flat. The fiber flats made before have the
+    mask of the zero order only, in the extension ZOMASK, that the fiber flat
+    correction also reads.
 
     """
 
@@ -658,12 +693,8 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         collapse_smooth[mask_noinfo] = 1.0
 
         xx = numpy.arange(collapse.shape[0])
-        skip = numpy.zeros(collapse.shape[0], dtype=bool)
+        skip = window_pixels(rss_wl[0].header, collapse.shape[0], skip_windows)
         if skip_windows:
-            hdr = rss_wl[0].header
-            wl = hdr.get("CRVAL1", 0.0) + hdr.get("CDELT1", 1.0) * (xx + 1 - hdr.get("CRPIX1", 1.0))
-            for w1, w2 in skip_windows:
-                skip |= (wl >= w1) & (wl <= w2)
             self.logger.info("skipping %d pixels in %d absorption windows", skip.sum(), len(skip_windows))
         collapse_smooth_s = numpy.ones_like(collapse)
         if knot_step > 0:
@@ -803,7 +834,10 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         if zero_order:
             solutions = _wavelength_solutions(rinput.master_wlcalib)
             mask = zero_order_mask(mask.shape, rss_wl[0].header, ncols, traces, zero_order, solutions)
-        rss_wl2.append(self.zero_order_mask_hdu(mask))
+        # the absorption windows, interpolated in the fiber flat of each fiber where it has coverage
+        skip = window_pixels(rss_wl[0].header, mask.shape[1], skip_windows)
+        mask[(rss_wl["WLMAP"].data > 0) & skip[numpy.newaxis, :]] |= FLAT_MASK_ABSORPTION
+        rss_wl2.append(flat_mask_hdu(mask))
         result = self.create_result(master_fiberflat=rss_wl2, reduced_image=flat2d, reduced_rss=rss_wl)
         return result
 
@@ -812,12 +846,3 @@ class FiberFlatRecipe(MegaraBaseRecipe):
         hdr = self.set_base_headers(hdr)
         hdr["NUMTYPE"] = ("MasterFiberFlat", "Product type")
         return hdr
-
-    @staticmethod
-    def zero_order_mask_hdu(mask):
-        """Extension with the mask of the zero order of the VPH"""
-        hdu = fits.ImageHDU(mask, name=ZERO_ORDER_MASK_EXTNAME)
-        hdu.header["BIT1"] = ("ZEROINT", "Zero order of the VPH, interpolated in the fiber flat")
-        hdu.header["BIT2"] = ("ZEROWEAK", "Zero order of the VPH, weak, not interpolated")
-        hdu.header["COMMENT"] = "Pixels of each fiber where the zero order of the VPH adds light"
-        return hdu

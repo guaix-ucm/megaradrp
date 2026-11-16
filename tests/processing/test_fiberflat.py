@@ -68,49 +68,64 @@ def test_fiber_flat_corrector_invalid_fibers():
     assert "FIB004_V" not in img["FIBERS"].header
 
 
-def zero_order_flat():
+def zero_order_flat(name="FLATMASK"):
     flat = fits.HDUList([fits.PrimaryHDU(make_flat())])
     flat[0].header["UUID"] = "11111111-2222-3333-4444-555555555555"
     mask = numpy.zeros((5, 8), dtype="uint8")
     mask[:, 2:4] = 1
     mask[4, 6] = 2
-    flat.append(fits.ImageHDU(mask, name="ZOMASK"))
+    mask[1, 7] = 4
+    flat.append(fits.ImageHDU(mask, name=name))
     return flat, mask
 
 
-def test_fiber_flat_corrector_zero_order_mask():
-    """The mask of the zero order of the fiber flat is added to the corrected image"""
-    flat, mask = zero_order_flat()
+@pytest.mark.parametrize("name", ["FLATMASK", "ZOMASK"])
+def test_fiber_flat_corrector_flat_mask(name):
+    """The mask of the fiber flat is added to the corrected image as FLATMASK, also from the older ZOMASK"""
+    flat, mask = zero_order_flat(name)
     img = FiberFlatCorrector(flat, datamodel=MegaraDataModel())(make_img())
-    assert "ZOMASK" in img
-    assert numpy.array_equal(img["ZOMASK"].data, mask)
-    # the mask of the flat is not shared with the image
-    img["ZOMASK"].data[:] = 0
-    assert flat["ZOMASK"].data.any()
+    assert "FLATMASK" in img
+    assert "ZOMASK" not in img
+    assert numpy.array_equal(img["FLATMASK"].data, mask)
+    # the mask of the flat is not shared with the image, and keeps its name
+    img["FLATMASK"].data[:] = 0
+    assert flat[name].data.any()
 
 
-def test_fiber_flat_corrector_zero_order_mask_combined():
-    """An image that already has a zero order mask keeps it, combined with OR"""
+@pytest.mark.parametrize("name", ["FLATMASK", "ZOMASK"])
+def test_fiber_flat_corrector_flat_mask_combined(name):
+    """An image that already has a mask of a fiber flat keeps it as FLATMASK, combined with OR"""
     flat, mask = zero_order_flat()
     img = make_img()
     prev = numpy.zeros((5, 8), dtype="uint8")
     prev[0, 0] = 4
     prev[0, 2] = 2
-    img.append(fits.ImageHDU(prev, name="ZOMASK"))
+    img.append(fits.ImageHDU(prev, name=name))
     img = FiberFlatCorrector(flat, datamodel=MegaraDataModel())(img)
-    assert len([hdu for hdu in img if hdu.name == "ZOMASK"]) == 1
-    assert img["ZOMASK"].data[0, 0] == 4
-    assert img["ZOMASK"].data[0, 2] == 3
-    assert img["ZOMASK"].data[4, 6] == 2
+    assert [hdu.name for hdu in img if hdu.name in ("FLATMASK", "ZOMASK")] == ["FLATMASK"]
+    assert img["FLATMASK"].data[0, 0] == 4
+    assert img["FLATMASK"].data[0, 2] == 3
+    assert img["FLATMASK"].data[4, 6] == 2
+    assert img["FLATMASK"].data[1, 7] == 4
 
 
-def test_fiber_flat_corrector_zero_order_mask_shape(caplog):
+def test_fiber_flat_corrector_flat_mask_shape(caplog):
     """A mask of another shape is not added"""
     flat, _ = zero_order_flat()
-    flat["ZOMASK"].data = numpy.zeros((5, 9), dtype="uint8")
+    flat["FLATMASK"].data = numpy.zeros((5, 9), dtype="uint8")
     img = FiberFlatCorrector(flat, datamodel=MegaraDataModel())(make_img())
-    assert "ZOMASK" not in img
+    assert "FLATMASK" not in img
     assert "does not match" in caplog.text
+
+
+def test_flat_mask_hdu():
+    """The extension of the mask describes its bits"""
+    from megaradrp.processing.fiberflat import FLAT_MASK_ABSORPTION, flat_mask_hdu
+
+    hdu = flat_mask_hdu(numpy.zeros((2, 3), dtype="uint8"))
+    assert hdu.name == "FLATMASK"
+    assert [hdu.header[f"BIT{n}"] for n in (1, 2, 3)] == ["ZEROINT", "ZEROWEAK", "ABSINT"]
+    assert FLAT_MASK_ABSORPTION == 2 ** (3 - 1)
 
 
 def test_splitter():
