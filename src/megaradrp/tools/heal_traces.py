@@ -19,7 +19,7 @@ import yaml
 
 import numina.instrument.assembly as asb
 from numina.array.display.polfit_residuals import polfit_residuals, polfit_residuals_with_sigma_rejection
-from numina.array.display.matplotlib_qt import parse_geometry
+from numina.array.display.matplotlib_utils import parse_geometry
 from numina.array.display.ximshow import ximshow_file
 from numina.array.display.pause_debugplot import pause_debugplot
 
