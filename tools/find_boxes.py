@@ -83,14 +83,18 @@ def find_boxes(fitsfile, channels, nsearch, debugplot):
     ycut = np.median(image2d[:, nc1 : (nc2 + 1)], axis=1)
     xcut = np.arange(naxis2) + 1
     if debugplot in (21, 22):
-        ximplotxy(
+        fig, ax = ximplotxy(
             xcut,
             ycut,
-            debugplot=debugplot,
+            show=False,
             xlabel="y axis",
             ylabel="number of counts",
             title=fitsfile + " [" + str(nc1) + "," + str(nc2) + "]",
         )
+        fig.tight_layout()
+        plt.show(block=False)
+        plt.pause(0.001)
+        pause_debugplot(debugplot)
 
     # initial manipulation
     ycut -= np.median(ycut)  # subtract median
@@ -99,7 +103,11 @@ def find_boxes(fitsfile, channels, nsearch, debugplot):
     mask = cosinebell(n=ycut.size, fraction=0.10)
     ycut *= mask
     if debugplot in (21, 22):
-        ximplotxy(xcut, ycut, debugplot=debugplot, xlabel="y axis", ylabel="reversed scale")
+        fig, ax = ximplotxy(xcut, ycut, show=False, xlabel="y axis", ylabel="reversed scale")
+        plt.tight_layout()
+        plt.show(block=False)
+        plt.pause(0.001)
+        pause_debugplot(debugplot)
 
     # Fourier filtering
     xf = np.fft.fftfreq(xcut.size)
@@ -109,11 +117,12 @@ def find_boxes(fitsfile, channels, nsearch, debugplot):
     yf_trimmed[cut] = 0.0
     ycut_filt = np.fft.ifft(yf_trimmed).real
     if debugplot in (21, 22):
-        ax = ximplotxy(
+        fig, ax = ximplotxy(
             xf, yf.real, plottype="semilogy", xlim=(0.0, 0.51), show=False, label="original", linestyle="dotted"
         )
         ax.plot(xf, yf_trimmed.real, label="trimmed")
         ax.legend()
+        plt.tight_layout()
         plt.show(block=False)
         plt.pause(0.001)
         pause_debugplot(debugplot)
@@ -135,10 +144,10 @@ def find_boxes(fitsfile, channels, nsearch, debugplot):
             print(str(dum) + ",")
 
     if debugplot % 10 != 0:
-        ax = ximplotxy(xcut, ycut_filt, show=False, xlabel="y axis", ylabel="reversed scale")
+        fig, ax = ximplotxy(xcut, ycut_filt, show=False, xlabel="y axis", ylabel="reversed scale")
         ax.vlines(previous_boxes, ymin=1.1, ymax=1.3, colors="magenta")
         ax.vlines(refined_boxes, ymin=1.4, ymax=1.6, colors="green")
-
+        plt.tight_layout()
         plt.show(block=False)
         plt.pause(0.001)
         pause_debugplot(debugplot)

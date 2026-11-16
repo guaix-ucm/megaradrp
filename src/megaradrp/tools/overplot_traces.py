@@ -13,6 +13,7 @@ from numpy.polynomial import Polynomial
 import sys
 import numina.instrument.assembly as asb
 import numina.types.structured as structured
+from numina.array.display.matplotlib_qt import parse_geometry
 from numina.array.display.ximshow import ximshow_file
 from numina.array.display.pause_debugplot import pause_debugplot
 
@@ -111,7 +112,9 @@ def main(args=None):
     parser.add_argument("--z1z2", help="tuple z1,z2, minmax or None (use zscale)")
     parser.add_argument("--bbox", help="bounding box tuple: nc1,nc2,ns1,ns2")
     parser.add_argument("--keystitle", help="tuple of FITS keywords.format: " + "key1,key2,...keyn.'format'")
-    parser.add_argument("--geometry", help="tuple x,y,dx,dy", default="1024,648,0,0")
+    parser.add_argument(
+        "--geometry", help="tuple x,y,dx,dy (default 0,0,1024,648)", default="0,0,1024,648", type=parse_geometry
+    )
     parser.add_argument("--cmap", help="colormap name", default="hot")
     parser.add_argument("--pdffile", help="ouput PDF file name")
     parser.add_argument("--echo", help="Display full command line", action="store_true")

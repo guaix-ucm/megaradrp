@@ -445,6 +445,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     marker=".",
                     color="C0",
                     show=False,
+                    tight_layout=True,
                     fig=fig,
                 )
                 pdf.savefig(fig)
@@ -460,6 +461,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     marker=".",
                     color="C0",
                     show=False,
+                    tight_layout=True,
                     fig=fig,
                 )
                 pdf.savefig(fig)
@@ -611,6 +613,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         marker=".",
                         color="C0",
                         show=False,
+                        tight_layout=True,
                         fig=fig,
                     )
                     pdf.savefig(fig)
@@ -626,6 +629,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         marker=".",
                         color="C0",
                         show=False,
+                        tight_layout=True,
                         fig=fig,
                     )
                     pdf.savefig(fig)
