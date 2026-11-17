@@ -130,10 +130,14 @@ files by these metadata, whatever their directory. The catalogs and the
 extinction table are valid for all the profiles, the bad pixel masks
 depend on the profile. This dataset requires numina 0.42 or later.
 
-To change from the dataset 2026.2 to 2026.11, install the new dataset in
-a new directory (``--base-path``): the files of the previous dataset would
-remain in the old directory. :program:`numina run` warns when the dataset
-installed in ``calibsdir`` is not the last one declared by megaradrp.
+The dataset 2026.11.17 corrects eight catalogs of lines of 2026.11, that
+had no line to refine the wavelength calibration.
+
+To change from a previous dataset (2026.2 or 2026.11) to 2026.11.17,
+install the new dataset in a new directory (``--base-path``): the files of
+the previous dataset would remain in the old directory.
+:program:`numina run` warns when the dataset installed in ``calibsdir`` is
+not the last one declared by megaradrp.
 
 The files of the dataset are selected before the files found by their
 path in the tree of directories. To use another catalog of lines, give
