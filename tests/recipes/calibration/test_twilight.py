@@ -148,3 +148,94 @@ def test_twilight_recipe_continuum(recipe, twilight_rss):
     good[4] = False
     expected = level / level[good].mean()
     assert numpy.allclose(result.master_twilightflat.open()[0].data, expected[:, numpy.newaxis])
+
+
+def test_select_normalize_region():
+    """The initial window, moved out of the zero order in the direction in which the signal grows"""
+    from megaradrp.recipes.calibration.twilight import select_normalize_region
+
+    npix = 1000
+    x = numpy.arange(npix)
+    # the signal grows to the right
+    data = numpy.tile(1.0 + x / npix, (10, 1))
+    coverage = numpy.ones(data.shape, dtype=bool)
+    zero = numpy.zeros(data.shape, dtype=bool)
+    good = numpy.ones(10, dtype=bool)
+    region = (400, 500)
+    # without zero order, the initial window
+    assert select_normalize_region(data, coverage, zero, good, region=region) == region
+    # zero order in one good fiber: the window moves to the right, just after it
+    zero[2, 450:470] = True
+    assert select_normalize_region(data, coverage, zero, good, region=region) == (470, 570)
+    # the signal grows to the left: the window moves to the left, just before it
+    assert select_normalize_region(data[:, ::-1], coverage, zero, good, region=region) == (350, 450)
+    # zero order in a bad fiber does not move the window
+    good[2] = False
+    assert select_normalize_region(data, coverage, zero, good, region=region) == region
+    good[2] = True
+    # no free window to the right: to the left
+    zero[2, 450:470] = False
+    zero[2, 450:] = True
+    assert select_normalize_region(data, coverage, zero, good, region=region) == (350, 450)
+    # a good fiber without coverage is like the zero order
+    zero[:] = False
+    coverage[3, 480:520] = False
+    assert select_normalize_region(data, coverage, zero, good, region=region) == (520, 620)
+    # no window at all
+    coverage[3] = False
+    assert select_normalize_region(data, coverage, zero, good, region=region) is None
+    assert select_normalize_region(data, coverage, zero, good, region=(0, 2000)) is None
+
+
+def test_masked_mean():
+    """The masked pixels are left out without bias from the shape of the spectrum"""
+    from megaradrp.recipes.calibration.twilight import masked_mean
+
+    spectrum = numpy.array([1.0, 2.0, 4.0, 2.0])
+    data = numpy.array([1.0, 2.0, 3.0])[:, numpy.newaxis] * spectrum
+    good = numpy.ones(3, dtype=bool)
+    usable = numpy.ones(data.shape, dtype=bool)
+    # without masked pixels, the mean of each fiber
+    assert numpy.allclose(masked_mean(data, usable, (0, 4), good), data.mean(axis=1))
+    # the brightest pixel of the second fiber masked, and extra light there
+    data[1, 2] += 10.0
+    usable[1, 2] = False
+    assert numpy.allclose(masked_mean(data, usable, (0, 4), good), [2.25, 4.5, 6.75])
+    # a fiber without usable pixels gets its mean
+    usable[2] = False
+    assert numpy.isclose(masked_mean(data, usable, (0, 4), good)[2], data[2].mean())
+
+
+def test_twilight_recipe_masked_automatic(recipe, twilight_rss):
+    """With the automatic region, the window leaves the zero order towards more signal; invalid fibers left out"""
+    from megaradrp.processing.fiberflat import flat_mask_hdu
+
+    level, rss = twilight_rss
+    x = numpy.arange(NWL)
+    shape = 1.0 + numpy.exp(-0.5 * ((x - 180) / 40.0) ** 2)
+    rss[0].data = level[:, numpy.newaxis] * shape
+    # zero order: extra light in some fibers, marked in the mask
+    mask = numpy.zeros(rss[0].data.shape, dtype="uint8")
+    rss[0].data[100:300, 170:190] += 40.0
+    mask[100:300, 170:190] = 1
+    rss.append(flat_mask_hdu(mask))
+    # a fiber invalid in the fiber flat, much brighter, is not used in the mean
+    fibers = fits.ImageHDU(name="FIBERS")
+    fibers.header["FIB010_V"] = False
+    rss.append(fibers)
+    rss[0].data[9] *= 3.0
+
+    inputs = make_input()
+    inputs.normalize_region = []
+    # the window starts at the centre of the spectrum of the test, with the zero order
+    recipe.default_normalize_region = (100, 200)
+    master = recipe.run(inputs).master_twilightflat.open()
+    good = numpy.ones(623, dtype=bool)
+    good[[4, 9]] = False
+    # the mean of each fiber in the window, without the zero order, is its level times the same factor
+    assert numpy.allclose(master[0].data[good], (level / level[good].mean())[good, numpy.newaxis])
+    assert "FLATMASK" not in master
+    history = str(master[0].header["HISTORY"])
+    start, end = (int(v) for v in history.split("columns ")[1].split()[0].split("-"))
+    # the signal grows to the right of the initial window, the window moves to just after the zero order
+    assert (start, end) == (190, 290)
