@@ -268,6 +268,10 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
 
         shape = rss_wl_data.shape
         coverage = reduced_rss["WLMAP"].data > 0 if "WLMAP" in reduced_rss else numpy.ones(shape, dtype=bool)
+        uncovered = numpy.flatnonzero(mask & ~coverage.any(axis=1))
+        if uncovered.size > 0:
+            self.logger.info("fibers without coverage, not used in the normalization: %s", (uncovered + 1).tolist())
+            mask[uncovered] = False
         flat_mask = find_flat_mask(reduced_rss)
         flat_mask_data = flat_mask.data if flat_mask is not None else numpy.zeros(shape, dtype="uint8")
         masked = flat_mask_data > 0
@@ -332,9 +336,25 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
         )
 
     def good_ids_mask(self, calibration):
+        """The fibers with a wavelength solution in `calibration`
 
+        The missing fibers, the fibers with errors in the fit and the fibers
+        without a solution in its contents are bad. A calibration done with
+        a ModelMap may not list its missing fibers.
+        """
         # Bad fibers, join in a new list, the calibration is not modified
         bad_fibers = list(calibration.missing_fibers) + list(calibration.error_fitting)
+        contents = getattr(calibration, "contents", None)
+        if contents is not None:
+            solved = {fibsol.fibid for fibsol in contents}
+            unlisted = [
+                fibid
+                for fibid in range(1, calibration.total_fibers + 1)
+                if fibid not in solved and fibid not in bad_fibers
+            ]
+            if unlisted:
+                self.logger.info("fibers without a wavelength solution, not listed as missing: %s", unlisted)
+            bad_fibers += unlisted
 
         bad_idxs = [fibid - 1 for fibid in bad_fibers]
 

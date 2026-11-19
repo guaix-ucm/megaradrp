@@ -42,6 +42,14 @@ def test_good_ids_mask():
     assert numpy.flatnonzero(~mask).tolist() == [4, 6, 7]
 
 
+def test_good_ids_mask_contents():
+    """A fiber without a solution is bad, even if the calibration does not list it as missing"""
+    calibration = make_wlcalib(missing=[5])
+    calibration.contents = [types.SimpleNamespace(fibid=fibid) for fibid in range(1, 623) if fibid != 5]
+    mask = TwilightFiberFlatRecipe().good_ids_mask(calibration)
+    assert numpy.flatnonzero(~mask).tolist() == [4, 622]
+
+
 def test_good_ids_mask_does_not_modify_the_calibration():
     """The calibration is not modified (#360)"""
     calibration = make_wlcalib(missing=[5], error=[7, 8])
@@ -239,3 +247,29 @@ def test_twilight_recipe_masked_automatic(recipe, twilight_rss):
     start, end = (int(v) for v in history.split("columns ")[1].split()[0].split("-"))
     # the signal grows to the right of the initial window, the window moves to just after the zero order
     assert (start, end) == (190, 290)
+
+
+def test_twilight_recipe_fiber_without_coverage(recipe, twilight_rss):
+    """A fiber without coverage, not listed in the calibration, does not block the region nor enter the mean"""
+    level, rss = twilight_rss
+    rss[0].data[622] = 0.0
+    wlmap = numpy.ones(rss[0].data.shape)
+    wlmap[622] = 0.0
+    rss.append(fits.ImageHDU(wlmap, name="WLMAP"))
+    # zero order in the initial window: the window has to move
+    from megaradrp.processing.fiberflat import flat_mask_hdu
+
+    mask = numpy.zeros(rss[0].data.shape, dtype="uint8")
+    mask[100:300, 150:160] = 1
+    rss.append(flat_mask_hdu(mask))
+
+    inputs = make_input()
+    inputs.normalize_region = []
+    recipe.default_normalize_region = (100, 200)
+    master = recipe.run(inputs).master_twilightflat.open()
+    good = numpy.ones(623, dtype=bool)
+    good[[4, 622]] = False
+    collapse = level + 2.0
+    assert numpy.allclose(master[0].data[good], (collapse / collapse[good].mean())[good, numpy.newaxis])
+    assert numpy.isclose(master[0].data[good, 0].mean(), 1.0)
+    assert "columns 160-260" in str(master[0].header["HISTORY"])
