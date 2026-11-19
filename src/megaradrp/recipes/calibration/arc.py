@@ -45,6 +45,22 @@ import megaradrp.requirements as reqs
 from megaradrp.instrument import vph_thr_arc
 
 
+def add_untraced_fibers(tracemap, wlcalib):
+    """List as missing in `wlcalib` the fibers without an entry in the contents of `tracemap`
+
+    A ModelMap has no entry for its missing fibers, a TraceMap has one,
+    marked invalid. Returns the number of fibers added.
+    """
+    traced = {trace.fibid for trace in tracemap.contents}
+    untraced = [
+        fibid
+        for fibid in range(1, tracemap.total_fibers + 1)
+        if fibid not in traced and fibid not in wlcalib.missing_fibers
+    ]
+    wlcalib.missing_fibers.extend(untraced)
+    return len(untraced)
+
+
 class ArcCalibrationRecipe(MegaraBaseRecipe):
     """Provides wavelength calibration information from arc images.
 
@@ -422,6 +438,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                 missing_fib += 1
                 initial_data_wlcalib.missing_fibers.append(fibid)
 
+        missing_fib += add_untraced_fibers(tracemap, initial_data_wlcalib)
         self.logger.info("Errors in fitting: %s", error_contador)
         self.logger.info("Missing fibers: %s", missing_fib)
 
@@ -585,6 +602,7 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                     missing_fib += 1
                     data_wlcalib.missing_fibers.append(fibid)
 
+            missing_fib += add_untraced_fibers(tracemap, data_wlcalib)
             self.logger.info("Errors in fitting: %s", error_contador)
             self.logger.info("Missing fibers: %s", missing_fib)
 

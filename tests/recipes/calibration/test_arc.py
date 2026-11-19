@@ -203,6 +203,28 @@ def test_calibrate_wl_refined(thar, recipe):
         assert fibsol.solution.npoints_eff > nflag1
 
 
+def test_calibrate_wl_untraced_fibers(thar, recipe):
+    """The fibers without an entry in the traces, as in a ModelMap, are missing (#402)"""
+    catalog, rss = thar
+    tracemap = make_tracemap()
+    tracemap.contents = [trace for trace in tracemap.contents if trace.fibid in VALID]
+    initial, refined, _ = recipe.calibrate_wl(rss, catalog, [3, 3], tracemap, [30])
+    for wlcalib in [initial, refined]:
+        assert [sol.fibid for sol in wlcalib.contents] == VALID
+        assert sorted(wlcalib.missing_fibers) == [fibid for fibid in range(1, 624) if fibid not in VALID]
+        assert wlcalib.error_fitting == []
+
+
+def test_add_untraced_fibers():
+    """Only the fibers without an entry and not already missing are added"""
+    tracemap = make_tracemap()
+    tracemap.contents = [trace for trace in tracemap.contents if trace.fibid != 623]
+    wlcalib = WavelengthCalibration(instrument="MEGARA")
+    wlcalib.missing_fibers = [1]
+    assert arcmod.add_untraced_fibers(tracemap, wlcalib) == 1
+    assert wlcalib.missing_fibers == [1, 623]
+
+
 @pytest.mark.parametrize(
     "ncols, poldeg, message",
     [
