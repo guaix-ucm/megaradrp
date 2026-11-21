@@ -5,7 +5,13 @@ import numpy
 import pytest
 from numpy.polynomial import Polynomial
 
-from megaradrp.processing.traceoffset import _base_sigma, _pixel_gaussian, measure_extraction_offset
+from megaradrp.processing.traceoffset import (
+    TraceOffset,
+    _base_sigma,
+    _pixel_gaussian,
+    combine_extraction_offsets,
+    measure_extraction_offset,
+)
 from megaradrp.products.tracemap import GeometricTrace, TraceMap
 from megaradrp.testing.create_traceoffset import SIGMA
 from megaradrp.testing.create_traceoffset import create_offset_image as make_image
@@ -94,3 +100,48 @@ def test_base_sigma():
     model = types.SimpleNamespace(model={"params": {"stddev": lambda x: 1.0 + x / 100.0}})
     trace = types.SimpleNamespace()
     assert numpy.allclose(_base_sigma([model, trace], [0.0, 100.0]), [1.5, 1.0])
+
+
+def fake_result(c0, c1=0.0, reliable=True):
+    return TraceOffset(
+        coef=[c0, c1],
+        error=[0.01, 0.0],
+        reliable=reliable,
+        alias_contrast=100.0,
+        alias_bootstrap=1.0 if reliable else 0.6,
+        nsignal=40,
+        sigma_scale=1.3,
+        reduced_chi2=1.0,
+        bands=[],
+        grid=numpy.zeros(1),
+        curve=numpy.zeros(1),
+        message="" if reliable else "only 2 fibers with signal",
+    )
+
+
+def test_combine_extraction_offsets(caplog):
+    """The mean of the reliable measurements; the others are reported and left out"""
+    tracemap = make_tracemap()
+    results = [fake_result(1.0, 1e-4), fake_result(1.2, 3e-4), fake_result(5.0, reliable=False)]
+    coef, history = combine_extraction_offsets(results, tracemap)
+    assert coef == pytest.approx([1.1, 2e-4])
+    assert len(history) == 4
+    assert "not reliable (only 2 fibers with signal)" in history[2]
+    assert history[3] == "Extraction offset measured: [1.1000, 0.0002]"
+    assert "reliable in 2 of 3 images" in caplog.text
+    assert "differ" not in caplog.text
+
+
+def test_combine_extraction_offsets_spread(caplog):
+    """Images with offsets more different than max_spread give a warning"""
+    coef, history = combine_extraction_offsets([fake_result(1.0), fake_result(1.5)], make_tracemap(), max_spread=0.3)
+    assert coef == pytest.approx([1.25, 0.0])
+    assert "differ by 0.50 pixels" in caplog.text
+    assert any("differ by 0.50 pixels" in line for line in history)
+
+
+def test_combine_extraction_offsets_none_reliable(caplog):
+    coef, history = combine_extraction_offsets([fake_result(3.0, reliable=False)], make_tracemap())
+    assert coef == [0.0]
+    assert history[-1] == "No reliable measurement of the extraction offset, using 0"
+    assert "no reliable measurement" in caplog.text

@@ -203,7 +203,7 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
     master_bpm = reqs.MasterBPMRequirement()
     master_slitflat = reqs.MasterSlitFlatRequirement()
     master_apertures = reqs.MasterAperturesRequirement(alias="master_traces")
-    extraction_offset = Parameter([0.0], "Offset traces for extraction", accept_scalar=True)
+    extraction_offset = reqs.ExtractionOffsetParameter()
     normalize_region = Parameter(
         [],
         "Columns used to normalize the flat-field; [] to start at 1900-2100 and avoid the zero order",
@@ -249,13 +249,16 @@ class TwilightFiberFlatRecipe(MegaraBaseRecipe):
         reduced_image = fits.HDUList([hdu.copy() for hdu in img])
         self.save_intermediate_img(reduced_image, "reduced_image.fits")
 
+        offset, history = self.resolve_extraction_offset(rinput, rinput.master_apertures)
         reduced_rss = self.run_reduction_1d(
             img,
             rinput.master_apertures,
             rinput.master_wlcalib,
             rinput.master_fiberflat,
-            offset=rinput.extraction_offset,
+            offset=offset,
         )
+        for line in history:
+            reduced_rss[0].header.add_history(line)
 
         self.save_intermediate_img(reduced_rss, "reduced_rss.fits")
         # Measure values in final

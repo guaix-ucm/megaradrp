@@ -9,7 +9,8 @@
 
 """Typical requirements of recipes"""
 
-from numina.core import Requirement
+from numina.core import Parameter, Requirement
+import numina.types.datatype as dt
 from numina.types.multitype import MultiType
 
 import megaradrp.ntypes
@@ -123,3 +124,49 @@ class CRMasksRequirement(Requirement):
         super(CRMasksRequirement, self).__init__(
             megaradrp.ntypes.CRMasks, "CR Pixel Masks", optional=optional, validation=False
         )
+
+
+# value of extraction_offset that asks to measure the offset in each image
+EXTRACTION_OFFSET_AUTO = "auto"
+
+
+class ExtractionOffsetType(dt.ListOfType):
+    """A list of numbers, the coefficients of the offset, or the word "auto" """
+
+    def __init__(self):
+        super().__init__(dt.PlainPythonType(ref=0.0), accept_scalar=True)
+
+    def convert(self, obj):
+        if isinstance(obj, str):
+            if obj.strip().lower() == EXTRACTION_OFFSET_AUTO:
+                return EXTRACTION_OFFSET_AUTO
+            raise ValueError(f"expected a list of numbers or '{EXTRACTION_OFFSET_AUTO}', got {obj!r}")
+        return super().convert(obj)
+
+    def validate(self, obj):
+        if obj == EXTRACTION_OFFSET_AUTO:
+            return True
+        return super().validate(obj)
+
+    def _datatype_load(self, objs):
+        # the values of the observation result and of the DAL are loaded with this method
+        if isinstance(objs, str):
+            return self.convert(objs)
+        return super()._datatype_load(objs)
+
+
+class ExtractionOffsetParameter(Parameter):
+    """Offset of the traces for the extraction
+
+    The coefficients of a polynomial in the position of the traces in the
+    reference column, added to the global offset of the traces, or "auto"
+    to measure it in each image (see megaradrp.processing.traceoffset).
+    """
+
+    def __init__(self):
+        super().__init__(
+            [0.0],
+            "Offset of the traces for the extraction: coefficients of a polynomial in y, or 'auto' to measure it",
+            accept_scalar=True,
+        )
+        self.type = ExtractionOffsetType()

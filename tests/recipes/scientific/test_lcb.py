@@ -160,6 +160,38 @@ def test_base_run(monkeypatch):
     assert reduced_rss is rss
 
 
+def test_base_run_auto_offset(monkeypatch):
+    """With extraction_offset "auto", the measured offset is used and recorded in the HISTORY"""
+    recipe = LCBImageRecipe()
+    offsets = []
+    img2d = fits.HDUList([fits.PrimaryHDU(numpy.ones((10, 10)))])
+    rss = fits.HDUList([fits.PrimaryHDU(numpy.ones((623, NWL)))])
+
+    def resolve(rinput, trace_repr, flow=None):
+        assert (rinput.extraction_offset, trace_repr, flow) == ("auto", "traces", "flow")
+        return [-2.1, 1e-4], ["Extraction offset measured: [-2.1000, 0.0001]"]
+
+    monkeypatch.setattr(recipe, "init_filters", lambda rinput, conf: "flow")
+    monkeypatch.setattr(base, "basic_processing_with_combination", lambda *args, **kwds: img2d)
+    monkeypatch.setattr(recipe, "resolve_extraction_offset", resolve)
+    monkeypatch.setattr(recipe, "run_reduction_1d", lambda *args, offset: offsets.append(offset) or rss)
+    monkeypatch.setattr(recipe, "save_intermediate_img", lambda img, name: None)
+
+    rinput = types.SimpleNamespace(
+        obresult=types.SimpleNamespace(configuration=None),
+        method="mean",
+        method_kwargs={},
+        master_apertures="traces",
+        master_wlcalib="wlcalib",
+        master_fiberflat="fiberflat",
+        master_twilight=None,
+        extraction_offset="auto",
+    )
+    _, reduced_rss = recipe.base_run(rinput)
+    assert offsets == [[-2.1, 1e-4]]
+    assert "Extraction offset measured: [-2.1000, 0.0001]" in str(reduced_rss[0].header["HISTORY"])
+
+
 @pytest.mark.parametrize("twilight", [False, True])
 def test_run_reduction_1d(monkeypatch, twilight):
     """The correctors of the 1D reduction, in order"""

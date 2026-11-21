@@ -441,3 +441,61 @@ def measure_extraction_offset(
         "" if result.reliable else ", not reliable: " + result.message,
     )
     return result
+
+
+def combine_extraction_offsets(results, trace_repr, max_spread=0.3, logger=None):
+    """Offset of several images of an observation, from the measurement in each one
+
+    The offset is the mean of the coefficients of the reliable measurements.
+    If the offsets of the reliable measurements in the middle of the slit
+    differ by more than `max_spread` pixels, there is a warning: the images
+    are combined before the extraction, so a single offset is applied to all
+    of them. Without reliable measurements the offset is 0, with a warning.
+
+    Parameters
+    ----------
+    results : list of TraceOffset
+        The measurement in each image
+    trace_repr : TraceMap or ModelMap
+        The traces of the calibration
+    max_spread : float
+        Maximum difference, in pixels, between the offsets of the images
+    logger : logging.Logger, optional
+
+    Returns
+    -------
+    coef : list of float
+        The coefficients of ``extraction_offset``
+    history : list of str
+        Lines for the HISTORY of the product
+    """
+    logger = logger or _logger
+    y_ref = numpy.array([trace.polynomial(trace_repr.ref_column) for trace in valid_traces(trace_repr)])
+    y_mid = 0.5 * (y_ref.min() + y_ref.max())
+    history = []
+    for idx, result in enumerate(results, start=1):
+        status = "reliable" if result.reliable else f"not reliable ({result.message})"
+        history.append(f"Extraction offset of image {idx}: [{result.coef[0]:.4f}, {result.coef[1]:.4g}], {status}")
+    reliable = [result for result in results if result.reliable]
+    if not reliable:
+        logger.warning("no reliable measurement of the extraction offset in %d images, using 0", len(results))
+        history.append("No reliable measurement of the extraction offset, using 0")
+        return [0.0], history
+    coef = numpy.mean([result.coef for result in reliable], axis=0).tolist()
+    middle = [result.coef[0] + result.coef[1] * y_mid for result in reliable]
+    spread = max(middle) - min(middle)
+    if spread > max_spread:
+        logger.warning(
+            "the extraction offsets of the images differ by %.2f pixels in the middle of the slit, "
+            "more than %.2f; their mean is applied to the combined image",
+            spread,
+            max_spread,
+        )
+        history.append(f"The extraction offsets of the images differ by {spread:.2f} pixels")
+    if len(reliable) < len(results):
+        logger.warning(
+            "the extraction offset is reliable in %d of %d images, using their mean", len(reliable), len(results)
+        )
+    logger.info("extraction offset [%.4f, %.4g] from %d images", coef[0], coef[1], len(reliable))
+    history.append(f"Extraction offset measured: [{coef[0]:.4f}, {coef[1]:.4g}]")
+    return coef, history

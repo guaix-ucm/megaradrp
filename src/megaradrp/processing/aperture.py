@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
+import copy
 import datetime
 import logging
 import sys
@@ -158,7 +159,12 @@ class ApertureExtractor(numina.processing.Corrector):
     def __init__(self, trace_repr, datamodel=None, dtype="float32", processes=0, offset=None):
 
         if offset:
+            # a copy, the calibration is not modified
+            trace_repr = copy.copy(trace_repr)
             trace_repr.global_offset = trace_repr.global_offset + nppol.Polynomial(offset)
+            # the extraction matrices of a ModelMap depend on the offset
+            if hasattr(trace_repr, "_wcols"):
+                trace_repr._wcols = None
 
         self.trace_repr = trace_repr
         self.processes = processes

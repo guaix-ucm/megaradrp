@@ -7,13 +7,17 @@
 # License-Filename: LICENSE.txt
 #
 
+from numina.array import combine
 from numina.core import BaseRecipe
 from numina.core.recipeinout import RecipeInput, TagsChecker
+from numina.processing.combine import basic_processing_with_combination_frames
 from numina.types.qc import QC
 from numina.core.requirements import ObservationResultRequirement
 
 import megaradrp.core.correctors as cor
 from megaradrp.datamodel import MegaraDataModel
+from megaradrp.processing.traceoffset import combine_extraction_offsets, measure_extraction_offset
+from megaradrp.requirements import EXTRACTION_OFFSET_AUTO
 
 
 class MegaraRecipeInput(RecipeInput):
@@ -45,6 +49,33 @@ class MegaraBaseRecipe(BaseRecipe):
         """Run Quality Control checks."""
         recipe_result.qc = QC.GOOD
         return recipe_result
+
+    def resolve_extraction_offset(self, rinput, trace_repr, flow=None):
+        """The extraction_offset of `rinput`; with "auto", measured in each frame
+
+        Each frame of the observation result is processed alone with `flow`,
+        the flows of ``init_filters`` (built if not given), and the offset of
+        the traces of `trace_repr` is measured in it. The offset applied is the mean of the
+        reliable measurements, 0 if there are none.
+
+        Returns
+        -------
+        coef : list of float
+            The coefficients of the offset
+        history : list of str
+            Lines for the HISTORY of the product, empty if the offset is given
+        """
+        offset = rinput.extraction_offset
+        if offset != EXTRACTION_OFFSET_AUTO:
+            return offset, []
+        if flow is None:
+            flow = self.init_filters(rinput, rinput.obresult.configuration)
+        results = []
+        for frame in rinput.obresult.frames:
+            img = basic_processing_with_combination_frames([frame], flow, method=combine.mean)
+            ron = img[0].header.get("RDNOISE1", 3.4)
+            results.append(measure_extraction_offset(img[0].data, trace_repr, ron=ron))
+        return combine_extraction_offsets(results, trace_repr, logger=self.logger)
 
     def types_getter(self):
         from megaradrp.ntypes import MasterBias, MasterDark, MasterBPM, MasterSlitFlat
