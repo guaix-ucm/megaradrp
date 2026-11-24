@@ -18,7 +18,6 @@ from scipy.interpolate import interp1d
 from numina.types.datatype import PlainPythonType
 from numina.types.datatype import ListOfType
 from numina.types.multitype import MultiType
-from numina.array.numsplines import AdaptiveLSQUnivariateSpline
 from numina.core import Result, Parameter
 from numina.core.requirements import Requirement
 from numina.core.validator import range_validator
@@ -31,6 +30,7 @@ from megaradrp.ntypes import ProcessedRSS, ProcessedFrame, ProcessedSpectrum
 from megaradrp.ntypes import ReferenceSpectrumTable, ReferenceExtinctionTable
 from megaradrp.ntypes import MasterSensitivity
 from megaradrp.processing.extractobj import extract_star, generate_sensitivity
+from megaradrp.processing.fluxcalib import sensitivity_skip_windows, smooth_sensitivity, windows_check
 from megaradrp.processing.extractobj import mix_values, compute_broadening
 from megaradrp.processing.centroid import calc_centroid_brightest
 from megaradrp.recipes.scientific.base import ImageRecipe
@@ -73,6 +73,17 @@ class MOSStandardRecipe(ImageRecipe):
     The flux of the star is computed by adding the 7 fibers corresponding to the bundle
     containing the star and returned as `star_spectrum`.
 
+    The raw sensitivity is the ratio between the spectrum of the star and the
+    reference spectrum, corrected from extinction, and is returned as
+    `sensitivity_raw`. The `master_sensitivity` is that ratio smoothed with a
+    spline fitted only in the region of valid flux (``PIXLIMF1``-``PIXLIMF2``),
+    and continued outside it with straight lines. The fit skips the telluric
+    bands and the strong lines of the standard stars of a default table
+    (`skip_sensitivity_windows`), and the windows in `extra_skip_windows`.
+    By default the spline has 5 fixed knots, equidistant in the region of
+    valid flux, so that the result is reproducible (`smoothing_knots`,
+    `smoothing_adaptive`).
+
     """
 
     position = Requirement(
@@ -95,8 +106,21 @@ class MOSStandardRecipe(ImageRecipe):
             PlainPythonType(ref=3, validator=range_validator(minval=3)), ListOfType(PlainPythonType(ref=0.0), nmin=3)
         ),
         description="List of nodes or number of nodes for sensitivity smoothing",
-        default=3,
+        default=5,
         optional=True,
+    )
+    smoothing_adaptive = Parameter(
+        False,
+        "Move the knots of the smoothing of the sensitivity to their best positions; if false (the default), "
+        "they are fixed, equidistant in the region of valid flux if smoothing_knots is a number",
+    )
+    skip_sensitivity_windows = Parameter(
+        True, "Skip in the smoothing of the sensitivity the telluric bands and the strong lines of the default table"
+    )
+    extra_skip_windows = Parameter(
+        [],
+        "Other windows [[wl1, wl2], ...] (Angstrom, air) skipped in the smoothing of the sensitivity",
+        validator=windows_check,
     )
 
     reduced_image = Result(ProcessedFrame)
@@ -210,10 +234,20 @@ class MOSStandardRecipe(ImageRecipe):
 
         sens = sens_raw.copy()
         self.set_product_headers(sens.header)
-        i_knots = rinput.smoothing_knots
-        self.logger.debug(f"using adaptive spline with t={i_knots} interior knots")
-        spl = AdaptiveLSQUnivariateSpline(x=wl_aa.value, y=sens_raw.data, t=i_knots)
-        sens.data = spl(wl_aa.value)
+        windows = sensitivity_skip_windows() if rinput.skip_sensitivity_windows else []
+        windows = windows + [tuple(w) for w in rinput.extra_skip_windows]
+        sens.data, knots = smooth_sensitivity(
+            wl_aa.value,
+            sens_raw.data,
+            sens_raw.header,
+            knots=rinput.smoothing_knots,
+            adaptive=rinput.smoothing_adaptive,
+            skip_windows=windows,
+        )
+        knots_text = ", ".join(f"{k:.1f}" for k in knots)
+        self.logger.info("sensitivity smoothed with the knots %s, skipping %d windows", knots_text, len(windows))
+        sens.header["history"] = f"Smoothed in PIXLIMF1-PIXLIMF2 with the knots {knots_text}"
+        sens.header["history"] = f"Skipped {len(windows)} windows of telluric bands and stellar lines"
 
         if self.intermediate_results:
             from matplotlib.figure import Figure

@@ -80,7 +80,10 @@ def make_input(**kwds):
         nrings=3,
         degrade_resolution_method="none",
         sigma_resolution=20.0,
-        smoothing_knots=3,
+        smoothing_knots=5,
+        smoothing_adaptive=False,
+        skip_sensitivity_windows=True,
+        extra_skip_windows=[],
     )
     values.update(kwds)
     return types.SimpleNamespace(**values)
@@ -121,9 +124,8 @@ def test_lcb_standard(recipe, lcb, method):
 
 
 @pytest.mark.slow
-@pytest.mark.xfail(reason="the spline is fitted also where there is no coverage, with values near 0", strict=True)
 def test_lcb_standard_smoothed_sensitivity(recipe):
-    """The smoothed sensitivity follows the sensitivity in the region of valid flux"""
+    """The smoothed sensitivity follows the sensitivity in the region of valid flux (#357)"""
     result = recipe.run(make_input())
     master = result.master_sensitivity.open()[0]
     region = flux_valid(master.header)
