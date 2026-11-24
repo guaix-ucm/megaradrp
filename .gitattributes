@@ -1,0 +1,12 @@
+# Files of the development, not part of the source archives (the
+# archive of each tag in Zenodo, and the sdist: setuptools-scm skips
+# the files with export-ignore)
+/.basedpyright export-ignore
+/.flake8 export-ignore
+/.git-blame-ignore-revs export-ignore
+/.gitattributes export-ignore
+/.github export-ignore
+/.gitignore export-ignore
+/.pre-commit-config.yaml export-ignore
+/.readthedocs.yaml export-ignore
+/.zenodo.json export-ignore

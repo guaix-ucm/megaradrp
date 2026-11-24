@@ -1,0 +1,39 @@
+{
+  "title": "megaradrp",
+  "upload_type": "software",
+  "description": "This is Megara DRP, the data reduction pipeline for MEGARA, the optical Integral-Field Unit and Multi-Object Spectrograph designed for the Gran Telescopio Canarias (GTC).",
+  "creators": [
+    {
+      "name": "Pascual, Sergio",
+      "affiliation": "Universidad Complutense de Madrid",
+      "orcid": "0000-0002-9351-6051"
+    },
+    {
+      "name": "Cardiel, Nicolás",
+      "affiliation": "Universidad Complutense de Madrid",
+      "orcid": "0000-0002-9334-2979"
+    },
+    {
+      "name": "Castillo-Morales, África",
+      "affiliation": "Universidad Complutense de Madrid",
+      "orcid": "0000-0003-4964-3245"
+    },
+    {
+      "name": "Gil de Paz, Armando",
+      "affiliation": "Universidad Complutense de Madrid",
+      "orcid": "0000-0001-6150-2854"
+    }
+  ],
+  "keywords": ["MEGARA", "GTC"],
+  "license": "gpl-3.0-or-later",
+  "access_right": "open",
+  "communities": [
+    {"identifier": "iparcos-ucm"},
+    {"identifier": "guaix-ucm"}
+  ],
+  "custom": {
+    "code:codeRepository": "https://github.com/guaix-ucm/megaradrp",
+    "code:programmingLanguage": [{"id": "python"}],
+    "code:developmentStatus": {"id": "active"}
+  }
+}
