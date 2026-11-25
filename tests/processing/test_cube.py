@@ -18,6 +18,7 @@ from megaradrp.processing.cube import (
     create_cube,
     create_cube_from_array,
     create_cube_from_rss,
+    flagged_cube,
     hexspline3_coefficients,
     main,
     merge_wcs,
@@ -275,6 +276,83 @@ def test_create_cube_from_rss_wcs(fiber_header, focal_plane, rotated, scale):
         x, y = r0l[:, fibids.index(fibid)]
         world = wcs_cube.all_pix2world(x / target_scale - j1min, y / target_scale - i1min, 0)
         assert np.allclose(world, expected, rtol=0, atol=1e-3 / 3600)
+
+
+@pytest.mark.parametrize("p", [1, pytest.param(2, marks=pytest.mark.slow), 3])
+def test_flagged_cube(focal_plane, p):
+    """The flags are resampled as the values, once for each set of flagged fibers"""
+    rng = np.random.default_rng(1)
+    patterns = rng.random((623, 3)) < 0.2
+    flags = patterns[:, [0, 1, 0, 2, 1, 0]]
+    result = flagged_cube(flags, focal_plane, p=p, target_scale_arcsec=0.7)
+    fraction = create_cube_from_array(
+        flags.astype(float), focal_plane, p=p, target_scale_arcsec=0.7, conserve_flux=False
+    )
+    assert result.dtype == bool
+    assert np.array_equal(result, fraction > 0.01)
+
+
+def test_flagged_cube_unconnected(focal_plane):
+    """The flags of the unconnected fibers are not used"""
+    unconnected = sorted(set(range(1, 624)) - {fiber.fibid for fiber in focal_plane.connected_fibers()})
+    flags = np.zeros((623, 2), dtype=bool)
+    flags[[fibid - 1 for fibid in unconnected], 0] = True
+    if not unconnected:
+        pytest.skip("all the fibers are connected")
+    assert not flagged_cube(flags, focal_plane, target_scale_arcsec=0.7).any()
+
+
+def spaxel_of_fiber(focal_plane, fibid, scale):
+    """Pixel (row, column) of the cube nearest to the position of the fiber"""
+    r0l, _ = calc_matrix_from_fiberconf(focal_plane)
+    fibids = [fiber.fibid for fiber in focal_plane.connected_fibers()]
+    x, y = r0l[:, fibids.index(fibid)]
+    target_scale = scale / HEX_SCALE
+    (i1min, _), (j1min, _) = hexgrid_extremes(r0l, target_scale)
+    return round(y / target_scale) - i1min, round(x / target_scale) - j1min
+
+
+def test_create_cube_from_rss_extensions(fiber_header, focal_plane):
+    """WLMAP and FLATMASK are converted to the geometry of the cube, with its WCS"""
+    nwl = 4
+    scale = 0.7
+    rss = make_rss(np.ones((623, nwl)), fiber_header)
+    wlmap = np.ones((623, nwl), dtype="int16")
+    # fiber 311 without data in the first wavelength
+    wlmap[310, 0] = 0
+    mask = np.zeros((623, nwl), dtype="uint8")
+    # zero order in fiber 311, absorption in all the fibers
+    mask[310, 1] = 1
+    mask[:, 2] = 4
+    rss.append(fits.ImageHDU(wlmap, name="WLMAP"))
+    hdu = fits.ImageHDU(mask, name="FLATMASK")
+    hdu.header["BIT1"] = "ZEROINT"
+    rss.append(hdu)
+
+    cube = create_cube_from_rss(rss, target_scale_arcsec=scale)
+    shape = cube[0].data.shape
+    for extname in ["WLMAP", "FLATMASK"]:
+        ext = cube[extname]
+        assert ext.data.shape == shape
+        assert ext.data.dtype == np.uint8
+        for key in ["CTYPE1", "CTYPE3", "CRPIX1", "CRPIX2", "CDELT3", "PC1_1"]:
+            assert ext.header[key] == cube[0].header[key]
+    assert cube["FLATMASK"].header["BIT1"] == "ZEROINT"
+
+    row, col = spaxel_of_fiber(focal_plane, 311, scale)
+    covered = cube["WLMAP"].data
+    fov = covered[1] == 1
+    # the field of view, not the corners of the cube
+    assert 0 < fov.sum() < fov.size
+    assert covered[0, row, col] == 0
+    assert np.array_equal(covered[1:], np.broadcast_to(fov, (nwl - 1,) + fov.shape))
+    assert covered[0].sum() < fov.sum()
+
+    flatmask = cube["FLATMASK"].data
+    assert flatmask[1, row, col] == 1
+    assert 0 < np.count_nonzero(flatmask[1]) < 10
+    assert np.all(flatmask[2][fov] == 4)
+    assert not flatmask[[0, 3]].any()
 
 
 def test_sub_wcs():

@@ -25,11 +25,16 @@ orders the coefficients of the hex-spline are the values of the fibers.
 The order 3 gives a quadratic interpolation, its coefficients are the
 solution of a linear system (:func:`hexspline3_coefficients`).
 
+The extensions of the RSS with a value per fiber and wavelength, the
+spectral coverage (WLMAP) and the mask of the fiber flat (FLATMASK), are
+converted to the geometry of the cube (:func:`flagged_cube`).
+
 The command line tool ``megaradrp-cube`` (:func:`main`) converts a RSS
 file in a cube file.
 """
 
 import argparse
+import re
 import warnings
 
 from astropy.io import fits
@@ -45,6 +50,7 @@ from megaradrp.instrument.focalplane import FocalPlaneConf
 
 # from megaradrp.datamodel import MegaraDataModel
 from megaradrp.core.utils import atleast_2d_last
+from megaradrp.processing.fiberflat import FLAT_MASK_EXTNAME, ZERO_ORDER_MASK_EXTNAME
 import megaradrp.processing.fixrss as fixrss
 import megaradrp.processing.hexgrid as hg
 import megaradrp.processing.hexspline as hspline
@@ -54,6 +60,18 @@ import megaradrp.instrument.constants as cons
 GTC_PLATESCALE = u.plate_scale(cons.GTC_FC_A_PLATESCALE)
 # Size scale of the spaxel grid in arcseconds
 HEX_SCALE = cons.SPAXEL_SCALE.to(u.arcsec, GTC_PLATESCALE).value
+
+# extension with the spectral coverage of each fiber, > 0 where the fiber has data
+WLMAP_EXTNAME = "WLMAP"
+# extensions with the bit mask of the fiber flat (ZOMASK in the fiber flats made before FLATMASK)
+MASK_EXTNAMES = (FLAT_MASK_EXTNAME, ZERO_ORDER_MASK_EXTNAME)
+# a pixel of the cube is flagged if the fibers flagged contribute more than this fraction of its value
+MASK_THRESHOLD = 0.01
+# keywords of the WCS of the cube, copied to the extensions converted to the geometry of the cube
+_WCS_KEYWORD = re.compile(
+    r"(WCSAXES|WCSNAME|CTYPE\d|CUNIT\d|CRPIX\d|CRVAL\d|CDELT\d|PC\d_\d|LONPOLE|LATPOLE|RADESYS|EQUINOX"
+    r"|SPECSYS|SSYSOBS|VELOSYS)[A-Z]?$"
+)
 
 
 def calc_matrix_from_fiberconf(fpconf, refid=614):
@@ -328,7 +346,58 @@ def create_cube_from_array(rss_data, fiberconf, p=1, target_scale_arcsec=1.0, co
     return result.astype("float32")
 
 
-def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
+def flagged_cube(flags, fiberconf, p=1, target_scale_arcsec=1.0, threshold=MASK_THRESHOLD):
+    """Pixels of the cube with a contribution of flagged fibers
+
+    The flags of the fibers are resampled as the values of the fibers in
+    :func:`create_cube_from_array`, without flux conservation: the result
+    in each pixel is the fraction of its value that comes from the fibers
+    flagged. With `p` = 1 the fraction is 0 or 1; with `p` = 2 and `p` = 3
+    the flags spread to the neighbouring pixels.
+
+    Each different set of flagged fibers is resampled only once.
+
+    Parameters
+    ----------
+    flags : numpy.ndarray
+        Boolean array of shape (nfibers, nwl)
+    fiberconf : megaradrp.instrument.focalplane.FocalPlaneConf
+        Focal plane configuration, with the positions of the fibers
+    p : {1, 2, 3}, optional
+        Order of the interpolation
+    target_scale_arcsec : float, optional
+        Size of the pixels of the cube, in arcsec
+    threshold : float, optional
+        A pixel is flagged if the fraction is larger than `threshold`
+
+    Returns
+    -------
+    numpy.ndarray
+        Boolean array of shape (nwl, ny, nx), the shape of the cube
+    """
+    flags = atleast_2d_last(np.asarray(flags) != 0)
+    rows = [conf.fibid - 1 for conf in fiberconf.connected_fibers()]
+    patterns, inverse = np.unique(flags[rows], axis=1, return_inverse=True)
+    inverse = np.ravel(inverse)
+    # the flags of the unconnected fibers are not used
+    expanded = np.zeros((flags.shape[0], patterns.shape[1]))
+    expanded[rows] = patterns
+    fraction = create_cube_from_array(
+        expanded, fiberconf, p=p, target_scale_arcsec=target_scale_arcsec, conserve_flux=False
+    )
+    return (fraction > threshold)[inverse]
+
+
+def _cube_extension(data, header, cube_header, name):
+    """Extension with `data` in the geometry of the cube, with the WCS of the cube"""
+    hdu = fits.ImageHDU(data, header=header, name=name)
+    for card in cube_header.cards:
+        if _WCS_KEYWORD.match(card.keyword):
+            hdu.header[card.keyword] = (card.value, card.comment)
+    return hdu
+
+
+def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True, mask_threshold=MASK_THRESHOLD):
     """
     Create a cube HDUList from a RSS HDUList
 
@@ -338,6 +407,17 @@ def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
     the pixels of the cube, and the spectral axis of the primary header
     of the RSS. Each WCS of the primary header (the main and the
     alternatives) gives a WCS of the cube.
+
+    The extensions with a value per fiber and wavelength are converted
+    to the geometry of the cube (see :func:`flagged_cube`), with the WCS
+    of the cube:
+
+    - WLMAP, the spectral coverage, is 1 in the pixels of the cube where
+      the fibers without data contribute at most `mask_threshold` of the
+      value, inside the field of view, and 0 elsewhere.
+    - FLATMASK (or ZOMASK), the mask of the fiber flat, has in each pixel
+      of the cube the bits of the fibers that contribute more than
+      `mask_threshold` of its value.
 
     Parameters
     ----------
@@ -351,6 +431,10 @@ def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
     conserve_flux : bool, optional
         If True, the cube has the same flux as the fibers,
         see :func:`create_cube_from_array`
+    mask_threshold : float, optional
+        Fraction of the value of a pixel of the cube above which the
+        flags of the fibers (no coverage, bits of the mask) are
+        set in the pixel
 
     Returns
     -------
@@ -390,6 +474,26 @@ def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True):
     # 2D from FIBERS
     # WL from PRIMARY
     merge_wcs(sky_header, spec_header, out=cube[0].header)
+
+    # Extensions with a value per fiber and wavelength
+    kwds = dict(p=p, target_scale_arcsec=target_scale_arcsec, threshold=mask_threshold)
+    if WLMAP_EXTNAME in rss:
+        wlmap = rss[WLMAP_EXTNAME]
+        # the field of view: pixels with at least half of their value from the fibers
+        inside = flagged_cube(np.ones((wlmap.data.shape[0], 1)), fiberconf, p, target_scale_arcsec, threshold=0.5)
+        covered = inside & ~flagged_cube(wlmap.data <= 0, fiberconf, **kwds)
+        hdu = _cube_extension(covered.astype("uint8"), wlmap.header, cube[0].header, WLMAP_EXTNAME)
+        hdu.header["COMMENT"] = "1 in the pixels of the cube with data from all their fibers"
+        cube[WLMAP_EXTNAME] = hdu
+    for extname in MASK_EXTNAMES:
+        if extname not in rss:
+            continue
+        mask = rss[extname].data
+        result = np.zeros(result_arr.shape, dtype="uint8")
+        for bit in (1 << k for k in range(8)):
+            if np.any(mask & bit):
+                result[flagged_cube(mask & bit, fiberconf, **kwds)] |= bit
+        cube[extname] = _cube_extension(result, rss[extname].header, cube[0].header, extname)
 
     # done
     return cube

@@ -24,7 +24,9 @@ def fix_missing_fiber(rss, fibid):
     around it. If the header of FIBERS has the limits of the valid
     region of the fibers (FIBnnnW1 and FIBnnnW2), the limits of the
     fiber are the narrowest of the fibers around it, and its values
-    outside them are 0.
+    outside them are 0. The fiber has coverage (extension WLMAP) where
+    all the fibers around it have it, and the bits of the mask of the
+    fiber flat (extension FLATMASK or ZOMASK) of all of them.
 
     Parameters
     ----------
@@ -67,6 +69,14 @@ def fix_missing_fiber(rss, fibid):
         pass
 
     rss[0].data[fibid - 1] = avg
+    rows = [idx - 1 for idx in idxs]
+    if "WLMAP" in rss:
+        wlmap = rss["WLMAP"].data
+        wlmap[fibid - 1] = np.all(wlmap[rows] > 0, axis=0)
+    for extname in ["FLATMASK", "ZOMASK"]:
+        if extname in rss:
+            mask = rss[extname].data
+            mask[fibid - 1] = np.bitwise_or.reduce(mask[rows], axis=0)
     return rss
 
 

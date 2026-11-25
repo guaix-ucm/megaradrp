@@ -59,6 +59,29 @@ def test_fix_missing_fiber_limits(lcb_fiber_header, nearby):
     assert np.all(row[w1 - 1 : w2 - 1] > 0)
 
 
+def test_fix_missing_fiber_coverage_and_mask(lcb_fiber_header, nearby):
+    """The missing fiber has coverage where all the fibers around it have it, and the bits of all of them"""
+    rss = make_rss(nearby, lcb_fiber_header)
+    nwl = rss[0].data.shape[1]
+    wlmap = np.zeros((623, nwl), dtype="int16")
+    mask = np.zeros((623, nwl), dtype="uint8")
+    for idx, fibid in enumerate(nearby):
+        wlmap[fibid - 1, idx : nwl - 1] = 1
+        mask[fibid - 1, 10] = 4
+    mask[nearby[0] - 1, 5] = 1
+    rss.append(fits.ImageHDU(wlmap, name="WLMAP"))
+    rss.append(fits.ImageHDU(mask, name="FLATMASK"))
+
+    result = fix_missing_fiber(rss, MISSING)
+    expected = np.zeros(nwl, dtype="int16")
+    expected[len(nearby) - 1 : nwl - 1] = 1
+    assert np.array_equal(result["WLMAP"].data[MISSING - 1], expected)
+    row = result["FLATMASK"].data[MISSING - 1]
+    assert row[5] == 1
+    assert row[10] == 4
+    assert np.count_nonzero(row) == 2
+
+
 @pytest.mark.parametrize("ipa", [0.0, 30.0, 200.0])
 def test_recompute_wcs(ipa):
     hdr = create_sky_header2()
