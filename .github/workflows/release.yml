@@ -5,6 +5,10 @@ on:
   release:
     types: [published]
 
+# Only read access for the GITHUB_TOKEN, the jobs that need more ask for it
+permissions:
+  contents: read
+
 jobs:
   build_sdist:
     name: Build source distribution and wheel
