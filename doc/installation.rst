@@ -103,9 +103,9 @@ Once the installation is finished, you can check
 by listing the installed recipes with the command line interface tool ``numina``::
 
   $ numina show-instruments
-  INFO: Numina simple recipe runner version 0.40.0
+  INFO: Numina simple recipe runner version 0.42.0
   Instrument: MEGARA
-   version is '0.22'
+   version is '0.30'
    has profile 'Configuration at LICA' uuid=9a86b2b2-3f7d-48ec-8f4f-3780ec967c90
    has profile 'MEGARA@GTC after November 2025' uuid=9f3fecbf-376c-47ae-a188-313b7d829104
    has profile 'Configuration for the Simulator' uuid=66f2283e-3049-4d4b-8ef1-14d62fcb611d

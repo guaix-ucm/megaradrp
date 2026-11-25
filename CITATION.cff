@@ -21,7 +21,7 @@ authors:
   family-names: Gil de Paz
   given-names: Armando
   orcid: 'https://orcid.org/0000-0001-6150-2854'
-date-released: '2026-10-15'
+date-released: '2026-11-25'
 doi: 10.5281/zenodo.593647
 identifiers:
 - type: doi
@@ -34,4 +34,4 @@ abstract: >-
 keywords:
 - MEGARA
 license: GPL-3.0-or-later
-version: '0.22'
+version: '0.30'
