@@ -26,7 +26,7 @@ from megaradrp.instrument.focalplane import FocalPlaneConf
 from megaradrp.products.modelmap import ModelMap
 from megaradrp.products.modelmap import GeometricModel
 from megaradrp.processing.aperture import ApertureExtractor
-from megaradrp.processing.modelmap import calc1d_model
+from megaradrp.processing.modelmap import calc1d_model, check_model_map
 from megaradrp.processing.modeldesc import config
 from megaradrp.ntypes import ProcessedImage, ProcessedRSS
 from megaradrp.core.recipe import MegaraBaseRecipe
@@ -84,6 +84,14 @@ class ModelMapRecipe(MegaraBaseRecipe):
     are interpolated to all columns using splines. The coefficientes of the
     splines are stored in the final `master_traces` object.
 
+    The quality control (`run_qc`) checks the geometry of the model of each
+    fiber against its neighbours of the same block: the traces do not cross,
+    each trace is approximately parallel to its neighbours, the width varies
+    smoothly, and the amplitude varies smoothly along the fiber (in the RSS of
+    the flat, relative to its neighbours). The fibers that fail get flags in
+    the model map, which is not changed otherwise; its quality is GOOD,
+    PARTIAL, or BAD with more than 5 % of the fibers flagged.
+
     The recipe returns also the RSS obtained by applying advanced extraction
     to `reduced_image`. As an intermediate result, the recipe proceduces DS9
     reg files with the position of the center of the profiles, that can be
@@ -114,6 +122,17 @@ class ModelMapRecipe(MegaraBaseRecipe):
     reduced_image = Result(ProcessedImage)
     reduced_rss = Result(ProcessedRSS)
     master_model = Result(ModelMap)
+
+    def run_qc(self, recipe_input, recipe_result):
+        """Quality control of the geometry of the model map, see check_model_map"""
+        self.logger.info("start model map recipe QC")
+        model_map = recipe_result.master_model
+        rss = recipe_result.reduced_rss.open()[0].data
+        check_model_map(model_map, rss, logger=self.logger)
+        recipe_result.qc = model_map.quality_control
+        self.logger.info("Result QC is %s", recipe_result.qc)
+        self.logger.info("end model map recipe QC")
+        return recipe_result
 
     def run(self, rinput):
 

@@ -11,6 +11,7 @@ import bisect
 import collections
 import logging
 import math
+import warnings
 
 from collections.abc import Sequence  # for typing
 
@@ -330,3 +331,192 @@ def aper_extract(model_map, wcols, img):
         rss[:, key] = res[0]
 
     return rss
+
+
+# flags of the quality control of the model map
+MODEL_FLAG_CROSSING = "crossing"
+MODEL_FLAG_NOT_PARALLEL = "not_parallel"
+MODEL_FLAG_WIDTH = "width_not_smooth"
+MODEL_FLAG_AMPLITUDE = "amplitude_not_smooth"
+
+
+def _robust_limit(values, nsigma, floor):
+    """median + nsigma robust sigmas of the finite `values`, and at least `floor`"""
+    finite = values[numpy.isfinite(values)]
+    if finite.size == 0:
+        return floor
+    med = numpy.median(finite)
+    sigma = 1.4826 * numpy.median(numpy.abs(finite - med))
+    return max(med + nsigma * sigma, floor)
+
+
+def _neighbour_prediction(values, boxes, use=None):
+    """Prediction of each row of `values` from its neighbours of the same block
+
+    The neighbours are the closest fibers of the same block at each side
+    that are in `use` (all by default). The prediction is their mean, or the
+    only neighbour for the fibers at the border of a block (an extrapolation
+    from two neighbours doubles the noise); NaN for a fiber without
+    neighbours.
+    """
+    nfib = values.shape[0]
+    use = numpy.ones(nfib, dtype=bool) if use is None else use
+    pred = numpy.full(values.shape, numpy.nan)
+    for i in range(nfib):
+        prev = next((j for j in range(i - 1, -1, -1) if boxes[j] == boxes[i] and use[j]), None)
+        succ = next((j for j in range(i + 1, nfib) if boxes[j] == boxes[i] and use[j]), None)
+        if prev is not None and succ is not None:
+            pred[i] = 0.5 * (values[prev] + values[succ])
+        elif prev is not None:
+            pred[i] = values[prev]
+        elif succ is not None:
+            pred[i] = values[succ]
+    return pred
+
+
+def _flag_outliers(values, boxes, metric, nsigma, floor, niter=3):
+    """Fibers whose `metric` against the prediction from their neighbours is an outlier
+
+    The flagged fibers are not used as neighbours in the next iteration, so
+    that a bad fiber does not flag its neighbours.
+    """
+    use = numpy.ones(values.shape[0], dtype=bool)
+    bad = numpy.zeros(values.shape[0], dtype=bool)
+    for _ in range(niter):
+        measure = metric(values, _neighbour_prediction(values, boxes, use))
+        limit = _robust_limit(measure[use], nsigma, floor)
+        new_bad = measure > limit
+        if numpy.array_equal(new_bad, bad):
+            break
+        bad = new_bad
+        use = ~bad
+    return numpy.flatnonzero(bad)
+
+
+def _parallel_metric(centres, pred):
+    """Range along the detector of the centre minus the prediction"""
+    return numpy.ptp(centres - pred, axis=1)
+
+
+def _width_metric(widths, pred):
+    """Largest difference of the width from the prediction"""
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        return numpy.nanmax(numpy.abs(widths - pred), axis=1)
+
+
+def _amplitude_metric(flux, pred):
+    """Largest local relative change of the ratio between the fiber and the prediction
+
+    The ratio removes the spectrum of the lamp; its median over 21 columns is
+    compared with its median over 401 columns.
+    """
+    from scipy.ndimage import median_filter
+
+    with numpy.errstate(invalid="ignore", divide="ignore"):
+        ratio = flux / pred
+    rough = numpy.full(flux.shape[0], numpy.nan)
+    for i, r in enumerate(ratio):
+        if not numpy.all(numpy.isfinite(r)) or numpy.median(r) <= 0:
+            continue
+        local = median_filter(r, 21, mode="nearest")
+        broad = median_filter(r, 401, mode="nearest")
+        rough[i] = numpy.max(numpy.abs(local / broad - 1))
+    return rough
+
+
+def check_model_map(
+    model_map,
+    rss=None,
+    cols=None,
+    nsigma=5.0,
+    min_gap=0.5,
+    parallel_floor=0.5,
+    width_floor=0.3,
+    amplitude_floor=0.05,
+    bad_fraction=0.05,
+    logger=None,
+):
+    """Quality control of the geometry of a model map
+
+    The checks, for each valid fiber, compare its model with those of its
+    neighbours of the same block of the pseudo-slit:
+
+    - the traces do not cross: the gap between neighbouring centres is
+      larger than `min_gap` times the median gap, at all the columns;
+    - each trace is approximately parallel to its neighbours: the range,
+      along the detector, of its centre minus the prediction from its
+      neighbours;
+    - the width varies smoothly: the largest difference from the width
+      predicted by its neighbours;
+    - the amplitude varies smoothly along the fiber: with the RSS of the flat
+      extracted with the model (`rss`), the ratio between the fiber and the
+      prediction from its neighbours (which removes the spectrum of the lamp)
+      is compared with a smooth version of itself. The amplitude is not
+      compared between fibers: a fiber can be fainter than its neighbours.
+
+    A fiber fails a check if its value is an outlier (beyond the median plus
+    `nsigma` robust sigmas of all the fibers) and larger than the floor of the
+    check (in pixels, or relative for the amplitude). It gets a flag in
+    `flags`, but its model is not changed. The quality of the model map is
+    GOOD without flagged fibers, PARTIAL with some, and BAD if they are more
+    than `bad_fraction` of the valid fibers.
+
+    Returns
+    -------
+    dict
+        The fibids of the fibers with each flag
+    """
+    from numina.types.qc import QC
+
+    logger = logger or _logger
+    models = [m for m in model_map.contents if m.valid]
+    if not models:
+        model_map.quality_control = QC.BAD
+        return {}
+    if cols is None:
+        cols = numpy.arange(200, 3901, 100)
+    cols = numpy.asarray(cols, dtype=float)
+    centres = numpy.array([m.model["params"]["mean"](cols) for m in models])
+    order = numpy.argsort(centres[:, len(cols) // 2])
+    models = [models[i] for i in order]
+    centres = centres[order]
+    fibids = numpy.array([m.fibid for m in models])
+    boxes = numpy.array([m.boxid for m in models])
+    found = {}
+
+    def flag(name, indices):
+        for i in indices:
+            models[i].add_flag(name)
+            found.setdefault(name, set()).add(int(fibids[i]))
+
+    # crossings
+    gaps = numpy.diff(centres, axis=0)
+    same_box = boxes[1:] == boxes[:-1]
+    typical = numpy.median(gaps[same_box]) if numpy.any(same_box) else numpy.median(gaps)
+    close = numpy.flatnonzero(gaps.min(axis=1) < min_gap * typical)
+    flag(MODEL_FLAG_CROSSING, set(close) | set(close + 1))
+
+    # parallelism
+    flag(MODEL_FLAG_NOT_PARALLEL, _flag_outliers(centres, boxes, _parallel_metric, nsigma, parallel_floor))
+
+    # width
+    if all("stddev" in m.model["params"] for m in models):
+        widths = numpy.array([m.model["params"]["stddev"](cols) for m in models])
+        flag(MODEL_FLAG_WIDTH, _flag_outliers(widths, boxes, _width_metric, nsigma, width_floor))
+
+    # amplitude along each fiber, relative to its neighbours
+    if rss is not None:
+        flux = numpy.asarray(rss, dtype=float)[fibids - 1][:, int(cols[0]) : int(cols[-1])]
+        flag(MODEL_FLAG_AMPLITUDE, _flag_outliers(flux, boxes, _amplitude_metric, nsigma, amplitude_floor))
+
+    flagged = set().union(*found.values()) if found else set()
+    for name, values in sorted(found.items()):
+        logger.warning("model map: fibers with flag %r: %d %s", name, len(values), sorted(values))
+    if len(flagged) > bad_fraction * len(models):
+        model_map.quality_control = QC.BAD
+    elif flagged:
+        model_map.quality_control = QC.PARTIAL
+    else:
+        model_map.quality_control = QC.GOOD
+    return {name: sorted(values) for name, values in found.items()}

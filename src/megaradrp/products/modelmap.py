@@ -20,9 +20,22 @@ from .traces import to_ds9_reg as to_ds9_reg_function
 
 
 class GeometricModel(GeometricAperture):
-    def __init__(self, fibid, boxid, start, stop, model):
+    """The model of the profile of a fiber
+
+    `flags` are the problems found by the quality control of the model map
+    (see megaradrp.processing.modelmap.check_model_map). They do not make the
+    model invalid.
+    """
+
+    def __init__(self, fibid, boxid, start, stop, model, flags=None):
         super(GeometricModel, self).__init__(fibid, boxid, start, stop)
         self.model = model
+        self.flags = list(flags) if flags is not None else []
+
+    def add_flag(self, flag):
+        """Add `flag` to the flags of the model, if not present"""
+        if flag not in self.flags:
+            self.flags.append(flag)
 
     @property
     def valid(self):
@@ -50,6 +63,8 @@ class GeometricModel(GeometricAperture):
 
     def __setstate__(self, state):
         super(GeometricModel, self).__setstate__(state)
+        # models saved before the quality control
+        self.flags = list(state.get("flags", []))
         self._set_model(state["model"])
 
     def _set_model(self, model):

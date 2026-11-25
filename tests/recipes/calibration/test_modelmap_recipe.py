@@ -5,6 +5,7 @@ import numpy
 import pytest
 from numina.core import DataFrame
 from numina.modeling.gaussbox import GaussBox
+from numina.types.qc import QC
 
 import megaradrp.recipes.calibration.modelmap as modelmap
 from megaradrp.datamodel import create_default_fiber_header
@@ -101,6 +102,16 @@ def test_modelmap(run_recipe, caplog):
         flux = GaussBox.evaluate(rows, amplitude(2000), center(fibid, 2000), SIGMA, 0.5).sum()
         assert rss[fibid - 1, 2000] == pytest.approx(flux, rel=0.002)
     assert numpy.all(rss[0] == 0)
+
+
+@pytest.mark.slow
+def test_modelmap_qc(run_recipe):
+    """The model of parallel fibers with smooth widths passes the quality control"""
+    recipe = ModelMapRecipe()
+    result = recipe.run_qc(None, run_recipe(recipe))
+    assert result.qc == QC.GOOD
+    assert result.master_model.quality_control == QC.GOOD
+    assert all(model.flags == [] for model in result.master_model.contents)
 
 
 @pytest.mark.slow
