@@ -2,6 +2,7 @@
 # archive of each tag in Zenodo, and the sdist: setuptools-scm skips
 # the files with export-ignore)
 /.basedpyright export-ignore
+/container export-ignore
 /.flake8 export-ignore
 /.git-blame-ignore-revs export-ignore
 /.gitattributes export-ignore
