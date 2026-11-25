@@ -16,6 +16,9 @@ from .structured import BaseStructuredCalibration
 
 # Flags of a wavelength solution that make it invalid
 INVALID_SOLUTION_FLAGS = frozenset(["high_residual", "deviant"])
+# the first-pass solution was rejected by the model of the coefficients vs fiber,
+# the refinement started from the coefficients interpolated from the other fibers
+INTERPOLATED_FLAG = "interpolated"
 
 
 class FiberSolutionArcCalibration:
@@ -27,6 +30,10 @@ class FiberSolutionArcCalibration:
     - "deviant": the wavelengths differ from those of the neighbouring fibers
     - "edge_deviation": they differ only near the borders of the detector
     - "not_refined": the solution was not refined with all the lines
+    - "interpolated": the solution of the first pass departed from the model of
+      the coefficients vs fiber, and the refinement started from the
+      coefficients of the model, interpolated from the other fibers (the
+      solution is valid)
 
     A solution with a flag in INVALID_SOLUTION_FLAGS is not valid.
     """

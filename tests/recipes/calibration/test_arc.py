@@ -248,6 +248,66 @@ def test_model_coeff_vs_fiber_degree():
         ArcCalibrationRecipe().model_coeff_vs_fiber(wlcalib, 3)
 
 
+def smooth_wlcalib(nfib=60, outlier=None):
+    """Solutions with coefficients that vary smoothly with the fiber, and one outlier"""
+    wlcalib = WavelengthCalibration(instrument="MEGARA")
+    rng = numpy.random.default_rng(1)
+    for fibid in range(1, nfib + 1):
+        noise = rng.normal(0.0, 1.0, 4) * [0.01, 1e-6, 1e-9, 1e-12]
+        coeff = list(numpy.array([6000.0 + 0.01 * fibid, 0.3 + 1e-5 * fibid, 1e-7, 0.0]) + noise)
+        if fibid == outlier:
+            coeff[0] += 5.0
+        sol = SolutionArcCalibration([], coeff, 0.0, CrLinear(0, 0, 0, 0, 0))
+        wlcalib.contents.append(FiberSolutionArcCalibration(fibid, sol))
+    return wlcalib
+
+
+def test_model_coeff_vs_fiber_rejected():
+    """The fibers rejected by the model of the coefficients"""
+    recipe = ArcCalibrationRecipe()
+    polys, rejected = recipe.model_coeff_vs_fiber(smooth_wlcalib(outlier=17), 3, return_rejected=True)
+    # the outlier; the rejection at 5 sigma of each coefficient can also take a few fibers with noise
+    assert 17 in rejected
+    assert len(rejected) <= 3
+    assert len(polys) == 4
+    # by default, only the polynomials
+    assert len(recipe.model_coeff_vs_fiber(smooth_wlcalib(outlier=17), 3)) == 4
+
+
+def test_plot_vs_fiber():
+    """The marked fibers are highlighted, with their number in the legend"""
+    fig = arcmod.plot_vs_fiber([1, 2, 3, 4], [1.0, 2.0, 9.0, 4.0], "value", marked=[3], label="interpolated")
+    ax = fig.axes[0]
+    assert ax.get_legend().get_texts()[0].get_text() == "interpolated (1)"
+    assert list(ax.lines[-1].get_xdata()) == [3]
+    # without marked fibers, no legend
+    assert arcmod.plot_vs_fiber([1, 2], [1.0, 2.0], "value").axes[0].get_legend() is None
+
+
+@pytest.mark.slow
+def test_calibrate_wl_interpolated(thar, recipe, monkeypatch, tmp_path):
+    """The fibers rejected by the model are flagged in the final calibration and marked in the plots"""
+    catalog, rss = thar
+    original = recipe.model_coeff_vs_fiber
+    marked = VALID[2]
+
+    def model(*args, **kwds):
+        polys, _ = original(*args, **kwds)
+        return polys, [marked]
+
+    monkeypatch.setattr(recipe, "model_coeff_vs_fiber", model)
+    monkeypatch.chdir(tmp_path)
+    recipe.intermediate_results = True
+    initial, refined, _ = recipe.calibrate_wl(rss, catalog, [3, 3], make_tracemap(), [30])
+    flags = {sol.fibid: sol.flags for sol in refined.contents}
+    assert flags[marked] == ["interpolated"]
+    assert all(flag == [] for fibid, flag in flags.items() if fibid != marked)
+    # the solution is still valid
+    assert marked not in refined.invalid_fibers()
+    assert (tmp_path / "wavecal_iter1.pdf").exists()
+    assert (tmp_path / "wavecal_iter2.pdf").exists()
+
+
 @pytest.mark.slow
 def test_generate_fwhm_image():
     """The FWHM of the nearest line in the detector, of the fibers multiple of 10 (#367)"""

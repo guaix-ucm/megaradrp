@@ -39,10 +39,47 @@ from megaradrp.processing.arcqc import check_qc_wlcalib, flag_solutions
 from megaradrp.processing.fiberflat import Splitter, FlipLR
 from megaradrp.core.recipe import MegaraBaseRecipe
 from megaradrp.products import WavelengthCalibration
-from megaradrp.products.wavecalibration import FiberSolutionArcCalibration
+from megaradrp.products.wavecalibration import INTERPOLATED_FLAG, FiberSolutionArcCalibration
 import megaradrp.requirements as reqs
 
 from megaradrp.instrument import vph_thr_arc
+
+LABEL_REJECTED = "rejected by the model of the coefficients, interpolated in the second pass"
+LABEL_INTERPOLATED = "refined from the coefficients interpolated from the other fibers"
+
+
+def plot_vs_fiber(fibids, values, ylabel, marked=(), label=""):
+    """Figure of `values` vs fiber number, with the fibers in `marked` highlighted"""
+    from matplotlib.figure import Figure
+
+    fig = Figure()
+    _, ax = ximplotxy(
+        fibids,
+        values,
+        xlabel="fiber number",
+        ylabel=ylabel,
+        linestyle="",
+        marker=".",
+        color="C0",
+        show=False,
+        tight_layout=True,
+        fig=fig,
+    )
+    marked = set(marked)
+    sel = [i for i, fibid in enumerate(fibids) if fibid in marked]
+    if sel:
+        ax.plot(
+            [fibids[i] for i in sel],
+            [values[i] for i in sel],
+            linestyle="",
+            marker="o",
+            markersize=7,
+            markerfacecolor="none",
+            color="C3",
+            label=f"{label} ({len(sel)})",
+        )
+        ax.legend(fontsize="small")
+    return fig
 
 
 def add_untraced_fibers(tracemap, wlcalib):
@@ -442,46 +479,29 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         self.logger.info("Errors in fitting: %s", error_contador)
         self.logger.info("Missing fibers: %s", missing_fib)
 
+        # model of the coefficients vs fiber for the refinement; the fibers
+        # rejected start the refinement from the coefficients of the model
+        interpolated = []
+        if refine_wv_calibration:
+            self.logger.info("Improving wavelength calibration...")
+            list_poly_vs_fiber, interpolated = self.model_coeff_vs_fiber(
+                initial_data_wlcalib, poldeg_initial, times_sigma_reject=5, return_rejected=True
+            )
+            self.logger.info("fibers with coefficients interpolated from the model: %s", interpolated)
+
         # save PDF file with plots in working directory
         if self.intermediate_results:
             from matplotlib.backends.backend_pdf import PdfPages
-            from matplotlib.figure import Figure
 
             pdf = PdfPages("wavecal_iter1.pdf")
             for dumplot in zip(
                 [plot_npeaksfound, plot_crval1, plot_cdelt1],
                 ["number of peaks found", "linear CRVAL1 " + r"($\AA$)", "linear_CDELT1 " + r"($\AA$/pixel)"],
             ):
-                fig = Figure()
-                ximplotxy(
-                    plot_tracenumber,
-                    dumplot[0],
-                    xlabel="fiber number",
-                    ylabel=dumplot[1],
-                    linestyle="",
-                    marker=".",
-                    color="C0",
-                    show=False,
-                    tight_layout=True,
-                    fig=fig,
-                )
-                pdf.savefig(fig)
+                pdf.savefig(plot_vs_fiber(plot_tracenumber, dumplot[0], dumplot[1], interpolated, LABEL_REJECTED))
             for ideg in range(poldeg_initial + 1):
                 dumplot = [coef[ideg] for coef in plot_coeff]
-                fig = Figure()
-                ximplotxy(
-                    plot_tracenumber,
-                    dumplot,
-                    xlabel="fiber number",
-                    ylabel="coef[" + str(ideg) + "]",
-                    linestyle="",
-                    marker=".",
-                    color="C0",
-                    show=False,
-                    tight_layout=True,
-                    fig=fig,
-                )
-                pdf.savefig(fig)
+                pdf.savefig(plot_vs_fiber(plot_tracenumber, dumplot, f"coef[{ideg}]", interpolated, LABEL_REJECTED))
             pdf.close()
 
         self.logger.info("Generating fwhm_image...")
@@ -490,10 +510,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         fwhm_hdulist = fits.HDUList([fwhm_image])
 
         if refine_wv_calibration:
-            self.logger.info("Improving wavelength calibration...")
-            # model polynomial coefficients vs. fiber number using
-            # previous results stored in data_wlcalib
-            list_poly_vs_fiber = self.model_coeff_vs_fiber(initial_data_wlcalib, poldeg_initial, times_sigma_reject=5)
             # recompute data_wlcalib from scratch
             missing_fib = 0
             error_contador = 0
@@ -586,6 +602,8 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         )
                         solution_wv.npoints_eff = npoints_eff  # add also this
                         new = FiberSolutionArcCalibration(fibid, solution_wv)
+                        if fibid in interpolated:
+                            new.add_flag(INTERPOLATED_FLAG)
                         data_wlcalib.contents.append(new)
                         # store results for plotting
                         plot_tracenumber.append(fibid)
@@ -609,7 +627,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
             # save PDF file with plots in working directory
             if self.intermediate_results:
                 from matplotlib.backends.backend_pdf import PdfPages
-                from matplotlib.figure import Figure
 
                 pdf = PdfPages("wavecal_iter2.pdf")
                 for dumplot in zip(
@@ -621,36 +638,14 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
                         "linear_CDELT1 " + r"($\AA$/pixel)",
                     ],
                 ):
-                    fig = Figure()
-                    ximplotxy(
-                        plot_tracenumber,
-                        dumplot[0],
-                        xlabel="fiber number",
-                        ylabel=dumplot[1],
-                        linestyle="",
-                        marker=".",
-                        color="C0",
-                        show=False,
-                        tight_layout=True,
-                        fig=fig,
+                    pdf.savefig(
+                        plot_vs_fiber(plot_tracenumber, dumplot[0], dumplot[1], interpolated, LABEL_INTERPOLATED)
                     )
-                    pdf.savefig(fig)
                 for ideg in range(poldeg_refined + 1):
                     dumplot = [coef[ideg] for coef in plot_coeff]
-                    fig = Figure()
-                    ximplotxy(
-                        plot_tracenumber,
-                        dumplot,
-                        xlabel="fiber number",
-                        ylabel="coef[" + str(ideg) + "]",
-                        linestyle="",
-                        marker=".",
-                        color="C0",
-                        show=False,
-                        tight_layout=True,
-                        fig=fig,
+                    pdf.savefig(
+                        plot_vs_fiber(plot_tracenumber, dumplot, f"coef[{ideg}]", interpolated, LABEL_INTERPOLATED)
                     )
-                    pdf.savefig(fig)
                 pdf.close()
         else:
             data_wlcalib = None
@@ -698,12 +693,15 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         final_image = final[test_point_regions.reshape((naxis2, naxis1)), 2].astype("float32")
         return final_image
 
-    def model_coeff_vs_fiber(self, data_wlcalib, poldeg, times_sigma_reject=5):
+    def model_coeff_vs_fiber(self, data_wlcalib, poldeg, times_sigma_reject=5, return_rejected=False):
         """Model polynomial coefficients vs. fiber number.
 
         For each polynomial coefficient, a smooth polynomial dependence
         with fiber number is also computed, rejecting information from
         fibers which coefficients depart from that smooth variation.
+
+        With `return_rejected`, it also returns the list of the fibers
+        rejected.
         """
 
         if self.intermediate_results:
@@ -793,4 +791,6 @@ class ArcCalibrationRecipe(MegaraBaseRecipe):
         if pdf is not None:
             pdf.close()
 
+        if return_rejected:
+            return list_poly_vs_fiber, [int(f) for f in fibid[reject_all]]
         return list_poly_vs_fiber
