@@ -12,15 +12,27 @@
 
 ARG PYTHON_VERSION="3.12"
 
+# Some dependencies have no wheels for every platform (spherical-geometry
+# has none for linux/arm64), so the wheels of megaradrp and of all its
+# dependencies are built in a stage with a compiler
+FROM python:${PYTHON_VERSION}-slim AS wheels
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY dist/megaradrp-*.whl /tmp/dist/
+
+RUN pip wheel --no-cache-dir --wheel-dir /tmp/wheels /tmp/dist/megaradrp-*.whl
+
 FROM python:${PYTHON_VERSION}-slim
 
 LABEL org.opencontainers.image.authors="Sergio Pascual <sergiopr@fis.ucm.es>" \
       org.opencontainers.image.vendor="GUAIX - Universidad Complutense de Madrid" \
       org.opencontainers.image.url="https://guaix.ucm.es"
 
-COPY dist/megaradrp-*.whl /tmp/dist/
-
-RUN pip install --no-cache-dir /tmp/dist/megaradrp-*.whl \
-    && rm -rf /tmp/dist
+# The wheels are mounted, not copied, so that they are not in any layer
+RUN --mount=type=bind,from=wheels,source=/tmp/wheels,target=/tmp/wheels \
+    pip install --no-cache-dir --no-index --find-links /tmp/wheels megaradrp
 
 CMD ["python3"]
