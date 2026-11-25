@@ -89,6 +89,9 @@ jobs:
           images: |
             ghcr.io/guaix-ucm/megaradrp
             quay.io/guaix-ucm/megaradrp
+          # latest only from the input, not added with the tag of the version
+          flavor: |
+            latest=false
           tags: |
             type=pep440,pattern={{version}},value=${{ steps.version.outputs.version }}
             type=raw,value=latest,enable=${{ env.LATEST }}
