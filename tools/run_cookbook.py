@@ -24,7 +24,7 @@ from numina.testing.testcache import download_cache
 from numina.user.inittree import find_dataset
 from numina.user.session import Session
 
-DATASET = "megara-cookbook-v4"
+DATASET = "megara-cookbook-v5"
 URL = f"https://guaix.fis.ucm.es/data/megaradrp/{DATASET}.tar.gz"
 
 OBSERVATIONS = [
