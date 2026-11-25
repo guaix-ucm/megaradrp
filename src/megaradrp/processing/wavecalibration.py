@@ -9,6 +9,7 @@
 
 """Corrector for wavelength calibration"""
 
+import copy
 import datetime
 import logging
 import sys
@@ -25,7 +26,6 @@ import astropy.io.fits as fits
 
 import numina.datamodel as dm
 import numina.array.utils as utils
-from numina.frame.utils import copy_img
 from numina.processing import Corrector
 from numina.array.interpolation import SteffenInterpolator
 
@@ -146,7 +146,7 @@ def calibrate_wl_rss(rss, solutionwl, npix, targetwcs, dtype="float32", span=0, 
 
     if not inplace:
         # This is a new HDUList
-        rss = copy_img(rss)
+        rss = copy.deepcopy(rss)
 
     imgid = dm.get_imgid(rss)
     _logger.debug("wavelength calibration in image %s", imgid)

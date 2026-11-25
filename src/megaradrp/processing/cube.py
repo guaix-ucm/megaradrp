@@ -34,13 +34,13 @@ file in a cube file.
 """
 
 import argparse
+import copy
 import re
 import warnings
 
 from astropy.io import fits
 import astropy.units as u
 import astropy.wcs
-from numina.frame.utils import copy_img
 import numpy as np
 from scipy import ndimage, signal, sparse
 from scipy.sparse.linalg import splu
@@ -447,7 +447,7 @@ def create_cube_from_rss(rss, p=1, target_scale_arcsec=1.0, conserve_flux=True, 
         rss[0].data, fiberconf, p=p, target_scale_arcsec=target_scale_arcsec, conserve_flux=conserve_flux
     )
 
-    cube = copy_img(rss)
+    cube = copy.deepcopy(rss)
     cube[0].data = result_arr
 
     sky_header = rss["FIBERS"].header.copy()

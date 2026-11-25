@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
+import copy
 import datetime
 import logging
 import sys
@@ -17,7 +18,6 @@ if sys.version_info[:2] <= (3, 10):
 from astropy.io import fits
 import numpy
 from numina.processing import Corrector
-from numina.frame.utils import copy_img
 
 _logger = logging.getLogger(__name__)
 
@@ -161,7 +161,7 @@ class Splitter(Corrector):
         return img
 
     def copy_img(self, img):
-        return copy_img(img)
+        return copy.deepcopy(img)
 
 
 class FlipLR(Corrector):

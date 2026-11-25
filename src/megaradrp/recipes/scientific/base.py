@@ -9,11 +9,12 @@
 
 """Base scientific recipe for MEGARA"""
 
+import copy
+
 from numina.core import Parameter
 from numina.core.requirements import ObservationResultRequirement
 from numina.util.flow import SerialFlow
 from numina.array import combine
-from numina.frame.utils import copy_img
 from numina.processing.combine import basic_processing_with_combination
 
 from megaradrp.core.recipe import MegaraBaseRecipe
@@ -67,7 +68,7 @@ class ImageRecipe(MegaraBaseRecipe):
 
         self.save_intermediate_img(img, "reduced_image.fits")
 
-        reduced2d = copy_img(img)
+        reduced2d = copy.deepcopy(img)
 
         offset, history = self.resolve_extraction_offset(rinput, rinput.master_apertures, flow=flow1)
 

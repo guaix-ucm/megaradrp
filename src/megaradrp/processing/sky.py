@@ -7,12 +7,12 @@
 # License-Filename: LICENSE.txt
 #
 
+import copy
 import logging
 
 import numpy
 
 import megaradrp.instrument.focalplane as fp
-from numina.frame.utils import copy_img
 
 
 def _subtract_sky_data(img, sky_data, sky_valid, fibers):
@@ -39,7 +39,7 @@ def _subtract_sky_data(img, sky_data, sky_valid, fibers):
     astropy.io.fits.HDUList
         A new RSS, with the sky subtracted
     """
-    final_img = copy_img(img)
+    final_img = copy.deepcopy(img)
     covered = img["WLMAP"].data > 0
     rows = numpy.zeros(covered.shape[0], dtype=bool)
     rows[numpy.asarray(fibers, dtype=int) - 1] = True
@@ -68,7 +68,7 @@ def subtract_sky(img, ignored_sky_bundles=None, logger=None):
         logger = logging.getLogger(__name__)
 
     logger.info("obtain fiber information")
-    sky_img = copy_img(img)
+    sky_img = copy.deepcopy(img)
     fp_conf = fp.FocalPlaneConf.from_img(sky_img)
     # Sky fibers
     skyfibs = fp_conf.sky_fibers(valid_only=True, ignored_bundles=ignored_sky_bundles)

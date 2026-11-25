@@ -9,6 +9,7 @@
 
 """Trace model recipe for Megara"""
 
+import copy
 import logging
 import os
 import multiprocessing as mp
@@ -17,7 +18,6 @@ import numpy as np
 from scipy.interpolate import UnivariateSpline
 from numina.core import Result, Parameter
 from numina.array import combine
-from numina.frame.utils import copy_img
 from numina.util.objimport import import_object
 from numina.processing.combine import basic_processing_with_combination
 from numina.util.parallel import logging_pool
@@ -287,7 +287,7 @@ class ModelMapRecipe(MegaraBaseRecipe):
         # perform extraction with our own calibration
         self.logger.info("perform extraction with computed calibration")
         calibrator_aper = ApertureExtractor(model_map, self.datamodel)
-        reduced_copy = copy_img(reduced)
+        reduced_copy = copy.deepcopy(reduced)
         reduced_rss = calibrator_aper(reduced_copy)
 
         if self.intermediate_results:

@@ -9,6 +9,7 @@
 
 """Fiber tracing Recipe."""
 
+import copy
 import logging
 
 import numpy
@@ -19,7 +20,6 @@ from numina.array.trace.traces import trace as trace_func, tracing_limits
 from numina.array.wavecalib.crosscorrelation import cosinebell
 from numina.array.wavecalib.crosscorrelation import convolve_comb_lines
 from numina.core import Result, Parameter
-from numina.frame.utils import copy_img
 import numina.types.qc as qc
 from numina.processing.combine import basic_processing_with_combination
 from scipy.ndimage import maximum_filter1d, minimum_filter, minimum_filter1d
@@ -294,7 +294,7 @@ class TraceMapRecipe(MegaraBaseRecipe):
         final.missing_fibers = missing_fibers
         # Perform extraction with own traces
         calibrator_aper = ApertureExtractor(final, self.datamodel)
-        reduced_copy = copy_img(reduced)
+        reduced_copy = copy.deepcopy(reduced)
         reduced_rss = calibrator_aper(reduced_copy)
 
         if self.intermediate_results:
